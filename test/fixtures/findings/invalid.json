@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/example-run/"
+  },
+  "base": "1111111111111111111111111111111111111111",
+  "head": "2222222222222222222222222222222222222222",
+  "personas": ["correctness-reviewer"],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "P4",
+      "title": "Missing empty-input check",
+      "file": "src/example.mjs",
+      "line": 42,
+      "persona": "correctness-reviewer",
+      "confidence": 0.8,
+      "disposition": "open",
+      "reason": null
+    },
+    {
+      "id": "F2",
+      "severity": "P1",
+      "title": "Consider a clearer name",
+      "file": "src/example.mjs",
+      "line": 57,
+      "persona": "correctness-reviewer",
+      "confidence": 0.7,
+      "disposition": "dismissed",
+      "reason": null
+    }
+  ]
+}

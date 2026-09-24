@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "presets": {
+    "baton-templates": {
+      "version": "0.1.0",
+      "source": "local",
+      "manifest_hash": "sha256:80c341b2f1a20caeef69b6fc5fc932d53e52c882f84869cf561b74e74c8616dc",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {},
+      "registered_skills": {},
+      "installed_at": "2026-09-24T11:44:42.012185+00:00"
+    }
+  }
+}

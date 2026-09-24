@@ -1,0 +1,16 @@
+{
+  "config": {
+    "MD013": false,
+    "MD024": false,
+    "MD036": false,
+    "MD033": false,
+    "MD041": false
+  },
+  "ignores": [
+    ".github/skills/**",
+    ".github/agents/**",
+    "packs/**/files/**",
+    "baton/speckit-extension/**",
+    "baton/speckit-preset/**"
+  ]
+}

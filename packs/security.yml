@@ -1,0 +1,12 @@
+schema: 1
+id: security
+description: Optional deeper audit beyond the core security reviewer.
+requires: [core]
+conflicts: []
+files:
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/atv-security/SKILL.md, path: .github/skills/atv-security/SKILL.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/security-sentinel.agent.md, path: .github/agents/security-sentinel.agent.md }
+optional_refs:
+  - ref: cso
+    reason: upstream-absent
+    note: Former name of atv-security, retained only as a legacy trigger and report heading.

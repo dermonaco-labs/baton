@@ -1,0 +1,26 @@
+[
+  {
+    "package": "ajv",
+    "license": "MIT"
+  },
+  {
+    "package": "ajv-formats",
+    "license": "MIT"
+  },
+  {
+    "package": "fast-deep-equal",
+    "license": "MIT"
+  },
+  {
+    "package": "fast-uri",
+    "license": "BSD-3-Clause"
+  },
+  {
+    "package": "json-schema-traverse",
+    "license": "MIT"
+  },
+  {
+    "package": "yaml",
+    "license": "ISC"
+  }
+]

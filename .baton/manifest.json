@@ -1,0 +1,536 @@
+{
+  "schema": 1,
+  "baton_version": "0.1.0",
+  "installed_at": "2026-09-24T12:24:47.193Z",
+  "source": "template",
+  "upstreams": {
+    "speckit": "1.0.11@8147943",
+    "atv": "main@ad99673"
+  },
+  "packs": [
+    "core"
+  ],
+  "recommended_packs": [
+    {
+      "pack": "docs-review",
+      "refs": [
+        "ce-compound-refresh",
+        "document-review"
+      ]
+    },
+    {
+      "pack": "research",
+      "refs": [
+        "best-practices-researcher",
+        "framework-docs-researcher"
+      ]
+    },
+    {
+      "pack": "review-plus",
+      "refs": [
+        "api-contract-reviewer",
+        "cli-readiness-reviewer",
+        "code-simplicity-reviewer",
+        "data-integrity-guardian",
+        "data-migrations-reviewer",
+        "deployment-verification-agent",
+        "pattern-recognition-specialist",
+        "performance-oracle",
+        "performance-reviewer",
+        "previous-comments-reviewer",
+        "reliability-reviewer",
+        "schema-drift-detector"
+      ]
+    },
+    {
+      "pack": "security",
+      "refs": [
+        "security-sentinel"
+      ]
+    },
+    {
+      "pack": "stack-python",
+      "refs": [
+        "kieran-python-reviewer"
+      ]
+    },
+    {
+      "pack": "stack-rails",
+      "refs": [
+        "dhh-rails-reviewer",
+        "kieran-rails-reviewer"
+      ]
+    },
+    {
+      "pack": "stack-typescript",
+      "refs": [
+        "julik-frontend-races-reviewer",
+        "kieran-typescript-reviewer"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": ".github/agents/adversarial-reviewer.agent.md",
+      "sha256": "917c5d48e73d203f72b471341e99daa56360bd227fe611c148ab8e873fe72b0c",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/agents/agent-native-reviewer.agent.md",
+      "sha256": "428604a28144b795c662f36f113c8cc5b973b18294ba71461fe2a92710e29d61",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/agents/correctness-reviewer.agent.md",
+      "sha256": "4a8fbce14b4e6452ffe102c0c4e5887c3a502ce09e4265142ef289bdade9c841",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/agents/learnings-researcher.agent.md",
+      "sha256": "b395b6c820c16ee574617a48f679f4dc247c857e39a11c0a8b04b341f6975391",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/agents/maintainability-reviewer.agent.md",
+      "sha256": "f6650ebe8847c9a696813f56050f22cbf37f65ad0aafbae0dca7ea3878e61113",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/agents/project-standards-reviewer.agent.md",
+      "sha256": "e7acf7d84973a7d8c8fb4eda710ed16712b5d91e9b42a98200267b4acce93852",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/agents/repo-research-analyst.agent.md",
+      "sha256": "9c9cac8e051e61c64ac6ffab02cfd67074870a523ab07948da18bd023144bad0",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/agents/security-reviewer.agent.md",
+      "sha256": "28d19d73cddcb4c647ccfe70f3e66148035eb66c233310288981daf5574e9abc",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/agents/testing-reviewer.agent.md",
+      "sha256": "7c768ff5556dcdc43feee879f4ff2f1aa9440178272efa68f4bd66aede6f92c5",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-brainstorm/SKILL.md",
+      "sha256": "4cee9e3e842ae657a0ecfb02a06823e59969c773f2184564934db721ae62c2a6",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-compound/assets/resolution-template.md",
+      "sha256": "e2aa5cf7e01b1d2ae08317863d011cb0b384bbf683bd2cab885a486f5b9cdd3b",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-compound/references/schema.yaml",
+      "sha256": "5787641cc2bb0a6f4df36e7aded4db898e47308284e0699b165605eb6731e36b",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-compound/references/yaml-schema.md",
+      "sha256": "5715d8c066060f93135b6f5536e9329b2cdb07d09fc134b3e26f9efc2a8a7608",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-compound/SKILL.md",
+      "sha256": "c66afa7af2676ab36aa2fca6aa527958fb4391742dab8a05bf82e7b367190b70",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-review/references/diff-scope.md",
+      "sha256": "b11a3cbee8372bc4162a2e00898e82317b37c5f56cbf456fe81c3e5fef1ff989",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-review/references/findings-schema.json",
+      "sha256": "2ddc30b034071836fad3ded0d75af5f67cbd7bbd7f973b9d6070d748be76e8c3",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-review/references/persona-catalog.md",
+      "sha256": "15ee8f3e6add6c4f08d091f5252a9298e48784329629f277182b7867a1d0f75f",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-review/references/resolve-base.sh",
+      "sha256": "5d51756e7cfdebe9ca9e8fd02595a1f4c6b70435c2c898ce25a7537ae497c8bf",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-review/references/review-output-template.md",
+      "sha256": "a84580fc5e37e5a4e435681d6984983af88fed73a4a9d9888b87e7e7f8f7f452",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-review/references/subagent-template.md",
+      "sha256": "750f1e2990403143ade8d06fdb9f8dd26232774202928806feecb7b371bb4f30",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-review/SKILL.md",
+      "sha256": "44e58dfe90bd51325cf656db7b7364fbcbe552f182de66f2429575fd5d2a2eda",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/ce-work/SKILL.md",
+      "sha256": "053d34cd135c12143e3c1940a8db518aa709e6a95e0628f529e8a25384b235d6",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/land/SKILL.md",
+      "sha256": "b15260eac5ec4aa1ab717adb2aa90659dfc868d94b8fa73ad42eaf5fab2f00de",
+      "pack": "core",
+      "owner": "atv",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-analyze/SKILL.md",
+      "sha256": "60cbd0a4bb5c01bc5d447e5d42543b02ebf1560a2b9bfcb750b3502c5941a711",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-baton-handoff/SKILL.md",
+      "sha256": "892e4bcb62250ec2edf361cf2a2738cec724cde776c0600ba5bb8caf70e9bd93",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-baton-receive/SKILL.md",
+      "sha256": "120341e2db614e68bae38c70cadc2890e841b05c7abf3bbedf899dd25e7e2c61",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-checklist/SKILL.md",
+      "sha256": "43009036898a3242742336fd3582c2c5909d12fd9a7d6894eb8608b43ccd27ad",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-clarify/SKILL.md",
+      "sha256": "457e6985a30cf6b3d89990b9ab0f198803398c5cd1a35b62f4ee3e59c8dc30d3",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-constitution/SKILL.md",
+      "sha256": "177600a10d466eac78014a3b65d78663e24c05463266df539b5be9830a81c18e",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-converge/SKILL.md",
+      "sha256": "90c6a2cf400d114a41945745aeadc94ebcd69f4eb12dd723635ca153806bced6",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-implement/SKILL.md",
+      "sha256": "0c565295d8b1de03821812be86e6d5bba68268f40d52550499110ab9cad1b118",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-plan/SKILL.md",
+      "sha256": "c77d361665b34d5870dd1ffe9d2c805700a36cfacd35c63a935ea6edcb100762",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-specify/SKILL.md",
+      "sha256": "342dd2173103ce701b2bae2f489b462da19fc7369d920c93df10754be2216be8",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".github/skills/speckit-tasks/SKILL.md",
+      "sha256": "4dfb5cb2fd544f7ad5f1ddb9ff44bf230082fc312090db7e36102fe400dfab77",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/.gitignore",
+      "sha256": "8c908410d177a1ef3d0dee16d7ad55f2ac3333df3104c4d4adee1c9b82f1dbc1",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/extensions.yml",
+      "sha256": "5a0eb847f0b239bb0935a121252af79ac706971ef837d361678ec4a3aa48365a",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/extensions/.registry",
+      "sha256": "18079c2cc5ae4609fd7c16e08483df0a606fd47bf753bcb8a28514fef5795475",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-handoff/SKILL.md",
+      "sha256": "892e4bcb62250ec2edf361cf2a2738cec724cde776c0600ba5bb8caf70e9bd93",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-receive/SKILL.md",
+      "sha256": "120341e2db614e68bae38c70cadc2890e841b05c7abf3bbedf899dd25e7e2c61",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/extensions/baton/commands/handoff.md",
+      "sha256": "548265571f3fcdddfee8244aa65c5d35c08b421e3229b695d3f1056760eee2da",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/extensions/baton/commands/receive.md",
+      "sha256": "e5059e54d4fe08403f9940929789d45e4dc8cc9c6e4341f946c0efae0317c610",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/extensions/baton/extension.yml",
+      "sha256": "ed69e6d8655b7b0d0e22b833034ca5c6ff3cb8876461d3b48afed169c8aeb80a",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/extensions/baton/README.md",
+      "sha256": "faa43e116589f5cbd52adca933d18044abbb4b21400caaefeb3bcb97de1065c9",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/init-options.json",
+      "sha256": "96b8e003452698d3ba352b9c05ac03041044fe5478a59d2145f73dddb7e7366f",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/integration.json",
+      "sha256": "d85dea5c3f9984443cb57ba6248f7f713f0ba3b1a74681248e4c9327dc7765bf",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/integrations/copilot.manifest.json",
+      "sha256": "0b949b85b078a63c7bcdb56dc56cb09064f9b669ced358910296a1b4a7dd660b",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/integrations/speckit.manifest.json",
+      "sha256": "8e4ca0a869b32f0c3aec0440d1ff8755c48db38b88258778770fe81c55c9807b",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/memory/.constitution-template.json",
+      "sha256": "8fc4b39294bae0c10d59547ad7d415b6f0e890d656cbf7171dd567f4e9054711",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/presets/.registry",
+      "sha256": "8737391d16df378698061586c294f3d375f12bd4314f774bb96d82c94d3f8b43",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/presets/baton-templates/preset.yml",
+      "sha256": "80c341b2f1a20caeef69b6fc5fc932d53e52c882f84869cf561b74e74c8616dc",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/presets/baton-templates/templates/plan-template.md",
+      "sha256": "332aa4d763383ba876097dd63b19b1d5124dff529ea5a594dfba8d5101b4547f",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/presets/baton-templates/templates/tasks-template.md",
+      "sha256": "43ebe8fc1760b88ad34210b7778f1212be9e40888bc3c33d170edb4a5c05a285",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/scripts/bash/check-prerequisites.sh",
+      "sha256": "daa377146db4fb69912f42611a7b91c5d55873b3e3e27ed33bd8d67505826344",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/scripts/bash/common.sh",
+      "sha256": "adaec9a43ecaa52609eeb9661d5f9c36a41d3160aa2bd714be9973082d0dc2d2",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/scripts/bash/create-new-feature.sh",
+      "sha256": "7f85da63527be6464b08e79578b35b33d0b259fa7653a61ae64da626a26207e2",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/scripts/bash/resolve-template.sh",
+      "sha256": "829e227096abc8bf0889889ec9f792f503ca5d395b7836a8a7eb739ee75214e7",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/scripts/bash/setup-plan.sh",
+      "sha256": "d0bd298c026446f3c63167130d65e49e4aa4485de6bef18bcdfd57b19aa0de96",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/scripts/bash/setup-tasks.sh",
+      "sha256": "4a33dd1e6c32ddc7d570f4b538572c54069192573eed0ec654d9fb826e31a4fe",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/templates/checklist-template.md",
+      "sha256": "856532b3cb66171c662cc16f16b31a5856e4655a8666aad1e545bbfc7f603ca1",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/templates/constitution-template.md",
+      "sha256": "ce7549540fa45543cca797a150201d868e64495fdff39dc38246fb17bd4024b3",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/templates/plan-template.md",
+      "sha256": "7e637502d41eccf0ca672496636365691fdca62ef37b27ec07fcb412dbfa90d4",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/templates/spec-template.md",
+      "sha256": "3945437fc35cd30a5b2bf7beea680337c3516826d3efa5a6b92c4a7eca1ba28e",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/templates/tasks-template.md",
+      "sha256": "fc29a233f6f5a27ca31f1aa46b596af6500c627441c6e62b2bc4a1d721525842",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/workflows/speckit/workflow.yml",
+      "sha256": "177761c5e7df28126beea043b5cb45aeaf7958090c022dc11ac71399422fcfbc",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    },
+    {
+      "path": ".specify/workflows/workflow-registry.json",
+      "sha256": "56b9a38645265b3afa54b8c2ddb67e80e90ff7afd9330af6401bc49e060475c5",
+      "pack": "core",
+      "owner": "speckit",
+      "managed": true
+    }
+  ],
+  "marker_sections": [
+    {
+      "path": ".github/copilot-instructions.md",
+      "marker": "BATON",
+      "sha256": "7227fba4f168e867113bbf790832f98a143b46b4db2133c19cd86a2a3efb5c56"
+    }
+  ]
+}

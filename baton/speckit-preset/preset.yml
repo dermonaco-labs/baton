@@ -1,0 +1,24 @@
+schema_version: "1.0"
+preset:
+  id: baton-templates
+  name: Baton Templates
+  version: "0.1.0"
+  description: Append pre-registered acceptance and handoff guidance to Spec Kit templates.
+  author: baton
+  repository: https://github.com/dermonaco-labs/baton
+  license: MIT
+requires:
+  speckit_version: ">=1.0.11,<2.0.0"
+provides:
+  templates:
+    - type: template
+      name: tasks-template
+      file: templates/tasks-template.md
+      strategy: append
+      description: Add the Acceptance Registry without replacing the upstream tasks template.
+    - type: template
+      name: plan-template
+      file: templates/plan-template.md
+      strategy: append
+      description: Add Phase 0 research guidance and a handoff pointer.
+tags: [handoff, acceptance, templates]

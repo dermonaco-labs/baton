@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Baton adopter configuration",
+  "type": "object",
+  "required": ["schema", "packs", "lanes", "gates", "denylist", "models", "checks", "budgets"],
+  "properties": {
+    "schema": { "const": 1 },
+    "packs": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "contains": { "const": "core" },
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "lanes": {
+      "type": "object", "required": ["quick"],
+      "properties": {
+        "quick": {
+          "type": "object", "required": ["max_files_changed"],
+          "properties": { "max_files_changed": { "type": "integer", "minimum": 1 } },
+          "patternProperties": { "^x-": {} }, "additionalProperties": false
+        }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "gates": {
+      "type": "object", "required": ["approver_roles", "approval_channels"],
+      "properties": {
+        "approver_roles": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/role_label" }
+        },
+        "approval_channels": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/role_label" }
+        }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "denylist": {
+      "type": "object", "required": ["terms_file"],
+      "properties": {
+        "terms_file": { "type": ["string", "null"], "minLength": 1 }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "models": {
+      "type": "object", "required": ["roles", "phase_roles", "allowed", "enforce", "apply_to_agents"],
+      "properties": {
+        "roles": {
+          "type": "object", "required": ["planning", "implementation", "review", "fast"],
+          "properties": {
+            "planning": { "$ref": "#/$defs/model" },
+            "implementation": { "$ref": "#/$defs/model" },
+            "review": { "$ref": "#/$defs/model" },
+            "fast": { "$ref": "#/$defs/model" }
+          },
+          "patternProperties": { "^x-": {} }, "additionalProperties": false
+        },
+        "phase_roles": {
+          "type": "object",
+          "patternProperties": {
+            "^(brainstorm|specify|clarify|plan|tasks|analyze|implement|review|land|compound|work)$": {
+              "enum": ["planning", "implementation", "review", "fast"]
+            },
+            "^x-": {}
+          },
+          "additionalProperties": false
+        },
+        "allowed": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "enforce": { "enum": ["off", "warn", "error"] },
+        "apply_to_agents": { "type": "boolean" }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["name", "run"],
+        "properties": {
+          "name": { "$ref": "#/$defs/id" },
+          "run": { "type": "string", "minLength": 1 }
+        },
+        "patternProperties": { "^x-": {} }, "additionalProperties": false
+      }
+    },
+    "budgets": {
+      "type": "object", "required": ["read_first_max", "body_max_lines"],
+      "properties": {
+        "read_first_max": { "type": "integer", "minimum": 1 },
+        "body_max_lines": { "type": "integer", "minimum": 1 }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    }
+  },
+  "patternProperties": { "^x-": {} },
+  "additionalProperties": false,
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "role_label": { "type": "string", "pattern": "^[a-z]+(?:-[a-z]+)*(?: [a-z]+(?:-[a-z]+)*){0,3}$" },
+    "model": {
+      "type": "object", "required": ["model"],
+      "properties": {
+        "model": { "type": "string", "minLength": 1 },
+        "reasoning": { "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"] }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    }
+  }
+}

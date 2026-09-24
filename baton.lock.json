@@ -1,0 +1,1516 @@
+{
+  "schema": 1,
+  "generated_by": "baton sync 0.1.0",
+  "upstreams": {
+    "speckit": {
+      "package": "specify-cli",
+      "version": "1.0.11",
+      "repo": "github/spec-kit",
+      "tag": "v1.0.11",
+      "commit": "8147943512404afb9d99c6252cb9bf84369fd0b0",
+      "requirements": "baton/upstream/specify-cli.requirements.txt",
+      "requirements_sha256": "5e6f1d40a80b984138e816e148f331659e6de3363a7df1160b62b66eb99ee8ff",
+      "license": "MIT",
+      "init_args": [
+        "--integration",
+        "copilot",
+        "--script",
+        "sh"
+      ]
+    },
+    "atv": {
+      "package": "atv-starterkit",
+      "version": null,
+      "repo": "All-The-Vibes/ATV-StarterKit",
+      "ref": "main",
+      "commit": "ad996736b879be87c7755df5c5017d5336203bbc",
+      "tree": "777a37ef9cf15f3a6fd6a3355cc3c945e8bb1c47",
+      "license": "MIT",
+      "note": "pinned to main: v2.6.3 ships corrupted agent templates (fixed in f0a86ef)"
+    }
+  },
+  "files": [
+    {
+      "path": ".github/agents/adversarial-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/adversarial-reviewer.agent.md",
+      "stored_at": ".github/agents/adversarial-reviewer.agent.md",
+      "sha256_upstream": "917c5d48e73d203f72b471341e99daa56360bd227fe611c148ab8e873fe72b0c",
+      "sha256": "917c5d48e73d203f72b471341e99daa56360bd227fe611c148ab8e873fe72b0c",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/agents/agent-native-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/agent-native-reviewer.agent.md",
+      "stored_at": ".github/agents/agent-native-reviewer.agent.md",
+      "sha256_upstream": "428604a28144b795c662f36f113c8cc5b973b18294ba71461fe2a92710e29d61",
+      "sha256": "428604a28144b795c662f36f113c8cc5b973b18294ba71461fe2a92710e29d61",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/agents/correctness-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/correctness-reviewer.agent.md",
+      "stored_at": ".github/agents/correctness-reviewer.agent.md",
+      "sha256_upstream": "4a8fbce14b4e6452ffe102c0c4e5887c3a502ce09e4265142ef289bdade9c841",
+      "sha256": "4a8fbce14b4e6452ffe102c0c4e5887c3a502ce09e4265142ef289bdade9c841",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/agents/learnings-researcher.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/learnings-researcher.agent.md",
+      "stored_at": ".github/agents/learnings-researcher.agent.md",
+      "sha256_upstream": "b395b6c820c16ee574617a48f679f4dc247c857e39a11c0a8b04b341f6975391",
+      "sha256": "b395b6c820c16ee574617a48f679f4dc247c857e39a11c0a8b04b341f6975391",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/agents/maintainability-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/maintainability-reviewer.agent.md",
+      "stored_at": ".github/agents/maintainability-reviewer.agent.md",
+      "sha256_upstream": "f6650ebe8847c9a696813f56050f22cbf37f65ad0aafbae0dca7ea3878e61113",
+      "sha256": "f6650ebe8847c9a696813f56050f22cbf37f65ad0aafbae0dca7ea3878e61113",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/agents/project-standards-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/project-standards-reviewer.agent.md",
+      "stored_at": ".github/agents/project-standards-reviewer.agent.md",
+      "sha256_upstream": "e7acf7d84973a7d8c8fb4eda710ed16712b5d91e9b42a98200267b4acce93852",
+      "sha256": "e7acf7d84973a7d8c8fb4eda710ed16712b5d91e9b42a98200267b4acce93852",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/agents/repo-research-analyst.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/repo-research-analyst.agent.md",
+      "stored_at": ".github/agents/repo-research-analyst.agent.md",
+      "sha256_upstream": "9c9cac8e051e61c64ac6ffab02cfd67074870a523ab07948da18bd023144bad0",
+      "sha256": "9c9cac8e051e61c64ac6ffab02cfd67074870a523ab07948da18bd023144bad0",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/agents/security-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/security-reviewer.agent.md",
+      "stored_at": ".github/agents/security-reviewer.agent.md",
+      "sha256_upstream": "28d19d73cddcb4c647ccfe70f3e66148035eb66c233310288981daf5574e9abc",
+      "sha256": "28d19d73cddcb4c647ccfe70f3e66148035eb66c233310288981daf5574e9abc",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/agents/testing-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/testing-reviewer.agent.md",
+      "stored_at": ".github/agents/testing-reviewer.agent.md",
+      "sha256_upstream": "7c768ff5556dcdc43feee879f4ff2f1aa9440178272efa68f4bd66aede6f92c5",
+      "sha256": "7c768ff5556dcdc43feee879f4ff2f1aa9440178272efa68f4bd66aede6f92c5",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-brainstorm/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-brainstorm/SKILL.md",
+      "stored_at": ".github/skills/ce-brainstorm/SKILL.md",
+      "sha256_upstream": "4cee9e3e842ae657a0ecfb02a06823e59969c773f2184564934db721ae62c2a6",
+      "sha256": "4cee9e3e842ae657a0ecfb02a06823e59969c773f2184564934db721ae62c2a6",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-compound/assets/resolution-template.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-compound/assets/resolution-template.md",
+      "stored_at": ".github/skills/ce-compound/assets/resolution-template.md",
+      "sha256_upstream": "e2aa5cf7e01b1d2ae08317863d011cb0b384bbf683bd2cab885a486f5b9cdd3b",
+      "sha256": "e2aa5cf7e01b1d2ae08317863d011cb0b384bbf683bd2cab885a486f5b9cdd3b",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-compound/references/schema.yaml",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-compound/references/schema.yaml",
+      "stored_at": ".github/skills/ce-compound/references/schema.yaml",
+      "sha256_upstream": "5787641cc2bb0a6f4df36e7aded4db898e47308284e0699b165605eb6731e36b",
+      "sha256": "5787641cc2bb0a6f4df36e7aded4db898e47308284e0699b165605eb6731e36b",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-compound/references/yaml-schema.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-compound/references/yaml-schema.md",
+      "stored_at": ".github/skills/ce-compound/references/yaml-schema.md",
+      "sha256_upstream": "5715d8c066060f93135b6f5536e9329b2cdb07d09fc134b3e26f9efc2a8a7608",
+      "sha256": "5715d8c066060f93135b6f5536e9329b2cdb07d09fc134b3e26f9efc2a8a7608",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-compound/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-compound/SKILL.md",
+      "stored_at": ".github/skills/ce-compound/SKILL.md",
+      "sha256_upstream": "c66afa7af2676ab36aa2fca6aa527958fb4391742dab8a05bf82e7b367190b70",
+      "sha256": "c66afa7af2676ab36aa2fca6aa527958fb4391742dab8a05bf82e7b367190b70",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-review/references/diff-scope.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-review/references/diff-scope.md",
+      "stored_at": ".github/skills/ce-review/references/diff-scope.md",
+      "sha256_upstream": "b11a3cbee8372bc4162a2e00898e82317b37c5f56cbf456fe81c3e5fef1ff989",
+      "sha256": "b11a3cbee8372bc4162a2e00898e82317b37c5f56cbf456fe81c3e5fef1ff989",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-review/references/findings-schema.json",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-review/references/findings-schema.json",
+      "stored_at": ".github/skills/ce-review/references/findings-schema.json",
+      "sha256_upstream": "2ddc30b034071836fad3ded0d75af5f67cbd7bbd7f973b9d6070d748be76e8c3",
+      "sha256": "2ddc30b034071836fad3ded0d75af5f67cbd7bbd7f973b9d6070d748be76e8c3",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-review/references/persona-catalog.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-review/references/persona-catalog.md",
+      "stored_at": ".github/skills/ce-review/references/persona-catalog.md",
+      "sha256_upstream": "15ee8f3e6add6c4f08d091f5252a9298e48784329629f277182b7867a1d0f75f",
+      "sha256": "15ee8f3e6add6c4f08d091f5252a9298e48784329629f277182b7867a1d0f75f",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-review/references/resolve-base.sh",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-review/references/resolve-base.sh",
+      "stored_at": ".github/skills/ce-review/references/resolve-base.sh",
+      "sha256_upstream": "5d51756e7cfdebe9ca9e8fd02595a1f4c6b70435c2c898ce25a7537ae497c8bf",
+      "sha256": "5d51756e7cfdebe9ca9e8fd02595a1f4c6b70435c2c898ce25a7537ae497c8bf",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-review/references/review-output-template.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-review/references/review-output-template.md",
+      "stored_at": ".github/skills/ce-review/references/review-output-template.md",
+      "sha256_upstream": "a84580fc5e37e5a4e435681d6984983af88fed73a4a9d9888b87e7e7f8f7f452",
+      "sha256": "a84580fc5e37e5a4e435681d6984983af88fed73a4a9d9888b87e7e7f8f7f452",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-review/references/subagent-template.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-review/references/subagent-template.md",
+      "stored_at": ".github/skills/ce-review/references/subagent-template.md",
+      "sha256_upstream": "750f1e2990403143ade8d06fdb9f8dd26232774202928806feecb7b371bb4f30",
+      "sha256": "750f1e2990403143ade8d06fdb9f8dd26232774202928806feecb7b371bb4f30",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-review/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-review/SKILL.md",
+      "stored_at": ".github/skills/ce-review/SKILL.md",
+      "sha256_upstream": "44e58dfe90bd51325cf656db7b7364fbcbe552f182de66f2429575fd5d2a2eda",
+      "sha256": "44e58dfe90bd51325cf656db7b7364fbcbe552f182de66f2429575fd5d2a2eda",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-work/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-work/SKILL.md",
+      "stored_at": ".github/skills/ce-work/SKILL.md",
+      "sha256_upstream": "053d34cd135c12143e3c1940a8db518aa709e6a95e0628f529e8a25384b235d6",
+      "sha256": "053d34cd135c12143e3c1940a8db518aa709e6a95e0628f529e8a25384b235d6",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/land/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/land/SKILL.md",
+      "stored_at": ".github/skills/land/SKILL.md",
+      "sha256_upstream": "b15260eac5ec4aa1ab717adb2aa90659dfc868d94b8fa73ad42eaf5fab2f00de",
+      "sha256": "b15260eac5ec4aa1ab717adb2aa90659dfc868d94b8fa73ad42eaf5fab2f00de",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-analyze/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-analyze/SKILL.md",
+      "stored_at": ".github/skills/speckit-analyze/SKILL.md",
+      "sha256_upstream": "60cbd0a4bb5c01bc5d447e5d42543b02ebf1560a2b9bfcb750b3502c5941a711",
+      "sha256": "60cbd0a4bb5c01bc5d447e5d42543b02ebf1560a2b9bfcb750b3502c5941a711",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-baton-handoff/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-baton-handoff/SKILL.md",
+      "stored_at": ".github/skills/speckit-baton-handoff/SKILL.md",
+      "sha256_upstream": "892e4bcb62250ec2edf361cf2a2738cec724cde776c0600ba5bb8caf70e9bd93",
+      "sha256": "892e4bcb62250ec2edf361cf2a2738cec724cde776c0600ba5bb8caf70e9bd93",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-baton-receive/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-baton-receive/SKILL.md",
+      "stored_at": ".github/skills/speckit-baton-receive/SKILL.md",
+      "sha256_upstream": "120341e2db614e68bae38c70cadc2890e841b05c7abf3bbedf899dd25e7e2c61",
+      "sha256": "120341e2db614e68bae38c70cadc2890e841b05c7abf3bbedf899dd25e7e2c61",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-checklist/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-checklist/SKILL.md",
+      "stored_at": ".github/skills/speckit-checklist/SKILL.md",
+      "sha256_upstream": "43009036898a3242742336fd3582c2c5909d12fd9a7d6894eb8608b43ccd27ad",
+      "sha256": "43009036898a3242742336fd3582c2c5909d12fd9a7d6894eb8608b43ccd27ad",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-clarify/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-clarify/SKILL.md",
+      "stored_at": ".github/skills/speckit-clarify/SKILL.md",
+      "sha256_upstream": "457e6985a30cf6b3d89990b9ab0f198803398c5cd1a35b62f4ee3e59c8dc30d3",
+      "sha256": "457e6985a30cf6b3d89990b9ab0f198803398c5cd1a35b62f4ee3e59c8dc30d3",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-constitution/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-constitution/SKILL.md",
+      "stored_at": ".github/skills/speckit-constitution/SKILL.md",
+      "sha256_upstream": "177600a10d466eac78014a3b65d78663e24c05463266df539b5be9830a81c18e",
+      "sha256": "177600a10d466eac78014a3b65d78663e24c05463266df539b5be9830a81c18e",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-converge/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-converge/SKILL.md",
+      "stored_at": ".github/skills/speckit-converge/SKILL.md",
+      "sha256_upstream": "90c6a2cf400d114a41945745aeadc94ebcd69f4eb12dd723635ca153806bced6",
+      "sha256": "90c6a2cf400d114a41945745aeadc94ebcd69f4eb12dd723635ca153806bced6",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-implement/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-implement/SKILL.md",
+      "stored_at": ".github/skills/speckit-implement/SKILL.md",
+      "sha256_upstream": "0c565295d8b1de03821812be86e6d5bba68268f40d52550499110ab9cad1b118",
+      "sha256": "0c565295d8b1de03821812be86e6d5bba68268f40d52550499110ab9cad1b118",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-plan/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-plan/SKILL.md",
+      "stored_at": ".github/skills/speckit-plan/SKILL.md",
+      "sha256_upstream": "c77d361665b34d5870dd1ffe9d2c805700a36cfacd35c63a935ea6edcb100762",
+      "sha256": "c77d361665b34d5870dd1ffe9d2c805700a36cfacd35c63a935ea6edcb100762",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-specify/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-specify/SKILL.md",
+      "stored_at": ".github/skills/speckit-specify/SKILL.md",
+      "sha256_upstream": "342dd2173103ce701b2bae2f489b462da19fc7369d920c93df10754be2216be8",
+      "sha256": "342dd2173103ce701b2bae2f489b462da19fc7369d920c93df10754be2216be8",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-tasks/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-tasks/SKILL.md",
+      "stored_at": ".github/skills/speckit-tasks/SKILL.md",
+      "sha256_upstream": "4dfb5cb2fd544f7ad5f1ddb9ff44bf230082fc312090db7e36102fe400dfab77",
+      "sha256": "4dfb5cb2fd544f7ad5f1ddb9ff44bf230082fc312090db7e36102fe400dfab77",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/.gitignore",
+      "upstream": "speckit",
+      "upstream_path": ".specify/.gitignore",
+      "stored_at": ".specify/.gitignore",
+      "sha256_upstream": "8c908410d177a1ef3d0dee16d7ad55f2ac3333df3104c4d4adee1c9b82f1dbc1",
+      "sha256": "8c908410d177a1ef3d0dee16d7ad55f2ac3333df3104c4d4adee1c9b82f1dbc1",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/extensions.yml",
+      "upstream": "speckit",
+      "upstream_path": ".specify/extensions.yml",
+      "stored_at": ".specify/extensions.yml",
+      "sha256_upstream": "5a0eb847f0b239bb0935a121252af79ac706971ef837d361678ec4a3aa48365a",
+      "sha256": "5a0eb847f0b239bb0935a121252af79ac706971ef837d361678ec4a3aa48365a",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/extensions/.registry",
+      "upstream": "speckit",
+      "upstream_path": ".specify/extensions/.registry",
+      "stored_at": ".specify/extensions/.registry",
+      "sha256_upstream": "18079c2cc5ae4609fd7c16e08483df0a606fd47bf753bcb8a28514fef5795475",
+      "sha256": "18079c2cc5ae4609fd7c16e08483df0a606fd47bf753bcb8a28514fef5795475",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-handoff/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-handoff/SKILL.md",
+      "stored_at": ".specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-handoff/SKILL.md",
+      "sha256_upstream": "892e4bcb62250ec2edf361cf2a2738cec724cde776c0600ba5bb8caf70e9bd93",
+      "sha256": "892e4bcb62250ec2edf361cf2a2738cec724cde776c0600ba5bb8caf70e9bd93",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-receive/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-receive/SKILL.md",
+      "stored_at": ".specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-receive/SKILL.md",
+      "sha256_upstream": "120341e2db614e68bae38c70cadc2890e841b05c7abf3bbedf899dd25e7e2c61",
+      "sha256": "120341e2db614e68bae38c70cadc2890e841b05c7abf3bbedf899dd25e7e2c61",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/extensions/baton/commands/handoff.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/extensions/baton/commands/handoff.md",
+      "stored_at": ".specify/extensions/baton/commands/handoff.md",
+      "sha256_upstream": "548265571f3fcdddfee8244aa65c5d35c08b421e3229b695d3f1056760eee2da",
+      "sha256": "548265571f3fcdddfee8244aa65c5d35c08b421e3229b695d3f1056760eee2da",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/extensions/baton/commands/receive.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/extensions/baton/commands/receive.md",
+      "stored_at": ".specify/extensions/baton/commands/receive.md",
+      "sha256_upstream": "e5059e54d4fe08403f9940929789d45e4dc8cc9c6e4341f946c0efae0317c610",
+      "sha256": "e5059e54d4fe08403f9940929789d45e4dc8cc9c6e4341f946c0efae0317c610",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/extensions/baton/extension.yml",
+      "upstream": "speckit",
+      "upstream_path": ".specify/extensions/baton/extension.yml",
+      "stored_at": ".specify/extensions/baton/extension.yml",
+      "sha256_upstream": "ed69e6d8655b7b0d0e22b833034ca5c6ff3cb8876461d3b48afed169c8aeb80a",
+      "sha256": "ed69e6d8655b7b0d0e22b833034ca5c6ff3cb8876461d3b48afed169c8aeb80a",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/extensions/baton/README.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/extensions/baton/README.md",
+      "stored_at": ".specify/extensions/baton/README.md",
+      "sha256_upstream": "faa43e116589f5cbd52adca933d18044abbb4b21400caaefeb3bcb97de1065c9",
+      "sha256": "faa43e116589f5cbd52adca933d18044abbb4b21400caaefeb3bcb97de1065c9",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/init-options.json",
+      "upstream": "speckit",
+      "upstream_path": ".specify/init-options.json",
+      "stored_at": ".specify/init-options.json",
+      "sha256_upstream": "96b8e003452698d3ba352b9c05ac03041044fe5478a59d2145f73dddb7e7366f",
+      "sha256": "96b8e003452698d3ba352b9c05ac03041044fe5478a59d2145f73dddb7e7366f",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/integration.json",
+      "upstream": "speckit",
+      "upstream_path": ".specify/integration.json",
+      "stored_at": ".specify/integration.json",
+      "sha256_upstream": "d85dea5c3f9984443cb57ba6248f7f713f0ba3b1a74681248e4c9327dc7765bf",
+      "sha256": "d85dea5c3f9984443cb57ba6248f7f713f0ba3b1a74681248e4c9327dc7765bf",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/integrations/copilot.manifest.json",
+      "upstream": "speckit",
+      "upstream_path": ".specify/integrations/copilot.manifest.json",
+      "stored_at": ".specify/integrations/copilot.manifest.json",
+      "sha256_upstream": "0b949b85b078a63c7bcdb56dc56cb09064f9b669ced358910296a1b4a7dd660b",
+      "sha256": "0b949b85b078a63c7bcdb56dc56cb09064f9b669ced358910296a1b4a7dd660b",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/integrations/speckit.manifest.json",
+      "upstream": "speckit",
+      "upstream_path": ".specify/integrations/speckit.manifest.json",
+      "stored_at": ".specify/integrations/speckit.manifest.json",
+      "sha256_upstream": "8e4ca0a869b32f0c3aec0440d1ff8755c48db38b88258778770fe81c55c9807b",
+      "sha256": "8e4ca0a869b32f0c3aec0440d1ff8755c48db38b88258778770fe81c55c9807b",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/memory/.constitution-template.json",
+      "upstream": "speckit",
+      "upstream_path": ".specify/memory/.constitution-template.json",
+      "stored_at": ".specify/memory/.constitution-template.json",
+      "sha256_upstream": "8fc4b39294bae0c10d59547ad7d415b6f0e890d656cbf7171dd567f4e9054711",
+      "sha256": "8fc4b39294bae0c10d59547ad7d415b6f0e890d656cbf7171dd567f4e9054711",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/presets/.registry",
+      "upstream": "speckit",
+      "upstream_path": ".specify/presets/.registry",
+      "stored_at": ".specify/presets/.registry",
+      "sha256_upstream": "8737391d16df378698061586c294f3d375f12bd4314f774bb96d82c94d3f8b43",
+      "sha256": "8737391d16df378698061586c294f3d375f12bd4314f774bb96d82c94d3f8b43",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/presets/baton-templates/preset.yml",
+      "upstream": "speckit",
+      "upstream_path": ".specify/presets/baton-templates/preset.yml",
+      "stored_at": ".specify/presets/baton-templates/preset.yml",
+      "sha256_upstream": "80c341b2f1a20caeef69b6fc5fc932d53e52c882f84869cf561b74e74c8616dc",
+      "sha256": "80c341b2f1a20caeef69b6fc5fc932d53e52c882f84869cf561b74e74c8616dc",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/presets/baton-templates/templates/plan-template.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/presets/baton-templates/templates/plan-template.md",
+      "stored_at": ".specify/presets/baton-templates/templates/plan-template.md",
+      "sha256_upstream": "332aa4d763383ba876097dd63b19b1d5124dff529ea5a594dfba8d5101b4547f",
+      "sha256": "332aa4d763383ba876097dd63b19b1d5124dff529ea5a594dfba8d5101b4547f",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/presets/baton-templates/templates/tasks-template.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/presets/baton-templates/templates/tasks-template.md",
+      "stored_at": ".specify/presets/baton-templates/templates/tasks-template.md",
+      "sha256_upstream": "43ebe8fc1760b88ad34210b7778f1212be9e40888bc3c33d170edb4a5c05a285",
+      "sha256": "43ebe8fc1760b88ad34210b7778f1212be9e40888bc3c33d170edb4a5c05a285",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/scripts/bash/check-prerequisites.sh",
+      "upstream": "speckit",
+      "upstream_path": ".specify/scripts/bash/check-prerequisites.sh",
+      "stored_at": ".specify/scripts/bash/check-prerequisites.sh",
+      "sha256_upstream": "daa377146db4fb69912f42611a7b91c5d55873b3e3e27ed33bd8d67505826344",
+      "sha256": "daa377146db4fb69912f42611a7b91c5d55873b3e3e27ed33bd8d67505826344",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/scripts/bash/common.sh",
+      "upstream": "speckit",
+      "upstream_path": ".specify/scripts/bash/common.sh",
+      "stored_at": ".specify/scripts/bash/common.sh",
+      "sha256_upstream": "adaec9a43ecaa52609eeb9661d5f9c36a41d3160aa2bd714be9973082d0dc2d2",
+      "sha256": "adaec9a43ecaa52609eeb9661d5f9c36a41d3160aa2bd714be9973082d0dc2d2",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/scripts/bash/create-new-feature.sh",
+      "upstream": "speckit",
+      "upstream_path": ".specify/scripts/bash/create-new-feature.sh",
+      "stored_at": ".specify/scripts/bash/create-new-feature.sh",
+      "sha256_upstream": "7f85da63527be6464b08e79578b35b33d0b259fa7653a61ae64da626a26207e2",
+      "sha256": "7f85da63527be6464b08e79578b35b33d0b259fa7653a61ae64da626a26207e2",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/scripts/bash/resolve-template.sh",
+      "upstream": "speckit",
+      "upstream_path": ".specify/scripts/bash/resolve-template.sh",
+      "stored_at": ".specify/scripts/bash/resolve-template.sh",
+      "sha256_upstream": "829e227096abc8bf0889889ec9f792f503ca5d395b7836a8a7eb739ee75214e7",
+      "sha256": "829e227096abc8bf0889889ec9f792f503ca5d395b7836a8a7eb739ee75214e7",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/scripts/bash/setup-plan.sh",
+      "upstream": "speckit",
+      "upstream_path": ".specify/scripts/bash/setup-plan.sh",
+      "stored_at": ".specify/scripts/bash/setup-plan.sh",
+      "sha256_upstream": "d0bd298c026446f3c63167130d65e49e4aa4485de6bef18bcdfd57b19aa0de96",
+      "sha256": "d0bd298c026446f3c63167130d65e49e4aa4485de6bef18bcdfd57b19aa0de96",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/scripts/bash/setup-tasks.sh",
+      "upstream": "speckit",
+      "upstream_path": ".specify/scripts/bash/setup-tasks.sh",
+      "stored_at": ".specify/scripts/bash/setup-tasks.sh",
+      "sha256_upstream": "4a33dd1e6c32ddc7d570f4b538572c54069192573eed0ec654d9fb826e31a4fe",
+      "sha256": "4a33dd1e6c32ddc7d570f4b538572c54069192573eed0ec654d9fb826e31a4fe",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/templates/checklist-template.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/templates/checklist-template.md",
+      "stored_at": ".specify/templates/checklist-template.md",
+      "sha256_upstream": "856532b3cb66171c662cc16f16b31a5856e4655a8666aad1e545bbfc7f603ca1",
+      "sha256": "856532b3cb66171c662cc16f16b31a5856e4655a8666aad1e545bbfc7f603ca1",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/templates/constitution-template.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/templates/constitution-template.md",
+      "stored_at": ".specify/templates/constitution-template.md",
+      "sha256_upstream": "ce7549540fa45543cca797a150201d868e64495fdff39dc38246fb17bd4024b3",
+      "sha256": "ce7549540fa45543cca797a150201d868e64495fdff39dc38246fb17bd4024b3",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/templates/plan-template.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/templates/plan-template.md",
+      "stored_at": ".specify/templates/plan-template.md",
+      "sha256_upstream": "7e637502d41eccf0ca672496636365691fdca62ef37b27ec07fcb412dbfa90d4",
+      "sha256": "7e637502d41eccf0ca672496636365691fdca62ef37b27ec07fcb412dbfa90d4",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/templates/spec-template.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/templates/spec-template.md",
+      "stored_at": ".specify/templates/spec-template.md",
+      "sha256_upstream": "3945437fc35cd30a5b2bf7beea680337c3516826d3efa5a6b92c4a7eca1ba28e",
+      "sha256": "3945437fc35cd30a5b2bf7beea680337c3516826d3efa5a6b92c4a7eca1ba28e",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/templates/tasks-template.md",
+      "upstream": "speckit",
+      "upstream_path": ".specify/templates/tasks-template.md",
+      "stored_at": ".specify/templates/tasks-template.md",
+      "sha256_upstream": "fc29a233f6f5a27ca31f1aa46b596af6500c627441c6e62b2bc4a1d721525842",
+      "sha256": "fc29a233f6f5a27ca31f1aa46b596af6500c627441c6e62b2bc4a1d721525842",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/workflows/speckit/workflow.yml",
+      "upstream": "speckit",
+      "upstream_path": ".specify/workflows/speckit/workflow.yml",
+      "stored_at": ".specify/workflows/speckit/workflow.yml",
+      "sha256_upstream": "177761c5e7df28126beea043b5cb45aeaf7958090c022dc11ac71399422fcfbc",
+      "sha256": "177761c5e7df28126beea043b5cb45aeaf7958090c022dc11ac71399422fcfbc",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".specify/workflows/workflow-registry.json",
+      "upstream": "speckit",
+      "upstream_path": ".specify/workflows/workflow-registry.json",
+      "stored_at": ".specify/workflows/workflow-registry.json",
+      "sha256_upstream": "56b9a38645265b3afa54b8c2ddb67e80e90ff7afd9330af6401bc49e060475c5",
+      "sha256": "56b9a38645265b3afa54b8c2ddb67e80e90ff7afd9330af6401bc49e060475c5",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "core"
+      ]
+    },
+    {
+      "path": ".github/agents/design-implementation-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/design-implementation-reviewer.agent.md",
+      "stored_at": "packs/design/files/.github/agents/design-implementation-reviewer.agent.md",
+      "sha256_upstream": "1d037a14c93f5a9339082b132ee95ed884733eb740fbfdaa29a457e9d3d54606",
+      "sha256": "1d037a14c93f5a9339082b132ee95ed884733eb740fbfdaa29a457e9d3d54606",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "design"
+      ]
+    },
+    {
+      "path": ".github/agents/design-iterator.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/design-iterator.agent.md",
+      "stored_at": "packs/design/files/.github/agents/design-iterator.agent.md",
+      "sha256_upstream": "7630f0e953994235da9939fbd9cbbfbca33760beef5dd57d56523bad80a63fd0",
+      "sha256": "7630f0e953994235da9939fbd9cbbfbca33760beef5dd57d56523bad80a63fd0",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "design"
+      ]
+    },
+    {
+      "path": ".github/agents/figma-design-sync.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/figma-design-sync.agent.md",
+      "stored_at": "packs/design/files/.github/agents/figma-design-sync.agent.md",
+      "sha256_upstream": "462faa19a577da0ba1e3ded1a785fd32afcfa71a4d01d50da709692b69237669",
+      "sha256": "462faa19a577da0ba1e3ded1a785fd32afcfa71a4d01d50da709692b69237669",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "design"
+      ]
+    },
+    {
+      "path": ".github/skills/frontend-design/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": ".github/skills/frontend-design/SKILL.md",
+      "stored_at": "packs/design/files/.github/skills/frontend-design/SKILL.md",
+      "sha256_upstream": "da28087fd1e003076a706a59f4d62b067493f05cb78fcf3d8d3e0c61ac021110",
+      "sha256": "da28087fd1e003076a706a59f4d62b067493f05cb78fcf3d8d3e0c61ac021110",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "design"
+      ]
+    },
+    {
+      "path": ".github/agents/adversarial-document-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/adversarial-document-reviewer.agent.md",
+      "stored_at": "packs/docs-review/files/.github/agents/adversarial-document-reviewer.agent.md",
+      "sha256_upstream": "5e501737401bea96782b9a5343d35a88aeef61851473d815d0f827d86e7e375d",
+      "sha256": "5e501737401bea96782b9a5343d35a88aeef61851473d815d0f827d86e7e375d",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/agents/coherence-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/coherence-reviewer.agent.md",
+      "stored_at": "packs/docs-review/files/.github/agents/coherence-reviewer.agent.md",
+      "sha256_upstream": "7ca1ebdf8425bd20473a8e52b2834feba1491dbdaef0ac0490f436be5260d8f2",
+      "sha256": "7ca1ebdf8425bd20473a8e52b2834feba1491dbdaef0ac0490f436be5260d8f2",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/agents/design-lens-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/design-lens-reviewer.agent.md",
+      "stored_at": "packs/docs-review/files/.github/agents/design-lens-reviewer.agent.md",
+      "sha256_upstream": "9626ba20e9f6a47c4370493793bf461dfbadebf3a3f00bfe34155aeef1cf80e5",
+      "sha256": "9626ba20e9f6a47c4370493793bf461dfbadebf3a3f00bfe34155aeef1cf80e5",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/agents/feasibility-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/feasibility-reviewer.agent.md",
+      "stored_at": "packs/docs-review/files/.github/agents/feasibility-reviewer.agent.md",
+      "sha256_upstream": "4dfa83204bb60c79a08f918489718e7a502f026339b028c4f6bb40f1ce30e858",
+      "sha256": "4dfa83204bb60c79a08f918489718e7a502f026339b028c4f6bb40f1ce30e858",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/agents/product-lens-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/product-lens-reviewer.agent.md",
+      "stored_at": "packs/docs-review/files/.github/agents/product-lens-reviewer.agent.md",
+      "sha256_upstream": "fe66bd4e1be5bec586f6c1fcac2dd773b5130a3f7e9171e0a97018212f04744f",
+      "sha256": "fe66bd4e1be5bec586f6c1fcac2dd773b5130a3f7e9171e0a97018212f04744f",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/agents/scope-guardian-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/scope-guardian-reviewer.agent.md",
+      "stored_at": "packs/docs-review/files/.github/agents/scope-guardian-reviewer.agent.md",
+      "sha256_upstream": "cb1b522bb27529e36664f20eeec3363d673f1a62399a0b3080de32aef9a3aa04",
+      "sha256": "cb1b522bb27529e36664f20eeec3363d673f1a62399a0b3080de32aef9a3aa04",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/agents/security-lens-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/security-lens-reviewer.agent.md",
+      "stored_at": "packs/docs-review/files/.github/agents/security-lens-reviewer.agent.md",
+      "sha256_upstream": "5271d12602dd2fb26cadf46399b2eb062675e27505e6e6e6e0f479f19165fd0e",
+      "sha256": "5271d12602dd2fb26cadf46399b2eb062675e27505e6e6e6e0f479f19165fd0e",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-compound-refresh/assets/resolution-template.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-compound-refresh/assets/resolution-template.md",
+      "stored_at": "packs/docs-review/files/.github/skills/ce-compound-refresh/assets/resolution-template.md",
+      "sha256_upstream": "e2aa5cf7e01b1d2ae08317863d011cb0b384bbf683bd2cab885a486f5b9cdd3b",
+      "sha256": "e2aa5cf7e01b1d2ae08317863d011cb0b384bbf683bd2cab885a486f5b9cdd3b",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-compound-refresh/references/schema.yaml",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-compound-refresh/references/schema.yaml",
+      "stored_at": "packs/docs-review/files/.github/skills/ce-compound-refresh/references/schema.yaml",
+      "sha256_upstream": "5787641cc2bb0a6f4df36e7aded4db898e47308284e0699b165605eb6731e36b",
+      "sha256": "5787641cc2bb0a6f4df36e7aded4db898e47308284e0699b165605eb6731e36b",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-compound-refresh/references/yaml-schema.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-compound-refresh/references/yaml-schema.md",
+      "stored_at": "packs/docs-review/files/.github/skills/ce-compound-refresh/references/yaml-schema.md",
+      "sha256_upstream": "5715d8c066060f93135b6f5536e9329b2cdb07d09fc134b3e26f9efc2a8a7608",
+      "sha256": "5715d8c066060f93135b6f5536e9329b2cdb07d09fc134b3e26f9efc2a8a7608",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/skills/ce-compound-refresh/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/ce-compound-refresh/SKILL.md",
+      "stored_at": "packs/docs-review/files/.github/skills/ce-compound-refresh/SKILL.md",
+      "sha256_upstream": "30dce86b89fe342b2fd9851ad66a5247675d961fdf26f4bf5252ba2aed6797d8",
+      "sha256": "30dce86b89fe342b2fd9851ad66a5247675d961fdf26f4bf5252ba2aed6797d8",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/skills/document-review/references/findings-schema.json",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/document-review/references/findings-schema.json",
+      "stored_at": "packs/docs-review/files/.github/skills/document-review/references/findings-schema.json",
+      "sha256_upstream": "e2182c7d2d590f61b231e2d527154e70dc39208fe0f095ae84f27e9bbc0ff9bd",
+      "sha256": "e2182c7d2d590f61b231e2d527154e70dc39208fe0f095ae84f27e9bbc0ff9bd",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/skills/document-review/references/review-output-template.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/document-review/references/review-output-template.md",
+      "stored_at": "packs/docs-review/files/.github/skills/document-review/references/review-output-template.md",
+      "sha256_upstream": "3a702b5dc3f849e426b25410cd64ef3ccef0840f62ddcbe98bf12c976ebaa77f",
+      "sha256": "3a702b5dc3f849e426b25410cd64ef3ccef0840f62ddcbe98bf12c976ebaa77f",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/skills/document-review/references/subagent-template.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/document-review/references/subagent-template.md",
+      "stored_at": "packs/docs-review/files/.github/skills/document-review/references/subagent-template.md",
+      "sha256_upstream": "d5167612fc3c884433f00b066cd06858a5953cc3cdb4e5fb403196e52b4606b6",
+      "sha256": "d5167612fc3c884433f00b066cd06858a5953cc3cdb4e5fb403196e52b4606b6",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/skills/document-review/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/document-review/SKILL.md",
+      "stored_at": "packs/docs-review/files/.github/skills/document-review/SKILL.md",
+      "sha256_upstream": "68feb4947cb91e001b012b06e786cbcaf61feb7ed8ce637cd65307d1b7e4e766",
+      "sha256": "68feb4947cb91e001b012b06e786cbcaf61feb7ed8ce637cd65307d1b7e4e766",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "docs-review"
+      ]
+    },
+    {
+      "path": ".github/skills/speckit-taskstoissues/SKILL.md",
+      "upstream": "speckit",
+      "upstream_path": ".github/skills/speckit-taskstoissues/SKILL.md",
+      "stored_at": "packs/issues/files/.github/skills/speckit-taskstoissues/SKILL.md",
+      "sha256_upstream": "a25c75b567310292548df39ebaef19b98e3fa9c0b28de32a177c677256acf743",
+      "sha256": "a25c75b567310292548df39ebaef19b98e3fa9c0b28de32a177c677256acf743",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "issues"
+      ]
+    },
+    {
+      "path": ".github/hooks/copilot-hooks.json",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/hooks/copilot-hooks.json",
+      "stored_at": "packs/learning/files/.github/hooks/copilot-hooks.json",
+      "sha256_upstream": "4efd34a87c6d9c20373b5293257f29a4d2ce5f16d0e45487ef5c3f5be5f3088d",
+      "sha256": "4efd34a87c6d9c20373b5293257f29a4d2ce5f16d0e45487ef5c3f5be5f3088d",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "learning"
+      ]
+    },
+    {
+      "path": ".github/hooks/scripts/observe.js",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/hooks/scripts/observe.js",
+      "stored_at": "packs/learning/files/.github/hooks/scripts/observe.js",
+      "sha256_upstream": "d8fa02691d8a5db0bf0655a1dd47d046bfb71604c681bfb1dfe57ba1871bb1df",
+      "sha256": "d8fa02691d8a5db0bf0655a1dd47d046bfb71604c681bfb1dfe57ba1871bb1df",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "learning"
+      ]
+    },
+    {
+      "path": ".github/skills/evolve/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/evolve/SKILL.md",
+      "stored_at": "packs/learning/files/.github/skills/evolve/SKILL.md",
+      "sha256_upstream": "67f81f2316396f250995d185c4bfb8a5a634af63c1df0d65bce4703d76ec0b02",
+      "sha256": "67f81f2316396f250995d185c4bfb8a5a634af63c1df0d65bce4703d76ec0b02",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "learning"
+      ]
+    },
+    {
+      "path": ".github/skills/instincts/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/instincts/SKILL.md",
+      "stored_at": "packs/learning/files/.github/skills/instincts/SKILL.md",
+      "sha256_upstream": "7211c09c7c9e9b4be51ddc54f80719fddefdb970b1161f3f748a38849e8085bd",
+      "sha256": "7211c09c7c9e9b4be51ddc54f80719fddefdb970b1161f3f748a38849e8085bd",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "learning"
+      ]
+    },
+    {
+      "path": ".github/skills/learn/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/learn/SKILL.md",
+      "stored_at": "packs/learning/files/.github/skills/learn/SKILL.md",
+      "sha256_upstream": "26ca1864c2b4cd186d8c23e466a755c18f3a29839b070a081edfca44a86e3732",
+      "sha256": "26ca1864c2b4cd186d8c23e466a755c18f3a29839b070a081edfca44a86e3732",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "learning"
+      ]
+    },
+    {
+      "path": ".github/skills/observe/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/observe/SKILL.md",
+      "stored_at": "packs/learning/files/.github/skills/observe/SKILL.md",
+      "sha256_upstream": "3547808f1b09c59561a1134c72936e767ced838f8da0b2df653203b2cdde1dba",
+      "sha256": "3547808f1b09c59561a1134c72936e767ced838f8da0b2df653203b2cdde1dba",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "learning"
+      ]
+    },
+    {
+      "path": ".github/agents/best-practices-researcher.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/best-practices-researcher.agent.md",
+      "stored_at": "packs/research/files/.github/agents/best-practices-researcher.agent.md",
+      "sha256_upstream": "8801051034230b51224a1cb822bcf48a99f4bda225443537a77934a79d5dafd7",
+      "sha256": "8801051034230b51224a1cb822bcf48a99f4bda225443537a77934a79d5dafd7",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "research"
+      ]
+    },
+    {
+      "path": ".github/agents/framework-docs-researcher.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/framework-docs-researcher.agent.md",
+      "stored_at": "packs/research/files/.github/agents/framework-docs-researcher.agent.md",
+      "sha256_upstream": "88a7535a9a1f3d0106060a54aca6938bf4cd52ac4d1a35a0d5faf99744fcadc2",
+      "sha256": "88a7535a9a1f3d0106060a54aca6938bf4cd52ac4d1a35a0d5faf99744fcadc2",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "research"
+      ]
+    },
+    {
+      "path": ".github/agents/git-history-analyzer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/git-history-analyzer.agent.md",
+      "stored_at": "packs/research/files/.github/agents/git-history-analyzer.agent.md",
+      "sha256_upstream": "5087f9d6a57b92f7dbbfb0141d43b473b06c6b41c89ed80216e07144cad93b78",
+      "sha256": "5087f9d6a57b92f7dbbfb0141d43b473b06c6b41c89ed80216e07144cad93b78",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "research"
+      ]
+    },
+    {
+      "path": ".github/agents/issue-intelligence-analyst.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/issue-intelligence-analyst.agent.md",
+      "stored_at": "packs/research/files/.github/agents/issue-intelligence-analyst.agent.md",
+      "sha256_upstream": "063fc6262d5fa6de7ba2a22e5a23ae2c1c90f6bebc7b8ca4670eacc68a8d3bab",
+      "sha256": "063fc6262d5fa6de7ba2a22e5a23ae2c1c90f6bebc7b8ca4670eacc68a8d3bab",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "research"
+      ]
+    },
+    {
+      "path": ".github/agents/api-contract-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/api-contract-reviewer.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/api-contract-reviewer.agent.md",
+      "sha256_upstream": "22c9d4d4da1718bc494c1a60f3ff8ec062844d24081b5c7aca69a49c49e5269f",
+      "sha256": "22c9d4d4da1718bc494c1a60f3ff8ec062844d24081b5c7aca69a49c49e5269f",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/cli-readiness-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/cli-readiness-reviewer.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/cli-readiness-reviewer.agent.md",
+      "sha256_upstream": "e44c0b172b61909d5f9048075475bca2e3942ea31cfc9381c76a740030964d12",
+      "sha256": "e44c0b172b61909d5f9048075475bca2e3942ea31cfc9381c76a740030964d12",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/code-simplicity-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/code-simplicity-reviewer.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/code-simplicity-reviewer.agent.md",
+      "sha256_upstream": "0d8afcb90a3248e6151f6e2dab7d627461c058d66f884c573c9561ee0526ee5e",
+      "sha256": "0d8afcb90a3248e6151f6e2dab7d627461c058d66f884c573c9561ee0526ee5e",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/data-integrity-guardian.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/data-integrity-guardian.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/data-integrity-guardian.agent.md",
+      "sha256_upstream": "18273e49797e8afb91600026f29c7dae71fc44a9b861a4dba85f466381ca38e9",
+      "sha256": "18273e49797e8afb91600026f29c7dae71fc44a9b861a4dba85f466381ca38e9",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/data-migrations-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/data-migrations-reviewer.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/data-migrations-reviewer.agent.md",
+      "sha256_upstream": "51c681aa0d268dd219b88f297c22c0bd12e8b845474c3eb425618a494c196a43",
+      "sha256": "51c681aa0d268dd219b88f297c22c0bd12e8b845474c3eb425618a494c196a43",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/deployment-verification-agent.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/deployment-verification-agent.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/deployment-verification-agent.agent.md",
+      "sha256_upstream": "4091d828ba55aeab49800f79a2f692aec1ffa941d21559ad13d7730f8eff09ec",
+      "sha256": "4091d828ba55aeab49800f79a2f692aec1ffa941d21559ad13d7730f8eff09ec",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/pattern-recognition-specialist.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/pattern-recognition-specialist.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/pattern-recognition-specialist.agent.md",
+      "sha256_upstream": "f6b4a012c4bd112569abccbb65c33c21fc354632bd315d8b9818da2aa440bd2f",
+      "sha256": "f6b4a012c4bd112569abccbb65c33c21fc354632bd315d8b9818da2aa440bd2f",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/performance-oracle.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/performance-oracle.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/performance-oracle.agent.md",
+      "sha256_upstream": "ec35546d5c29d5b1c8960e8c1d81a9c10da0f0f53e6c252b5e430ad9e4be6f82",
+      "sha256": "ec35546d5c29d5b1c8960e8c1d81a9c10da0f0f53e6c252b5e430ad9e4be6f82",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/performance-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/performance-reviewer.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/performance-reviewer.agent.md",
+      "sha256_upstream": "296a85d58db93d6de3b2f2f1007c7a9d2b478b33ee40ec28cf72185948cbc9a8",
+      "sha256": "296a85d58db93d6de3b2f2f1007c7a9d2b478b33ee40ec28cf72185948cbc9a8",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/previous-comments-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/previous-comments-reviewer.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/previous-comments-reviewer.agent.md",
+      "sha256_upstream": "726782c02950b9203ba35be24f36cb0de5074db3d60056d2fa66cffa3b3600cc",
+      "sha256": "726782c02950b9203ba35be24f36cb0de5074db3d60056d2fa66cffa3b3600cc",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/reliability-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/reliability-reviewer.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/reliability-reviewer.agent.md",
+      "sha256_upstream": "f55d9334aeb272ac1ccd0246e488769ca3a88ecc8071d6c0b043eb1ebd2745c7",
+      "sha256": "f55d9334aeb272ac1ccd0246e488769ca3a88ecc8071d6c0b043eb1ebd2745c7",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/schema-drift-detector.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/schema-drift-detector.agent.md",
+      "stored_at": "packs/review-plus/files/.github/agents/schema-drift-detector.agent.md",
+      "sha256_upstream": "bf68266d114a937dfdc08f53da7ca072daabc6dc53e83f347a96ed9094a90b67",
+      "sha256": "bf68266d114a937dfdc08f53da7ca072daabc6dc53e83f347a96ed9094a90b67",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "review-plus"
+      ]
+    },
+    {
+      "path": ".github/agents/security-sentinel.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/security-sentinel.agent.md",
+      "stored_at": "packs/security/files/.github/agents/security-sentinel.agent.md",
+      "sha256_upstream": "27e1c41361f9ca9215b2d4a6a9654377238adfa3fae8f7a6a4d6d37a8d335290",
+      "sha256": "27e1c41361f9ca9215b2d4a6a9654377238adfa3fae8f7a6a4d6d37a8d335290",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "security"
+      ]
+    },
+    {
+      "path": ".github/skills/atv-security/SKILL.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/skills/atv-security/SKILL.md",
+      "stored_at": "packs/security/files/.github/skills/atv-security/SKILL.md",
+      "sha256_upstream": "40176bb8aeeba4531147daf5b6522a8b965f26c11b788e3e465ff677a49af700",
+      "sha256": "40176bb8aeeba4531147daf5b6522a8b965f26c11b788e3e465ff677a49af700",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "security"
+      ]
+    },
+    {
+      "path": ".github/agents/kieran-python-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/kieran-python-reviewer.agent.md",
+      "stored_at": "packs/stack-python/files/.github/agents/kieran-python-reviewer.agent.md",
+      "sha256_upstream": "f240145cda5bc118235907ee3fbe5cd46551acd56a8eed59ca1cbd958ca8182b",
+      "sha256": "f240145cda5bc118235907ee3fbe5cd46551acd56a8eed59ca1cbd958ca8182b",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "stack-python"
+      ]
+    },
+    {
+      "path": ".github/agents/dhh-rails-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/dhh-rails-reviewer.agent.md",
+      "stored_at": "packs/stack-rails/files/.github/agents/dhh-rails-reviewer.agent.md",
+      "sha256_upstream": "2e655450f6f8fe645d0d2b368b16cf00903e76152b189da8897d15c72008abc3",
+      "sha256": "2e655450f6f8fe645d0d2b368b16cf00903e76152b189da8897d15c72008abc3",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "stack-rails"
+      ]
+    },
+    {
+      "path": ".github/agents/kieran-rails-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/kieran-rails-reviewer.agent.md",
+      "stored_at": "packs/stack-rails/files/.github/agents/kieran-rails-reviewer.agent.md",
+      "sha256_upstream": "0499b28f1479e66fe8b6c7189c0c2fda0097f6644444e6a22e7a3ce738827970",
+      "sha256": "0499b28f1479e66fe8b6c7189c0c2fda0097f6644444e6a22e7a3ce738827970",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "stack-rails"
+      ]
+    },
+    {
+      "path": ".github/agents/julik-frontend-races-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/julik-frontend-races-reviewer.agent.md",
+      "stored_at": "packs/stack-typescript/files/.github/agents/julik-frontend-races-reviewer.agent.md",
+      "sha256_upstream": "a7d5094aca522ab2ab2bb9047e87ccc81151d24b5f14f1ea7a5c3aa945db619a",
+      "sha256": "a7d5094aca522ab2ab2bb9047e87ccc81151d24b5f14f1ea7a5c3aa945db619a",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "stack-typescript"
+      ]
+    },
+    {
+      "path": ".github/agents/kieran-typescript-reviewer.agent.md",
+      "upstream": "atv",
+      "upstream_path": "pkg/scaffold/templates/agents/kieran-typescript-reviewer.agent.md",
+      "stored_at": "packs/stack-typescript/files/.github/agents/kieran-typescript-reviewer.agent.md",
+      "sha256_upstream": "202976337cdf6e306a2fc26c988abbd998ceadaf632b99a977b13ec078d738a1",
+      "sha256": "202976337cdf6e306a2fc26c988abbd998ceadaf632b99a977b13ec078d738a1",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "stack-typescript"
+      ]
+    }
+  ]
+}

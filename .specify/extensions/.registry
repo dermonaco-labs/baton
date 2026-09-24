@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "extensions": {
+    "baton": {
+      "version": "0.1.0",
+      "source": "local",
+      "manifest_hash": "sha256:ed69e6d8655b7b0d0e22b833034ca5c6ff3cb8876461d3b48afed169c8aeb80a",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {},
+      "registered_skills": [
+        "speckit-baton-receive",
+        "speckit-baton-handoff"
+      ],
+      "installed_at": "2026-09-24T11:44:30.300178+00:00"
+    }
+  }
+}

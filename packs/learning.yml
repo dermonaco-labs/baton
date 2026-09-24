@@ -1,0 +1,13 @@
+schema: 1
+id: learning
+description: Opt-in local observation and reviewed learning loop.
+requires: [core]
+conflicts: []
+files:
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/observe/SKILL.md, path: .github/skills/observe/SKILL.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/learn/SKILL.md, path: .github/skills/learn/SKILL.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/instincts/SKILL.md, path: .github/skills/instincts/SKILL.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/evolve/SKILL.md, path: .github/skills/evolve/SKILL.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/hooks/copilot-hooks.json, path: .github/hooks/copilot-hooks.json }
+  - { from: atv, upstream_path: pkg/scaffold/templates/hooks/scripts/observe.js, path: .github/hooks/scripts/observe.js }
+  - { from: baton, path: .atv/.gitignore }

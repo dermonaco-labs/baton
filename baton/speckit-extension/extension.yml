@@ -1,0 +1,35 @@
+schema_version: "1.0"
+extension:
+  id: baton
+  name: Baton Relay
+  version: "0.1.0"
+  description: Mandatory receive and handoff checks around Spec Kit phases.
+  author: baton
+  repository: https://github.com/dermonaco-labs/baton
+  license: MIT
+requires:
+  speckit_version: ">=1.0.11,<2.0.0"
+provides:
+  commands:
+    - name: speckit.baton.receive
+      file: commands/receive.md
+      description: Validate the incoming baton before a Spec Kit phase.
+    - name: speckit.baton.handoff
+      file: commands/handoff.md
+      description: Validate exit checks and write the baton after a Spec Kit phase.
+hooks:
+  before_specify: { command: speckit.baton.receive, optional: false }
+  after_specify: { command: speckit.baton.handoff, optional: false }
+  before_clarify: { command: speckit.baton.receive, optional: false }
+  after_clarify: { command: speckit.baton.handoff, optional: false }
+  before_plan: { command: speckit.baton.receive, optional: false }
+  after_plan: { command: speckit.baton.handoff, optional: false }
+  before_tasks: { command: speckit.baton.receive, optional: false }
+  after_tasks: { command: speckit.baton.handoff, optional: false }
+  before_analyze: { command: speckit.baton.receive, optional: false }
+  after_analyze: { command: speckit.baton.handoff, optional: false }
+  before_implement: { command: speckit.baton.receive, optional: false }
+  after_implement: { command: speckit.baton.handoff, optional: false }
+  before_converge: { command: speckit.baton.receive, optional: false }
+  after_converge: { command: speckit.baton.handoff, optional: false }
+tags: [handoff, validation, workflow]

@@ -1,0 +1,349 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Baton handoff frontmatter",
+  "type": "object",
+  "required": [
+    "baton", "lane", "feature", "phase_completed", "next_phase", "next_owner",
+    "status", "model_role", "suggested_model", "summary", "read_first",
+    "artifacts", "entry_checked", "exit_criteria", "gate", "history",
+    "updated_at", "updated_by"
+  ],
+  "properties": {
+    "baton": { "const": 1 },
+    "lane": { "enum": ["feature", "quick"] },
+    "feature": { "type": "string", "minLength": 1 },
+    "phase_completed": { "oneOf": [{ "$ref": "#/$defs/phase" }, { "const": "none" }] },
+    "next_phase": { "oneOf": [{ "$ref": "#/$defs/phase" }, { "const": "done" }] },
+    "next_owner": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ready", "needs-human", "blocked", "done"] },
+    "model_role": { "enum": ["planning", "implementation", "review", "fast"] },
+    "suggested_model": { "type": ["string", "null"], "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 600 },
+    "read_first": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["path", "why"],
+        "properties": {
+          "path": { "$ref": "#/$defs/path" },
+          "why": { "$ref": "#/$defs/text" },
+          "sha256": { "$ref": "#/$defs/sha256" }
+        },
+        "patternProperties": { "^x-": {} }, "additionalProperties": false
+      }
+    },
+    "do_not_read": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["path", "why"],
+        "properties": {
+          "path": { "$ref": "#/$defs/path" },
+          "why": { "$ref": "#/$defs/text" }
+        },
+        "patternProperties": { "^x-": {} }, "additionalProperties": false
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["path", "role", "sha256"],
+        "properties": {
+          "path": { "$ref": "#/$defs/path" },
+          "role": { "enum": ["source-of-truth", "derived", "evidence", "review"] },
+          "sha256": { "$ref": "#/$defs/sha256" }
+        },
+        "patternProperties": { "^x-": {} }, "additionalProperties": false
+      }
+    },
+    "entry_checked": { "type": "array", "items": { "$ref": "#/$defs/entry_result" } },
+    "exit_criteria": { "type": "array", "items": { "$ref": "#/$defs/exit_result" } },
+    "acceptance_checks": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["id", "story", "check", "kind", "expect_initial"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "story": { "type": "string", "pattern": "^US[1-9][0-9]*$" },
+          "check": { "$ref": "#/$defs/text" },
+          "kind": { "enum": ["command", "test-id", "manual"] },
+          "expect_initial": { "enum": ["fail", "n/a"] }
+        },
+        "patternProperties": { "^x-": {} }, "additionalProperties": false
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["id", "decision", "rationale", "by"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "decision": { "$ref": "#/$defs/text" },
+          "rationale": { "$ref": "#/$defs/text" },
+          "by": { "$ref": "#/$defs/actor" },
+          "tag": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" }
+        },
+        "patternProperties": { "^x-": {} }, "additionalProperties": false
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["id", "question", "blocking"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "question": { "$ref": "#/$defs/text" },
+          "blocking": { "type": "boolean" },
+          "options": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/text" } },
+          "owner": { "$ref": "#/$defs/text" }
+        },
+        "patternProperties": { "^x-": {} }, "additionalProperties": false,
+        "if": { "properties": { "blocking": { "const": true } }, "required": ["blocking"] },
+        "then": { "required": ["options"], "properties": { "options": {} } }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["id", "text", "revisit_at"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "text": { "$ref": "#/$defs/text" },
+          "revisit_at": { "$ref": "#/$defs/phase" }
+        },
+        "patternProperties": { "^x-": {} }, "additionalProperties": false
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["id", "text", "severity"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "text": { "$ref": "#/$defs/text" },
+          "severity": { "enum": ["low", "medium", "high"] }
+        },
+        "patternProperties": { "^x-": {} }, "additionalProperties": false
+      }
+    },
+    "gate": {
+      "type": "object", "required": ["required", "approved_by", "approved_at"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "approved_by": { "oneOf": [{ "$ref": "#/$defs/approver" }, { "type": "null" }] },
+        "approved_at": { "oneOf": [{ "$ref": "#/$defs/datetime" }, { "$ref": "#/$defs/date" }, { "type": "null" }] }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false,
+      "if": { "properties": { "approved_by": { "type": "null" } }, "required": ["approved_by"] },
+      "then": { "properties": { "approved_at": { "type": "null" } } },
+      "else": {
+        "properties": {
+          "approved_at": { "oneOf": [{ "$ref": "#/$defs/datetime" }, { "$ref": "#/$defs/date" }] }
+        }
+      }
+    },
+    "review": {
+      "type": "object", "required": ["findings_path", "blocking_findings"],
+      "properties": {
+        "findings_path": { "$ref": "#/$defs/path" },
+        "blocking_findings": { "type": "integer", "minimum": 0 }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "analysis": {
+      "type": "object", "required": ["report_path", "critical", "high"],
+      "properties": {
+        "report_path": { "$ref": "#/$defs/path" },
+        "critical": { "type": "integer", "minimum": 0 },
+        "high": { "type": "integer", "minimum": 0 }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "pr": {
+      "type": "object", "required": ["url", "number"],
+      "properties": {
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "number": { "type": "integer", "minimum": 1 }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "history": {
+      "type": "array", "maxItems": 20,
+      "items": {
+        "type": "object", "required": ["phase", "at", "by", "commit"],
+        "properties": {
+          "phase": { "$ref": "#/$defs/phase" },
+          "at": { "$ref": "#/$defs/datetime" },
+          "by": { "$ref": "#/$defs/actor" },
+          "commit": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{7,64}$" }
+        },
+        "patternProperties": { "^x-": {} }, "additionalProperties": false
+      }
+    },
+    "updated_at": { "$ref": "#/$defs/datetime" },
+    "updated_by": { "$ref": "#/$defs/actor" }
+  },
+  "patternProperties": { "^x-": {} },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "lane": { "const": "feature" } }, "required": ["lane"] },
+      "then": { "properties": { "feature": { "type": "string", "pattern": "^[0-9]{3}-[a-z0-9-]+$" } } },
+      "else": { "properties": { "feature": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,48}$" } } }
+    },
+    {
+      "if": { "properties": { "phase_completed": { "const": "none" } }, "required": ["phase_completed"] },
+      "then": {
+        "properties": {
+          "lane": { "const": "quick" },
+          "next_phase": { "const": "work" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "phase_completed": { "const": "work" } }, "required": ["phase_completed"] },
+      "then": { "properties": { "lane": { "const": "quick" } } }
+    },
+    {
+      "if": { "properties": { "next_phase": { "const": "work" } }, "required": ["next_phase"] },
+      "then": { "properties": { "lane": { "const": "quick" } } }
+    },
+    {
+      "if": { "properties": { "lane": { "const": "quick" } }, "required": ["lane"] },
+      "then": {
+        "properties": {
+          "phase_completed": { "enum": ["none", "work", "review", "land", "compound"] },
+          "next_phase": { "enum": ["work", "review", "land", "compound", "specify", "done"] }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "next_phase": { "const": "implement" } }, "required": ["next_phase"] },
+      "then": { "required": ["acceptance_checks"], "properties": { "acceptance_checks": { "type": "array", "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "phase_completed": { "const": "analyze" } }, "required": ["phase_completed"] },
+      "then": { "required": ["analysis"], "properties": { "analysis": {} } }
+    },
+    {
+      "if": { "properties": { "phase_completed": { "const": "review" } }, "required": ["phase_completed"] },
+      "then": { "required": ["review"], "properties": { "review": {} } }
+    },
+    {
+      "if": { "properties": { "phase_completed": { "const": "land" } }, "required": ["phase_completed"] },
+      "then": { "required": ["pr"], "properties": { "pr": {} } }
+    },
+    {
+      "if": { "properties": { "next_phase": { "const": "done" } }, "required": ["next_phase"] },
+      "then": { "properties": { "status": { "const": "done" } } },
+      "else": { "properties": { "status": { "not": { "const": "done" } } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "ready" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "exit_criteria": {
+            "not": {
+              "type": "array",
+              "contains": { "type": "object", "properties": { "met": { "const": false } }, "required": ["met"] }
+            }
+          },
+          "open_questions": {
+            "not": {
+              "type": "array",
+              "contains": { "type": "object", "properties": { "blocking": { "const": true } }, "required": ["blocking"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "open_questions": {
+            "type": "array",
+            "contains": { "type": "object", "properties": { "blocking": { "const": true } }, "required": ["blocking"] }
+          }
+        },
+        "required": ["open_questions"]
+      },
+      "then": { "properties": { "status": { "enum": ["needs-human", "blocked"] } } }
+    }
+  ],
+  "$defs": {
+    "phase": { "enum": ["brainstorm", "specify", "clarify", "plan", "tasks", "analyze", "implement", "review", "land", "compound", "work"] },
+    "text": { "type": "string", "minLength": 1 },
+    "actor": { "type": "string", "pattern": "^(human:[a-z]+(-[a-z]+)*|[a-z][a-z0-9-]{1,63})$" },
+    "approver": {
+      "type": "string",
+      "pattern": "^[a-z]+(?:-[a-z]+)*(?: [a-z]+(?:-[a-z]+)*){0,3}(?: via [a-z]+(?:-[a-z]+)*(?: [a-z]+(?:-[a-z]+)*){0,3})?$"
+    },
+    "entry_leaf_result": {
+      "type": "object", "required": ["id", "ok"],
+      "properties": {
+        "id": { "$ref": "#/$defs/text" },
+        "ok": { "type": "boolean" },
+        "note": { "type": "string" },
+        "evidence": { "type": "string" }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "entry_result": {
+      "type": "object", "required": ["id", "ok"],
+      "properties": {
+        "id": { "$ref": "#/$defs/text" },
+        "ok": { "type": "boolean" },
+        "note": { "type": "string" },
+        "evidence": { "type": "string" },
+        "members": {
+          "type": "array", "minItems": 2, "maxItems": 8,
+          "items": {
+            "type": "object", "required": ["id", "ok"],
+            "properties": {
+              "id": { "$ref": "#/$defs/text" },
+              "ok": { "type": "boolean" },
+              "note": { "type": "string" },
+              "evidence": { "type": "string" },
+              "members": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "$ref": "#/$defs/entry_leaf_result" } }
+            },
+            "patternProperties": { "^x-": {} }, "additionalProperties": false
+          }
+        }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "exit_leaf_result": {
+      "type": "object", "required": ["id", "met"],
+      "properties": {
+        "id": { "$ref": "#/$defs/text" },
+        "met": { "type": "boolean" },
+        "evidence": { "type": "string" }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "exit_result": {
+      "type": "object", "required": ["id", "met"],
+      "properties": {
+        "id": { "$ref": "#/$defs/text" },
+        "met": { "type": "boolean" },
+        "evidence": { "type": "string" },
+        "members": {
+          "type": "array", "minItems": 2, "maxItems": 8,
+          "items": {
+            "type": "object", "required": ["id", "met"],
+            "properties": {
+              "id": { "$ref": "#/$defs/text" },
+              "met": { "type": "boolean" },
+              "evidence": { "type": "string" },
+              "members": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "$ref": "#/$defs/exit_leaf_result" } }
+            },
+            "patternProperties": { "^x-": {} }, "additionalProperties": false
+          }
+        }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\r\\n\\\\]+$" },
+    "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+    "datetime": { "type": "string", "format": "date-time" },
+    "date": { "type": "string", "format": "date" }
+  }
+}

@@ -1,0 +1,7 @@
+schema: 1
+id: issues
+description: Opt-in GitHub issue creation from tasks.md.
+requires: [core]
+conflicts: []
+files:
+  - { from: speckit, path: .github/skills/speckit-taskstoissues/SKILL.md }

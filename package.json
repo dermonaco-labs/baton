@@ -1,0 +1,32 @@
+{
+  "name": "baton",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "baton": ".baton/bin/baton.mjs"
+  },
+  "scripts": {
+    "build": "node src/commands/build.mjs",
+    "check": "npm run lint:md && npm run lint:yaml && npm run typecheck && node src/commands/build.mjs --check && node .baton/bin/baton.mjs lock verify && node .baton/bin/baton.mjs validate && npm test",
+    "lint:md": "markdownlint-cli2 \"README.md\" \"specs/**/*.md\" \".specify/memory/constitution.md\" \"baton/**/*.md\" \"docs/**/*.md\" \"THIRD_PARTY_NOTICES.md\"",
+    "lint:yaml": "uvx --from yamllint==1.37.1 yamllint -c .yamllint.yml .baton packs baton .github/workflows",
+    "typecheck": "tsc --noEmit",
+    "test": "node test/run.mjs",
+    "manifest": "node .baton/bin/baton.mjs manifest"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "esbuild": "^0.25.0",
+    "markdownlint-cli2": "^0.18.1",
+    "typescript": "^5.9.2"
+  }
+}
