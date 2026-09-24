@@ -42,3 +42,30 @@ test('a docs-review pack missing its dispatched persona fails closed', () => {
   const contents = new Map([['.github/skills/document-review/SKILL.md', 'subagent_type: adversarial-document-reviewer']]);
   assert.ok(validatePackClosure(defs, 'docs-review', contents).some((error) => error.code === 'E_DANGLING_REF'));
 });
+
+test('closure detects optional specialized agents with non-reviewer role suffixes', () => {
+  const defs = new Map([['core', { id: 'core', requires: [], conflicts: [],
+    files: [{ path: '.github/skills/ce-compound/SKILL.md' }], optional_refs: [] }]]);
+  const contents = new Map([['.github/skills/ce-compound/SKILL.md', [
+    'Based on problem type, optionally invoke specialized agents:',
+    '- **performance_issue** → `performance-oracle`',
+    '- **database_issue** → `data-integrity-guardian`',
+    '- **pattern-recognition-specialist**: Identifies repeating issues',
+    '- **best-practices-researcher**: Enriches the documentation',
+    '- **framework-docs-researcher**: Links reference documentation',
+    '- **every-style-editor**: Reviews documentation style',
+  ].join('\n')]]);
+  const issues = validatePackClosure(defs, 'core', contents);
+  for (const name of ['performance-oracle', 'data-integrity-guardian', 'pattern-recognition-specialist',
+    'best-practices-researcher', 'framework-docs-researcher', 'every-style-editor']) {
+    assert.ok(issues.some((issue) => issue.message.includes(`Reference ${name} `)), name);
+  }
+});
+
+test('closure ignores CSS, tool decorators and browser element locators', () => {
+  const defs = new Map([['core', { id: 'core', requires: [], conflicts: [],
+    files: [{ path: '.github/skills/example/SKILL.md' }], optional_refs: [] }]]);
+  const contents = new Map([['.github/skills/example/SKILL.md',
+    '`@tool` decorators, `@font-face` declarations, `@package` instead of `@package@version`; agent-browser hover @e1']]);
+  assert.deepEqual(validatePackClosure(defs, 'core', contents), []);
+});

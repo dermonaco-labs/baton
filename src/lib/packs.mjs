@@ -51,9 +51,9 @@ function referencedNames(text) {
     /(?:^|[\s(`])\/([a-z][a-z0-9-]+)(?=[\s)`]|$)/gm,
     /`([a-z][a-z0-9-]+)`\s+skill\b/g,
     /\b(?:agent|subagent_type|persona|reviewer)\s*:\s*[`"']?([a-z][a-z0-9-]+)(?![\w-])/gi,
-    /\b([a-z][a-z0-9-]+-(?:reviewer|analyst|sentinel))\b/g,
+    /\b([a-z][a-z0-9-]+-(?:reviewer|analyst|sentinel|oracle|guardian|specialist|researcher|editor))\b/g,
     /\b(?:use|run|invoke|dispatch|delegate to|call|spawn)\s+(?:the\s+)?([a-z][a-z0-9-]+-agent)\b/gi,
-    /(?<![\w.])@([a-z][a-z0-9-]+)(?![\w.(])/g,
+    /(?<![\w.@])@([a-z][a-z0-9-]+)(?![\w.(])/g,
     /\bcompound-engineering:[a-z0-9-]+:([a-z][a-z0-9-]+)/g,
     /\bspeckit\.([a-z][a-z0-9-.]+)/g,
   ];
@@ -61,6 +61,15 @@ function referencedNames(text) {
     for (const match of text.matchAll(regex)) {
       if (index === 2 && !/^[a-z][a-z0-9-]+$/.test(match[1])) continue;
       if (index === 3 && match[1] === 'cross-reviewer') continue;
+      if (index === 5) {
+        const lineStart = text.lastIndexOf('\n', match.index) + 1;
+        const lineEnd = text.indexOf('\n', match.index);
+        const line = text.slice(lineStart, lineEnd < 0 ? undefined : lineEnd);
+        const after = text.slice((match.index ?? 0) + match[0].length);
+        if (/^e\d+$/.test(match[1]) && /\bagent-browser\s+\w+\s+@e\d+\b/.test(line)) continue;
+        if (text[(match.index ?? 0) - 1] === '`' &&
+            /^(?:@\w+\b|`\s+(?:decorators?|declarations?|instead of|suffix)\b)/.test(after)) continue;
+      }
       const name = index === 7 ? `speckit-${match[1].replaceAll('.', '-')}` : match[1];
       found.add(name);
     }

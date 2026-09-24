@@ -130,7 +130,7 @@ export async function run(root, args) {
       }).map((issue) => ({ ...issue, file: path })));
     }
   }
-  if (!selected) {
+  if (!selected && !changed) {
     if (!await exists(root, '.github/workflows/baton.yml')) warnings.push({ code: 'W_NO_ADOPTER_CI', file: '.github/workflows/baton.yml', message: 'Adopter validation workflow is absent' });
     if (await exists(root, '.github/copilot-setup-steps.yml')) warnings.push({ code: 'W_SETUP_STEPS_MISPLACED', file: '.github/copilot-setup-steps.yml', message: 'Move setup steps into .github/workflows/' });
     for (const top of ['docs', 'specs', 'baton', 'src', '.github']) {
@@ -156,9 +156,12 @@ export async function run(root, args) {
   if (changed) {
     for (const absolute of files) {
       const path = relative(root, absolute).replaceAll('\\', '/');
-      if (!/^(?:docs\/|specs\/|baton\/|src\/|\.github\/)/.test(path) && !['README.md', 'THIRD_PARTY_NOTICES.md'].includes(path)) continue;
-      if (/^\.github\/(?:skills|agents)\//.test(path) || path === '.github/dependabot.yml' || /^test\/fixtures\//.test(path)) continue;
-      if (!/\.(?:md|mjs|yml|yaml|json)$/.test(path)) continue;
+      const notice = isLicenseNotice(path);
+      if (!notice && !/^(?:docs\/|specs\/|baton\/|src\/|\.github\/)/.test(path) &&
+          !['README.md', 'THIRD_PARTY_NOTICES.md'].includes(path)) continue;
+      if (!notice && (/^\.github\/(?:skills|agents)\//.test(path) ||
+          path === '.github/dependabot.yml' || /^test\/fixtures\//.test(path))) continue;
+      if (!notice && !/\.(?:md|mjs|yml|yaml|json)$/.test(path)) continue;
       errors.push(...scanPersonalData(await readFile(absolute, 'utf8'), { path, terms }).map((issue) => ({ ...issue, file: path })));
     }
   }

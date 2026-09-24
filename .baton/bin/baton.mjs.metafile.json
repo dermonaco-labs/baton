@@ -1684,7 +1684,7 @@
       "format": "cjs"
     },
     "src/lib/packs.mjs": {
-      "bytes": 3947,
+      "bytes": 4551,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -1721,7 +1721,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 18688,
+      "bytes": 18689,
       "imports": [
         {
           "path": "node:fs",
@@ -3691,7 +3691,7 @@
       "format": "esm"
     },
     "src/commands/validate.mjs": {
-      "bytes": 8408,
+      "bytes": 8519,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4523,13 +4523,13 @@
           "bytesInOutput": 814
         },
         "src/lib/packs.mjs": {
-          "bytesInOutput": 1838
+          "bytesInOutput": 2193
         },
         "src/lib/repairs.mjs": {
           "bytesInOutput": 1657
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 9419
+          "bytesInOutput": 9420
         },
         "node_modules/ajv/dist/compile/codegen/code.js": {
           "bytesInOutput": 2551
@@ -4835,7 +4835,7 @@
           "bytesInOutput": 6722
         },
         "src/commands/validate.mjs": {
-          "bytesInOutput": 4730
+          "bytesInOutput": 4757
         },
         "src/commands/handoff.mjs": {
           "bytesInOutput": 11183
@@ -4865,7 +4865,7 @@
           "bytesInOutput": 2343
         }
       },
-      "bytes": 336307
+      "bytes": 336690
     }
   }
 }
