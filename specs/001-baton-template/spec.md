@@ -305,7 +305,9 @@ all on free hosted runners.
   `stack-python`, `stack-typescript`, `stack-rails`, `design`.
 - **FR-052**: The dependency closure MUST be checked. A vendored file that references (or dispatches) a skill or agent that isn't
   in its own pack or that pack's `requires` closure fails sync with `E_DANGLING_REF`, unless the reference is declared as an optional reference with a
-  graceful-degradation note.
+  graceful-degradation note and a valid reason (`upstream-absent`, `pack-provided:<pack>` or `excluded:C<n>`;
+  contracts/packs.md closure rule 5). Packs named by `pack-provided:` are recommended and produce a warning, not an
+  error, when missing.
 - **FR-053**: The files of optional packs MUST be stored in the Baton repo under `packs/<id>/files/` (mirroring the
   install paths) so that `init --packs` works offline from the package. `core` files live in place. In a
   template-derived repo, where `packs/` has been removed, adding a pack MUST exit 5 and print the exact pinned
