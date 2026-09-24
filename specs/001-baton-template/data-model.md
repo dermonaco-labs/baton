@@ -63,19 +63,30 @@ Markdown file = YAML frontmatter (the contract) + a short body (for humans and t
 
 Batons never contain a personal name, handle or email. People are recorded by **role** only.
 
+- **Word**: `[a-z]+(-[a-z]+)*`, i.e. lower-case letters with optional internal single hyphens (`control-plane`). No
+  leading, trailing or double hyphens, digits, upper case, `@`, `.` or `_`. A **phrase** is 1–4 words separated by
+  single spaces: `^[a-z]+(-[a-z]+)*( [a-z]+(-[a-z]+)*){0,3}$`.
 - **Role vocabulary**: `config.yml` `gates.approver_roles` (default `repository owner`, `maintainer`, `reviewer`,
   `release manager`, `security lead`) and `gates.approval_channels` (default `direct approval`,
-  `control-plane delegation`, `pull request review`). Each entry matches `^[a-z]+( [a-z]+){0,3}$`.
-- **Approver** (`gate.approved_by`): `<role>` or `<role> via <channel>`, where role and channel come from the
-  vocabulary. Schema pattern (structural): `^[a-z]+( [a-z]+){0,3}( via [a-z]+( [a-z-]+){0,3})?$`. The validator then
-  checks the vocabulary. Example: `approved_by: "repository owner via control-plane delegation"`,
-  `approved_at: 2026-09-24`.
+  `control-plane delegation`, `pull request review`). Each entry is a phrase (pattern above).
+- **Approver** (`gate.approved_by`): `<role>` or `<role> via <channel>`, where role and channel are phrases from the
+  vocabulary. With a channel the pattern is
+  `^[a-z]+(-[a-z]+)*( [a-z]+(-[a-z]+)*){0,3} via [a-z]+(-[a-z]+)*( [a-z]+(-[a-z]+)*){0,3}$`. The schema pattern
+  keeps the channel optional:
+  `^[a-z]+(-[a-z]+)*( [a-z]+(-[a-z]+)*){0,3}( via [a-z]+(-[a-z]+)*( [a-z]+(-[a-z]+)*){0,3})?$`. The validator then
+  splits on the last ` via ` and checks both parts against the vocabulary. Example:
+  `approved_by: "repository owner via control-plane delegation"`, `approved_at: 2026-09-24`.
 - **Actor** (`decisions[].by`, `history[].by`, `updated_by`): an agent or session id (`^[a-z][a-z0-9-]{1,63}$`, e.g.
   `speckit-plan`, `planning-session`) or `human:<role-slug>`, where role-slug is a vocabulary role with spaces
-  replaced by `-` (e.g. `human:repository-owner`). Schema pattern: `^(human:[a-z]+(-[a-z]+){0,3}|[a-z][a-z0-9-]{1,63})$`.
+  replaced by `-` (e.g. `human:repository-owner`). The slug uses the same hyphenated-word form and has no spaces.
+  Schema pattern: `^(human:[a-z]+(-[a-z]+)*|[a-z][a-z0-9-]{1,63})$`. The validator checks that the slug equals a
+  vocabulary role with spaces replaced by `-`.
+- Valid: `repository owner via control-plane delegation`, `maintainer`, `human:repository-owner`. Invalid
+  (`E_APPROVER_FORMAT` / `E_ACTOR_FORMAT`): `-maintainer` (leading hyphen), `control--plane` (double hyphen),
+  `Repository owner` (upper case), `@maintainer` (`@`), and `human:-owner` / `human:Owner`.
 - The patterns exclude `@`, `.`, `_`, `/`, `\`, digits in roles and upper case, so no email, `@handle`, path or
-  username fits. The denylist scan (handoff-contract `E_DENYLIST`) is therefore consistent with the schema: a value
-  that passes the schema can only fail the scan through a configured denylist term.
+  username fits. The denylist scan (handoff-contract `E_DENYLIST`) still applies and is consistent with the schema: a
+  value that passes the schema can only fail the scan through a configured denylist term.
 - Errors: `E_APPROVER_FORMAT` (pattern or vocabulary), `E_ACTOR_FORMAT` (pattern or unknown `human:` role).
 ## 2. Phase and phase contract — `.baton/phases.yml`
 

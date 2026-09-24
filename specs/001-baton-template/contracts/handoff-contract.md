@@ -99,8 +99,8 @@ sequenceDiagram
 | `E_BLOCKING_OPEN` | error | There is a blocking open question and `status` = `ready`. |
 | `E_EXIT_UNMET` | error | `status: ready`, but some `exit_criteria.met` is false. |
 | `E_GATE_PENDING` | error (on receive) | The previous phase requires a human gate and `gate.approved_by` is null. |
-| `E_APPROVER_FORMAT` | error | `gate.approved_by` isn't `<role>` or `<role> via <channel>` from `config.gates` (data-model §1.1), or only one of `approved_by` / `approved_at` is set. |
-| `E_ACTOR_FORMAT` | error | A `by` / `updated_by` value isn't an agent id or `human:<role-slug>` from `config.gates.approver_roles`. |
+| `E_APPROVER_FORMAT` | error | `gate.approved_by` isn't `<role>` or `<role> via <channel>` from `config.gates` (data-model §1.1: each is 1–4 words of `[a-z]+(-[a-z]+)*`, so `control-plane` is valid), or only one of `approved_by` / `approved_at` is set. |
+| `E_ACTOR_FORMAT` | error | A `by` / `updated_by` value isn't an agent id or `human:<role-slug>` (`human:[a-z]+(-[a-z]+)*`, a vocabulary role with spaces → `-`) from `config.gates.approver_roles`. |
 | `E_DENYLIST` | error | Personal data found by the denylist scan (below). |
 | `E_NO_PREREG` | error | `next_phase: implement` and any in-scope user story has no `acceptance_checks`. |
 | `E_ANALYSIS_MISSING` | error | `phase_completed: analyze` without `analysis.report_path`, or the file doesn't exist. |
