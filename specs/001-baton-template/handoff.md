@@ -5,7 +5,7 @@ feature: 001-baton-template
 phase_completed: analyze
 next_phase: implement
 next_owner: speckit-implement
-status: ready
+status: needs-human
 model_role: implementation
 suggested_model: gpt-6-sol
 summary: >-
@@ -100,7 +100,19 @@ decisions:
   - { id: D15, tag: amendment-a4, decision: "adversarial-document-reviewer ships in the docs-review pack (not core); closure is checked per pack (the pack plus its requires) and covers dispatched agents", rationale: "document-review dispatches that agent; MIT upstream ATV content (packs.md Closure rules)", by: "human:repository-owner" }
   - { id: D16, tag: amendment-a5, decision: "Approver and actor words are [a-z]+(-[a-z]+)* (internal single hyphens); role and channel are 1-4 words separated by single spaces; human actors are human:[a-z]+(-[a-z]+)*; nothing else changes", rationale: "the A1 pattern rejected the prescribed channel control-plane delegation (data-model 1.1)", by: "human:repository-owner" }
   - { id: D17, tag: license-notice-exemption, decision: "Verbatim third-party license emails are exempt from email scanning only in THIRD_PARTY_NOTICES.md and vendored license files; all other privacy checks still apply", rationale: "copyright attribution and full license text are mandatory, while repository-owner data remains prohibited", by: "human:repository-owner" }
-open_questions: []
+open_questions:
+  - id: Q1
+    question: >-
+      Pinned core ce-work dispatches linting-agent, which is absent at the pin. ce-compound
+      also invokes /compound and /research and names reviewers outside core. Which
+      contract amendment resolves all required references while preserving unmodified
+      upstream instructions, per-pack closure, and the core size cap?
+    blocking: true
+    owner: repository owner
+    options:
+      - Amend the core and pack inventory to include the required pinned resources
+      - Revise the core phase workflow and pack boundaries in the planning contracts
+      - Revisit the upstream pin and repeat license and closure validation
 assumptions:
   - { id: AS1, text: "The spec assumptions A1-A9 hold (re-checked at analyze, unchanged)", revisit_at: review }
   - { id: AS2, text: "The model ids in D5 are available to adopters as of 2026-09; they are config, not code", revisit_at: implement }

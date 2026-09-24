@@ -45,9 +45,9 @@ export async function buildBundle(root, check = false) {
   /** @type {Set<string>} */
   const packages = new Set();
   for (const path of Object.keys(output.metafile.inputs)) {
-    const packagePath = path.replaceAll('\\', '/').split('/node_modules/').at(-1);
-    if (packagePath === path.replaceAll('\\', '/')) continue;
-    if (!packagePath) continue;
+    const normalized = path.replaceAll('\\', '/');
+    const packagePath = normalized.split(/(?:^|\/)node_modules\//).at(-1);
+    if (!packagePath || packagePath === normalized) continue;
     const pieces = packagePath.split('/');
     packages.add(pieces[0].startsWith('@') ? pieces.slice(0, 2).join('/') : pieces[0]);
   }
