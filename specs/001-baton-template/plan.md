@@ -38,8 +38,15 @@ under 5 s offline.
 **Scale/Scope**:
 - `core` has 28 planned skill/agent files, and SC-002 caps it at 30
 - 10 optional packs
-- 9 phases
+- 11 phases: 10 in the feature lane, plus `work` in the quick lane (which shares `review`, `land` and `compound`)
 - ~12 CLI subcommands
+
+**Maintainer validation environment**: Some maintainer workstations can't make TLS connections to
+`registry.npmjs.org` or PyPI. On those, registry-dependent validation (`npm ci`, `npm run check`, and the
+`uv`/`specify-cli` steps) runs in an ephemeral Linux container that has registry access, with the repo mounted
+(for example `node:20-bookworm`), plus hosted CI, which is the authoritative gate. Never disable TLS verification,
+and never commit a private registry or mirror. See quickstart.md § Local gate. Adopters are unaffected, because
+Baton has no runtime network access.
 
 ## Constitution Check
 
@@ -192,14 +199,18 @@ that adopters may relicense their own code, and that the notices must remain for
    - The agent fills in the summary, `read_first` rationale, decisions, open questions, risks and acceptance checks.
    - This split keeps batons trustworthy and cheap to produce.
 5. **Human gates** (constitution): after `clarify` (or after `specify` if clarify is skipped), after `analyze`, and
-   at `land` (the PR). `baton handoff approve --by <handle>` records the approval in the baton. The receive hook for
+   at `land` (the PR). `baton handoff approve --by "<role>" [--via "<channel>"]` records the approval in the baton,
+   role-only and never a personal handle or email (data-model §1.1). The receive hook for
    the next phase requires it.
 6. **Context budget.** `read_first` has at most 12 entries, and the baton body has at most 150 lines by default
    (configurable). `do_not_read` lets the previous agent exclude noisy files explicitly, such as superseded
    research.
 7. **Quick lane.** `ce-work` → `baton-review` → `baton-land` → (`ce-compound`). The baton lives at
    `.baton/quick/<slug>.md` (so there's no `docs/plans/`). It uses the same schema with `lane: quick`, and escalates
-   to the feature lane on `E_LANE_ESCALATE` (new behaviour or contract detected by the reviewer).
+   to the feature lane on `E_LANE_ESCALATE` (new behaviour or contract detected by the reviewer). Its phases
+   (`work`, plus `by_lane.quick` for review/land/compound), entry checks, gate and lane transitions are normative in
+   contracts/phase-contracts.md § Quick lane. Compound exit criteria with OR use check groups (`any_of`/`all_of`,
+   data-model §2.1).
 8. **Review personas in core.**
    - Always included: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher.
    - Also included: security-reviewer and adversarial-reviewer.

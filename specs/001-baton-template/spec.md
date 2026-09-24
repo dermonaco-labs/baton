@@ -262,7 +262,10 @@ all on free hosted runners.
   - A blocking open question implies `status ∈ {needs-human, blocked}`.
   - The `read_first` budget: ≤ 12 entries by default, configurable.
   - Pre-registered acceptance checks exist before implement.
-  - Human-gate approval is recorded where the phase requires one.
+  - Human-gate approval is recorded where the phase requires one. `approved_by` and every `human:` actor are
+    role-only (a configured role, optionally `via <channel>`), never a personal handle, name or email; a denylist
+    scan rejects personal data in batons (`E_APPROVER_FORMAT`, `E_ACTOR_FORMAT`, `E_DENYLIST`).
+  - Entry/exit criteria may combine checks with `all_of`/`any_of` groups, which have defined error codes.
   - Every error has a stable code, listed in the handoff contract.
 - **FR-025**: `baton handoff` MUST provide at least `new`, `show`, `receive`, `write`, `next` (prints the next
   command and the suggested model), `approve --by`, `answer`, `refresh --reason`, `escalate`, `init --infer` and
@@ -270,7 +273,8 @@ all on free hosted runners.
 
 **Workflow coherence**
 
-- **FR-030**: Baton MUST define one feature workflow and one quick lane, and document the conflict
+- **FR-030**: Baton MUST define one feature workflow and one quick lane (phases `work` → `review` → `land` →
+  `compound`, with only legal escalation to the feature lane; see contracts/phase-contracts.md), and document the conflict
   rules (see contracts/conflict-rules.md). The `core` pack MUST NOT install `ce-plan`, `deepen-plan`,
   `lfg`, `slfg`, `ralph-loop` or `docs/plans/`.
 - **FR-031**: Baton MUST own `.github/copilot-instructions.md` through the marker-managed section, and

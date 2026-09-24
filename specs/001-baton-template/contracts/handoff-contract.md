@@ -43,7 +43,7 @@ decisions:
 gate: { required: false, approved_by: null, approved_at: null }
 history:
   - { phase: specify, at: 2026-09-24T09:00:00Z, by: speckit-specify, commit: 1a2b3c4 }
-  - { phase: clarify, at: 2026-09-24T09:20:00Z, by: "human:alice", commit: 2b3c4d5 }
+  - { phase: clarify, at: 2026-09-24T09:20:00Z, by: "human:maintainer", commit: 2b3c4d5 }
   - { phase: plan,    at: 2026-09-24T10:05:00Z, by: speckit-plan, commit: 3c4d5e6 }
   - { phase: tasks,   at: 2026-09-24T10:30:00Z, by: speckit-tasks, commit: 4d5e6f7 }
 updated_at: 2026-09-24T10:30:00Z
@@ -57,7 +57,7 @@ tasks.md created (18 tasks). Acceptance checks registered in tasks.md § Accepta
 
 ## Next steps
 1. `/speckit-analyze` (model role: review → claude-opus-5.5)
-2. On a clean report: `baton handoff approve --by <you>` (analyze is a human gate)
+2. On a clean report: `baton handoff approve --by "maintainer" --via "direct approval"` (analyze is a human gate)
 
 ## Watch out for
 - T007 and T008 both touch `src/export/writer.ts`, so they are not parallel.
@@ -99,17 +99,22 @@ sequenceDiagram
 | `E_BLOCKING_OPEN` | error | There is a blocking open question and `status` = `ready`. |
 | `E_EXIT_UNMET` | error | `status: ready`, but some `exit_criteria.met` is false. |
 | `E_GATE_PENDING` | error (on receive) | The previous phase requires a human gate and `gate.approved_by` is null. |
+| `E_APPROVER_FORMAT` | error | `gate.approved_by` isn't `<role>` or `<role> via <channel>` from `config.gates` (data-model §1.1), or only one of `approved_by` / `approved_at` is set. |
+| `E_ACTOR_FORMAT` | error | A `by` / `updated_by` value isn't an agent id or `human:<role-slug>` from `config.gates.approver_roles`. |
+| `E_DENYLIST` | error | Personal data found by the denylist scan (below). |
 | `E_NO_PREREG` | error | `next_phase: implement` and any in-scope user story has no `acceptance_checks`. |
 | `E_ANALYSIS_MISSING` | error | `phase_completed: analyze` without `analysis.report_path`, or the file doesn't exist. |
 | `E_ANALYSIS_CRITICAL` | error (on receive of implement) | `analysis.critical > 0`. |
 | `E_REVIEW_MISSING` | error | `phase_completed: review` without `review.findings_path`, or the file fails `findings.schema.json`. |
 | `E_REVIEW_BLOCKING` | error (on receive of land) | `review.blocking_findings > 0`. |
 | `E_PR_MISSING` | error | `phase_completed: land` without `pr.url`. |
-| `E_LANE_ESCALATE` | error | Quick lane: the review found new behaviour or a new contract. Move to the feature lane (`baton handoff escalate`). |
+| `E_LANE_ESCALATE` | error | Quick lane: `quick-scope-held` is unmet (the review found new behaviour or a new contract). Move to the feature lane (`baton handoff escalate`). |
+| `E_LANE_MISMATCH` | error | The baton's `lane` isn't listed in the phase's `lane`, e.g. `receive --phase work` on a feature baton (phase-contracts § Quick lane). |
 | `E_MODEL_NOT_ALLOWED` | error/warn | The `suggested_model` or an agent's `model:` is not in `models.allowed` (the severity comes from `enforce`). |
 | `E_MULTIPLE_BATONS` | error | More than one handoff file exists in a feature dir. |
 | `W_ASSUMPTION_DUE` | warn | An assumption's `revisit_at` equals the current phase. |
-| `W_WEAKENED_CONTRACT` | warn | A `phases.yml` override removed a built-in exit check. |
+| `W_WEAKENED_CONTRACT` | warn | A `phases.yml` override removed a built-in exit check, or moved it into an `any_of` group with a new alternative. |
+| `W_QUICK_LARGE` | warn | A quick-lane diff touches more files than `config.lanes.quick.max_files_changed`. |
 | `W_NO_BATON` | warn | A feature dir has spec.md but no handoff.md. Suggests `baton handoff init --infer`. |
 
 Validator codes outside batons (the same output format, listed in `docs/reference/error-codes.md`):
@@ -118,6 +123,9 @@ Validator codes outside batons (the same output format, listed in `docs/referenc
 |---|---|
 | `E_FRONTMATTER_MALFORMED` | Skill or agent frontmatter doesn't start at byte 0 with `---\n`, fails to parse, or fails its schema. |
 | `E_CONFIG` / `E_PHASES` / `E_MANIFEST` / `E_PACK` / `E_LOCK` | The file fails its schema. |
+| `E_CHECK_UNKNOWN` | A `phases.yml` leaf uses an id that isn't a built-in check. |
+| `E_CHECK_GROUP` | A check group is malformed: missing or colliding `id`, fewer than 2 or more than 8 members, nesting deeper than 2, or both/neither of `all_of`/`any_of` (data-model §2.1). |
+| `E_CHECK_KEY_DUP` | Two expressions in one `entry` or `exit` list have the same check key. |
 | `E_LOCK_MISMATCH` | A locked file's sha256 ≠ the working tree (`lock verify`). |
 | `E_SYNC_DRIFT` | `sync --check` output ≠ the committed snapshot. |
 | `E_DANGLING_REF` | A vendored file references a skill or agent that isn't installed and isn't in `optional_refs`. |
@@ -128,6 +136,28 @@ Validator codes outside batons (the same output format, listed in `docs/referenc
 | `W_SETUP_STEPS_MISPLACED` | `.github/copilot-setup-steps.yml` exists (it belongs under `.github/workflows/`). |
 | `W_NO_ADOPTER_CI` | `.github/workflows/baton.yml` is missing, so skipped hooks would go unnoticed. |
 
+## Personal-data denylist scan (`E_DENYLIST`)
+
+Batons record people by role only (data-model §1.1). `baton validate` scans every baton (frontmatter and body) and,
+in the Baton repo, every Baton-authored file (`docs/`, `specs/`, `baton/`, `README.md`, `.github/` except vendored
+upstream files), and reports `E_DENYLIST` for:
+
+1. an email address (`[\w.+-]+@[\w-]+\.[\w.-]+`), except the fixed noreply trailer address and addresses listed in
+   `SECURITY.md`'s reporting section when that section says so explicitly;
+2. an `@mention` (`(^|[\s(])@[A-Za-z0-9-]{1,39}\b`);
+3. an absolute user-home path (`[A-Za-z]:\\Users\\`, `/home/<x>/`, `/Users/<x>/`);
+4. a `human:` actor or an `approved_by` value outside the configured role vocabulary (reported as the more specific
+   `E_ACTOR_FORMAT` / `E_APPROVER_FORMAT`);
+5. any term from the optional terms file (`config.denylist.terms_file` or env `BATON_DENYLIST_FILE`, one
+   case-insensitive term per line). This file holds real names and hostnames, so it MUST NOT be committed; keep it
+   untracked or outside the repo.
+
+Scope rules: in baton frontmatter every string value is scanned. In Markdown bodies and docs, rules 1–3 skip code
+spans and fenced code (so docs can show patterns and counter-examples), while rule 5 applies everywhere.
+`test/fixtures/` is excluded from the repository-wide scan, but `validate --path <fixture>` scans it, so the
+`E_DENYLIST.md` fixture still fails.
+The role vocabulary and the Approver/Actor patterns contain no `@`, `.`, `/`, `\` or upper case, so no valid
+approval can trip rules 1–3. `CODEOWNERS` and `dependabot.yml` are exempt, because GitHub requires handles there.
 Exit codes: `0` ok, `1` errors, `2` usage error, `3` stopped because `needs-human` (receive only). Output is human
 text by default. `--json` emits `{ok, errors:[{code, file, pointer?, message, fix}]}`, and `--github` emits workflow
 annotations.
@@ -142,5 +172,5 @@ An agent that finds ambiguity affecting scope, behaviour, security, data or publ
 4. Stop and print the question.
 
 `receive` refuses to start the next phase (exit 3) until a human answers. The human does this with
-`baton handoff answer <id> "<choice>" --by <handle>`, which moves the answer to `decisions` and recomputes
+`baton handoff answer <id> "<choice>" --by "<role>"`, which moves the answer to `decisions` and recomputes
 `status`.

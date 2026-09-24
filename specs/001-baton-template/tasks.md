@@ -15,8 +15,11 @@ files and have no unfinished dependencies. Paths are repo-relative.
 - Use `registry.npmjs.org`, never a private registry. `.npmrc` pins the public registry.
 - Run `npm run check` before every commit once T006 exists.
 - When a decision isn't covered by these docs, **stop, don't choose**: add it to `handoff.md` `open_questions` and ask.
-- Task IDs are stable. T095–T099 were added by the analyze pass (see `analysis.md`) and sit in the phase where they
-  belong, so IDs are not in numeric order inside a phase.
+- Task IDs are stable. T095–T099 were added by the analyze pass (see `analysis.md`), and T100–T102 by post-analyze
+  amendment A1–A3 (role-only approvals, check groups, quick lane). They sit in the phase where they belong, so IDs are
+  not in numeric order inside a phase.
+- Maintainers on a workstation that can't reach `registry.npmjs.org` or PyPI over TLS run registry-dependent
+  validation in an ephemeral Linux container, plus hosted CI (quickstart § Local gate). Never disable TLS.
 
 ## Phase 1: Setup
 
@@ -45,8 +48,10 @@ files and have no unfinished dependencies. Paths are repo-relative.
 ## Phase 2: Foundational (blocks all stories)
 
 - [ ] T007 [P] `baton/schemas/handoff.schema.json`: every field and conditional rule in data-model §1 (draft 2020-12,
-  `additionalProperties: false`, `x-*` allowed).
-- [ ] T008 [P] `baton/schemas/phases.schema.json` and `config.schema.json` (data-model §2–3).
+  `additionalProperties: false`, `x-*` allowed), including the Actor/Approver patterns of §1.1 (T100) and `phase_completed: none`.
+- [ ] T008 [P] `baton/schemas/phases.schema.json` and `config.schema.json` (data-model §2–3), including check
+  expressions (§2.1), `lane`/`by_lane` (§2.2), and the `gates`/`denylist` config blocks (T100–T102 add the
+  behaviour).
 - [ ] T009 [P] `baton/schemas/pack.schema.json`, `lock.schema.json` and `manifest.schema.json` (data-model §4–6).
 - [ ] T010 [P] `baton/schemas/skill-frontmatter.schema.json` and `agent-frontmatter.schema.json` (data-model §7).
   Unknown keys produce a warning.
@@ -145,10 +150,12 @@ files and have no unfinished dependencies. Paths are repo-relative.
 - [ ] T036 [US3] `src/commands/validate.mjs`: batons, phases, config, manifest, and skill and agent frontmatter.
   Supports `--changed` and `--path`, and emits the stable codes.
 - [ ] T037 [US3] `src/commands/handoff.mjs`: new, show, receive, write (`--from-json`, `--next`, `--from-brainstorm`,
-  `--analysis-from`), next, approve, answer, refresh, escalate, `init --infer` and migrate (a no-op for schema 1).
+  `--analysis-from`, `--from-quick`, `--quick`), next, approve (`--by <role> --via <channel>`), answer, refresh,
+  escalate, `init --infer` and migrate (a no-op for schema 1), as in `contracts/cli.md`.
   Branching and brainstorm rules follow `contracts/phase-contracts.md` § Transition rules.
 - [ ] T038 [P] [US3] `src/commands/status.mjs`: a table of all feature and quick batons.
-- [ ] T039 [P] [US3] `baton/templates/phases.yml` (the defaults, exactly as the phase table) and
+- [ ] T039 [P] [US3] `baton/templates/phases.yml` (the defaults, exactly as the phase table and the quick-lane table,
+  with the `compound-recorded` group) and
   `baton/templates/handoff.md` (the body skeleton).
 - [ ] T040 [US3] Full prompts for `baton/speckit-extension/commands/{receive,handoff}.md`:
   - Keep them thin, and don't repeat upstream instructions.
@@ -170,11 +177,32 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - Run `config.checks` and `validate` before any push, then delegate to `land`.
   - Record `pr.url` and never merge.
   - Suggest `/ce-compound`.
-- [ ] T044 [US3] Quick-lane rules:
+- [ ] T044 [US3] Quick-lane rules (normative: `contracts/phase-contracts.md` § Quick lane; the CLI and checks are T102):
   - batons live in `.baton/quick/<slug>.md`
   - a `ce-work` guard: the `baton` skill refuses to run `ce-work` on a feature that has tasks.md (conflict rule C3)
   - `handoff escalate` sets `next_phase: specify` with the reason and hands the quick baton to `/speckit-specify`;
     it never creates feature dirs (Spec Kit owns numbering)
+- [ ] T100 [US3] Role-only actors and approvals (data-model §1.1, handoff-contract § denylist scan):
+  - `config.gates.approver_roles`/`approval_channels` in `config.schema.json` and the default `config.yml`;
+    Approver/Actor patterns in `handoff.schema.json`; the vocabulary check in `validate`
+  - `approve --by "<role>" [--via "<channel>"]` sets `approved_by` and `approved_at` together; `answer --by "<role>"`
+  - the `E_DENYLIST` scan (email, `@mention`, user-home paths, and the untracked terms file) over batons and
+    Baton-authored files, with the exemptions from the contract
+  - invalid fixtures `E_APPROVER_FORMAT.md`, `E_ACTOR_FORMAT.md` and `E_DENYLIST.md`, and a test that
+    `approve --by "@x"`, `--by "Jane Doe"` and `--by "a@b.io"` are rejected while `--by "maintainer" --via
+    "direct approval"` is accepted (AC-US3-8). **The test must fail first.**
+- [ ] T101 [US3] Check expressions (data-model §2.1): leaf/group grammar with `all_of`/`any_of` in
+  `phases.schema.json`, the evaluator in `src/lib/phases.mjs` (all members evaluated, evidence per member), check keys,
+  `E_CHECK_UNKNOWN`/`E_CHECK_GROUP`/`E_CHECK_KEY_DUP`, and `W_WEAKENED_CONTRACT` for a built-in moved into an
+  `any_of`. The default compound exit is the `compound-recorded` group. Unit tests cover each code, and the relay
+  test covers both compound alternatives plus the `E_EXIT_UNMET` member evidence (AC-US3-9). **The tests must fail
+  first.**
+- [ ] T102 [US3] Quick lane in the defaults and the CLI (phase-contracts § Quick lane, data-model §2.2): the `work`
+  phase and `by_lane.quick` for review/land/compound in `baton/templates/phases.yml`; `handoff new --quick <slug>
+  --reason`, `--quick <slug>` on show/receive/write/escalate, and `write --phase specify --from-quick`;
+  `from-phase:none`, `decision:<tag>`, `no-feature-tasks`, `findings-fixed-or-dismissed` and `quick-scope-held`;
+  `E_LANE_MISMATCH` and `W_QUICK_LARGE`; the quick relay from quickstart S3 in `relay.test.mjs`, including escalation
+  and the rejected feature → quick transition (AC-US3-10). **The test must fail first.**
 - [ ] T045 [US3] `baton/instructions/copilot-instructions.baton.md` (fewer than 80 lines, covering conflict rules C1–C13
   in short form). Apply it to `.github/copilot-instructions.md` with the SPECKIT block preserved.
 - [ ] T046 [US3] Re-run `baton sync`. Verify that `.specify/extensions.yml` registers the mandatory Baton hooks for
@@ -333,7 +361,8 @@ files and have no unfinished dependencies. Paths are repo-relative.
 ## Phase 10: Polish & Community
 
 - [ ] T089 [P] `CONTRIBUTING.md`: setup, `npm run check` before push, how upstream bumps work, the maintainer release
-  checklist, and how to add a pack.
+  checklist, how to add a pack, and the registry-restricted workstation note (ephemeral Linux container plus hosted
+  CI; never disable TLS).
 - [ ] T090 [P] `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, attributed), `SECURITY.md` (GitHub private
   vulnerability reporting, supported versions) and `SUPPORT.md`.
 - [ ] T091 [P] `.github/ISSUE_TEMPLATE/{bug,feature,config}.yml`, `.github/pull_request_template.md` (checklist:
@@ -365,6 +394,9 @@ files and have no unfinished dependencies. Paths are repo-relative.
 | AC-US3-5 | US3 | relay.test "land requires pr.url and checks" | test-id | fail |
 | AC-US3-6 | US3 | `baton validate --path specs/001-baton-template/handoff.md` | command | fail |
 | AC-US3-7 | US3 | relay.test "checked task stays fresh, reworded task is stale" | test-id | fail |
+| AC-US3-8 | US3 | validate-handoff.test + relay.test "role-only approver; handle/email/name rejected; denylist" | test-id | fail |
+| AC-US3-9 | US3 | phases.test + relay.test "any_of compound: solution or skip-compound; group errors" | test-id | fail |
+| AC-US3-10 | US3 | relay.test "quick relay new→work→review→land, escalate, feature→quick rejected" | test-id | fail |
 | AC-US4-1 | US4 | models.test "role resolution + overrides" | test-id | fail |
 | AC-US4-2 | US4 | models.test "enforce error → E_MODEL_NOT_ALLOWED" | test-id | fail |
 | AC-US4-3 | US4 | models.test "apply idempotent, managed only" | test-id | fail |
@@ -390,11 +422,12 @@ files and have no unfinished dependencies. Paths are repo-relative.
 
 - Foundational: T007–T014 and T018 run together, and T020–T022 run together after T016.
 - US3: T030–T033 run together, then T034, then T035–T037. T038, T039, T041, T042 and T043 run in parallel with T037.
+  T100 and T101 follow T034–T036, and T102 follows T037 and T101.
 - US6: T076–T081 run in parallel after T075 (they share only the docs index).
 
 ## Implementation Strategy
 
-1. **MVP** = Setup + Foundational + US3 + US1 (T001–T054 plus T095–T098). At that point a derived repo runs the
+1. **MVP** = Setup + Foundational + US3 + US1 (T001–T054 plus T095–T098 and T100–T102). At that point a derived repo runs the
    validated relay.
 2. Then US2 (overlay), US4/US5/US6 in parallel, and US7 for CI.
 3. After each checkpoint, run `npm run check`, commit (with the Co-authored-by trailer the owner requests) and update
