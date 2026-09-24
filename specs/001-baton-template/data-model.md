@@ -315,6 +315,7 @@ optional packs (FR-053). A repair entry is `{id, reason, upstream_issue}`, where
   "source": "template|init",
   "upstreams": { "speckit": "1.0.11@8147943", "atv": "main@ad99673" },
   "packs": ["core"],
+  "recommended_packs": [ { "pack": "review-plus", "refs": ["performance-oracle"] } ],
   "files": [ { "path": "…", "sha256": "…", "pack": "core", "owner": "baton|speckit|atv", "managed": true } ],
   "marker_sections": [ { "path": ".github/copilot-instructions.md", "marker": "BATON", "sha256": "…" } ]
 }
@@ -322,6 +323,8 @@ optional packs (FR-053). A repair entry is `{id, reason, upstream_issue}`, where
 
 A file counts as **user-modified** when its current sha256 differs from `manifest.files[].sha256`. `update` and
 `uninstall` never touch user-modified files.
+`recommended_packs` preserves optional pack recommendations when template cleanup removes `packs/`; warnings for
+packs already in `packs` are suppressed. It is advisory and never causes `doctor --strict` to fail.
 
 ## 7. Frontmatter schemas
 

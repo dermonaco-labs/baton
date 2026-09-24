@@ -11,7 +11,7 @@ import {
 const lockedRequirements = 'baton/upstream/specify-cli.requirements.txt';
 const forbidden = /(?:^|\/)(?:karpathy-guidelines|\.env(?:\..*)?|\.context|node_modules|\.git)(?:\/|$)/i;
 /** @typedef {{from:string,path:string,upstream_path?:string}} PackFile */
-/** @typedef {{id:string,requires:string[],conflicts:string[],files:PackFile[],optional_refs?:Array<{ref:string,note:string}>}} PackDefinition */
+/** @typedef {{id:string,requires:string[],conflicts:string[],files:PackFile[],optional_refs?:Array<{ref:string,reason:string,note:string}>}} PackDefinition */
 /** @typedef {{id:string,match:string,applies_to:string,reason:string,upstream_issue:string}} RepairRule */
 /** @typedef {{path:string,upstream:'speckit'|'atv',upstream_path:string,stored_at:string,sha256_upstream:string,sha256:string,license:string,repair:{id:string,reason:string,upstream_issue:string}|null,packs:string[],bytes:Buffer}} VendoredEntry */
 /** @typedef {{path:string,stored_at:string,packs:string[],bytes:Buffer}} AuthoredEntry */
@@ -34,6 +34,7 @@ function filesUnder(dir) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const path = join(dir, entry.name);
+    if (entry.name === '.git') return [];
     return entry.isDirectory() ? filesUnder(path) : entry.isFile() ? [path] : [];
   });
 }
@@ -68,7 +69,7 @@ function sourceFor(entry, generated, atv) {
 }
 
 /** @param {Buffer} bytes @param {string} path @param {string} root */
-function generatedStable(bytes, path, root) {
+export function generatedStable(bytes, path, root) {
   const target = join(root, ...path.split('/'));
   if (!existsSync(target) || !/\.json$|\.registry$/.test(path)) return bytes;
   try {
@@ -80,12 +81,13 @@ function generatedStable(bytes, path, root) {
       if (!oldValue || !newValue || typeof oldValue !== 'object' || typeof newValue !== 'object') return;
       const prior = /** @type {Record<string,unknown>} */ (oldValue);
       const next = /** @type {Record<string,unknown>} */ (newValue);
-      if (typeof prior.installed_at === 'string' && typeof next.installed_at === 'string') {
-        next.installed_at = prior.installed_at;
+      for (const field of ['installed_at', 'updated_at']) {
+        if (typeof prior[field] === 'string' && typeof next[field] === 'string') next[field] = prior[field];
       }
       for (const key of Object.keys(next)) keepDates(prior[key], next[key]);
     };
     keepDates(current, proposed);
+    if (JSON.stringify(current) === JSON.stringify(proposed)) return readFileSync(target);
     return Buffer.from(`${JSON.stringify(proposed, null, 2)}\n`);
   } catch {
     return bytes;
@@ -96,13 +98,47 @@ function generatedStable(bytes, path, root) {
 const resourceName = path => path.match(/\/skills\/([^/]+)\/SKILL\.md$/)?.[1] ||
   path.match(/\/agents\/([^/]+)\.agent\.md$/)?.[1] || null;
 
-/** @param {Array<VendoredEntry|AuthoredEntry>} entries @param {PackDefinition[]} packs */
-export function referenceClosure(entries, packs) {
+/** @param {string} root */
+export function excludedNames(root) {
+  const document = readFileSync(join(root, 'specs', '001-baton-template', 'contracts', 'packs.md'), 'utf8');
+  const section = document.split('## Excluded (never installed)\n')[1]?.split('\n## Closure rules')[0];
+  if (!section) throw new UpstreamError('E_DANGLING_REF', 'Cannot verify excluded references without the pack contract');
+  const names = new Map();
+  for (const line of section.split('\n')) {
+    const columns = line.split('|');
+    if (columns.length < 4) continue;
+    const codes = [...columns[2].matchAll(/\bC\d+\b/g)].map(match => match[0]);
+    if (!codes.length) continue;
+    const tokens = [...columns[1].matchAll(/`([^`]+)`/g)].map(match => match[1]);
+    if (tokens.length === 0) tokens.push(...columns[1].split(',').map(token => token.trim()));
+    for (const token of tokens) {
+      if (/^[a-z][a-z0-9-]+$/.test(token)) names.set(token, codes);
+    }
+  }
+  return names;
+}
+
+/** @param {string} generated @param {string} atv */
+export function pinnedNames(generated, atv) {
+  const paths = [
+    ...filesUnder(join(generated, '.github')),
+    ...filesUnder(join(atv, 'pkg', 'scaffold', 'templates', 'skills')),
+    ...filesUnder(join(atv, 'pkg', 'scaffold', 'templates', 'agents')),
+  ];
+  return new Set(paths.flatMap(path => {
+    const name = resourceName(clean(path));
+    return name ? [name] : [];
+  }));
+}
+
+/** @param {Array<VendoredEntry|AuthoredEntry>} entries @param {PackDefinition[]} packs @param {{upstreamNames?:Set<string>,exclusions?:Map<string,string[]>}} [options] */
+export function referenceClosure(entries, packs, options = {}) {
   const declared = new Map(packs.map(pack => [pack.id, pack]));
-  const contents = new Map(entries.map(entry => [entry.path, entry.bytes.toString('utf8')]));
   const issues = [];
   for (const pack of packs) {
-    for (const issue of validatePackClosure(declared, pack.id, contents)) {
+    const contents = new Map(entries.filter(entry => entry.packs.includes(pack.id) ||
+      declared.get(pack.id)?.requires.includes(entry.packs[0])).map(entry => [entry.path, entry.bytes.toString('utf8')]));
+    for (const issue of validatePackClosure(declared, pack.id, contents, options)) {
       issues.push(`${pack.id}: ${issue.file} ${issue.message}`);
     }
   }
@@ -190,7 +226,9 @@ function prepareEntries(root, generated, atv, packs, repairs, oldLock, bump) {
     }
   }
   const values = [...entries.values()].sort((a, b) => a.stored_at.localeCompare(b.stored_at, 'en'));
-  referenceClosure([...values, ...authored], packs);
+  referenceClosure([...values, ...authored], packs, {
+    upstreamNames: pinnedNames(generated, atv), exclusions: excludedNames(root)
+  });
   return { vendored: values, authored };
 }
 

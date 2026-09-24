@@ -1,0 +1,44 @@
+name: Windows MVP smoke
+
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  smoke:
+    if: github.repository == 'dermonaco-labs/baton'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.12.18'
+      - name: Check
+        run: |
+          npm ci --registry=https://registry.npmjs.org/ --no-audit --no-fund
+          npm run check
+      - name: Instantiate template
+        shell: bash
+        run: |
+          tmp=$(mktemp -d)
+          trap 'rm -rf "$tmp"' EXIT
+          git archive HEAD | tar -x -C "$tmp"
+          cd "$tmp"
+          git init -q
+          git add .github/workflows
+          git -c user.name=t -c user.email=t@t commit -qm base
+          BATON_FORCE_CLEANUP=1 node .baton/bin/baton.mjs adopt --no-workflows
+          test ! -e src && test ! -e test && test ! -e specs/001-baton-template
+          test ! -e package.json && test -d docs/baton
+          test -f .github/workflows/baton.yml
+          test -z "$(git status --porcelain -- .github/workflows)"
+          ! grep -q '# Baton Constitution' .specify/memory/constitution.md
+          node .baton/bin/baton.mjs doctor --strict
+          node .baton/bin/baton.mjs validate

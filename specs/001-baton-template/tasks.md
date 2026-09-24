@@ -71,10 +71,10 @@ files and have no unfinished dependencies. Paths are repo-relative.
 - [x] T017 `src/lib/phases.mjs`: load `.baton/phases.yml` over the built-in defaults, validate it, raise
   `W_WEAKENED_CONTRACT`, and provide the check registry interface.
 - [x] T018 [P] Unit tests for T011–T014 in `test/unit/{frontmatter,schema,hash,markers}.test.mjs`.
-- [ ] T019 [P] Unit tests for T015–T017 in `test/unit/{manifest,packs,phases}.test.mjs`. Include the SC-003 test:
+- [x] T019 [P] Unit tests for T015–T017 in `test/unit/{manifest,packs,phases}.test.mjs`. Include the SC-003 test:
   every feature-lane phase in the default `phases.yml` has ≥ 1 entry check and ≥ 1 exit check (`brainstorm` is
   exempt from entry).
-- [ ] T020 Write `packs/core.yml`, the ten optional packs and `packs/repairs.yml`, exactly as in `contracts/packs.md`.
+- [x] T020 Write `packs/core.yml`, the ten optional packs and `packs/repairs.yml`, exactly as in `contracts/packs.md`.
   Every core entry has a `role`. Every `optional_refs` entry has a `reason` and a `note`, and the A6 additions
   (`review-plus`: code-simplicity-reviewer, performance-oracle, data-integrity-guardian, pattern-recognition-specialist;
   `design`: design-iterator) are included, as in `contracts/packs.md` § Reference classification at the pin.
@@ -87,10 +87,10 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - The tasks template gets a `## Acceptance Registry` table.
   - The plan template gets a Phase 0 note to invoke `repo-research-analyst` and `learnings-researcher`, and a
     `## Handoff` pointer section.
-- [ ] T096 `baton/upstream/specify-cli.requirements.in` (`specify-cli==1.0.11`) and the generated
+- [x] T096 `baton/upstream/specify-cli.requirements.in` (`specify-cli==1.0.11`) and the generated
   `baton/upstream/specify-cli.requirements.txt` (`uv pip compile --generate-hashes --python-version 3.11`), plus its
   sha256 in `baton.lock.json` (`requirements_sha256`). `lock verify` checks it.
-- [ ] T023 `src/lib/upstream.mjs`:
+- [x] T023 `src/lib/upstream.mjs`:
   - Create a temp venv, run `uv pip install --require-hashes -r baton/upstream/specify-cli.requirements.txt` (T096),
     then `specify init --here --integration copilot --script <s> --force --ignore-agent-tools` in a temp dir. No bare
     `uvx`: every wheel, including transitive ones, is hash-checked (constitution II, research R4).
@@ -98,9 +98,9 @@ files and have no unfinished dependencies. Paths are repo-relative.
     fetched commit id and its tree id equal the lock (`E_UPSTREAM_VERIFY`). No codeload tarballs: their bytes aren't
     stable.
   - Never execute ATV code.
-- [ ] T024 `src/lib/repairs.mjs`: declared mechanical repairs, currently only the frontmatter newline restoration
+- [x] T024 `src/lib/repairs.mjs`: declared mechanical repairs, currently only the frontmatter newline restoration
   for known-corrupted ATV agents. Verify each result by re-parsing it, and detect no-op repairs (`repair: none`).
-- [ ] T025 `src/commands/sync.mjs`:
+- [x] T025 `src/commands/sync.mjs`:
   - In the temp Spec Kit project, install the Baton extension and preset (`specify extension add --dev`,
     `specify preset add --dev`).
   - Copy the curated `.specify/` and `.github/skills` files and the ATV pack files: `core` to the installed paths,
@@ -109,7 +109,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - Write `baton.lock.json` (provenance, sha256_upstream, sha256, license, repair, packs) and
     `docs/reference/upstream-diff.md`.
   - Support `--check`, which writes nothing and raises `E_SYNC_DRIFT`.
-- [ ] T026 Closure and license checks in sync:
+- [x] T026 Closure and license checks in sync:
   - Run the per-pack reference scan from `contracts/packs.md` § Closure rules (including dispatched agents) and
     raise `E_DANGLING_REF`. Test in `test/unit/packs.test.mjs`: every shipped pack is closed over itself plus its
     `requires`, and a `docs-review` fixture without `adversarial-document-reviewer` fails with `E_DANGLING_REF`
@@ -124,11 +124,11 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - Check upstream LICENSE files and raise `E_LICENSE`.
   - Decide from the closure result whether `brainstorming` joins `core` (#29).
   - Record the result in research.md R6.
-- [ ] T027 `src/commands/lock.mjs`: `lock verify`, which works offline and raises `E_LOCK_MISMATCH`.
-- [ ] T028 Run the first `baton sync` with the Spec Kit 1.0.11 and ATV `ad99673` pins. Commit the materialized
-  `.specify/` (constitution preserved), `.github/skills/`, `.github/agents/`, `baton.lock.json` and the Spec Kit
-  SPECKIT instruction block. `sync --check` must be clean.
-- [ ] T029 Verify three upstream facts at the pins and record them in research.md:
+- [x] T027 `src/commands/lock.mjs`: `lock verify`, which works offline and raises `E_LOCK_MISMATCH`.
+- [x] T028 Run the first `baton sync` with the Spec Kit 1.0.11 and ATV `ad99673` pins. Commit the materialized
+  `.specify/` (constitution preserved), `.github/skills/`, `.github/agents/`, `baton.lock.json` and the Baton
+  instruction block (preserving a SPECKIT block if present; the pinned init emits none). `sync --check` must be clean.
+- [x] T029 Verify three upstream facts at the pins and record them in research.md:
   - the exact `.specify/extensions.yml` format produced by `specify extension add`
   - that the Baton hooks are mandatory and unconditional
   - whether `ce-review` degrades gracefully when personas are missing
@@ -144,24 +144,24 @@ files and have no unfinished dependencies. Paths are repo-relative.
 **Goal**: Every core phase receives and writes a validated baton, with gates, freshness and stop-don't-choose checks.
 **Independent Test**: quickstart S3.
 
-- [ ] T030 [P] [US3] Fixtures in `test/fixtures/handoffs/`: `valid/` (at least one per phase and lane) and
+- [x] T030 [P] [US3] Fixtures in `test/fixtures/handoffs/`: `valid/` (at least one per phase and lane) and
   `invalid/<CODE>.md` (one per baton error code in `contracts/handoff-contract.md`).
-- [ ] T031 [P] [US3] `test/fixtures/features/sample/` (minimal spec, plan, research and tasks with an Acceptance
+- [x] T031 [P] [US3] `test/fixtures/features/sample/` (minimal spec, plan, research and tasks with an Acceptance
   Registry).
-- [ ] T032 [P] [US3] `test/unit/validate-handoff.test.mjs`: valid fixtures pass, and each invalid fixture fails with
+- [x] T032 [P] [US3] `test/unit/validate-handoff.test.mjs`: valid fixtures pass, and each invalid fixture fails with
   exactly its code (AC-US3-1). **Must fail before T034–T036.**
-- [ ] T033 [P] [US3] `test/integration/relay.test.mjs`: the headless relay from quickstart S3, covering the pending gate
+- [x] T033 [P] [US3] `test/integration/relay.test.mjs`: the headless relay from quickstart S3, covering the pending gate
   (exit 3), approve, stale artifact, refresh, `E_NO_PREREG` and `E_PR_MISSING` (AC-US3-2..5).
 - [x] T098 [US3] Checkbox-insensitive `tasks.md` hashing in `src/lib/hash.mjs` (data-model §1 Hashing) with a test in
   `test/integration/relay.test.mjs`: checking a task box after `receive --phase implement` keeps the baton fresh, and
   rewording a task makes it stale (AC-US3-7). **The test must fail first.**
-- [ ] T034 [US3] `src/lib/handoff.mjs`:
+- [x] T034 [US3] `src/lib/handoff.mjs`:
   - read and write batons, fill the deterministic fields (hashes, role, `suggested_model`, timestamps, commit)
   - FIFO history (≤ 20), body section order, and budgets
-- [ ] T035 [US3] Implement every built-in check id from `contracts/phase-contracts.md` in `src/lib/phases.mjs`.
-- [ ] T036 [US3] `src/commands/validate.mjs`: batons, phases, config, manifest, and skill and agent frontmatter.
+- [x] T035 [US3] Implement every built-in check id from `contracts/phase-contracts.md` in `src/lib/phases.mjs`.
+- [x] T036 [US3] `src/commands/validate.mjs`: batons, phases, config, manifest, and skill and agent frontmatter.
   Supports `--changed` and `--path`, and emits the stable codes.
-- [ ] T037 [US3] `src/commands/handoff.mjs`: new, show, receive, write (`--from-json`, `--next`, `--from-brainstorm`,
+- [x] T037 [US3] `src/commands/handoff.mjs`: new, show, receive, write (`--from-json`, `--next`, `--from-brainstorm`,
   `--analysis-from`, `--from-quick`, `--quick`), next, approve (`--by <role> --via <channel>`), answer, refresh,
   escalate, `init --infer` and migrate (a no-op for schema 1), as in `contracts/cli.md`.
   Branching and brainstorm rules follow `contracts/phase-contracts.md` § Transition rules.
@@ -189,12 +189,12 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - Run `config.checks` and `validate` before any push, then delegate to `land`.
   - Record `pr.url` and never merge.
   - Suggest `/ce-compound`.
-- [ ] T044 [US3] Quick-lane rules (normative: `contracts/phase-contracts.md` § Quick lane; the CLI and checks are T102):
+- [x] T044 [US3] Quick-lane rules (normative: `contracts/phase-contracts.md` § Quick lane; the CLI and checks are T102):
   - batons live in `.baton/quick/<slug>.md`
   - a `ce-work` guard: the `baton` skill refuses to run `ce-work` on a feature that has tasks.md (conflict rule C3)
   - `handoff escalate` sets `next_phase: specify` with the reason and hands the quick baton to `/speckit-specify`;
     it never creates feature dirs (Spec Kit owns numbering)
-- [ ] T100 [US3] Role-only actors and approvals (data-model §1.1, handoff-contract § denylist scan):
+- [x] T100 [US3] Role-only actors and approvals (data-model §1.1, handoff-contract § denylist scan):
   - `config.gates.approver_roles`/`approval_channels` in `config.schema.json` and the default `config.yml`;
     Approver/Actor patterns in `handoff.schema.json`; the vocabulary check in `validate`
   - `approve --by "<role>" [--via "<channel>"]` sets `approved_by` and `approved_at` together; `answer --by "<role>"`
@@ -215,17 +215,17 @@ files and have no unfinished dependencies. Paths are repo-relative.
   `any_of`. The default compound exit is the `compound-recorded` group. Unit tests cover each code, and the relay
   test covers both compound alternatives plus the `E_EXIT_UNMET` member evidence (AC-US3-9). **The tests must fail
   first.**
-- [ ] T102 [US3] Quick lane in the defaults and the CLI (phase-contracts § Quick lane, data-model §2.2): the `work`
+- [x] T102 [US3] Quick lane in the defaults and the CLI (phase-contracts § Quick lane, data-model §2.2): the `work`
   phase and `by_lane.quick` for review/land/compound in `baton/templates/phases.yml`; `handoff new --quick <slug>
   --reason`, `--quick <slug>` on show/receive/write/escalate, and `write --phase specify --from-quick`;
   `from-phase:none`, `decision:<tag>`, `no-feature-tasks`, `findings-fixed-or-dismissed` and `quick-scope-held`;
   `E_LANE_MISMATCH` and `W_QUICK_LARGE`; the quick relay from quickstart S3 in `relay.test.mjs`, including escalation
   and the rejected feature → quick transition (AC-US3-10). **The test must fail first.**
-- [ ] T045 [US3] `baton/instructions/copilot-instructions.baton.md` (fewer than 80 lines, covering conflict rules C1–C13
+- [x] T045 [US3] `baton/instructions/copilot-instructions.baton.md` (fewer than 80 lines, covering conflict rules C1–C13
   in short form). Apply it to `.github/copilot-instructions.md` with the SPECKIT block preserved.
-- [ ] T046 [US3] Re-run `baton sync`. Verify that `.specify/extensions.yml` registers the mandatory Baton hooks for
+- [x] T046 [US3] Re-run `baton sync`. Verify that `.specify/extensions.yml` registers the mandatory Baton hooks for
   all seven commands and that the extension commands appear as `.github/skills/speckit-baton-*`.
-- [ ] T047 [US3] Dogfood: `baton validate --path specs/001-baton-template/handoff.md` passes (AC-US3-6). Fix any drift
+- [x] T047 [US3] Dogfood: `baton validate --path specs/001-baton-template/handoff.md` passes (AC-US3-6). Fix any drift
   between this plan and the implementation by amending the docs, not by weakening the validator.
 
 **Checkpoint**: The relay works headlessly and in Copilot. This is the MVP.
@@ -235,17 +235,17 @@ files and have no unfinished dependencies. Paths are repo-relative.
 **Goal**: "Use this template" gives a clean, valid Baton repo.
 **Independent Test**: quickstart S1.
 
-- [ ] T048 [P] [US1] `test/integration/adopt.test.mjs`: dev paths removed, docs moved, README replaced, manifest
+- [x] T048 [P] [US1] `test/integration/adopt.test.mjs`: dev paths removed, docs moved, README replaced, manifest
   `source: template`, and the "cannot push" message (AC-US1-1, AC-US1-3).
 - [x] T049 [P] [US1] `.baton/template-cleanup.yml`: the full plan.md "Template disposition" table (Remove, Replace,
   Move, Keep dormant, Keep active). Workflows are never in the Remove list. Also the
   `.baton/template-cleanup-pending` marker.
 - [x] T050 [P] [US1] `baton/templates/README.adopter.md`: a short README for derived repos that links to `docs/baton/`.
-- [ ] T095 [P] [US1] `baton/templates/workflows/baton.yml` (adopter CI per `contracts/ci.md`: `contents: read`,
+- [x] T095 [P] [US1] `baton/templates/workflows/baton.yml` (adopter CI per `contracts/ci.md`: `contents: read`,
   SHA-pinned, `validate --github` then `doctor`) and `baton/templates/gitignore.adopter`. Install `baton.yml` in the
   Baton repo itself and from `init` and `adopt` when absent; `doctor` warns `W_NO_ADOPTER_CI` when it's missing.
   adopt.test asserts it exists and validates in the derived repo (AC-US1-5).
-- [ ] T051 [US1] `src/commands/adopt.mjs`:
+- [x] T051 [US1] `src/commands/adopt.mjs`:
   - remove the listed paths, move `docs/` to `docs/baton/` (keeping `brainstorms/` and `solutions/` at the top) and
     rewrite relative links
   - apply the Replace rows: adopter README, the placeholder constitution (`.specify/templates/constitution-template.md`),
@@ -254,15 +254,15 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - remove the marker; support `--dry-run`, `--no-workflows` (touch nothing under `.github/workflows/`) and
     `--prune-workflows` (delete the dormant maintainer workflows; local use)
   - refuse in the Baton source repo (`GITHUB_REPOSITORY`/`origin` is `dermonaco-labs/baton`) unless `BATON_FORCE_CLEANUP=1`
-- [ ] T052 [US1] `.github/workflows/template-cleanup.yml`:
+- [x] T052 [US1] `.github/workflows/template-cleanup.yml`:
   - guard with `github.repository != 'dermonaco-labs/baton'` and the marker file
   - run `adopt --no-workflows` and commit as `github-actions[bot]` (`GITHUB_TOKEN` can't push workflow changes, R12)
   - the job summary tells the adopter they may run `baton adopt --prune-workflows` locally
   - if the push fails, fail with a message that says to run `baton adopt` locally
-- [ ] T053 [US1] `src/commands/doctor.mjs`: every check in `contracts/cli.md` (hooks registered, misplaced setup steps,
+- [x] T053 [US1] `src/commands/doctor.mjs`: every check in `contracts/cli.md` (hooks registered, misplaced setup steps,
   corrupted agents, prerequisites, integrity, and `W_PACK_RECOMMENDED` per packs.md rule 6, also emitted by
   `validate`). Supports `--strict` (which does not escalate `W_PACK_RECOMMENDED`).
-- [ ] T054 [US1] Generate `.baton/manifest.json` and `.baton/config.yml` for the repo itself (`npm run manifest`),
+- [x] T054 [US1] Generate `.baton/manifest.json` and `.baton/config.yml` for the repo itself (`npm run manifest`),
   and add `docs/brainstorms/.gitkeep` and `docs/solutions/.gitkeep`. The repo's own `config.checks` runs
   `npm run check`. The smoke S1 script passes (AC-US1-2).
 

@@ -108,8 +108,10 @@ ref, sync fails with a hard error (no silent drop).
 3. `init --packs X` installs the `requires` closure of X and refuses packs that are in each other's `conflicts`.
 4. `core` cannot be removed. `init --packs` always includes it.
 5. **`optional_refs` reasons (A6).** Every entry is `{ref, reason, note}`. `reason` is exactly one of:
-   - `upstream-absent`: the name does not exist in either pinned upstream tree. `sync` checks this against the
-     materialized snapshot; if the name *is* present at the pin, the reason is stale.
+   - `upstream-absent`: the name is not an installable resource in the pinned Spec Kit output or ATV scaffold
+     templates. `sync` checks those resource inventories after verifying the upstream commits and trees; if
+     the name *is* installable at the pin, the reason is stale. Upstream development-only `.github/skills/`
+     outside the ATV scaffold is not an installable resource.
    - `pack-provided:<pack-id>`: `<pack-id>` is an existing pack in `packs/` and installs a file with that name.
    - `excluded:C<n>`: the name is listed in § Excluded, that row cites `C<n>`, and no pack installs it. This third
      reason keeps settled exclusions expressible (see D18).
@@ -130,7 +132,7 @@ closure) plus the enhancement lists the old scanner missed. Upstream files are n
 | core · `ce-compound` | `compound` | absent (legacy self-name of `/ce-compound`) | `upstream-absent`; T074 | none, it means the skill itself |
 | core · `ce-compound` | `research` | absent (only `autoresearch`, a different skill) | `upstream-absent`; T074 | "Related commands" text only, nothing dispatched |
 | core · `ce-compound` | `cora-test-reviewer` | absent | `upstream-absent`; T074 | enhancement skipped |
-| core · `ce-compound`; research · `best-practices-researcher` | `every-style-editor` | absent | `upstream-absent`; T074 | enhancement skipped |
+| core · `ce-compound`; research · `best-practices-researcher` | `every-style-editor` | absent from installable scaffold (present in ATV development `.github/skills/`) | `upstream-absent`; T074 | enhancement skipped |
 | core · `ce-compound` | `security-sentinel` | present | `pack-provided:security` | optional Phase 3 enhancement skipped |
 | core · `ce-compound` | `best-practices-researcher`, `framework-docs-researcher` | present | `pack-provided:research` | enhancement skipped |
 | core · `ce-compound` | `kieran-rails-reviewer` | present | `pack-provided:stack-rails` | enhancement skipped |

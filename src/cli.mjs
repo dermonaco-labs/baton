@@ -3,9 +3,10 @@ import { resolve } from 'node:path';
 import { formatResult, BatonError } from './lib/report.mjs';
 
 const version = '0.1.0';
-const usage = 'baton [--cwd DIR] [--json|--github] [--quiet] <init|update|doctor|validate|status|handoff|models|adopt|uninstall|sync|lock|build> [options]';
+const usage = 'baton [--cwd DIR] [--json|--github] [--quiet] <init|update|doctor|validate|status|handoff|models|adopt|uninstall|sync|lock|build|manifest> [options]';
 const commands = {
   build: () => import('./commands/build.mjs'),
+  manifest: () => import('./commands/manifest.mjs'),
   lock: () => import('./commands/lock.mjs'),
   sync: () => import('./commands/sync.mjs'),
   validate: () => import('./commands/validate.mjs'),

@@ -43,52 +43,113 @@ files:
   - { from: atv, upstream_path: pkg/scaffold/templates/agents/repo-research-analyst.agent.md, path: .github/agents/repo-research-analyst.agent.md, role: plan-research }
 optional_refs:
   - ref: todo-create
+    reason: excluded:C4
     note: ce-review interactive/autofix only; baton-review always uses mode:headless.
   - ref: performance-reviewer
+    reason: pack-provided:review-plus
     note: Optional review-plus persona; baton-review passes only installed personas.
   - ref: api-contract-reviewer
+    reason: pack-provided:review-plus
     note: Optional review-plus persona; baton-review passes only installed personas.
   - ref: data-migrations-reviewer
+    reason: pack-provided:review-plus
     note: Optional review-plus persona; baton-review passes only installed personas.
   - ref: reliability-reviewer
+    reason: pack-provided:review-plus
     note: Optional review-plus persona; baton-review passes only installed personas.
   - ref: cli-readiness-reviewer
+    reason: pack-provided:review-plus
     note: Optional review-plus persona; baton-review passes only installed personas.
   - ref: previous-comments-reviewer
+    reason: pack-provided:review-plus
     note: Optional review-plus persona; baton-review passes only installed personas.
   - ref: schema-drift-detector
+    reason: pack-provided:review-plus
     note: Optional review-plus agent; baton-review passes only installed agents.
   - ref: deployment-verification-agent
+    reason: pack-provided:review-plus
     note: Optional review-plus agent; baton-review passes only installed agents.
   - ref: kieran-python-reviewer
+    reason: pack-provided:stack-python
     note: Optional stack-python persona; baton-review passes only installed personas.
   - ref: kieran-typescript-reviewer
+    reason: pack-provided:stack-typescript
     note: Optional stack-typescript persona; baton-review passes only installed personas.
   - ref: julik-frontend-races-reviewer
+    reason: pack-provided:stack-typescript
     note: Optional stack-typescript persona; baton-review passes only installed personas.
   - ref: dhh-rails-reviewer
+    reason: pack-provided:stack-rails
     note: Optional stack-rails persona; baton-review passes only installed personas.
   - ref: kieran-rails-reviewer
+    reason: pack-provided:stack-rails
     note: Optional stack-rails persona; baton-review passes only installed personas.
   - ref: ce-plan
+    reason: excluded:C2
     note: Upstream planning suggestion is overridden by the Baton phase owner speckit-plan (C2).
   - ref: document-review
+    reason: pack-provided:docs-review
     note: Advisory only and supplied by the optional docs-review pack; use speckit-checklist for requirements quality.
   - ref: ce-compound-refresh
+    reason: pack-provided:docs-review
     note: Optional docs-review refinement; ce-compound itself works without it.
   - ref: simplify
+    reason: upstream-absent
     note: ce-work explicitly permits reviewing the changed files instead when the skill is absent.
   - ref: lfg
+    reason: excluded:C6
     note: Autonomy shortcut is excluded; ce-work/ce-review merely recognize its optional invocation arguments.
   - ref: slfg
+    reason: excluded:C6
     note: Autonomy shortcut is excluded; ce-work/ce-review merely recognize its optional invocation arguments.
   - ref: takeoff
+    reason: excluded:C13
     note: Land references this optional start-of-session counterpart; Baton status replaces it.
   - ref: agent-browser
+    reason: excluded:C13
     note: Optional browser tool is excluded; ce-work can proceed without browser automation.
   - ref: git-commit
+    reason: excluded:C5
     note: Upstream optional Git convenience instruction; Baton landing delegates to land without a second Git extension.
   - ref: git-commit-push-pr
+    reason: excluded:C5
     note: Upstream optional Git convenience instruction; Baton landing delegates to land without a second Git extension.
   - ref: speckit-git-commit
+    reason: excluded:C5
     note: Spec Kit command templates cite this excluded git-extension command only as a hook example; Baton hooks and the phase commands work without it.
+  - ref: linting-agent
+    reason: upstream-absent
+    note: Not shipped at the pin; Baton runs its configured local lint checks instead.
+  - ref: compound
+    reason: upstream-absent
+    note: Legacy name for ce-compound; the installed phase owner remains ce-compound.
+  - ref: research
+    reason: upstream-absent
+    note: Related-command text only; no research command is dispatched.
+  - ref: cora-test-reviewer
+    reason: upstream-absent
+    note: Optional documentation enhancement cannot run at this pin.
+  - ref: every-style-editor
+    reason: upstream-absent
+    note: Optional documentation style enhancement cannot run at this pin.
+  - ref: security-sentinel
+    reason: pack-provided:security
+    note: Optional compound security review runs only with the security pack.
+  - ref: code-simplicity-reviewer
+    reason: pack-provided:review-plus
+    note: Optional compound review runs only with review-plus.
+  - ref: performance-oracle
+    reason: pack-provided:review-plus
+    note: Optional compound performance review runs only with review-plus.
+  - ref: data-integrity-guardian
+    reason: pack-provided:review-plus
+    note: Optional compound database review runs only with review-plus.
+  - ref: pattern-recognition-specialist
+    reason: pack-provided:review-plus
+    note: Optional compound pattern review runs only with review-plus.
+  - ref: best-practices-researcher
+    reason: pack-provided:research
+    note: Optional compound research runs only with the research pack.
+  - ref: framework-docs-researcher
+    reason: pack-provided:research
+    note: Optional compound reference review runs only with the research pack.

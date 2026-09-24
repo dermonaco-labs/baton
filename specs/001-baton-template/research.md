@@ -117,8 +117,9 @@ How D works:
 ## R5. Integration strategy: extension and hooks, not presets or patches
 
 - **Spec Kit side**: a Baton **extension** with commands `speckit.baton.receive` (entry check) and
-  `speckit.baton.handoff` (exit write), registered as **mandatory** `before_*`/`after_*` hooks on the 8 core
-  commands. The core Spec Kit prompts stay untouched, so upgrades stay clean.
+  `speckit.baton.handoff` (exit write), registered as **mandatory** `before_*`/`after_*` hooks on the seven gated
+  commands (specify, clarify, plan, tasks, analyze, implement, converge). `checklist` supports hooks upstream but is
+  not a Baton handoff phase. The core Spec Kit prompts stay untouched, so upgrades stay clean.
 - Presets were considered, for example appending a "Handoff" section to each command. They were rejected as the
   primary mechanism because they change the command text, and because `append` composition couples Baton to
   upstream prompt structure. A preset remains an option for template text additions (for example a
@@ -154,7 +155,9 @@ The full rules are in `contracts/conflict-rules.md`. Summary:
 | Instructions | SPECKIT markers in agent context | ATV-authored instructions template | Baton-owned `copilot-instructions.md` with a BATON marker section. The SPECKIT block is preserved. The ATV template text isn't copied. |
 | Hooks | `.github/hooks/speckit.json` (extension events) | `.github/hooks/copilot-hooks.json` observer | Both allowed. The observer only comes with the `learning` pack. |
 
-**Pinned closure investigation (Spec Kit 1.0.11, ATV `ad99673`).** An initial curated-resource scan materialized 114 locked files; core has 28 counted resources and `ce-brainstorm` does not require `brainstorming`. Checking optional `upstream-absent` reasons against the *entire* verified ATV tree then found `.github/skills/every-style-editor/SKILL.md` at commit `ad996736b879be87c7755df5c5017d5336203bbc` (tree `777a37ef9cf15f3a6fd6a3355cc3c945e8bb1c47`). This contradicts the A6 classification of `every-style-editor` as absent; `sync --check` now fails `E_DANGLING_REF`. Pack closure and materialization are pending a normative clarification; no upstream file or pin has been changed.
+**Pinned closure verification (Spec Kit 1.0.11, ATV `ad99673`).** Verified `sync` materialized 114 locked upstream files and checked all 11 packs in isolation. Core has 28 counted resources; `ce-brainstorm` does not require `brainstorming`. The ATV tree contains `.github/skills/every-style-editor/SKILL.md` as development tooling, but the pinned installable scaffold does not provide it. Per the clarified closure rule, `upstream-absent` applies to the installable inventory; the upstream file and pin remain unchanged.
+
+**Pinned runtime verification.** Spec Kit's `extension add --dev` generates `.specify/extensions.yml` with 14 `before_*`/`after_*` entries for the seven gated commands; each Baton hook is enabled, mandatory (`optional: false`) and unconditional (`condition: null`). With the pinned `--ignore-agent-tools` init flags it emits no `.github/copilot-instructions.md`, so Baton installs its own BATON section and preserves a SPECKIT section if one already exists. ATV `ce-review` always selects its six core personas and conditionally selects more, without its own missing-persona fallback; the `baton-review` wrapper restricts dispatch to installed personas and stops if upstream cannot honor the restriction. `mode:headless` emits a structured text finding envelope and a run artifact, not Baton JSON; the wrapper normalizes that output.
 
 ## R7. Model routing
 

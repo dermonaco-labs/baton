@@ -51,25 +51,18 @@ function referencedNames(text) {
     /(?:^|[\s(`])\/([a-z][a-z0-9-]+)(?=[\s)`]|$)/gm,
     /`([a-z][a-z0-9-]+)`\s+skill\b/g,
     /\b(?:agent|subagent_type|persona|reviewer)\s*:\s*[`"']?([a-z][a-z0-9-]+)(?![\w-])/gi,
-    /\b([a-z][a-z0-9-]+-(?:reviewer|analyst|sentinel|oracle|guardian|specialist|researcher|editor))\b/g,
+    /(?:`|\*\*)([a-z][a-z0-9-]+-(?:reviewer|analyst|sentinel|oracle|guardian|specialist|researcher|editor|agent))(?:`|\*\*)/g,
     /\b(?:use|run|invoke|dispatch|delegate to|call|spawn)\s+(?:the\s+)?([a-z][a-z0-9-]+-agent)\b/gi,
-    /(?<![\w.@])@([a-z][a-z0-9-]+)(?![\w.(])/g,
+    /(?<![\w.@])@([a-z][a-z0-9-]+)(?![\w(@-])/g,
     /\bcompound-engineering:[a-z0-9-]+:([a-z][a-z0-9-]+)/g,
     /\bspeckit\.([a-z][a-z0-9-.]+)/g,
   ];
+  const outsideCode = text.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '');
   for (const [index, regex] of patterns.entries()) {
-    for (const match of text.matchAll(regex)) {
+    for (const match of (index === 5 ? outsideCode : text).matchAll(regex)) {
       if (index === 2 && !/^[a-z][a-z0-9-]+$/.test(match[1])) continue;
       if (index === 3 && match[1] === 'cross-reviewer') continue;
-      if (index === 5) {
-        const lineStart = text.lastIndexOf('\n', match.index) + 1;
-        const lineEnd = text.indexOf('\n', match.index);
-        const line = text.slice(lineStart, lineEnd < 0 ? undefined : lineEnd);
-        const after = text.slice((match.index ?? 0) + match[0].length);
-        if (/^e\d+$/.test(match[1]) && /\bagent-browser\s+\w+\s+@e\d+\b/.test(line)) continue;
-        if (text[(match.index ?? 0) - 1] === '`' &&
-            /^(?:@\w+\b|`\s+(?:decorators?|declarations?|instead of|suffix)\b)/.test(after)) continue;
-      }
+      if (index === 5 && /^e\d+$/.test(match[1])) continue;
       const name = index === 7 ? `speckit-${match[1].replaceAll('.', '-')}` : match[1];
       found.add(name);
     }
@@ -78,15 +71,29 @@ function referencedNames(text) {
 }
 
 /**
- * @param {Map<string,{id:string,requires:string[],conflicts:string[],files:Array<{path:string}>,optional_refs?:Array<{ref:string,note:string}>}>} definitions
+ * @param {Map<string,{id:string,requires:string[],conflicts:string[],files:Array<{path:string}>,optional_refs?:Array<{ref:string,reason?:string,note:string}>}>} definitions
  * @param {string} id
  * @param {Map<string,string>} contents
+ * @param {{upstreamNames?:Set<string>,exclusions?:Map<string,string|string[]>}} [options]
  */
-export function validatePackClosure(definitions, id, contents) {
+export function validatePackClosure(definitions, id, contents, { upstreamNames, exclusions } = {}) {
   const closure = resolvePacks(definitions, [id]);
   const installed = new Set(closure.flatMap((pack) => definitions.get(pack)?.files.map((file) => installedName(file.path)).filter(Boolean) ?? []));
-  const optional = new Set(closure.flatMap((pack) => definitions.get(pack)?.optional_refs?.filter((ref) => ref.note)?.map((ref) => ref.ref) ?? []));
+  const optional = new Set();
   const errors = [];
+  for (const name of closure) {
+    for (const item of definitions.get(name)?.optional_refs ?? []) {
+      const provider = item.reason?.startsWith('pack-provided:') ? item.reason.slice('pack-provided:'.length) : '';
+      const valid = Boolean(item.ref && item.note && (
+        item.reason === 'upstream-absent' ? upstreamNames !== undefined && !upstreamNames.has(item.ref) :
+        provider ? definitions.get(provider)?.files.some((file) => installedName(file.path) === item.ref) :
+        item.reason?.startsWith('excluded:') ? (exclusions?.get(item.ref) ?? []).includes(item.reason.slice('excluded:'.length)) &&
+          ![...definitions.values()].some((pack) => pack.files.some((file) => installedName(file.path) === item.ref)) : false
+      ));
+      if (valid) optional.add(item.ref);
+      else errors.push({ code: 'E_DANGLING_REF', file: `packs/${name}.yml`, message: `Optional reference ${item.ref} has an invalid or unverifiable reason` });
+    }
+  }
   for (const pack of closure) {
     for (const file of definitions.get(pack)?.files ?? []) {
       const content = contents.get(file.path);
@@ -95,10 +102,49 @@ export function validatePackClosure(definitions, id, contents) {
         continue;
       }
       for (const reference of referencedNames(content)) {
-        if (installed.has(reference) || optional.has(reference)) continue;
+        if (installed.has(reference) || installed.has(`${reference}-reviewer`) ||
+            optional.has(reference) || optional.has(`${reference}-reviewer`)) continue;
         errors.push({ code: 'E_DANGLING_REF', file: file.path, message: `Reference ${reference} is not in ${id} + requires closure` });
       }
     }
   }
   return errors;
+}
+
+/**
+ * @param {Map<string,{id:string,requires:string[],conflicts:string[],files:Array<{path:string}>,optional_refs?:Array<{ref:string,reason?:string,note:string}>}>} definitions
+ * @param {string[]} installed
+ */
+export function recommendedPacks(definitions, installed) {
+  /** @type {Map<string,Set<string>>} */
+  const recommended = new Map();
+  for (const id of installed) {
+    for (const item of definitions.get(id)?.optional_refs ?? []) {
+      if (!item.reason?.startsWith('pack-provided:')) continue;
+      const provider = item.reason.slice('pack-provided:'.length);
+      if (installed.includes(provider)) continue;
+      if (!recommended.has(provider)) recommended.set(provider, new Set());
+      recommended.get(provider)?.add(item.ref);
+    }
+  }
+  return [...recommended].sort(([a], [b]) => a.localeCompare(b))
+    .map(([pack, refs]) => ({ pack, refs: [...refs].sort() }));
+}
+
+/** @param {string} root @param {{packs?:string[],recommended_packs?:Array<{pack:string,refs:string[]}>}|undefined} manifest */
+export async function missingRecommendations(root, manifest) {
+  try {
+    return recommendedPacks(await loadPacks(root), manifest?.packs ?? ['core']);
+  } catch (error) {
+    if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+    return (manifest?.recommended_packs ?? []).filter(({ pack }) => !manifest?.packs?.includes(pack));
+  }
+}
+
+/** @param {Array<{pack:string,refs:string[]}>} recommendations */
+export function recommendationWarnings(recommendations) {
+  return recommendations.map(({ pack, refs }) => ({
+    code: 'W_PACK_RECOMMENDED', file: '.baton/manifest.json',
+    message: `Recommended pack ${pack} is not installed: ${refs.join(', ')}`,
+  }));
 }

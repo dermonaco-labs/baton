@@ -57,53 +57,6 @@
       ],
       "format": "esm"
     },
-    "src/lib/upstream.mjs": {
-      "bytes": 6805,
-      "imports": [
-        {
-          "path": "node:crypto",
-          "kind": "import-statement",
-          "external": true
-        },
-        {
-          "path": "node:child_process",
-          "kind": "import-statement",
-          "external": true
-        },
-        {
-          "path": "node:fs",
-          "kind": "import-statement",
-          "external": true
-        },
-        {
-          "path": "node:path",
-          "kind": "import-statement",
-          "external": true
-        }
-      ],
-      "format": "esm"
-    },
-    "src/commands/lock.mjs": {
-      "bytes": 2662,
-      "imports": [
-        {
-          "path": "node:fs",
-          "kind": "import-statement",
-          "external": true
-        },
-        {
-          "path": "node:path",
-          "kind": "import-statement",
-          "external": true
-        },
-        {
-          "path": "src/lib/upstream.mjs",
-          "kind": "import-statement",
-          "original": "../lib/upstream.mjs"
-        }
-      ],
-      "format": "esm"
-    },
     "node_modules/yaml/dist/nodes/identity.js": {
       "bytes": 1794,
       "imports": [],
@@ -1683,8 +1636,29 @@
       ],
       "format": "cjs"
     },
+    "src/lib/manifest.mjs": {
+      "bytes": 1228,
+      "imports": [
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/hash.mjs",
+          "kind": "import-statement",
+          "original": "./hash.mjs"
+        }
+      ],
+      "format": "esm"
+    },
     "src/lib/packs.mjs": {
-      "bytes": 4551,
+      "bytes": 6988,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -1700,6 +1674,94 @@
           "path": "node_modules/yaml/dist/index.js",
           "kind": "import-statement",
           "original": "yaml"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/commands/manifest.mjs": {
+      "bytes": 2974,
+      "imports": [
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node_modules/yaml/dist/index.js",
+          "kind": "import-statement",
+          "original": "yaml"
+        },
+        {
+          "path": "src/lib/report.mjs",
+          "kind": "import-statement",
+          "original": "../lib/report.mjs"
+        },
+        {
+          "path": "src/lib/manifest.mjs",
+          "kind": "import-statement",
+          "original": "../lib/manifest.mjs"
+        },
+        {
+          "path": "src/lib/hash.mjs",
+          "kind": "import-statement",
+          "original": "../lib/hash.mjs"
+        },
+        {
+          "path": "src/lib/packs.mjs",
+          "kind": "import-statement",
+          "original": "../lib/packs.mjs"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/lib/upstream.mjs": {
+      "bytes": 6805,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/commands/lock.mjs": {
+      "bytes": 2662,
+      "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/upstream.mjs",
+          "kind": "import-statement",
+          "original": "../lib/upstream.mjs"
         }
       ],
       "format": "esm"
@@ -1721,7 +1783,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 18689,
+      "bytes": 20583,
       "imports": [
         {
           "path": "node:fs",
@@ -3525,27 +3587,6 @@
       ],
       "format": "esm"
     },
-    "src/lib/manifest.mjs": {
-      "bytes": 1228,
-      "imports": [
-        {
-          "path": "node:fs/promises",
-          "kind": "import-statement",
-          "external": true
-        },
-        {
-          "path": "node:path",
-          "kind": "import-statement",
-          "external": true
-        },
-        {
-          "path": "src/lib/hash.mjs",
-          "kind": "import-statement",
-          "original": "./hash.mjs"
-        }
-      ],
-      "format": "esm"
-    },
     "src/lib/phases.mjs": {
       "bytes": 11619,
       "imports": [
@@ -3594,7 +3635,7 @@
       "format": "esm"
     },
     "src/lib/handoff.mjs": {
-      "bytes": 10980,
+      "bytes": 12619,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3640,12 +3681,17 @@
           "path": "node_modules/yaml/dist/index.js",
           "kind": "dynamic-import",
           "original": "yaml"
+        },
+        {
+          "path": "node_modules/yaml/dist/index.js",
+          "kind": "dynamic-import",
+          "original": "yaml"
         }
       ],
       "format": "esm"
     },
     "src/lib/checks.mjs": {
-      "bytes": 11534,
+      "bytes": 12039,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3691,7 +3737,7 @@
       "format": "esm"
     },
     "src/commands/validate.mjs": {
-      "bytes": 8519,
+      "bytes": 10163,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3747,12 +3793,17 @@
           "path": "src/lib/checks.mjs",
           "kind": "import-statement",
           "original": "../lib/checks.mjs"
+        },
+        {
+          "path": "src/lib/packs.mjs",
+          "kind": "import-statement",
+          "original": "../lib/packs.mjs"
         }
       ],
       "format": "esm"
     },
     "src/commands/handoff.mjs": {
-      "bytes": 17687,
+      "bytes": 25825,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3839,7 +3890,7 @@
       "format": "esm"
     },
     "src/commands/adopt.mjs": {
-      "bytes": 7451,
+      "bytes": 13171,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3880,12 +3931,17 @@
           "path": "src/lib/hash.mjs",
           "kind": "import-statement",
           "original": "../lib/hash.mjs"
+        },
+        {
+          "path": "src/lib/packs.mjs",
+          "kind": "import-statement",
+          "original": "../lib/packs.mjs"
         }
       ],
       "format": "esm"
     },
     "src/commands/doctor.mjs": {
-      "bytes": 4031,
+      "bytes": 6852,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3921,6 +3977,21 @@
           "path": "src/lib/manifest.mjs",
           "kind": "import-statement",
           "original": "../lib/manifest.mjs"
+        },
+        {
+          "path": "src/lib/packs.mjs",
+          "kind": "import-statement",
+          "original": "../lib/packs.mjs"
+        },
+        {
+          "path": "src/lib/repairs.mjs",
+          "kind": "import-statement",
+          "original": "../lib/repairs.mjs"
+        },
+        {
+          "path": "src/lib/frontmatter.mjs",
+          "kind": "import-statement",
+          "original": "../lib/frontmatter.mjs"
         }
       ],
       "format": "esm"
@@ -3970,7 +4041,7 @@
       "format": "esm"
     },
     "src/cli.mjs": {
-      "bytes": 3642,
+      "bytes": 3704,
       "imports": [
         {
           "path": "node:path",
@@ -3986,6 +4057,11 @@
           "path": "src/commands/build.mjs",
           "kind": "dynamic-import",
           "original": "./commands/build.mjs"
+        },
+        {
+          "path": "src/commands/manifest.mjs",
+          "kind": "dynamic-import",
+          "original": "./commands/manifest.mjs"
         },
         {
           "path": "src/commands/lock.mjs",
@@ -4080,6 +4156,56 @@
           "external": true
         },
         {
+          "path": "process",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "buffer",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "process",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "process",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
           "path": "node:crypto",
           "kind": "import-statement",
           "external": true
@@ -4110,26 +4236,6 @@
           "external": true
         },
         {
-          "path": "process",
-          "kind": "require-call",
-          "external": true
-        },
-        {
-          "path": "buffer",
-          "kind": "require-call",
-          "external": true
-        },
-        {
-          "path": "process",
-          "kind": "require-call",
-          "external": true
-        },
-        {
-          "path": "process",
-          "kind": "require-call",
-          "external": true
-        },
-        {
           "path": "node:fs",
           "kind": "import-statement",
           "external": true
@@ -4141,11 +4247,6 @@
         },
         {
           "path": "node:fs/promises",
-          "kind": "import-statement",
-          "external": true
-        },
-        {
-          "path": "node:path",
           "kind": "import-statement",
           "external": true
         },
@@ -4299,12 +4400,6 @@
         },
         "src/commands/build.mjs": {
           "bytesInOutput": 2855
-        },
-        "src/lib/upstream.mjs": {
-          "bytesInOutput": 4146
-        },
-        "src/commands/lock.mjs": {
-          "bytesInOutput": 1656
         },
         "node_modules/yaml/dist/nodes/identity.js": {
           "bytesInOutput": 925
@@ -4522,14 +4617,26 @@
         "node_modules/yaml/dist/index.js": {
           "bytesInOutput": 814
         },
+        "src/lib/manifest.mjs": {
+          "bytesInOutput": 423
+        },
         "src/lib/packs.mjs": {
-          "bytesInOutput": 2193
+          "bytesInOutput": 3536
+        },
+        "src/commands/manifest.mjs": {
+          "bytesInOutput": 1827
+        },
+        "src/lib/upstream.mjs": {
+          "bytesInOutput": 4146
+        },
+        "src/commands/lock.mjs": {
+          "bytesInOutput": 1656
         },
         "src/lib/repairs.mjs": {
           "bytesInOutput": 1657
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 9420
+          "bytesInOutput": 10480
         },
         "node_modules/ajv/dist/compile/codegen/code.js": {
           "bytesInOutput": 2551
@@ -4819,9 +4926,6 @@
         "src/lib/frontmatter.mjs": {
           "bytesInOutput": 589
         },
-        "src/lib/manifest.mjs": {
-          "bytesInOutput": 221
-        },
         "src/lib/phases.mjs": {
           "bytesInOutput": 6837
         },
@@ -4829,25 +4933,25 @@
           "bytesInOutput": 1504
         },
         "src/lib/handoff.mjs": {
-          "bytesInOutput": 6061
+          "bytesInOutput": 7054
         },
         "src/lib/checks.mjs": {
-          "bytesInOutput": 6722
+          "bytesInOutput": 7114
         },
         "src/commands/validate.mjs": {
-          "bytesInOutput": 4757
+          "bytesInOutput": 5512
         },
         "src/commands/handoff.mjs": {
-          "bytesInOutput": 11183
+          "bytesInOutput": 15965
         },
         "src/commands/status.mjs": {
           "bytesInOutput": 937
         },
         "src/commands/adopt.mjs": {
-          "bytesInOutput": 4386
+          "bytesInOutput": 7376
         },
         "src/commands/doctor.mjs": {
-          "bytesInOutput": 2430
+          "bytesInOutput": 3799
         },
         "src/commands/init.mjs": {
           "bytesInOutput": 166
@@ -4862,10 +4966,10 @@
           "bytesInOutput": 171
         },
         "src/cli.mjs": {
-          "bytesInOutput": 2343
+          "bytesInOutput": 2403
         }
       },
-      "bytes": 336690
+      "bytes": 352463
     }
   }
 }

@@ -12,3 +12,11 @@ files:
   - { from: atv, upstream_path: pkg/scaffold/templates/agents/previous-comments-reviewer.agent.md, path: .github/agents/previous-comments-reviewer.agent.md }
   - { from: atv, upstream_path: pkg/scaffold/templates/agents/schema-drift-detector.agent.md, path: .github/agents/schema-drift-detector.agent.md }
   - { from: atv, upstream_path: pkg/scaffold/templates/agents/deployment-verification-agent.agent.md, path: .github/agents/deployment-verification-agent.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/code-simplicity-reviewer.agent.md, path: .github/agents/code-simplicity-reviewer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/performance-oracle.agent.md, path: .github/agents/performance-oracle.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/data-integrity-guardian.agent.md, path: .github/agents/data-integrity-guardian.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/pattern-recognition-specialist.agent.md, path: .github/agents/pattern-recognition-specialist.agent.md }
+optional_refs:
+  - ref: ce-plan
+    reason: excluded:C2
+    note: The plan phase uses speckit-plan instead of the upstream planning suggestion.

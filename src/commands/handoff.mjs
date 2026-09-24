@@ -67,7 +67,7 @@ function parseOptions(args) {
 async function locate(root, options) {
   if (options.quick && options.feature) throw new BatonError('E_USAGE', 'Use --quick or --feature, not both', 2);
   if (typeof options.quick === 'string') {
-    if (!/^[a-z0-9][a-z0-9-]*$/.test(options.quick)) throw new BatonError('E_USAGE', 'Quick slug must be kebab-case', 2);
+    if (!/^[a-z0-9][a-z0-9-]{0,47}[a-z0-9]$/.test(options.quick)) throw new BatonError('E_USAGE', 'Quick slug must be kebab-case (2-49 characters)', 2);
     return `.baton/quick/${options.quick}.md`;
   }
   if (typeof options.feature === 'string') {
@@ -92,6 +92,53 @@ export async function run(root, args) {
   }
   const options = parseOptions(rest);
   const path = await locate(root, options);
+  if (action === 'new' && typeof options.feature === 'string' || action === 'init') {
+    if (typeof options.feature !== 'string' || options.quick ||
+        (action === 'init' && !options.infer)) {
+      throw new BatonError('E_USAGE', 'Feature creation needs --feature; init also needs --infer', 2);
+    }
+    try {
+      await readFile(withinRoot(root, path));
+      throw new BatonError('E_CONFLICT', 'Feature baton already exists', 4);
+    } catch (error) {
+      if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+    }
+    const spec = `${dirname(path).replaceAll('\\', '/')}/spec.md`;
+    let digest;
+    try {
+      digest = await hashFile(withinRoot(root, spec));
+    } catch (error) {
+      if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+      return { errors: [{ code: 'E_MISSING_ARTIFACT', file: spec, message: 'The specification must exist before creating a feature baton' }], exitCode: 1 };
+    }
+    const { config: phases } = await loadPhases(root);
+    const inferred = action === 'init';
+    const now = new Date().toISOString();
+    const data = {
+      baton: 1, lane: 'feature', feature: options.feature, phase_completed: 'specify',
+      next_phase: 'clarify', next_owner: phases.phases.clarify.owner,
+      status: inferred ? 'needs-human' : 'ready', model_role: phases.phases.clarify.model_role,
+      suggested_model: await suggestedModel(root, phases.phases.clarify.model_role),
+      summary: inferred ? 'Confirm the inferred phase of the existing feature' : 'Specification ready for clarification',
+      read_first: [{ path: spec, why: 'Specification and scope', sha256: digest }],
+      artifacts: [{ path: spec, role: 'source-of-truth', sha256: digest }],
+      entry_checked: [], exit_criteria: /** @type {Awaited<ReturnType<typeof evaluateChecks>>} */ ([]),
+      open_questions: inferred ? [{
+        id: 'Q1', question: 'Is the existing specification complete and ready for clarification?',
+        blocking: true, options: ['Continue with clarification', 'Revise specification first'],
+      }] : [],
+      decisions: [], gate: { required: false, approved_by: null, approved_at: null },
+      history: [{ phase: 'specify', at: now, by: 'speckit-specify', commit: await commitId(root) }],
+      updated_at: now, updated_by: 'baton',
+    };
+    data.exit_criteria = await evaluateChecks(phaseForLane(phases.phases.specify, 'feature').exit,
+      (check) => evaluateBuiltIn(root, path, data, check));
+    const body = headingBody('speckit-clarify');
+    const errors = await validateHandoff(root, path, serializeFrontmatter(data, body));
+    if (errors.length) return { errors, exitCode: 1 };
+    await writeHandoff(root, path, data, body);
+    return { data: { path, next_phase: 'clarify', status: data.status } };
+  }
   if (action === 'new') {
     if (typeof options.quick !== 'string' || typeof options.reason !== 'string' || options.feature) throw new BatonError('E_USAGE', 'new requires --quick <slug> --reason <why>', 2);
     try {
@@ -115,6 +162,11 @@ export async function run(root, args) {
     await writeHandoff(root, path, data, headingBody('ce-work'));
     return { data: { path, next_phase: 'work' } };
   }
+  if (action === 'migrate') {
+    const { data } = await readHandoff(root, path);
+    if (data.baton !== 1) throw new BatonError('E_SCHEMA', `No migration is available for baton schema ${data.baton}`, 1);
+    return { data: { path, migrated: false, schema: 1 } };
+  }
   if (action === 'receive') {
     if (typeof options.phase !== 'string') throw new BatonError('E_USAGE', 'receive requires --phase', 2);
     const { data } = await readHandoff(root, path);
@@ -128,6 +180,9 @@ export async function run(root, args) {
     }
     if (data.gate?.required && !data.gate.approved_by) errors.push({ code: 'E_GATE_PENDING', file: path, message: 'Human approval is required before receiving this phase' });
     if (data.status === 'needs-human') errors.push({ code: 'E_BLOCKING_OPEN', file: path, message: 'A human decision is required' });
+    if (options.phase === 'land' && data.review?.blocking_findings > 0) {
+      errors.push({ code: 'E_REVIEW_BLOCKING', file: path, message: 'Resolve blocking review findings before landing' });
+    }
     if (!errors.length) {
       const checks = await evaluateChecks(phaseForLane(contract, data.lane).entry,
         (check) => evaluateBuiltIn(root, path, data, check));
@@ -136,6 +191,7 @@ export async function run(root, args) {
           : check.id.startsWith('fresh:') ? 'E_STALE_ARTIFACT'
           : check.id === 'acceptance-registered' ? 'E_NO_PREREG'
           : check.id === 'from-phase' || check.id === 'no-feature-tasks' ? 'E_TRANSITION'
+          : check.id === 'no-blocking-findings' ? 'E_REVIEW_BLOCKING'
           : check.id === 'no-blocking-questions' ? 'E_BLOCKING_OPEN' : 'E_MISSING_ARTIFACT';
         errors.push({ code, file: path, message: `${check.id} unmet: ${check.evidence}${check.members ? ` (${check.members.map((item) => `${item.id}: ${item.met}`).join(', ')})` : ''}` });
       }
@@ -179,8 +235,59 @@ export async function run(root, args) {
   }
   if (action === 'write') {
     if (typeof options.phase !== 'string' || typeof options['from-json'] !== 'string') throw new BatonError('E_USAGE', 'write requires --phase and --from-json', 2);
-    if (options['from-brainstorm'] || options['from-quick']) throw new BatonError('E_USAGE', 'Cross-source handoff evidence is not yet supported; no baton was changed', 2);
-    const { data, body } = await readHandoff(root, path);
+    const brainstorm = options['from-brainstorm'];
+    const quick = options['from-quick'];
+    if (brainstorm && quick) throw new BatonError('E_USAGE', 'Choose one source for the first feature handoff', 2);
+    if ((brainstorm || quick) && (options.phase !== 'specify' || typeof options.feature !== 'string')) {
+      throw new BatonError('E_USAGE', 'Cross-source evidence requires specify --feature', 2);
+    }
+    let data;
+    let body;
+    let sourceQuick;
+    if (brainstorm || quick) {
+      try {
+        await readFile(withinRoot(root, path));
+        throw new BatonError('E_CONFLICT', 'The first feature handoff already exists', 4);
+      } catch (error) {
+        if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+      }
+      const source = /** @type {string} */ (brainstorm ?? quick);
+      if (brainstorm && !/^docs\/brainstorms\/[^/]+\.md$/.test(source)) {
+        throw new BatonError('E_USAGE', 'Brainstorm source must be a document under docs/brainstorms', 2);
+      }
+      if (quick && !/^\.baton\/quick\/[a-z0-9][a-z0-9-]{1,48}\.md$/.test(source)) {
+        throw new BatonError('E_USAGE', 'Quick source must be a baton under .baton/quick', 2);
+      }
+      if (quick) {
+        const original = await readFile(withinRoot(root, source), 'utf8');
+        const parsed = await readHandoff(root, source);
+        const issues = await validateHandoff(root, source);
+        if (issues.length || parsed.data.lane !== 'quick' || parsed.data.status !== 'ready' ||
+            parsed.data.next_phase !== 'specify' || !['work', 'review'].includes(parsed.data.phase_completed)) {
+          return { errors: issues.length ? issues : [{ code: 'E_TRANSITION', file: source, message: 'Quick baton must be escalated from work or review first' }], exitCode: 1 };
+        }
+        sourceQuick = { source, original, ...parsed };
+      }
+      const digest = await hashFile(withinRoot(root, source));
+      const now = new Date().toISOString();
+      const origin = sourceQuick?.data.phase_completed ?? 'brainstorm';
+      data = {
+        baton: 1, lane: 'feature', feature: options.feature, phase_completed: origin,
+        next_phase: 'specify', next_owner: 'speckit-specify', status: 'ready',
+        model_role: 'planning', suggested_model: null, summary: 'First feature handoff',
+        read_first: [{ path: source, why: 'Source of the feature handoff' }],
+        artifacts: [{ path: source, role: 'evidence', sha256: digest }],
+        entry_checked: [], exit_criteria: [], open_questions: [], decisions: [],
+        gate: { required: false, approved_by: null, approved_at: null },
+        history: sourceQuick?.data.history?.length
+          ? [structuredClone(sourceQuick.data.history.at(-1))]
+          : [{ phase: 'brainstorm', at: now, by: 'ce-brainstorm', commit: null }],
+        updated_at: now, updated_by: 'baton',
+      };
+      body = headingBody('speckit-specify');
+    } else {
+      ({ data, body } = await readHandoff(root, path));
+    }
     const { config: phases, errors } = await loadPhases(root);
     if (errors.length) return { errors, exitCode: 1 };
     const contract = phases.phases[options.phase];
@@ -190,6 +297,13 @@ export async function run(root, args) {
     const allowed = new Set(['summary', 'read_first', 'do_not_read', 'artifacts', 'decisions', 'open_questions', 'assumptions', 'risks', 'acceptance_checks', 'review', 'analysis', 'pr']);
     if (!supplied || typeof supplied !== 'object' || Array.isArray(supplied) || Object.keys(supplied).some((key) => !allowed.has(key))) throw new BatonError('E_USAGE', 'Agent data contains unexpected or deterministic fields', 2);
     Object.assign(data, supplied);
+    if (brainstorm || quick) {
+      const source = /** @type {string} */ (brainstorm ?? quick);
+      const digest = await hashFile(withinRoot(root, source));
+      data.artifacts = [...(data.artifacts ?? []).filter((/** @type {{path:string}} */ item) => item.path !== source),
+        { path: source, role: 'evidence', sha256: digest }];
+      if (!data.read_first?.length) data.read_first = [{ path: source, why: 'Source of the feature handoff' }];
+    }
     if (typeof options['analysis-from'] === 'string') {
       if (options.phase !== 'analyze' || data.lane !== 'feature') throw new BatonError('E_USAGE', '--analysis-from requires feature analyze', 2);
       if (!data.analysis || !Number.isInteger(data.analysis.critical) || !Number.isInteger(data.analysis.high)) {
@@ -219,6 +333,36 @@ export async function run(root, args) {
     if (unmet.length) return { errors: unmet, data: { path, next_phase: next, exit_criteria: results } };
     const validation = await validateHandoff(root, path, serializeFrontmatter(data, body));
     if (validation.length) return { errors: validation, data: { path, next_phase: next, exit_criteria: results } };
+    if (sourceQuick) {
+      const closed = structuredClone(sourceQuick.data);
+      closed.status = 'done';
+      closed.next_phase = 'done';
+      closed.next_owner = 'none';
+      closed.decisions.push({
+        id: nextId(closed.decisions, 'D'), decision: `Escalated into ${dirname(path).replaceAll('\\', '/')}`,
+        rationale: 'The first feature handoff recorded the quick-lane evidence',
+        tag: 'escalated', by: 'baton',
+      });
+      closed.updated_at = new Date().toISOString();
+      closed.updated_by = 'baton';
+      let saved = false;
+      try {
+        await writeHandoff(root, sourceQuick.source, closed, sourceQuick.body);
+        for (const item of [...data.read_first, ...data.artifacts]) {
+          if (item.path === sourceQuick.source && item.sha256) item.sha256 = await hashFile(withinRoot(root, sourceQuick.source));
+        }
+        const closedValidation = await validateHandoff(root, sourceQuick.source);
+        const featureValidation = await validateHandoff(root, path, serializeFrontmatter(data, body));
+        if (closedValidation.length || featureValidation.length) {
+          return { errors: [...closedValidation, ...featureValidation], data: { path, next_phase: next } };
+        }
+        await writeHandoff(root, path, data, body);
+        saved = true;
+      } finally {
+        if (!saved) await writeFile(withinRoot(root, sourceQuick.source), sourceQuick.original);
+      }
+      return { errors: [], data: { path, next_phase: next, exit_criteria: results } };
+    }
     await writeHandoff(root, path, data, body);
     return { errors: unmet, data: { path, next_phase: next, exit_criteria: results } };
   }

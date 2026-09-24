@@ -5,14 +5,14 @@ feature: 001-baton-template
 phase_completed: analyze
 next_phase: implement
 next_owner: speckit-implement
-status: needs-human
+status: ready
 model_role: implementation
 suggested_model: gpt-6-sol
 summary: "Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analysis.md). Post-analyze amendments A1-A6 closed the gaps raised by implement: role-only approvals with a denylist scan (T100), any_of/all_of exit groups (T101), the quick lane (T102), per-pack closure incl. dispatched agents (A4), hyphenated approver words (A5) and reasoned optional_refs for names absent upstream or provided by packs (A6, T026). Now 102 tasks, 31 acceptance checks, constitution 1.0.1. The pre-code gate was approved by the repository owner via control-plane delegation."
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
-    sha256: ec9ace17949ca01d9f9d0b93fec0ddea7c9e4c2b2f8aa0f34e1b5c84da1f7814
+    sha256: f51cc07db2f08b6be4975dab7a67be0a05f1ef55121837810f38004db93038c2
   - path: specs/001-baton-template/plan.md
     why: structure, template disposition, key decisions, constitution check
     sha256: 53338c389d7a2452bdd4cebbb98c3b0c79628b541ad3c9368058e309e4c31f86
@@ -27,13 +27,13 @@ read_first:
     sha256: 3b4b30985a64f882ab3ea02876a6a4442ebab50005be3f4575d5542e1955f9cc
   - path: specs/001-baton-template/contracts/phase-contracts.md
     why: phase table, check ids, transition rules
-    sha256: 933326d0abfd56976c4f1c0b5dd426145bac651342bcb9d92f007e3fe54647be
+    sha256: d9395b14ddded8ba7eac84752fcb36acee7b9f397748487a9b8e58e6d9a089e7
   - path: specs/001-baton-template/contracts/cli.md
     why: commands, flags and exit codes (normative)
     sha256: 8041ef1180598b58f6c0ed0a3a3fd6482949d2fa02c1a7f45dac2dfefa82dff1
   - path: specs/001-baton-template/contracts/packs.md
     why: core file list, pack storage, closure rules
-    sha256: cf5146b39aa667c530eca45e900f197b20c9074cdfc92d982fbba63e12440c20
+    sha256: 75dcc68ac03b9caa0b731635e3ccfd5895ed0d00e05b19fca8cd6b438be4bbf4
   - path: specs/001-baton-template/contracts/conflict-rules.md
     why: Spec Kit vs ATV rules C1-C13 (T045)
     sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a
@@ -60,7 +60,7 @@ artifacts:
     sha256: c0f625c9d166b70568cc08594694e0f011105a4285edc1d5729538857a31fb6f
   - path: specs/001-baton-template/research.md
     role: evidence
-    sha256: 89b0626c94f94dc1f9b7276f0bea4c719888436b5585d3c30af570a6c7f1dde4
+    sha256: e9145d4fd79727f737ed04dad250208c3bc61ad18a85ee9d1492eaa43ccc9daf
   - path: specs/001-baton-template/plan.md
     role: source-of-truth
     sha256: 53338c389d7a2452bdd4cebbb98c3b0c79628b541ad3c9368058e309e4c31f86
@@ -72,13 +72,13 @@ artifacts:
     sha256: 3b4b30985a64f882ab3ea02876a6a4442ebab50005be3f4575d5542e1955f9cc
   - path: specs/001-baton-template/contracts/phase-contracts.md
     role: source-of-truth
-    sha256: 933326d0abfd56976c4f1c0b5dd426145bac651342bcb9d92f007e3fe54647be
+    sha256: d9395b14ddded8ba7eac84752fcb36acee7b9f397748487a9b8e58e6d9a089e7
   - path: specs/001-baton-template/contracts/conflict-rules.md
     role: source-of-truth
     sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a
   - path: specs/001-baton-template/contracts/packs.md
     role: source-of-truth
-    sha256: cf5146b39aa667c530eca45e900f197b20c9074cdfc92d982fbba63e12440c20
+    sha256: 75dcc68ac03b9caa0b731635e3ccfd5895ed0d00e05b19fca8cd6b438be4bbf4
   - path: specs/001-baton-template/contracts/cli.md
     role: source-of-truth
     sha256: 8041ef1180598b58f6c0ed0a3a3fd6482949d2fa02c1a7f45dac2dfefa82dff1
@@ -90,7 +90,7 @@ artifacts:
     sha256: 1ce6f86f51c89e87f3b5645da5778c9faf07eda7b735e07be652323b3ca32926
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: ec9ace17949ca01d9f9d0b93fec0ddea7c9e4c2b2f8aa0f34e1b5c84da1f7814
+    sha256: f51cc07db2f08b6be4975dab7a67be0a05f1ef55121837810f38004db93038c2
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: d3394921d7f5b9898695d0c9a18f9c308f34d56872c5c64d0509320a63e99e1d
@@ -362,15 +362,32 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Record verified A6 upstream resource contradiction without choosing a policy
     by: implementation-session
-open_questions:
-  - id: Q2
-    question: A6 classifies every-style-editor as upstream-absent, but verified ATV ad99673 contains .github/skills/every-style-editor/SKILL.md. Should the classification or definition of upstream-absent change, and how should the core and research references degrade?
-    blocking: true
-    owner: repository owner
-    options:
-      - Amend A6 to distinguish the installable scaffold from other files in the pinned tree
-      - Assign every-style-editor to a named optional pack and update the reference reasons
-      - Exclude every-style-editor with a cited conflict-rule decision
+  - id: D22
+    tag: pin-resource-inventory
+    decision: Classify upstream-absent against verified installable resources rather than development-only upstream tooling
+    rationale: ATV ad99673 contains every-style-editor under its development .github/skills tree but not in pkg/scaffold/templates; A6 classifies the installable enhancement as absent
+    by: implementation-session
+  - id: D23
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Clarify verified installable pin inventory for A6
+    by: implementation-session
+  - id: D24
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Clarify quick reviewer scope evidence in phase contract
+    by: implementation-session
+  - id: D25
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Require independently verified analysis severity and reviewer scope evidence
+    by: implementation-session
+  - id: D26
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Completed relay and adoption task checkboxes after pinned verification
+    by: implementation-session
+  - id: D27
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Recorded verified MVP tasks and corrected seven-hook runtime evidence
+    by: implementation-session
+open_questions: []
 assumptions:
   - id: AS1
     text: The spec assumptions A1-A9 hold (re-checked at analyze, unchanged)
@@ -418,7 +435,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-24T12:02:36.561Z
+updated_at: 2026-09-24T13:32:36.572Z
 updated_by: implementation-session
 ---
 ## Goal

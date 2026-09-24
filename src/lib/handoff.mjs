@@ -52,6 +52,25 @@ export function actorRole(value, vocabulary) {
   return !value.startsWith('human:') || vocabulary.roles.some((role) => `human:${role.replaceAll(' ', '-')}` === value);
 }
 
+/** @param {string} root @param {string} path @param {unknown} model */
+export async function modelPolicyIssue(root, path, model) {
+  if (typeof model !== 'string' || !model) return null;
+  let config;
+  try {
+    const { default: YAML } = await import('yaml');
+    config = YAML.parse(await readFile(withinRoot(root, '.baton/config.yml'), 'utf8'));
+  } catch (error) {
+    if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return null;
+    throw error;
+  }
+  const { allowed, enforce } = config.models ?? {};
+  if (!Array.isArray(allowed) || !allowed.length || enforce === 'off' || allowed.includes(model)) return null;
+  return {
+    code: enforce === 'error' ? 'E_MODEL_NOT_ALLOWED' : 'W_MODEL_NOT_ALLOWED',
+    file: path, message: `Suggested model ${model} is not in models.allowed`,
+  };
+}
+
 /** @param {string} root @param {string} path @param {string} [source] */
 export async function validateHandoff(root, path, source) {
   /** @type {Array<{code:string,file:string,message:string,pointer?:string,fix?:string}>} */
@@ -108,9 +127,13 @@ export async function validateHandoff(root, path, source) {
   if (data.status === 'ready' && /** @type {Array<{met:boolean}>} */ (data.exit_criteria ?? []).some((check) => !check.met)) {
     errors.push({ code: 'E_EXIT_UNMET', file: path, message: 'Ready handoff has unmet exit criteria' });
   }
+  const modelIssue = await modelPolicyIssue(root, path, data.suggested_model);
+  if (modelIssue?.code === 'E_MODEL_NOT_ALLOWED') errors.push(modelIssue);
   const completed = phases.phases[data.phase_completed];
   const target = phases.phases[data.next_phase];
-  if (completed && !phaseForLane(completed, data.lane).next.includes(data.next_phase)) {
+  if (completed && !phaseForLane(completed, data.lane).next.includes(data.next_phase) &&
+    !(data.lane === 'quick' && data.status === 'done' && data.next_phase === 'done' &&
+      ['work', 'review'].includes(data.phase_completed) && decisionsHaveTag(data.decisions, 'escalated'))) {
     errors.push({ code: 'E_TRANSITION', file: path, message: 'Next phase is not an allowed transition' });
   }
   if (target && !target.lane.includes(data.lane) && !(data.lane === 'quick' && data.next_phase === 'specify' &&
@@ -178,7 +201,15 @@ export async function validateHandoff(root, path, source) {
       errors.push({ code: 'E_MISSING_ARTIFACT', file: tasksPath, message: 'Tasks are required for implement' });
     }
   }
-  return errors;
+  const covered = [
+    ['E_BLOCKING_OPEN', new Set(['/open_questions', '/status'])],
+    ['E_EXIT_UNMET', new Set(['/exit_criteria'])],
+    ['E_PR_MISSING', new Set(['/pr'])],
+  ];
+  return errors.filter((entry) => entry.code !== 'E_SCHEMA' || !covered.some(([code, pointers]) =>
+    errors.some((issue) => issue.code === code) &&
+    (/** @type {Set<string>} */ (pointers).has(entry.pointer ?? '') ||
+      (entry.pointer === '/' && entry.message.includes('must match "then" schema')))));
 }
 
 /** @param {Array<{tag?:string}> | undefined} decisions @param {string} tag */

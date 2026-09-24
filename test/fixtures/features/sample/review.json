@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": "specs/001-sample/review.json"
+  },
+  "base": "1111111",
+  "head": "2222222",
+  "personas": ["correctness"],
+  "findings": []
+}

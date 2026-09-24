@@ -82,7 +82,6 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
   const decisions = /** @type {Array<{id:string,tag?:string,rationale?:string}>} */ (data.decisions ?? []);
   const accepted = /** @type {Array<{story:string,id:string}>} */ (data.acceptance_checks ?? []);
   const artifacts = /** @type {Array<{path:string,sha256:string}>} */ (data.artifacts ?? []);
-  const criteria = /** @type {Array<{id:string,met:boolean,evidence?:string}>} */ (data.exit_criteria ?? []);
   switch (check.id) {
     case 'artifact-exists':
       return answer(await matches(root, path(check.path ?? '')), check.path);
@@ -135,7 +134,18 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
       `registered: ${accepted.length}, stories: ${stories.length}`);
     }
     case 'analysis-recorded': return answer(data.analysis?.report_path && await exists(root, data.analysis.report_path), data.analysis?.report_path);
-    case 'no-critical-findings': return answer(data.analysis?.critical === 0 && data.analysis?.report_path && await exists(root, data.analysis.report_path), `critical: ${data.analysis?.critical ?? 'unknown'}`);
+    case 'no-critical-findings': {
+      const report = data.analysis?.report_path && await optionalText(root, data.analysis.report_path);
+      if (!report) return answer(false, 'Analysis report is missing');
+      const summary = /^\|\s*Findings remaining open\s*\|\s*([^|\n]+)\|/im.exec(report)?.[1];
+      const count = summary && /\bCRITICAL\s*:?\s*(\d+)\b/i.exec(summary)?.[1];
+      if (typeof count === 'string') {
+        return answer(data.analysis.critical === Number(count) && Number(count) === 0,
+          `report CRITICAL ${count}; baton CRITICAL ${data.analysis.critical}`);
+      }
+      return answer(data.analysis.critical === 0 && data.analysis['x-critical-evidence']?.trim(),
+        data.analysis['x-critical-evidence'] ?? 'Analysis severity could not be parsed; explicit evidence required');
+    }
     case 'tasks-all-checked-or-deferred': {
       const outstanding = (await text('tasks.md') ?? '').split('\n').filter((line) => /^\s*-\s+\[ \]\s+T\d{3}/.test(line) && !/\bDEFERRED\b/.test(line));
       return answer(outstanding.length === 0, `${outstanding.length} outstanding tasks`);
@@ -193,8 +203,8 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
     case 'no-blocking-findings': return answer(data.review?.blocking_findings === 0, `blocking: ${data.review?.blocking_findings ?? 'unknown'}`);
     case 'pr-opened': return answer(Boolean(data.pr?.url), data.pr?.url ?? 'PR URL missing');
     case 'quick-scope-held': {
-      const verified = criteria.find((item) => item.id === check.id);
-      return answer(verified?.met && verified.evidence?.trim(), verified?.evidence ?? 'Explicit reviewer scope evidence required');
+      const verified = decisions.find((item) => item.tag === 'quick-scope-held' && item.rationale?.trim());
+      return answer(verified, verified?.rationale ?? 'Explicit reviewer scope decision required');
     }
     default: throw new Error(`E_CHECK_UNKNOWN: ${check.id}`);
   }

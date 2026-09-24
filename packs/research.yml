@@ -10,4 +10,8 @@ files:
   - { from: atv, upstream_path: pkg/scaffold/templates/agents/issue-intelligence-analyst.agent.md, path: .github/agents/issue-intelligence-analyst.agent.md }
 optional_refs:
   - ref: ce-ideate
+    reason: excluded:C13
     note: Mentioned only in an agent usage example; issue-intelligence-analyst supports direct invocation and does not dispatch ce-ideate.
+  - ref: every-style-editor
+    reason: upstream-absent
+    note: Documentation style enhancement is unavailable at the pinned upstream.

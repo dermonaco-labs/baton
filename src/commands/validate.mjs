@@ -3,12 +3,13 @@ import { join, relative, extname } from 'node:path';
 import YAML from 'yaml';
 import { BatonError } from '../lib/report.mjs';
 import { loadSchemas, validateSchema } from '../lib/schema.mjs';
-import { validateHandoff } from '../lib/handoff.mjs';
+import { validateHandoff, modelPolicyIssue } from '../lib/handoff.mjs';
 import { parseFrontmatter } from '../lib/frontmatter.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
 import { scanPersonalData, denylistTerms, isLicenseNotice } from '../lib/denylist.mjs';
 import { loadPhases } from '../lib/phases.mjs';
 import { changedFiles } from '../lib/checks.mjs';
+import { missingRecommendations, recommendationWarnings } from '../lib/packs.mjs';
 
 /** @param {string} directory @returns {AsyncGenerator<string>} */
 async function* walk(directory) {
@@ -54,6 +55,15 @@ export async function run(root, args) {
   const terms = await denylistTerms(root);
   const errors = [];
   const warnings = [];
+  let manifest;
+  try {
+    manifest = JSON.parse(await readFile(withinRoot(root, '.baton/manifest.json'), 'utf8'));
+  } catch (error) {
+    if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') {
+      errors.push({ code: 'E_MANIFEST', file: '.baton/manifest.json', message: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  warnings.push(...recommendationWarnings(await missingRecommendations(root, manifest)));
   const changedPaths = changed ? await changedFiles(root) : null;
   if (changed && changedPaths === null) throw new BatonError('E_PREREQUISITE', '--changed requires a reachable origin/HEAD merge-base', 5);
   const locations = selected ? [withinRoot(root, selected)] : changedPaths !== null ? changedPaths.map((path) => withinRoot(root, path)) : [
@@ -106,7 +116,29 @@ export async function run(root, args) {
       continue;
     }
     if (/(?:^|\/)handoff\.md$/.test(path) || /^\.baton\/quick\/[^/]+\.md$/.test(path)) {
-      errors.push(...await validateHandoff(root, path));
+      const issues = await validateHandoff(root, path);
+      errors.push(...issues);
+      if (!issues.some((issue) => issue.code === 'E_FRONTMATTER_MALFORMED')) {
+        const { data } = parseFrontmatter(await readFile(absolute, 'utf8'));
+        const modelIssue = await modelPolicyIssue(root, path, data.suggested_model);
+        if (modelIssue?.code === 'W_MODEL_NOT_ALLOWED') warnings.push(modelIssue);
+        if (data.lane === 'quick') {
+          let config;
+          try {
+            config = YAML.parse(await readFile(withinRoot(root, '.baton/config.yml'), 'utf8'));
+          } catch (error) {
+            if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+          }
+          const limit = config?.lanes?.quick?.max_files_changed;
+          if (Number.isInteger(limit)) {
+            const files = changedPaths ?? await changedFiles(root);
+            if (files && files.length > limit) {
+              warnings.push({ code: 'W_QUICK_LARGE', file: path,
+                message: `Quick-lane diff has ${files.length} files; configured maximum is ${limit}` });
+            }
+          }
+        }
+      }
     } else if (/^\.github\/skills\/[^/]+\/SKILL\.md$/.test(path) || /^\.github\/agents\/[^/]+\.agent\.md$/.test(path)) {
       const type = path.endsWith('/SKILL.md') ? 'skill-frontmatter' : 'agent-frontmatter';
       try {

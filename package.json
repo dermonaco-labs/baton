@@ -15,7 +15,7 @@
     "lint:md": "markdownlint-cli2 \"README.md\" \"specs/**/*.md\" \".specify/memory/constitution.md\" \"baton/**/*.md\" \"docs/**/*.md\" \"THIRD_PARTY_NOTICES.md\"",
     "lint:yaml": "uvx --from yamllint==1.37.1 yamllint -c .yamllint.yml .baton packs baton .github/workflows",
     "typecheck": "tsc --noEmit",
-    "test": "node --test test/unit/*.test.mjs test/integration/*.test.mjs",
+    "test": "node --test --test-concurrency=2 test/unit/*.test.mjs test/integration/*.test.mjs",
     "manifest": "node .baton/bin/baton.mjs manifest"
   },
   "dependencies": {

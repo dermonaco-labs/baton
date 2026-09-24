@@ -125,10 +125,12 @@ findings file is `.baton/quick/<slug>.review.json`. `{quick_dir}` in check paths
   `feature` equal to the slug (conflict rule C3).
 - `findings-fixed-or-dismissed` (quick lane): every finding in review.json has `disposition` `fixed`, or `dismissed`
   with a `reason` (there are no tasks to map to).
-- `quick-scope-held` (quick lane): the reviewer recorded no new user-facing behaviour or public contract. If unmet,
-  the error is `E_LANE_ESCALATE`.
-- `no-critical-findings`: parses the analysis.md table for CRITICAL severity (the Spec Kit analyze output format).
-  If parsing fails, the agent must set the result explicitly and the validator requires evidence text.
+- `quick-scope-held` (quick lane): the reviewer records a reasoned `decisions[]` entry tagged
+  `quick-scope-held` after checking the diff adds no user-facing behaviour or public contract. Exit evidence cannot
+  assert this check itself. If unmet, the error is `E_LANE_ESCALATE`.
+- `no-critical-findings`: parses the analysis.md `Findings remaining open` row for CRITICAL severity (the Spec Kit
+  analyze output format) and compares it with `analysis.critical`. If parsing fails, the agent must set
+  `analysis.x-critical-evidence` with explicit review evidence; a zero declaration alone cannot pass.
 
 ## Transition rules
 

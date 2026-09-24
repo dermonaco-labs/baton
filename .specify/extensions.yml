@@ -1,0 +1,131 @@
+installed:
+- baton
+settings:
+  auto_execute_hooks: true
+hooks:
+  before_specify:
+  - extension: baton
+    command: speckit.baton.receive
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.receive?
+    description: ''
+    condition: null
+  after_specify:
+  - extension: baton
+    command: speckit.baton.handoff
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.handoff?
+    description: ''
+    condition: null
+  before_clarify:
+  - extension: baton
+    command: speckit.baton.receive
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.receive?
+    description: ''
+    condition: null
+  after_clarify:
+  - extension: baton
+    command: speckit.baton.handoff
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.handoff?
+    description: ''
+    condition: null
+  before_plan:
+  - extension: baton
+    command: speckit.baton.receive
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.receive?
+    description: ''
+    condition: null
+  after_plan:
+  - extension: baton
+    command: speckit.baton.handoff
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.handoff?
+    description: ''
+    condition: null
+  before_tasks:
+  - extension: baton
+    command: speckit.baton.receive
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.receive?
+    description: ''
+    condition: null
+  after_tasks:
+  - extension: baton
+    command: speckit.baton.handoff
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.handoff?
+    description: ''
+    condition: null
+  before_analyze:
+  - extension: baton
+    command: speckit.baton.receive
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.receive?
+    description: ''
+    condition: null
+  after_analyze:
+  - extension: baton
+    command: speckit.baton.handoff
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.handoff?
+    description: ''
+    condition: null
+  before_implement:
+  - extension: baton
+    command: speckit.baton.receive
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.receive?
+    description: ''
+    condition: null
+  after_implement:
+  - extension: baton
+    command: speckit.baton.handoff
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.handoff?
+    description: ''
+    condition: null
+  before_converge:
+  - extension: baton
+    command: speckit.baton.receive
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.receive?
+    description: ''
+    condition: null
+  after_converge:
+  - extension: baton
+    command: speckit.baton.handoff
+    enabled: true
+    optional: false
+    priority: 10
+    prompt: Execute speckit.baton.handoff?
+    description: ''
+    condition: null

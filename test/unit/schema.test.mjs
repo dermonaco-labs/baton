@@ -22,3 +22,17 @@ test('findings fixture validates and invalid fixture reports a JSON pointer', as
   assert.ok(errors.length > 0);
   assert.ok(errors.every((error) => error.code === 'E_SCHEMA' && error.pointer.startsWith('/')));
 });
+
+test('pack schema requires a classified reason for every optional reference', async () => {
+  const registry = await loadSchemas(root);
+  const pack = {
+    schema: 1, id: 'core', description: 'Minimal relay', requires: [], conflicts: [],
+    files: [{ from: 'baton', path: '.github/skills/baton/SKILL.md' }],
+    optional_refs: [{ ref: 'missing-agent', note: 'not at pin' }],
+  };
+  assert.ok(validateSchema(registry, 'pack', pack).length);
+  pack.optional_refs[0].reason = 'upstream-absent';
+  assert.deepEqual(validateSchema(registry, 'pack', pack), []);
+  pack.optional_refs[0].reason = 'arbitrary';
+  assert.ok(validateSchema(registry, 'pack', pack).length);
+});
