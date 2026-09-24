@@ -5,7 +5,7 @@ feature: 001-baton-template
 phase_completed: analyze
 next_phase: implement
 next_owner: speckit-implement
-status: ready
+status: needs-human
 model_role: implementation
 suggested_model: gpt-6-sol
 summary: "Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analysis.md). Post-analyze amendments A1-A6 closed the gaps raised by implement: role-only approvals with a denylist scan (T100), any_of/all_of exit groups (T101), the quick lane (T102), per-pack closure incl. dispatched agents (A4), hyphenated approver words (A5) and reasoned optional_refs for names absent upstream or provided by packs (A6, T026). Now 102 tasks, 31 acceptance checks, constitution 1.0.1. The pre-code gate was approved by the repository owner via control-plane delegation."
@@ -21,7 +21,7 @@ read_first:
     sha256: d3394921d7f5b9898695d0c9a18f9c308f34d56872c5c64d0509320a63e99e1d
   - path: specs/001-baton-template/data-model.md
     why: baton, phase, config, pack, lock, manifest and findings shapes
-    sha256: df52a0ec38762e7b82571744a487d664b462690030148698dac165fe2c78ed7b
+    sha256: 533817b9fa44a312103a924eff7b26f1bc750335080db8c825fcec8f4bbb2a7b
   - path: specs/001-baton-template/contracts/handoff-contract.md
     why: validator rules and stable error codes
     sha256: 3b4b30985a64f882ab3ea02876a6a4442ebab50005be3f4575d5542e1955f9cc
@@ -60,13 +60,13 @@ artifacts:
     sha256: c0f625c9d166b70568cc08594694e0f011105a4285edc1d5729538857a31fb6f
   - path: specs/001-baton-template/research.md
     role: evidence
-    sha256: edc20bbae358ab515baed4cdff5328565abbff768a33602f3c912a6d161229c5
+    sha256: 89b0626c94f94dc1f9b7276f0bea4c719888436b5585d3c30af570a6c7f1dde4
   - path: specs/001-baton-template/plan.md
     role: source-of-truth
     sha256: 53338c389d7a2452bdd4cebbb98c3b0c79628b541ad3c9368058e309e4c31f86
   - path: specs/001-baton-template/data-model.md
     role: source-of-truth
-    sha256: df52a0ec38762e7b82571744a487d664b462690030148698dac165fe2c78ed7b
+    sha256: 533817b9fa44a312103a924eff7b26f1bc750335080db8c825fcec8f4bbb2a7b
   - path: specs/001-baton-template/contracts/handoff-contract.md
     role: source-of-truth
     sha256: 3b4b30985a64f882ab3ea02876a6a4442ebab50005be3f4575d5542e1955f9cc
@@ -354,7 +354,23 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Merge approved A6 and reconcile D17-D18 with updated planning artifacts
     by: implementation-session
-open_questions: []
+  - id: D20
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record verified A6 pack closure and derived recommendation metadata
+    by: implementation-session
+  - id: D21
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record verified A6 upstream resource contradiction without choosing a policy
+    by: implementation-session
+open_questions:
+  - id: Q2
+    question: A6 classifies every-style-editor as upstream-absent, but verified ATV ad99673 contains .github/skills/every-style-editor/SKILL.md. Should the classification or definition of upstream-absent change, and how should the core and research references degrade?
+    blocking: true
+    owner: repository owner
+    options:
+      - Amend A6 to distinguish the installable scaffold from other files in the pinned tree
+      - Assign every-style-editor to a named optional pack and update the reference reasons
+      - Exclude every-style-editor with a cited conflict-rule decision
 assumptions:
   - id: AS1
     text: The spec assumptions A1-A9 hold (re-checked at analyze, unchanged)
@@ -402,7 +418,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-24T11:26:42.483Z
+updated_at: 2026-09-24T12:02:36.561Z
 updated_by: implementation-session
 ---
 ## Goal
