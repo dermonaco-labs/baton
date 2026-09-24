@@ -75,7 +75,9 @@ files and have no unfinished dependencies. Paths are repo-relative.
   every feature-lane phase in the default `phases.yml` has ≥ 1 entry check and ≥ 1 exit check (`brainstorm` is
   exempt from entry).
 - [ ] T020 Write `packs/core.yml`, the ten optional packs and `packs/repairs.yml`, exactly as in `contracts/packs.md`.
-  Every core entry has a `role`.
+  Every core entry has a `role`. Every `optional_refs` entry has a `reason` and a `note`, and the A6 additions
+  (`review-plus`: code-simplicity-reviewer, performance-oracle, data-integrity-guardian, pattern-recognition-specialist;
+  `design`: design-iterator) are included, as in `contracts/packs.md` § Reference classification at the pin.
 - [ ] T021 Create the `baton/speckit-extension/` skeleton:
   - `extension.yml` defines the commands `speckit.baton.receive` and `speckit.baton.handoff`
   - mandatory (`optional: false`, no `condition`) `before_*` and `after_*` hooks for specify, clarify, plan, tasks,
@@ -112,6 +114,13 @@ files and have no unfinished dependencies. Paths are repo-relative.
     raise `E_DANGLING_REF`. Test in `test/unit/packs.test.mjs`: every shipped pack is closed over itself plus its
     `requires`, and a `docs-review` fixture without `adversarial-document-reviewer` fails with `E_DANGLING_REF`
     (AC-US2-4). **The test must fail first.**
+  - A6 reasons and scanner precision (packs.md closure rules 1, 5, 6): validate each `optional_refs.reason`
+    (`upstream-absent` checked against the materialized pinned trees, `pack-provided:<id>` against `packs/`,
+    `excluded:C<n>` against § Excluded) and compute recommended packs. `packs.test.mjs` cases: shipped `core` closes
+    with its reasoned `optional_refs` (incl. `linting-agent`, `compound`, `research`); a fixture entry without
+    `reason`, with `pack-provided:nope`, or with `upstream-absent` for a name present at the pin fails
+    `E_DANGLING_REF`; backticked `@tool` / `@font-face` are not references; a backticked `performance-oracle` in a
+    list is one (AC-US2-5). **The test must fail first.**
   - Check upstream LICENSE files and raise `E_LICENSE`.
   - Decide from the closure result whether `brainstorming` joins `core` (#29).
   - Record the result in research.md R6.
@@ -251,7 +260,8 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - the job summary tells the adopter they may run `baton adopt --prune-workflows` locally
   - if the push fails, fail with a message that says to run `baton adopt` locally
 - [ ] T053 [US1] `src/commands/doctor.mjs`: every check in `contracts/cli.md` (hooks registered, misplaced setup steps,
-  corrupted agents, prerequisites, integrity). Supports `--strict`.
+  corrupted agents, prerequisites, integrity, and `W_PACK_RECOMMENDED` per packs.md rule 6, also emitted by
+  `validate`). Supports `--strict` (which does not escalate `W_PACK_RECOMMENDED`).
 - [ ] T054 [US1] Generate `.baton/manifest.json` and `.baton/config.yml` for the repo itself (`npm run manifest`),
   and add `docs/brainstorms/.gitkeep` and `docs/solutions/.gitkeep`. The repo's own `config.checks` runs
   `npm run check`. The smoke S1 script passes (AC-US1-2).
@@ -314,8 +324,10 @@ files and have no unfinished dependencies. Paths are repo-relative.
   never pushes (AC-US5-3). It also runs `baton sync --check` (FR-072, AS3).
 - [ ] T073 [P] [US5] `.github/ISSUE_TEMPLATE/upstream-bump.yml`.
 - [ ] T074 [US5] Draft an issue for All-The-Vibes/ATV-StarterKit that asks for a release containing f0a86ef (the agent
-  frontmatter fix), in `specs/001-baton-template/upstream-issue-draft.md`. **The owner files it.** Agents must not
-  post to third-party repos.
+  frontmatter fix), in `specs/001-baton-template/upstream-issue-draft.md`. It also lists the names referenced at the
+  pin but absent upstream (A6): `linting-agent` (ce-work), `compound`, `research`, `cora-test-reviewer`,
+  `every-style-editor` (ce-compound, best-practices-researcher) and `cso` (atv-security). **The owner files it.**
+  Agents must not post to third-party repos.
 
 ## Phase 8: User Story 6 — Public manual (P2)
 
@@ -397,6 +409,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
 | AC-US2-2 | US2 | init.test "idempotent rerun" case | test-id | fail |
 | AC-US2-3 | US2 | init.test "`--packs core,learning`" case | test-id | fail |
 | AC-US2-4 | US2 | packs.test "per-pack closure; docs-review without adversarial-document-reviewer → E_DANGLING_REF" | test-id | fail |
+| AC-US2-5 | US2 | packs.test "core closes with reasoned optional_refs; reason-less / unknown-pack / stale upstream-absent → E_DANGLING_REF; @ in code is not a ref" | test-id | fail |
 | AC-US3-1 | US3 | `node --test test/unit/validate-handoff.test.mjs` | test-id | fail |
 | AC-US3-2 | US3 | relay.test "gate pending exits 3" | test-id | fail |
 | AC-US3-3 | US3 | relay.test "stale artifact then refresh" | test-id | fail |

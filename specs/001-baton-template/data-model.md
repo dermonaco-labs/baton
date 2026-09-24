@@ -254,12 +254,24 @@ files:
     upstream_path: pkg/scaffold/templates/agents/correctness-reviewer.agent.md
     path: .github/agents/correctness-reviewer.agent.md
     role: review-persona:always
-optional_refs:
+optional_refs:                # A6: every entry needs a reason (contracts/packs.md closure rule 5)
   - ref: performance-reviewer
+    reason: pack-provided:review-plus
     note: ce-review selects only installed personas (baton-review passes the list)
+  - ref: linting-agent
+    reason: upstream-absent
+    note: absent at the ATV pin; local-checks-pass runs config.checks (lint included)
   - ref: todo-create
+    reason: excluded:C4
     note: only used by ce-review interactive/autofix modes; baton-review always calls mode:headless
 ```
+
+`optional_refs[].reason` pattern: `^(upstream-absent|pack-provided:[a-z0-9-]+|excluded:C[0-9]+)$`; `ref` and `note`
+are required non-empty strings. Semantic checks by `sync`/`validate` (each failure is `E_DANGLING_REF`, naming pack,
+ref and reason): `upstream-absent` ⇒ the name is absent from both materialized pinned trees; `pack-provided:<id>` ⇒
+`packs/<id>.yml` exists and installs that name; `excluded:C<n>` ⇒ the name is in contracts/packs.md § Excluded under
+`C<n>` and no pack installs it. Packs named by `pack-provided:` in X are X's recommended packs (`W_PACK_RECOMMENDED`
+when not installed).
 
 ## 5. Lock — `baton.lock.json` (maintainer side)
 

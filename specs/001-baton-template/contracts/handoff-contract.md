@@ -128,13 +128,14 @@ Validator codes outside batons (the same output format, listed in `docs/referenc
 | `E_CHECK_KEY_DUP` | Two expressions in one `entry` or `exit` list have the same check key. |
 | `E_LOCK_MISMATCH` | A locked file's sha256 ≠ the working tree (`lock verify`). |
 | `E_SYNC_DRIFT` | `sync --check` output ≠ the committed snapshot. |
-| `E_DANGLING_REF` | A vendored file of pack X references (or dispatches) a skill or agent that isn't in X or its `requires` closure and isn't in X's `optional_refs` (packs.md § Closure rules). |
+| `E_DANGLING_REF` | A vendored file of pack X references (or dispatches) a skill or agent that isn't in X or its `requires` closure and isn't in X's `optional_refs`, or an `optional_refs` entry has a missing, unknown or stale `reason` (packs.md § Closure rules 2 and 5). |
 | `E_LICENSE` | An upstream file, or an npm package bundled into `baton.mjs`, has no MIT-compatible license or no entry in `THIRD_PARTY_NOTICES.md`. |
 | `E_UNDOCUMENTED` | An installed core skill, agent or command is missing from `docs/reference/`. |
 | `E_BUNDLE_STALE` | `.baton/bin/baton.mjs` doesn't match a fresh build. |
 | `E_UPSTREAM_VERIFY` | A fetched upstream doesn't match the lock: the ATV commit or tree id, a Spec Kit requirement hash, or a file's `sha256_upstream`. |
 | `W_SETUP_STEPS_MISPLACED` | `.github/copilot-setup-steps.yml` exists (it belongs under `.github/workflows/`). |
 | `W_NO_ADOPTER_CI` | `.github/workflows/baton.yml` is missing, so skipped hooks would go unnoticed. |
+| `W_PACK_RECOMMENDED` | An installed pack names a `pack-provided:<id>` reason and `<id>` is not installed. One per missing pack, listing the refs; never an error, not escalated by `--strict` (packs.md rule 6). |
 
 ## Personal-data denylist scan (`E_DENYLIST`)
 
