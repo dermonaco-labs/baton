@@ -61,7 +61,7 @@ spec amendment.
 |---|---|---|---|
 | `review-plus` | performance, api-contract, data-migrations, reliability, cli-readiness and previous-comments reviewers, plus schema-drift-detector and deployment-verification-agent | core | ce-review auto-selects the extra personas |
 | `learning` | skills: observe, learn, instincts, evolve. `.github/hooks/copilot-hooks.json` (observer). `.atv/` scaffolding with a `.gitignore` for raw observations | core | opt-in because it writes local telemetry. Learned skills must be reviewed before commit (C10) |
-| `docs-review` | skills: document-review, ce-compound-refresh. Agents: coherence, feasibility, scope-guardian, product-lens, design-lens and security-lens reviewers | core | advisory review of spec/plan prose |
+| `docs-review` | skills: document-review, ce-compound-refresh. Agents: coherence, feasibility, scope-guardian, product-lens, design-lens, security-lens and adversarial-document reviewers | core | advisory review of spec/plan prose. `adversarial-document-reviewer` is dispatched by `document-review`, so it ships in this pack (never in core; closure rule 2) |
 | `security` | skill: atv-security. Agent: security-sentinel | core | a deeper audit than the core security persona |
 | `research` | agents: best-practices-researcher, framework-docs-researcher, git-history-analyzer, issue-intelligence-analyst | core | used by plan Phase 0 when present |
 | `issues` | skill: speckit-taskstoissues | core | needs the GitHub MCP / `gh`. Creates issues from tasks.md |
@@ -91,8 +91,13 @@ ref, sync fails with a hard error (no silent drop).
 ## Closure rules
 
 1. For every installed file, collect its references: `/<skill>`, `` `<skill>` skill ``, `agent: <name>`,
-   `@<agent>`, `compound-engineering:<ns>:<name>` and `speckit.<cmd>`.
-2. Every reference must resolve to a file in the installed pack set. Otherwise it must be listed in
-   `optional_refs` with a degradation note, or `sync` fails with `E_DANGLING_REF`.
+   `@<agent>`, `compound-engineering:<ns>:<name>`, `speckit.<cmd>`, and agent names a skill dispatches (reviewer or
+   persona lists, `subagent_type`/agent-name arguments).
+2. Closure is checked **per pack in isolation**: every reference in a file of pack X must resolve to a file in X or
+   in X's `requires` closure (always including `core`), independent of which other packs happen to be installed. So
+   `core` can't depend on an optional pack, and an optional pack can't rely on a sibling pack it doesn't `require`.
+   Otherwise the reference must be listed in X's `optional_refs` with a degradation note, or `sync` (and `sync
+   --check` in CI) fails with `E_DANGLING_REF` naming the pack, the file and the reference. Example: `docs-review`
+   without `adversarial-document-reviewer` fails, because `document-review` dispatches it.
 3. `init --packs X` installs the `requires` closure of X and refuses packs that are in each other's `conflicts`.
 4. `core` cannot be removed. `init --packs` always includes it.

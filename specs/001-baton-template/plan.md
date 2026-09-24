@@ -221,7 +221,7 @@ that adopters may relicense their own code, and that the notices must remain for
      research R13).
 9. **Dependency closure check.** Sync scans each vendored skill or agent for references to other
    skills and agents (`/name`, `agent: name`, `compound-engineering:*:name`). It fails with `E_DANGLING_REF`
-   unless the reference is installed in the same pack set or is declared in `packs/*.yml` under
+   unless the reference is in the same pack or its `requires` closure (checked per pack) or is declared in `packs/*.yml` under
    `optional_refs` with a graceful-degradation note.
 10. **Instructions.** `.github/copilot-instructions.md` is under 80 lines of Baton guidance between BATON markers:
     - where the baton lives

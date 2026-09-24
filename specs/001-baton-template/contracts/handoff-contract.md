@@ -128,7 +128,7 @@ Validator codes outside batons (the same output format, listed in `docs/referenc
 | `E_CHECK_KEY_DUP` | Two expressions in one `entry` or `exit` list have the same check key. |
 | `E_LOCK_MISMATCH` | A locked file's sha256 ≠ the working tree (`lock verify`). |
 | `E_SYNC_DRIFT` | `sync --check` output ≠ the committed snapshot. |
-| `E_DANGLING_REF` | A vendored file references a skill or agent that isn't installed and isn't in `optional_refs`. |
+| `E_DANGLING_REF` | A vendored file of pack X references (or dispatches) a skill or agent that isn't in X or its `requires` closure and isn't in X's `optional_refs` (packs.md § Closure rules). |
 | `E_LICENSE` | An upstream file, or an npm package bundled into `baton.mjs`, has no MIT-compatible license or no entry in `THIRD_PARTY_NOTICES.md`. |
 | `E_UNDOCUMENTED` | An installed core skill, agent or command is missing from `docs/reference/`. |
 | `E_BUNDLE_STALE` | `.baton/bin/baton.mjs` doesn't match a fresh build. |

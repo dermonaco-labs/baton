@@ -108,7 +108,10 @@ files and have no unfinished dependencies. Paths are repo-relative.
     `docs/reference/upstream-diff.md`.
   - Support `--check`, which writes nothing and raises `E_SYNC_DRIFT`.
 - [ ] T026 Closure and license checks in sync:
-  - Run the reference scan from `contracts/packs.md` § Closure rules and raise `E_DANGLING_REF`.
+  - Run the per-pack reference scan from `contracts/packs.md` § Closure rules (including dispatched agents) and
+    raise `E_DANGLING_REF`. Test in `test/unit/packs.test.mjs`: every shipped pack is closed over itself plus its
+    `requires`, and a `docs-review` fixture without `adversarial-document-reviewer` fails with `E_DANGLING_REF`
+    (AC-US2-4). **The test must fail first.**
   - Check upstream LICENSE files and raise `E_LICENSE`.
   - Decide from the closure result whether `brainstorming` joins `core` (#29).
   - Record the result in research.md R6.
@@ -387,6 +390,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
 | AC-US2-1 | US2 | `node --test test/integration/init.test.mjs` (fixtures + preserved bytes) | test-id | fail |
 | AC-US2-2 | US2 | init.test "idempotent rerun" case | test-id | fail |
 | AC-US2-3 | US2 | init.test "`--packs core,learning`" case | test-id | fail |
+| AC-US2-4 | US2 | packs.test "per-pack closure; docs-review without adversarial-document-reviewer → E_DANGLING_REF" | test-id | fail |
 | AC-US3-1 | US3 | `node --test test/unit/validate-handoff.test.mjs` | test-id | fail |
 | AC-US3-2 | US3 | relay.test "gate pending exits 3" | test-id | fail |
 | AC-US3-3 | US3 | relay.test "stale artifact then refresh" | test-id | fail |
