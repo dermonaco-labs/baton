@@ -3573,7 +3573,7 @@
       "format": "esm"
     },
     "src/lib/denylist.mjs": {
-      "bytes": 2282,
+      "bytes": 2381,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3691,7 +3691,7 @@
       "format": "esm"
     },
     "src/commands/validate.mjs": {
-      "bytes": 7440,
+      "bytes": 8408,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4826,7 +4826,7 @@
           "bytesInOutput": 6837
         },
         "src/lib/denylist.mjs": {
-          "bytesInOutput": 1473
+          "bytesInOutput": 1504
         },
         "src/lib/handoff.mjs": {
           "bytesInOutput": 6061
@@ -4835,7 +4835,7 @@
           "bytesInOutput": 6722
         },
         "src/commands/validate.mjs": {
-          "bytesInOutput": 4189
+          "bytesInOutput": 4730
         },
         "src/commands/handoff.mjs": {
           "bytesInOutput": 11183
@@ -4865,7 +4865,7 @@
           "bytesInOutput": 2343
         }
       },
-      "bytes": 335735
+      "bytes": 336307
     }
   }
 }

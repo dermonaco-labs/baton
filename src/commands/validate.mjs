@@ -6,7 +6,7 @@ import { loadSchemas, validateSchema } from '../lib/schema.mjs';
 import { validateHandoff } from '../lib/handoff.mjs';
 import { parseFrontmatter } from '../lib/frontmatter.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
-import { scanPersonalData, denylistTerms } from '../lib/denylist.mjs';
+import { scanPersonalData, denylistTerms, isLicenseNotice } from '../lib/denylist.mjs';
 import { loadPhases } from '../lib/phases.mjs';
 import { changedFiles } from '../lib/checks.mjs';
 
@@ -119,6 +119,17 @@ export async function run(root, args) {
     }
   }
 
+  if (selected) {
+    for (const absolute of new Set(files)) {
+      const path = relative(root, absolute).replaceAll('\\', '/');
+      if (!/\.(?:md|mjs|js|ts|tsx|yml|yaml|json)$/.test(path) ||
+          /(?:^|\/)handoff\.md$/.test(path) || /^\.baton\/quick\/[^/]+\.md$/.test(path) ||
+          path === '.github/dependabot.yml' || path === '.github/CODEOWNERS') continue;
+      errors.push(...scanPersonalData(await readFile(absolute, 'utf8'), {
+        path, terms, frontmatter: !path.endsWith('.md')
+      }).map((issue) => ({ ...issue, file: path })));
+    }
+  }
   if (!selected) {
     if (!await exists(root, '.github/workflows/baton.yml')) warnings.push({ code: 'W_NO_ADOPTER_CI', file: '.github/workflows/baton.yml', message: 'Adopter validation workflow is absent' });
     if (await exists(root, '.github/copilot-setup-steps.yml')) warnings.push({ code: 'W_SETUP_STEPS_MISPLACED', file: '.github/copilot-setup-steps.yml', message: 'Move setup steps into .github/workflows/' });
@@ -133,6 +144,13 @@ export async function run(root, args) {
     }
     for (const path of ['README.md', 'THIRD_PARTY_NOTICES.md']) {
       if (await exists(root, path)) errors.push(...scanPersonalData(await readFile(join(root, path), 'utf8'), { path, terms }).map((issue) => ({ ...issue, file: path })));
+    }
+    for (const top of ['.specify', '.github', 'packs']) {
+      for await (const absolute of walk(join(root, top))) {
+        const path = relative(root, absolute).replaceAll('\\', '/');
+        if (!isLicenseNotice(path)) continue;
+        errors.push(...scanPersonalData(await readFile(absolute, 'utf8'), { path, terms }).map((issue) => ({ ...issue, file: path })));
+      }
     }
   }
   if (changed) {

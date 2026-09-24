@@ -2,6 +2,13 @@ import { readFile } from 'node:fs/promises';
 import { isAbsolute, resolve } from 'node:path';
 import YAML from 'yaml';
 
+/** @param {string} path */
+export function isLicenseNotice(path) {
+  const normalized = path.replaceAll('\\', '/');
+  return normalized === 'THIRD_PARTY_NOTICES.md' ||
+    /^(?:\.specify\/|\.github\/|packs\/[^/]+\/files\/).*(?:^|\/)(?:LICENSE|NOTICE|COPYING)(?:\.[^/]*)?$/i.test(normalized);
+}
+
 /** @param {string} root */
 export async function denylistTerms(root) {
   let config;
@@ -31,9 +38,7 @@ export function scanPersonalData(text, options = {}) {
     { label: 'user-home path', regex: /(?:[A-Za-z]:\\Users\\|\/home\/[^/\s]+\/|\/Users\/[^/\s]+\/)/i },
   ];
   const errors = [];
-  const licensePath = options.path?.replaceAll('\\', '/');
-  const licensedEmail = licensePath === 'THIRD_PARTY_NOTICES.md' ||
-    /^(?:\.specify\/|\.github\/|packs\/[^/]+\/files\/).*(?:^|\/)(?:LICENSE|NOTICE|COPYING)(?:\.[^/]*)?$/i.test(licensePath ?? '');
+  const licensedEmail = isLicenseNotice(options.path ?? '');
   for (const { label, regex } of patterns) {
     if (label === 'email address' && licensedEmail) continue;
     if (regex.test(subject)) errors.push({ code: 'E_DENYLIST', message: `Personal ${label} is not allowed in public Baton content` });
