@@ -143,7 +143,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
   exactly its code (AC-US3-1). **Must fail before T034–T036.**
 - [ ] T033 [P] [US3] `test/integration/relay.test.mjs`: the headless relay from quickstart S3, covering the pending gate
   (exit 3), approve, stale artifact, refresh, `E_NO_PREREG` and `E_PR_MISSING` (AC-US3-2..5).
-- [ ] T098 [US3] Checkbox-insensitive `tasks.md` hashing in `src/lib/hash.mjs` (data-model §1 Hashing) with a test in
+- [x] T098 [US3] Checkbox-insensitive `tasks.md` hashing in `src/lib/hash.mjs` (data-model §1 Hashing) with a test in
   `test/integration/relay.test.mjs`: checking a task box after `receive --phase implement` keeps the baton fresh, and
   rewording a task makes it stale (AC-US3-7). **The test must fail first.**
 - [ ] T034 [US3] `src/lib/handoff.mjs`:
@@ -200,7 +200,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
     (`control--plane delegation`), upper case (`Repository owner`) and `@` (`@maintainer`), plus `human:-owner` /
     `human:Owner` (`E_ACTOR_FORMAT`). The default `config.yml` vocabulary must compile against the phrase pattern
     (AC-US3-8).
-- [ ] T101 [US3] Check expressions (data-model §2.1): leaf/group grammar with `all_of`/`any_of` in
+- [x] T101 [US3] Check expressions (data-model §2.1): leaf/group grammar with `all_of`/`any_of` in
   `phases.schema.json`, the evaluator in `src/lib/phases.mjs` (all members evaluated, evidence per member), check keys,
   `E_CHECK_UNKNOWN`/`E_CHECK_GROUP`/`E_CHECK_KEY_DUP`, and `W_WEAKENED_CONTRACT` for a built-in moved into an
   `any_of`. The default compound exit is the `compound-recorded` group. Unit tests cover each code, and the relay
