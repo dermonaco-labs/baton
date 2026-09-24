@@ -303,8 +303,8 @@ all on free hosted runners.
   the whole relay.
 - **FR-051**: Optional packs: `review-plus`, `learning`, `docs-review`, `security`, `research`, `issues`,
   `stack-python`, `stack-typescript`, `stack-rails`, `design`.
-- **FR-052**: The dependency closure MUST be checked. A vendored file that references a skill or agent that isn't
-  installed fails sync with `E_DANGLING_REF`, unless the reference is declared as an optional reference with a
+- **FR-052**: The dependency closure MUST be checked. A vendored file that references (or dispatches) a skill or agent that isn't
+  in its own pack or that pack's `requires` closure fails sync with `E_DANGLING_REF`, unless the reference is declared as an optional reference with a
   graceful-degradation note.
 - **FR-053**: The files of optional packs MUST be stored in the Baton repo under `packs/<id>/files/` (mirroring the
   install paths) so that `init --packs` works offline from the package. `core` files live in place. In a

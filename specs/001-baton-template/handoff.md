@@ -9,20 +9,20 @@ status: ready
 model_role: implementation
 suggested_model: gpt-6-sol
 summary: >-
-  Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analysis.md). A post-analyze amendment (A1-A3)
+  Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analysis.md). A post-analyze amendment (A1-A4)
   then closed three gaps raised by implement: role-only gate approvals and actors with a denylist scan (T100),
   any_of/all_of check groups for exit criteria such as compound (T101), and the quick lane's work phase, by_lane
-  overrides and lane transitions (T102). Now 102 tasks, 29 acceptance checks, constitution 1.0.1. The pre-code gate
+  overrides and lane transitions (T102). A4 adds adversarial-document-reviewer to docs-review with a per-pack closure check. Now 102 tasks, 30 acceptance checks, constitution 1.0.1. The pre-code gate
   awaits approval.
 read_first:
-  - { path: specs/001-baton-template/tasks.md, why: "the unit of work, in order, and the Acceptance Registry", sha256: 39f40a4b6a5a1e8728f01cb02daa7e9625dc0275c806d56a699b19c957ee8f37 }
-  - { path: specs/001-baton-template/plan.md, why: "structure, template disposition, key decisions, constitution check", sha256: 723166556f34118a823c44eec5bc8d125fe4bbba8a4ca89359581c3b6b3dce21 }
-  - { path: specs/001-baton-template/analysis.md, why: "what the analyze pass changed and the FR/SC to task map", sha256: 62611dfc4493d3a56ee9ce87c98553dd679fc574eef195ce3f7e47df10a0acec }
+  - { path: specs/001-baton-template/tasks.md, why: "the unit of work, in order, and the Acceptance Registry", sha256: 8318bab37aab7a79fcbf416942da8153751ae4292589464d0f9fd85fcebaddea }
+  - { path: specs/001-baton-template/plan.md, why: "structure, template disposition, key decisions, constitution check", sha256: 61a97487f08f17dae41705ab7f22e566b6bd8671e9102c11c2a3bebbe5d27285 }
+  - { path: specs/001-baton-template/analysis.md, why: "what the analyze pass changed and the FR/SC to task map", sha256: a0c4919714ab760875031fd5866d8a93862bd692b4cac9112c7e682252d621c3 }
   - { path: specs/001-baton-template/data-model.md, why: "baton, phase, config, pack, lock, manifest and findings shapes", sha256: 7c23331b8ed58cf7a550b6084f03336a3dfb627d3f48b92eb046d49e1e94ed90 }
-  - { path: specs/001-baton-template/contracts/handoff-contract.md, why: "validator rules and stable error codes", sha256: 25095cf1463ac805fb7c5e4294afa86cc7d3fc3af280fc266faff457fdf26dc2 }
+  - { path: specs/001-baton-template/contracts/handoff-contract.md, why: "validator rules and stable error codes", sha256: 97aa24cefe14927fdf0a073630ccf538eab867c1925f2a1f1a21b36e6bc1b075 }
   - { path: specs/001-baton-template/contracts/phase-contracts.md, why: "phase table, check ids, transition rules", sha256: c845a8903cbe2752ca981af78baac5399929b1fbd9e63a889e98a8dddc41ca38 }
   - { path: specs/001-baton-template/contracts/cli.md, why: "commands, flags and exit codes (normative)", sha256: 8041ef1180598b58f6c0ed0a3a3fd6482949d2fa02c1a7f45dac2dfefa82dff1 }
-  - { path: specs/001-baton-template/contracts/packs.md, why: "core file list, pack storage, closure rules", sha256: 0f9cd30ff67be03c43a8d974e4b87fc61302ebc8e786f6bafc192bce393ff2f6 }
+  - { path: specs/001-baton-template/contracts/packs.md, why: "core file list, pack storage, closure rules", sha256: aeee9e2f703a27af0ede69f6d43dce0a880e3d374e106e374b1922d800f1703c }
   - { path: specs/001-baton-template/contracts/conflict-rules.md, why: "Spec Kit vs ATV rules C1-C13 (T045)", sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a }
   - { path: specs/001-baton-template/contracts/ci.md, why: "workflows, smoke steps, budgets, release", sha256: af7ae56e257b3370985701b612500c8a704f771fdb293bd373249eb216c55c14 }
   - { path: specs/001-baton-template/quickstart.md, why: "the executable acceptance scenarios S1-S7", sha256: 1ce6f86f51c89e87f3b5645da5778c9faf07eda7b735e07be652323b3ca32926 }
@@ -32,19 +32,19 @@ do_not_read:
   - { path: specs/001-baton-template/spec.md, why: "prose beyond FR/SC is not needed; analysis.md maps every FR/SC to tasks; open it to check wording" }
 artifacts:
   - { path: .specify/memory/constitution.md, role: source-of-truth, sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391 }
-  - { path: specs/001-baton-template/spec.md, role: source-of-truth, sha256: 9f28d29ceb8c84f6bb410b6a01d4b5aa818152798f49b014b61e50a5e347bedf }
+  - { path: specs/001-baton-template/spec.md, role: source-of-truth, sha256: 873b6732fff91cedd623c335bef4e2a82cbafbe3e4319f6a7cb0143785ed4fda }
   - { path: specs/001-baton-template/research.md, role: evidence, sha256: edc20bbae358ab515baed4cdff5328565abbff768a33602f3c912a6d161229c5 }
-  - { path: specs/001-baton-template/plan.md, role: source-of-truth, sha256: 723166556f34118a823c44eec5bc8d125fe4bbba8a4ca89359581c3b6b3dce21 }
+  - { path: specs/001-baton-template/plan.md, role: source-of-truth, sha256: 61a97487f08f17dae41705ab7f22e566b6bd8671e9102c11c2a3bebbe5d27285 }
   - { path: specs/001-baton-template/data-model.md, role: source-of-truth, sha256: 7c23331b8ed58cf7a550b6084f03336a3dfb627d3f48b92eb046d49e1e94ed90 }
-  - { path: specs/001-baton-template/contracts/handoff-contract.md, role: source-of-truth, sha256: 25095cf1463ac805fb7c5e4294afa86cc7d3fc3af280fc266faff457fdf26dc2 }
+  - { path: specs/001-baton-template/contracts/handoff-contract.md, role: source-of-truth, sha256: 97aa24cefe14927fdf0a073630ccf538eab867c1925f2a1f1a21b36e6bc1b075 }
   - { path: specs/001-baton-template/contracts/phase-contracts.md, role: source-of-truth, sha256: c845a8903cbe2752ca981af78baac5399929b1fbd9e63a889e98a8dddc41ca38 }
   - { path: specs/001-baton-template/contracts/conflict-rules.md, role: source-of-truth, sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a }
-  - { path: specs/001-baton-template/contracts/packs.md, role: source-of-truth, sha256: 0f9cd30ff67be03c43a8d974e4b87fc61302ebc8e786f6bafc192bce393ff2f6 }
+  - { path: specs/001-baton-template/contracts/packs.md, role: source-of-truth, sha256: aeee9e2f703a27af0ede69f6d43dce0a880e3d374e106e374b1922d800f1703c }
   - { path: specs/001-baton-template/contracts/cli.md, role: source-of-truth, sha256: 8041ef1180598b58f6c0ed0a3a3fd6482949d2fa02c1a7f45dac2dfefa82dff1 }
   - { path: specs/001-baton-template/contracts/ci.md, role: source-of-truth, sha256: af7ae56e257b3370985701b612500c8a704f771fdb293bd373249eb216c55c14 }
   - { path: specs/001-baton-template/quickstart.md, role: derived, sha256: 1ce6f86f51c89e87f3b5645da5778c9faf07eda7b735e07be652323b3ca32926 }
-  - { path: specs/001-baton-template/tasks.md, role: derived, sha256: 39f40a4b6a5a1e8728f01cb02daa7e9625dc0275c806d56a699b19c957ee8f37 }
-  - { path: specs/001-baton-template/analysis.md, role: evidence, sha256: 62611dfc4493d3a56ee9ce87c98553dd679fc574eef195ce3f7e47df10a0acec }
+  - { path: specs/001-baton-template/tasks.md, role: derived, sha256: 8318bab37aab7a79fcbf416942da8153751ae4292589464d0f9fd85fcebaddea }
+  - { path: specs/001-baton-template/analysis.md, role: evidence, sha256: a0c4919714ab760875031fd5866d8a93862bd692b4cac9112c7e682252d621c3 }
   - { path: specs/001-baton-template/checklists/requirements.md, role: evidence, sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017 }
 entry_checked:
   - { id: tasks-exists, ok: true }
@@ -62,6 +62,7 @@ acceptance_checks:
   - { id: AC-US2-1, story: US2, check: "node --test test/integration/init.test.mjs", kind: test-id, expect_initial: fail }
   - { id: AC-US2-2, story: US2, check: "init.test 'idempotent rerun'", kind: test-id, expect_initial: fail }
   - { id: AC-US2-3, story: US2, check: "init.test '--packs core,learning'", kind: test-id, expect_initial: fail }
+  - { id: AC-US2-4, story: US2, check: "packs.test 'per-pack closure; docs-review without adversarial-document-reviewer -> E_DANGLING_REF'", kind: test-id, expect_initial: fail }
   - { id: AC-US3-1, story: US3, check: "node --test test/unit/validate-handoff.test.mjs", kind: test-id, expect_initial: fail }
   - { id: AC-US3-2, story: US3, check: "relay.test 'gate pending exits 3'", kind: test-id, expect_initial: fail }
   - { id: AC-US3-3, story: US3, check: "relay.test 'stale artifact then refresh'", kind: test-id, expect_initial: fail }
@@ -98,6 +99,7 @@ decisions:
   - { id: D12, tag: amendment-a1, decision: "gate.approved_by is role-only: '<role>' or '<role> via <channel>' from config.gates, plus approved_at as an ISO date; human actors are 'human:<role-slug>'; E_DENYLIST scans batons for emails, at-mentions, user-home paths and untracked terms", rationale: "public repo; no personal handles or emails in committed batons (data-model 1.1)", by: "human:repository-owner" }
   - { id: D13, tag: amendment-a2, decision: "Entry/exit lists accept check groups {id, all_of|any_of}; the top level is an implicit all_of; compound exit is the any_of group compound-recorded", rationale: "OR criteria need an exact, validated syntax (data-model 2.1)", by: "human:repository-owner" }
   - { id: D14, tag: amendment-a3, decision: "The quick lane is phases work -> review -> land -> compound with by_lane.quick overrides; it starts with handoff new --quick, escalates to specify only from work/review via --from-quick, and feature -> quick is illegal", rationale: "the owner and entry checks of the quick lane must be representable in phases.yml and the baton (phase-contracts Quick lane)", by: "human:repository-owner" }
+  - { id: D15, tag: amendment-a4, decision: "adversarial-document-reviewer ships in the docs-review pack (not core); closure is checked per pack (the pack plus its requires) and covers dispatched agents", rationale: "document-review dispatches that agent; MIT upstream ATV content (packs.md Closure rules)", by: "human:repository-owner" }
 open_questions: []
 assumptions:
   - { id: AS1, text: "The spec assumptions A1-A9 hold (re-checked at analyze, unchanged)", revisit_at: review }
@@ -115,7 +117,7 @@ history:
   - { phase: plan, at: 2026-09-24T07:39:15Z, by: planning-session, commit: 8aeed8a }
   - { phase: tasks, at: 2026-09-24T07:39:15Z, by: planning-session, commit: 8aeed8a }
   - { phase: analyze, at: 2026-09-24T07:53:35Z, by: review-session, commit: 23b1a1d }
-updated_at: 2026-09-24T09:30:00Z
+updated_at: 2026-09-24T10:20:00Z
 updated_by: planning-session
 ---
 ## Goal
@@ -135,7 +137,8 @@ No implementation code exists yet.
 Post-analyze amendment A1–A3 (owner decisions D12–D14) closed the three gaps the implement session stopped on:
 role-only approvals and the `E_DENYLIST` scan (data-model §1.1, handoff-contract), `all_of`/`any_of` check groups
 (data-model §2.1), and the quick lane (data-model §2.2, phase-contracts § Quick lane). New tasks are T100–T102, and
-the new acceptance checks are AC-US3-8..10.
+the new acceptance checks are AC-US3-8..10. Amendment A4 (D15) adds `adversarial-document-reviewer` to
+the `docs-review` pack and makes the closure check per pack (T026, AC-US2-4).
 
 ## Next steps
 
