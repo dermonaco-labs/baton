@@ -9,46 +9,46 @@ status: ready
 model_role: implementation
 suggested_model: gpt-6-sol
 summary: >-
-  Analyze found 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings; all are fixed in the planning docs (analysis.md).
-  Key fixes: hash-locked Spec Kit install plus a verified ATV git fetch, cleanup that never touches workflows plus an
-  adopter baton.yml, a template disposition table, persisted analysis.md, checkbox-insensitive tasks.md hashing, and
-  headless ce-review normalized to review.json. Now 99 tasks (T095-T099 added), 26 acceptance checks, constitution
-  1.0.1. The pre-code gate awaits approval.
+  Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analysis.md). A post-analyze amendment (A1-A3)
+  then closed three gaps raised by implement: role-only gate approvals and actors with a denylist scan (T100),
+  any_of/all_of check groups for exit criteria such as compound (T101), and the quick lane's work phase, by_lane
+  overrides and lane transitions (T102). Now 102 tasks, 29 acceptance checks, constitution 1.0.1. The pre-code gate
+  awaits approval.
 read_first:
-  - { path: specs/001-baton-template/tasks.md, why: "the unit of work, in order, and the Acceptance Registry", sha256: a675a9ae3a57d5606eb797a749e634bbc1e1b88764d90afa14936116ae0e9193 }
-  - { path: specs/001-baton-template/plan.md, why: "structure, template disposition, key decisions, constitution check", sha256: 95830548f6b64ae98f68bafc603f33a7565afb1ed36bb980a50fcc496f0cf7c6 }
-  - { path: specs/001-baton-template/analysis.md, why: "what the analyze pass changed and the FR/SC to task map", sha256: 61c3e7971d24e2a75b62b11b2587fe4104f25e0402cb3aa53e4ddce809bc44fd }
-  - { path: specs/001-baton-template/data-model.md, why: "baton, phase, config, pack, lock, manifest and findings shapes", sha256: 4208c1243306daefc059f1400f123b3333297ff4bb5633ff8fcfa8e65d38af10 }
-  - { path: specs/001-baton-template/contracts/handoff-contract.md, why: "validator rules and stable error codes", sha256: e3ef672b7d367cf2895906c9c681d21b0e22b505041974dd8b559051a00ea26d }
-  - { path: specs/001-baton-template/contracts/phase-contracts.md, why: "phase table, check ids, transition rules", sha256: c82914b3ef40d442bc37673eed6ef2425c2a96f6706c7f7e5fe4064aeba159d4 }
-  - { path: specs/001-baton-template/contracts/cli.md, why: "commands, flags and exit codes (normative)", sha256: 83c28799d83bbc48258b090692f0ce4273ff3b04a6feffe883a3a64641a165b5 }
+  - { path: specs/001-baton-template/tasks.md, why: "the unit of work, in order, and the Acceptance Registry", sha256: 39f40a4b6a5a1e8728f01cb02daa7e9625dc0275c806d56a699b19c957ee8f37 }
+  - { path: specs/001-baton-template/plan.md, why: "structure, template disposition, key decisions, constitution check", sha256: 723166556f34118a823c44eec5bc8d125fe4bbba8a4ca89359581c3b6b3dce21 }
+  - { path: specs/001-baton-template/analysis.md, why: "what the analyze pass changed and the FR/SC to task map", sha256: 62611dfc4493d3a56ee9ce87c98553dd679fc574eef195ce3f7e47df10a0acec }
+  - { path: specs/001-baton-template/data-model.md, why: "baton, phase, config, pack, lock, manifest and findings shapes", sha256: 7c23331b8ed58cf7a550b6084f03336a3dfb627d3f48b92eb046d49e1e94ed90 }
+  - { path: specs/001-baton-template/contracts/handoff-contract.md, why: "validator rules and stable error codes", sha256: 25095cf1463ac805fb7c5e4294afa86cc7d3fc3af280fc266faff457fdf26dc2 }
+  - { path: specs/001-baton-template/contracts/phase-contracts.md, why: "phase table, check ids, transition rules", sha256: c845a8903cbe2752ca981af78baac5399929b1fbd9e63a889e98a8dddc41ca38 }
+  - { path: specs/001-baton-template/contracts/cli.md, why: "commands, flags and exit codes (normative)", sha256: 8041ef1180598b58f6c0ed0a3a3fd6482949d2fa02c1a7f45dac2dfefa82dff1 }
   - { path: specs/001-baton-template/contracts/packs.md, why: "core file list, pack storage, closure rules", sha256: 0f9cd30ff67be03c43a8d974e4b87fc61302ebc8e786f6bafc192bce393ff2f6 }
   - { path: specs/001-baton-template/contracts/conflict-rules.md, why: "Spec Kit vs ATV rules C1-C13 (T045)", sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a }
   - { path: specs/001-baton-template/contracts/ci.md, why: "workflows, smoke steps, budgets, release", sha256: af7ae56e257b3370985701b612500c8a704f771fdb293bd373249eb216c55c14 }
-  - { path: specs/001-baton-template/quickstart.md, why: "the executable acceptance scenarios S1-S7", sha256: c0243ef0f42200c32285afc106c044609a49a9a31a15518a3497c093a87ed1f1 }
+  - { path: specs/001-baton-template/quickstart.md, why: "the executable acceptance scenarios S1-S7", sha256: 1ce6f86f51c89e87f3b5645da5778c9faf07eda7b735e07be652323b3ca32926 }
   - { path: .specify/memory/constitution.md, why: "principles I-VIII (v1.0.1); stop, don't choose", sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391 }
 do_not_read:
   - { path: specs/001-baton-template/research.md, why: "folded into plan.md; open it only to verify a pin, SHA or upstream fact" }
   - { path: specs/001-baton-template/spec.md, why: "prose beyond FR/SC is not needed; analysis.md maps every FR/SC to tasks; open it to check wording" }
 artifacts:
   - { path: .specify/memory/constitution.md, role: source-of-truth, sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391 }
-  - { path: specs/001-baton-template/spec.md, role: source-of-truth, sha256: fd5eaac786f81e54e60b136225eb56962b54f7486c65ba6673cc020ffafbca68 }
+  - { path: specs/001-baton-template/spec.md, role: source-of-truth, sha256: 9f28d29ceb8c84f6bb410b6a01d4b5aa818152798f49b014b61e50a5e347bedf }
   - { path: specs/001-baton-template/research.md, role: evidence, sha256: edc20bbae358ab515baed4cdff5328565abbff768a33602f3c912a6d161229c5 }
-  - { path: specs/001-baton-template/plan.md, role: source-of-truth, sha256: 95830548f6b64ae98f68bafc603f33a7565afb1ed36bb980a50fcc496f0cf7c6 }
-  - { path: specs/001-baton-template/data-model.md, role: source-of-truth, sha256: 4208c1243306daefc059f1400f123b3333297ff4bb5633ff8fcfa8e65d38af10 }
-  - { path: specs/001-baton-template/contracts/handoff-contract.md, role: source-of-truth, sha256: e3ef672b7d367cf2895906c9c681d21b0e22b505041974dd8b559051a00ea26d }
-  - { path: specs/001-baton-template/contracts/phase-contracts.md, role: source-of-truth, sha256: c82914b3ef40d442bc37673eed6ef2425c2a96f6706c7f7e5fe4064aeba159d4 }
+  - { path: specs/001-baton-template/plan.md, role: source-of-truth, sha256: 723166556f34118a823c44eec5bc8d125fe4bbba8a4ca89359581c3b6b3dce21 }
+  - { path: specs/001-baton-template/data-model.md, role: source-of-truth, sha256: 7c23331b8ed58cf7a550b6084f03336a3dfb627d3f48b92eb046d49e1e94ed90 }
+  - { path: specs/001-baton-template/contracts/handoff-contract.md, role: source-of-truth, sha256: 25095cf1463ac805fb7c5e4294afa86cc7d3fc3af280fc266faff457fdf26dc2 }
+  - { path: specs/001-baton-template/contracts/phase-contracts.md, role: source-of-truth, sha256: c845a8903cbe2752ca981af78baac5399929b1fbd9e63a889e98a8dddc41ca38 }
   - { path: specs/001-baton-template/contracts/conflict-rules.md, role: source-of-truth, sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a }
   - { path: specs/001-baton-template/contracts/packs.md, role: source-of-truth, sha256: 0f9cd30ff67be03c43a8d974e4b87fc61302ebc8e786f6bafc192bce393ff2f6 }
-  - { path: specs/001-baton-template/contracts/cli.md, role: source-of-truth, sha256: 83c28799d83bbc48258b090692f0ce4273ff3b04a6feffe883a3a64641a165b5 }
+  - { path: specs/001-baton-template/contracts/cli.md, role: source-of-truth, sha256: 8041ef1180598b58f6c0ed0a3a3fd6482949d2fa02c1a7f45dac2dfefa82dff1 }
   - { path: specs/001-baton-template/contracts/ci.md, role: source-of-truth, sha256: af7ae56e257b3370985701b612500c8a704f771fdb293bd373249eb216c55c14 }
-  - { path: specs/001-baton-template/quickstart.md, role: derived, sha256: c0243ef0f42200c32285afc106c044609a49a9a31a15518a3497c093a87ed1f1 }
-  - { path: specs/001-baton-template/tasks.md, role: derived, sha256: a675a9ae3a57d5606eb797a749e634bbc1e1b88764d90afa14936116ae0e9193 }
-  - { path: specs/001-baton-template/analysis.md, role: evidence, sha256: 61c3e7971d24e2a75b62b11b2587fe4104f25e0402cb3aa53e4ddce809bc44fd }
+  - { path: specs/001-baton-template/quickstart.md, role: derived, sha256: 1ce6f86f51c89e87f3b5645da5778c9faf07eda7b735e07be652323b3ca32926 }
+  - { path: specs/001-baton-template/tasks.md, role: derived, sha256: 39f40a4b6a5a1e8728f01cb02daa7e9625dc0275c806d56a699b19c957ee8f37 }
+  - { path: specs/001-baton-template/analysis.md, role: evidence, sha256: 62611dfc4493d3a56ee9ce87c98553dd679fc574eef195ce3f7e47df10a0acec }
   - { path: specs/001-baton-template/checklists/requirements.md, role: evidence, sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017 }
 entry_checked:
   - { id: tasks-exists, ok: true }
-  - { id: "fresh:spec,plan,tasks", ok: true, evidence: "analyzed at 23b1a1d; the artifacts were then amended by this pass and re-hashed here" }
+  - { id: "fresh:spec,plan,tasks", ok: true, evidence: "analyzed at 23b1a1d; the artifacts were then amended by the analyze fixes and amendment A1-A3 and re-hashed here" }
 exit_criteria:
   - { id: analysis-recorded, met: true, evidence: "specs/001-baton-template/analysis.md" }
   - { id: no-critical-findings, met: true, evidence: "CRITICAL 0 and HIGH 0 remaining (C1 and H1-H7 fixed; see analysis.md Findings)" }
@@ -69,6 +69,9 @@ acceptance_checks:
   - { id: AC-US3-5, story: US3, check: "relay.test 'land requires pr.url and checks'", kind: test-id, expect_initial: fail }
   - { id: AC-US3-6, story: US3, check: "node .baton/bin/baton.mjs validate --path specs/001-baton-template/handoff.md", kind: command, expect_initial: fail }
   - { id: AC-US3-7, story: US3, check: "relay.test 'checked task stays fresh, reworded task is stale'", kind: test-id, expect_initial: fail }
+  - { id: AC-US3-8, story: US3, check: "validate-handoff.test + relay.test 'role-only approver; handle/email/name rejected; denylist'", kind: test-id, expect_initial: fail }
+  - { id: AC-US3-9, story: US3, check: "phases.test + relay.test 'any_of compound: solution or skip-compound; group errors'", kind: test-id, expect_initial: fail }
+  - { id: AC-US3-10, story: US3, check: "relay.test 'quick relay new->work->review->land, escalate, feature->quick rejected'", kind: test-id, expect_initial: fail }
   - { id: AC-US4-1, story: US4, check: "models.test 'role resolution + overrides'", kind: test-id, expect_initial: fail }
   - { id: AC-US4-2, story: US4, check: "models.test 'enforce error -> E_MODEL_NOT_ALLOWED'", kind: test-id, expect_initial: fail }
   - { id: AC-US4-3, story: US4, check: "models.test 'apply idempotent, managed only'", kind: test-id, expect_initial: fail }
@@ -87,11 +90,14 @@ decisions:
   - { id: D4, decision: "speckit-plan is the only planner; ce-plan, deepen-plan, docs/plans, lfg, slfg and ralph-loop are excluded; the quick lane is ce-work -> baton-review -> baton-land", rationale: "removes the duplicate and conflicting workflows (conflict-rules C1-C6)", by: planning-session }
   - { id: D5, decision: "Model routing by role in .baton/config.yml (planning/review claude-opus-5.5, implementation gpt-6-sol, fast claude-haiku-4.5), enforce defaults to warn, writing agent frontmatter is opt-in", rationale: "Principle VII; the defaults are dated suggestions", by: planning-session }
   - { id: D6, decision: "No GitHub Pages site and no npm publish in v0.1; distribute via the template, npx github:...#tag and release assets with SHA256SUMS and provenance", rationale: "cheap and verifiable (research R9, R11)", by: planning-session }
-  - { id: D7, decision: "Scope gate (specify; clarify skipped because there are 0 NEEDS CLARIFICATION markers): the owner approved the planning outline in plan mode before the artifacts were written", rationale: "recorded honestly; the owner re-confirms scope at the analyze gate", by: "human:owner" }
+  - { id: D7, decision: "Scope gate (specify; clarify skipped because there are 0 NEEDS CLARIFICATION markers): the owner approved the planning outline in plan mode before the artifacts were written", rationale: "recorded honestly; the owner re-confirms scope at the analyze gate", by: "human:repository-owner" }
   - { id: D8, decision: "Template cleanup never touches .github/workflows/ (adopt --no-workflows); maintainer workflows are dormant behind a repository guard; every install ships an adopter baton.yml", rationale: "GITHUB_TOKEN cannot push workflow changes, and RK1 needs a server-side backstop (research R12, analyze H1-H3)", by: review-session }
   - { id: D9, decision: "Persist the read-only analyze report to analysis.md from the Baton hook, and hash tasks.md checkbox-insensitively", rationale: "the implement gate needs a file, and implement progress must not make the baton stale (research R13, analyze H5-H6)", by: review-session }
   - { id: D10, decision: "baton-review always runs ce-review mode:headless and normalizes the findings into a Baton-owned review.json (findings.schema.json)", rationale: "no load-bearing upstream-internal files or interactive todo-create side effects (research R13, analyze H7)", by: review-session }
   - { id: D11, decision: "Optional pack payloads live in packs/<id>/files/; derived repos add packs via the pinned npx command", rationale: "init --packs needs a payload, and derived repos drop packs/ (FR-053, analyze H4)", by: review-session }
+  - { id: D12, tag: amendment-a1, decision: "gate.approved_by is role-only: '<role>' or '<role> via <channel>' from config.gates, plus approved_at as an ISO date; human actors are 'human:<role-slug>'; E_DENYLIST scans batons for emails, at-mentions, user-home paths and untracked terms", rationale: "public repo; no personal handles or emails in committed batons (data-model 1.1)", by: "human:repository-owner" }
+  - { id: D13, tag: amendment-a2, decision: "Entry/exit lists accept check groups {id, all_of|any_of}; the top level is an implicit all_of; compound exit is the any_of group compound-recorded", rationale: "OR criteria need an exact, validated syntax (data-model 2.1)", by: "human:repository-owner" }
+  - { id: D14, tag: amendment-a3, decision: "The quick lane is phases work -> review -> land -> compound with by_lane.quick overrides; it starts with handoff new --quick, escalates to specify only from work/review via --from-quick, and feature -> quick is illegal", rationale: "the owner and entry checks of the quick lane must be representable in phases.yml and the baton (phase-contracts Quick lane)", by: "human:repository-owner" }
 open_questions: []
 assumptions:
   - { id: AS1, text: "The spec assumptions A1-A9 hold (re-checked at analyze, unchanged)", revisit_at: review }
@@ -109,8 +115,8 @@ history:
   - { phase: plan, at: 2026-09-24T07:39:15Z, by: planning-session, commit: 8aeed8a }
   - { phase: tasks, at: 2026-09-24T07:39:15Z, by: planning-session, commit: 8aeed8a }
   - { phase: analyze, at: 2026-09-24T07:53:35Z, by: review-session, commit: 23b1a1d }
-updated_at: 2026-09-24T07:53:35Z
-updated_by: review-session
+updated_at: 2026-09-24T09:30:00Z
+updated_by: planning-session
 ---
 ## Goal
 
@@ -126,13 +132,19 @@ now 1.0.1 (PATCH: gate wording and download verification). New requirements are 
 FR-053 (optional pack storage). New tasks T095–T099 sit in the phases where they belong; T001–T094 keep their IDs.
 No implementation code exists yet.
 
+Post-analyze amendment A1–A3 (owner decisions D12–D14) closed the three gaps the implement session stopped on:
+role-only approvals and the `E_DENYLIST` scan (data-model §1.1, handoff-contract), `all_of`/`any_of` check groups
+(data-model §2.1), and the quick lane (data-model §2.2, phase-contracts § Quick lane). New tasks are T100–T102, and
+the new acceptance checks are AC-US3-8..10.
+
 ## Next steps
 
 1. The owner or orchestrator reviews `analysis.md` and approves the pre-code gate. Until T047 exists, record it in this
-   baton by hand (`gate.approved_by`, `gate.approved_at`); afterwards use `baton handoff approve --by <handle>`.
+   baton by hand (`gate.approved_by`, `gate.approved_at`); afterwards use `baton handoff approve --by "repository owner" --via "control-plane delegation"`.
+   Record roles only, never a handle or email.
 2. `/speckit-implement` in a new session (model role: implementation → gpt-6-sol, reasoning high). Start at T001.
-   The MVP is Setup + Foundational + US3 + US1: T001–T054 plus T095–T098 (T096 and T097 are Foundational, T098 is
-   US3, T095 is US1).
+   The MVP is Setup + Foundational + US3 + US1: T001–T054 plus T095–T098 and T100–T102 (T096 and T097 are
+   Foundational, T098 and T100–T102 are US3, T095 is US1).
 3. After each checkpoint: `npm run check`, commit with the owner's trailer, and update this baton.
 
 ## Watch out for
@@ -147,4 +159,6 @@ No implementation code exists yet.
   pins by T029. Stop and ask if they fail.
 - Opening the ATV upstream issue (T074) is an owner action. Agents only draft it.
 - Nothing from any private reference project may enter this repo. Only the generalized lessons in research R8.
+- A workstation that can't reach the npm or PyPI registry over TLS runs registry-dependent validation in an ephemeral
+  Linux container, plus hosted CI (quickstart § Local gate). Never disable TLS.
 - Until T047, this baton is not machine-validated. If you edit any listed artifact, update its sha256 here.
