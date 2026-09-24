@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent YAML frontmatter",
+  "type": "object",
+  "required": ["description"],
+  "properties": {
+    "description": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "tools": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      ]
+    },
+    "model": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      ]
+    },
+    "handoffs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "agent", "prompt"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1 },
+          "agent": { "type": "string", "minLength": 1 },
+          "prompt": { "type": "string", "minLength": 1 },
+          "send": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "target": { "type": "string", "minLength": 1 },
+    "user-invocable": { "type": "boolean" },
+    "infer": { "type": "boolean" },
+    "mcp-servers": {
+      "oneOf": [
+        { "type": "object" },
+        { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      ]
+    }
+  },
+  "additionalProperties": true
+}

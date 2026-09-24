@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Baton normalized review findings",
+  "type": "object",
+  "required": ["schema", "source", "base", "head", "personas", "findings"],
+  "properties": {
+    "schema": { "const": 1 },
+    "source": {
+      "type": "object", "required": ["engine", "mode", "run_artifact"],
+      "properties": {
+        "engine": { "const": "ce-review" },
+        "mode": { "const": "headless" },
+        "run_artifact": { "$ref": "#/$defs/path" }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    },
+    "base": { "$ref": "#/$defs/git_id" },
+    "head": { "$ref": "#/$defs/git_id" },
+    "personas": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "title", "file", "line", "persona", "confidence", "disposition"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "severity": { "enum": ["P0", "P1", "P2", "P3"] },
+          "title": { "type": "string", "minLength": 1 },
+          "file": { "$ref": "#/$defs/path" },
+          "line": { "type": "integer", "minimum": 1 },
+          "persona": { "type": "string", "minLength": 1 },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "task": { "type": ["string", "null"], "pattern": "^T[0-9]{3,}$" },
+          "disposition": { "enum": ["open", "fixed", "dismissed"] },
+          "reason": { "type": ["string", "null"] }
+        },
+        "patternProperties": { "^x-": {} },
+        "additionalProperties": false,
+        "if": { "properties": { "disposition": { "const": "dismissed" } }, "required": ["disposition"] },
+        "then": {
+          "required": ["reason"],
+          "properties": { "reason": { "type": "string", "minLength": 1 } }
+        },
+        "else": {
+          "required": ["task"],
+          "properties": { "task": { "type": "string" } }
+        }
+      }
+    }
+  },
+  "patternProperties": { "^x-": {} },
+  "additionalProperties": false,
+  "$defs": {
+    "git_id": { "type": "string", "pattern": "^[a-fA-F0-9]{7,64}$" },
+    "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\r\\n\\\\]+$" }
+  }
+}

@@ -23,7 +23,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
 
 ## Phase 1: Setup
 
-- [ ] T001 Create `package.json`:
+- [x] T001 Create `package.json`:
   - name `baton`, `"type": "module"`, `engines.node >=20`, `bin: { "baton": ".baton/bin/baton.mjs" }`
   - scripts `build`, `check`, `lint:md`, `lint:yaml`, `typecheck`, `test`
   - deps `ajv@8`, `ajv-formats`, `yaml@2`; devDeps `esbuild`, `typescript`, `markdownlint-cli2`, `@types/node`
@@ -47,15 +47,15 @@ files and have no unfinished dependencies. Paths are repo-relative.
 
 ## Phase 2: Foundational (blocks all stories)
 
-- [ ] T007 [P] `baton/schemas/handoff.schema.json`: every field and conditional rule in data-model §1 (draft 2020-12,
+- [x] T007 [P] `baton/schemas/handoff.schema.json`: every field and conditional rule in data-model §1 (draft 2020-12,
   `additionalProperties: false`, `x-*` allowed), including the Actor/Approver patterns of §1.1 (T100) and `phase_completed: none`.
-- [ ] T008 [P] `baton/schemas/phases.schema.json` and `config.schema.json` (data-model §2–3), including check
+- [x] T008 [P] `baton/schemas/phases.schema.json` and `config.schema.json` (data-model §2–3), including check
   expressions (§2.1), `lane`/`by_lane` (§2.2), and the `gates`/`denylist` config blocks (T100–T102 add the
   behaviour).
-- [ ] T009 [P] `baton/schemas/pack.schema.json`, `lock.schema.json` and `manifest.schema.json` (data-model §4–6).
-- [ ] T010 [P] `baton/schemas/skill-frontmatter.schema.json` and `agent-frontmatter.schema.json` (data-model §7).
+- [x] T009 [P] `baton/schemas/pack.schema.json`, `lock.schema.json` and `manifest.schema.json` (data-model §4–6).
+- [x] T010 [P] `baton/schemas/skill-frontmatter.schema.json` and `agent-frontmatter.schema.json` (data-model §7).
   Unknown keys produce a warning.
-- [ ] T097 [P] `baton/schemas/findings.schema.json` (data-model §8: severities P0–P3, disposition, blocking rule) and a
+- [x] T097 [P] `baton/schemas/findings.schema.json` (data-model §8: severities P0–P3, disposition, blocking rule) and a
   fixture pair (valid/invalid) under `test/fixtures/findings/`.
 - [ ] T011 [P] `src/lib/frontmatter.mjs`: detect frontmatter at byte 0, parse YAML 1.2 and round-trip the body.
   Raise `E_FRONTMATTER_MALFORMED` when there is a single-line, no-newline file (the ATV 2.6.3 signature).

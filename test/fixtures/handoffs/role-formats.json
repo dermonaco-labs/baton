@@ -1,0 +1,29 @@
+{
+  "valid": [
+    {
+      "approved_by": "repository owner via control-plane delegation",
+      "actor": "human:repository-owner"
+    },
+    {
+      "approved_by": "maintainer",
+      "actor": "planning-session"
+    },
+    {
+      "approved_by": "maintainer via direct approval",
+      "actor": "human:maintainer"
+    }
+  ],
+  "invalid_approvers": [
+    { "approved_by": "-maintainer", "case": "leading hyphen" },
+    { "approved_by": "control--plane delegation", "case": "double hyphen" },
+    { "approved_by": "Repository owner", "case": "uppercase" },
+    { "approved_by": "@maintainer", "case": "at mention" },
+    { "approved_by": "maintainer via -control-plane", "case": "leading channel hyphen" }
+  ],
+  "invalid_actors": [
+    { "actor": "human:-owner", "case": "leading role hyphen" },
+    { "actor": "human:Owner", "case": "uppercase role" },
+    { "actor": "human:control--plane", "case": "double role hyphen" },
+    { "actor": "human:@maintainer", "case": "at mention" }
+  ]
+}

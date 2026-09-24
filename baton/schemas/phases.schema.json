@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Baton phase contracts",
+  "type": "object",
+  "required": ["schema", "budgets", "phases"],
+  "properties": {
+    "schema": { "const": 1 },
+    "budgets": { "$ref": "#/$defs/budgets" },
+    "phases": {
+      "type": "object",
+      "required": ["brainstorm", "specify", "clarify", "plan", "tasks", "analyze", "implement", "review", "land", "compound", "work"],
+      "patternProperties": { "^x-": {} },
+      "additionalProperties": false,
+      "properties": {
+        "brainstorm": { "$ref": "#/$defs/contract" },
+        "specify": { "$ref": "#/$defs/contract" },
+        "clarify": { "$ref": "#/$defs/contract" },
+        "plan": { "$ref": "#/$defs/contract" },
+        "tasks": { "$ref": "#/$defs/contract" },
+        "analyze": { "$ref": "#/$defs/contract" },
+        "implement": { "$ref": "#/$defs/contract" },
+        "review": { "$ref": "#/$defs/contract" },
+        "land": { "$ref": "#/$defs/contract" },
+        "compound": { "$ref": "#/$defs/contract" },
+        "work": {
+          "type": "object", "allOf": [{ "$ref": "#/$defs/contract" }],
+          "properties": { "lane": { "const": ["quick"] } }
+        }
+      }
+    }
+  },
+  "patternProperties": { "^x-": {} },
+  "additionalProperties": false,
+  "$defs": {
+    "phase": { "enum": ["brainstorm", "specify", "clarify", "plan", "tasks", "analyze", "implement", "review", "land", "compound", "work"] },
+    "budgets": {
+      "type": "object",
+      "required": ["read_first_max", "body_max_lines"],
+      "properties": {
+        "read_first_max": { "type": "integer", "minimum": 1 },
+        "body_max_lines": { "type": "integer", "minimum": 1 }
+      },
+      "patternProperties": { "^x-": {} },
+      "additionalProperties": false
+    },
+    "leaf": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "names": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "phases": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "oneOf": [{ "$ref": "#/$defs/phase" }, { "const": "none" }] }
+        },
+        "tag": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" }
+      },
+      "patternProperties": { "^x-": {} },
+      "additionalProperties": false,
+      "not": {
+        "anyOf": [
+          { "required": ["path", "names"], "properties": { "path": {}, "names": {} } },
+          { "required": ["path", "phases"], "properties": { "path": {}, "phases": {} } },
+          { "required": ["path", "tag"], "properties": { "path": {}, "tag": {} } },
+          { "required": ["names", "phases"], "properties": { "names": {}, "phases": {} } },
+          { "required": ["names", "tag"], "properties": { "names": {}, "tag": {} } },
+          { "required": ["phases", "tag"], "properties": { "phases": {}, "tag": {} } }
+        ]
+      }
+    },
+    "inner_group": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/group_id" },
+        "all_of": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "$ref": "#/$defs/leaf" } },
+        "any_of": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "$ref": "#/$defs/leaf" } }
+      },
+      "oneOf": [
+        { "required": ["all_of"], "properties": { "all_of": {} } },
+        { "required": ["any_of"], "properties": { "any_of": {} } }
+      ],
+      "patternProperties": { "^x-": {} },
+      "additionalProperties": false
+    },
+    "group": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/group_id" },
+        "all_of": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "$ref": "#/$defs/group_member" } },
+        "any_of": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "$ref": "#/$defs/group_member" } }
+      },
+      "oneOf": [
+        { "required": ["all_of"], "properties": { "all_of": {} } },
+        { "required": ["any_of"], "properties": { "any_of": {} } }
+      ],
+      "patternProperties": { "^x-": {} },
+      "additionalProperties": false
+    },
+    "group_id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+    "group_member": { "oneOf": [{ "$ref": "#/$defs/leaf" }, { "$ref": "#/$defs/inner_group" }] },
+    "check": { "oneOf": [{ "$ref": "#/$defs/leaf" }, { "$ref": "#/$defs/group" }] },
+    "next": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": { "oneOf": [{ "$ref": "#/$defs/phase" }, { "const": "done" }] }
+    },
+    "lane_override": {
+      "type": "object", "minProperties": 1,
+      "properties": {
+        "entry": { "type": "array", "items": { "$ref": "#/$defs/check" } },
+        "exit": { "type": "array", "items": { "$ref": "#/$defs/check" } },
+        "next": { "$ref": "#/$defs/next" },
+        "human_gate": { "type": "boolean" },
+        "read_first_hint": {}
+      },
+      "patternProperties": { "^x-": {} },
+      "additionalProperties": false
+    },
+    "contract": {
+      "type": "object",
+      "required": ["lane", "owner", "model_role", "human_gate", "entry", "exit", "next"],
+      "properties": {
+        "lane": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "enum": ["feature", "quick"] }
+        },
+        "owner": { "type": "string", "minLength": 1 },
+        "model_role": { "enum": ["planning", "implementation", "review", "fast"] },
+        "human_gate": { "type": "boolean" },
+        "entry": { "type": "array", "items": { "$ref": "#/$defs/check" } },
+        "exit": { "type": "array", "items": { "$ref": "#/$defs/check" } },
+        "next": { "$ref": "#/$defs/next" },
+        "by_lane": {
+          "type": "object",
+          "properties": {
+            "feature": { "$ref": "#/$defs/lane_override" },
+            "quick": { "$ref": "#/$defs/lane_override" }
+          },
+          "patternProperties": { "^x-": {} },
+          "additionalProperties": false
+        }
+      },
+      "patternProperties": { "^x-": {} },
+      "additionalProperties": false
+    }
+  }
+}
