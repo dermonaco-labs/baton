@@ -1,0 +1,7 @@
+schema: 1
+repairs:
+  - id: atv-263-agent-frontmatter-newlines
+    reason: Restore missing line breaks in known-corrupted ATV v2.6.3 agent frontmatter only when its original bytes match a known-bad checksum.
+    upstream_issue: pending
+    match: "pkg/scaffold/templates/agents/*.agent.md"
+    applies_to: "atv:v2.6.3"

@@ -1,0 +1,170 @@
+schema: 1
+budgets: { read_first_max: 12, body_max_lines: 150 }
+phases:
+  brainstorm:
+    lane: [feature]
+    owner: ce-brainstorm
+    model_role: planning
+    human_gate: false
+    entry: []
+    exit:
+      - { id: artifact-exists, path: "docs/brainstorms/*" }
+    next: [specify]
+  specify:
+    lane: [feature]
+    owner: speckit-specify
+    model_role: planning
+    human_gate: false
+    entry:
+      - { id: from-phase, phases: [none, brainstorm, work, review] }
+    exit:
+      - { id: artifact-exists, path: "{feature_dir}/spec.md" }
+      - { id: spec-has-stories }
+      - { id: spec-has-success-criteria }
+      - { id: markers-bounded }
+    next: [clarify, plan]
+  clarify:
+    lane: [feature]
+    owner: speckit-clarify
+    model_role: planning
+    human_gate: true
+    entry:
+      - { id: spec-exists }
+    exit:
+      - { id: no-needs-clarification, path: "{feature_dir}/spec.md" }
+      - { id: clarifications-recorded }
+    next: [plan]
+  plan:
+    lane: [feature]
+    owner: speckit-plan
+    model_role: planning
+    human_gate: false
+    entry:
+      - { id: spec-exists }
+      - { id: from-phase, phases: [specify, clarify] }
+      - { id: gate-approved }
+      - { id: no-blocking-questions }
+    exit:
+      - { id: artifact-exists, path: "{feature_dir}/plan.md" }
+      - { id: artifact-exists, path: "{feature_dir}/research.md" }
+      - { id: no-needs-clarification, path: "{feature_dir}/plan.md" }
+      - { id: constitution-check-present }
+    next: [tasks]
+  tasks:
+    lane: [feature]
+    owner: speckit-tasks
+    model_role: planning
+    human_gate: false
+    entry:
+      - { id: plan-exists }
+      - { id: no-blocking-questions }
+    exit:
+      - { id: artifact-exists, path: "{feature_dir}/tasks.md" }
+      - { id: tasks-reference-stories }
+      - { id: acceptance-registered }
+    next: [analyze]
+  analyze:
+    lane: [feature]
+    owner: speckit-analyze
+    model_role: review
+    human_gate: true
+    entry:
+      - { id: tasks-exists }
+      - { id: fresh, names: [spec, plan, tasks] }
+    exit:
+      - { id: analysis-recorded }
+      - { id: no-critical-findings }
+    next: [implement, specify, plan, tasks]
+  implement:
+    lane: [feature]
+    owner: speckit-implement
+    model_role: implementation
+    human_gate: false
+    entry:
+      - { id: gate-approved }
+      - { id: acceptance-registered }
+      - { id: fresh, names: [spec, plan, tasks] }
+    exit:
+      - { id: tasks-all-checked-or-deferred }
+      - { id: acceptance-evidence }
+      - { id: local-checks-pass }
+    next: [review]
+  work:
+    lane: [quick]
+    owner: ce-work
+    model_role: implementation
+    human_gate: false
+    entry:
+      - { id: from-phase, phases: [none, review] }
+      - { id: decision, tag: quick-eligible }
+      - { id: no-blocking-questions }
+      - { id: no-feature-tasks }
+    exit:
+      - { id: diff-nonempty }
+      - { id: local-checks-pass }
+    next: [review, specify]
+  review:
+    lane: [feature, quick]
+    owner: baton-review
+    model_role: review
+    human_gate: false
+    entry:
+      - { id: diff-nonempty }
+      - { id: fresh, names: [tasks] }
+    exit:
+      - { id: findings-json-valid }
+      - { id: findings-mapped-to-tasks-or-dismissed }
+    next: [land, implement]
+    by_lane:
+      quick:
+        entry:
+          - { id: diff-nonempty }
+        exit:
+          - { id: findings-json-valid }
+          - { id: findings-fixed-or-dismissed }
+          - { id: quick-scope-held }
+        next: [land, work, specify]
+  land:
+    lane: [feature, quick]
+    owner: baton-land
+    model_role: implementation
+    human_gate: true
+    entry:
+      - { id: no-blocking-findings }
+      - { id: local-checks-pass }
+    exit:
+      - { id: pr-opened }
+    next: [compound, done]
+    by_lane:
+      quick:
+        entry:
+          - { id: no-blocking-findings }
+          - { id: local-checks-pass }
+        exit:
+          - { id: pr-opened }
+        next: [compound, done]
+        human_gate: true
+  compound:
+    lane: [feature, quick]
+    owner: ce-compound
+    model_role: planning
+    human_gate: false
+    entry:
+      - { id: pr-opened }
+    exit:
+      - id: compound-recorded
+        any_of:
+          - { id: artifact-exists, path: "docs/solutions/*.md" }
+          - { id: decision, tag: skip-compound }
+    next: [done]
+    by_lane:
+      quick:
+        entry:
+          - { id: pr-opened }
+        exit:
+          - id: compound-recorded
+            any_of:
+              - { id: artifact-exists, path: "docs/solutions/*.md" }
+              - { id: decision, tag: skip-compound }
+        next: [done]
+        human_gate: false

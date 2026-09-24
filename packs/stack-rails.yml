@@ -1,0 +1,8 @@
+schema: 1
+id: stack-rails
+description: Rails review personas.
+requires: [core]
+conflicts: []
+files:
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/dhh-rails-reviewer.agent.md, path: .github/agents/dhh-rails-reviewer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/kieran-rails-reviewer.agent.md, path: .github/agents/kieran-rails-reviewer.agent.md }

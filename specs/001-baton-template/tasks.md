@@ -29,20 +29,20 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - deps `ajv@8`, `ajv-formats`, `yaml@2`; devDeps `esbuild`, `typescript`, `markdownlint-cli2`, `@types/node`
 
   Also create `.npmrc` (`registry=https://registry.npmjs.org/`) and generate `package-lock.json`.
-- [ ] T002 [P] Create `tsconfig.json` (`checkJs`, `strict`, `noEmit`, `module: nodenext`), `.editorconfig`, `.gitattributes`
+- [x] T002 [P] Create `tsconfig.json` (`checkJs`, `strict`, `noEmit`, `module: nodenext`), `.editorconfig`, `.gitattributes`
   (`* text=auto eol=lf`), and `.gitignore` (node_modules, `.baton/conflicts/`, `.atv/observations*`).
-- [ ] T003 [P] Create `.markdownlint-cli2.jsonc` and `.yamllint.yml`. Lint only Baton-authored paths, and ignore vendored
+- [x] T003 [P] Create `.markdownlint-cli2.jsonc` and `.yamllint.yml`. Lint only Baton-authored paths, and ignore vendored
   upstream files, which are checked by the frontmatter validator instead.
-- [ ] T004 [P] Create `src/cli.mjs` (command router, global flags, and exit codes per `contracts/cli.md`) and
+- [x] T004 [P] Create `src/cli.mjs` (command router, global flags, and exit codes per `contracts/cli.md`) and
   `src/lib/report.mjs` (human, `--json` and `--github` output).
-- [ ] T005 [P] Create `src/commands/build.mjs`:
+- [x] T005 [P] Create `src/commands/build.mjs`:
   - esbuild (dynamic import, dev-only) bundles `src/cli.mjs` into `.baton/bin/baton.mjs` plus `.sha256`
   - `--check` compares the bundle with a fresh build (`E_BUNDLE_STALE`)
   - the bundle must stay under 400 KB
   - write the esbuild metafile and derive the license inventory of every bundled npm package (including transitive
     ones such as `fast-uri`, `fast-deep-equal`, `json-schema-traverse` and `require-from-string`); fail with
     `E_LICENSE` when a package is missing from `THIRD_PARTY_NOTICES.md` or isn't MIT-compatible (FR-061)
-- [ ] T006 [P] Create `test/helpers/` (temp repo factory, fixture copy, `runCli()`), and wire the `check` script to run
+- [x] T006 [P] Create `test/helpers/` (temp repo factory, fixture copy, `runCli()`), and wire the `check` script to run
   lint, typecheck, `build --check`, `lock verify`, `validate` and `test`.
 
 ## Phase 2: Foundational (blocks all stories)
@@ -57,31 +57,31 @@ files and have no unfinished dependencies. Paths are repo-relative.
   Unknown keys produce a warning.
 - [x] T097 [P] `baton/schemas/findings.schema.json` (data-model §8: severities P0–P3, disposition, blocking rule) and a
   fixture pair (valid/invalid) under `test/fixtures/findings/`.
-- [ ] T011 [P] `src/lib/frontmatter.mjs`: detect frontmatter at byte 0, parse YAML 1.2 and round-trip the body.
+- [x] T011 [P] `src/lib/frontmatter.mjs`: detect frontmatter at byte 0, parse YAML 1.2 and round-trip the body.
   Raise `E_FRONTMATTER_MALFORMED` when there is a single-line, no-newline file (the ATV 2.6.3 signature).
-- [ ] T012 [P] `src/lib/schema.mjs`: an ajv 2020 registry that compiles all schemas once and maps errors to JSON
+- [x] T012 [P] `src/lib/schema.mjs`: an ajv 2020 registry that compiles all schemas once and maps errors to JSON
   pointers and fix hints.
-- [ ] T013 [P] `src/lib/hash.mjs`: sha256 of the raw bytes, plus a helper to hash a file list.
-- [ ] T014 [P] `src/lib/markers.mjs`: insert or replace `<!-- BATON:START -->…<!-- BATON:END -->` and leave every byte
+- [x] T013 [P] `src/lib/hash.mjs`: sha256 of the raw bytes, plus a helper to hash a file list.
+- [x] T014 [P] `src/lib/markers.mjs`: insert or replace `<!-- BATON:START -->…<!-- BATON:END -->` and leave every byte
   outside the markers untouched. If an unbalanced marker is detected, it's an error.
-- [ ] T015 `src/lib/manifest.mjs`: read and write `.baton/manifest.json`, detect user-modified files, and track marker
+- [x] T015 `src/lib/manifest.mjs`: read and write `.baton/manifest.json`, detect user-modified files, and track marker
   sections.
-- [ ] T016 `src/lib/packs.mjs`: load `packs/*.yml`, resolve the `requires` closure, enforce `conflicts`, and always
+- [x] T016 `src/lib/packs.mjs`: load `packs/*.yml`, resolve the `requires` closure, enforce `conflicts`, and always
   include `core`.
-- [ ] T017 `src/lib/phases.mjs`: load `.baton/phases.yml` over the built-in defaults, validate it, raise
+- [x] T017 `src/lib/phases.mjs`: load `.baton/phases.yml` over the built-in defaults, validate it, raise
   `W_WEAKENED_CONTRACT`, and provide the check registry interface.
-- [ ] T018 [P] Unit tests for T011–T014 in `test/unit/{frontmatter,schema,hash,markers}.test.mjs`.
+- [x] T018 [P] Unit tests for T011–T014 in `test/unit/{frontmatter,schema,hash,markers}.test.mjs`.
 - [ ] T019 [P] Unit tests for T015–T017 in `test/unit/{manifest,packs,phases}.test.mjs`. Include the SC-003 test:
   every feature-lane phase in the default `phases.yml` has ≥ 1 entry check and ≥ 1 exit check (`brainstorm` is
   exempt from entry).
-- [ ] T020 Write `packs/core.yml`, the ten optional packs and `packs/repairs.yml`, exactly as in `contracts/packs.md`.
+- [x] T020 Write `packs/core.yml`, the ten optional packs and `packs/repairs.yml`, exactly as in `contracts/packs.md`.
   Every core entry has a `role`.
-- [ ] T021 Create the `baton/speckit-extension/` skeleton:
+- [x] T021 Create the `baton/speckit-extension/` skeleton:
   - `extension.yml` defines the commands `speckit.baton.receive` and `speckit.baton.handoff`
   - mandatory (`optional: false`, no `condition`) `before_*` and `after_*` hooks for specify, clarify, plan, tasks,
     analyze, implement and converge
   - stub command files that call `node .baton/bin/baton.mjs handoff receive|write --phase <p>`
-- [ ] T022 [P] Create the `baton/speckit-preset/` preset `baton-templates`. It is **append-only**:
+- [x] T022 [P] Create the `baton/speckit-preset/` preset `baton-templates`. It is **append-only**:
   - The tasks template gets a `## Acceptance Registry` table.
   - The plan template gets a Phase 0 note to invoke `repo-research-analyst` and `learnings-researcher`, and a
     `## Handoff` pointer section.
@@ -156,27 +156,27 @@ files and have no unfinished dependencies. Paths are repo-relative.
   `--analysis-from`, `--from-quick`, `--quick`), next, approve (`--by <role> --via <channel>`), answer, refresh,
   escalate, `init --infer` and migrate (a no-op for schema 1), as in `contracts/cli.md`.
   Branching and brainstorm rules follow `contracts/phase-contracts.md` § Transition rules.
-- [ ] T038 [P] [US3] `src/commands/status.mjs`: a table of all feature and quick batons.
-- [ ] T039 [P] [US3] `baton/templates/phases.yml` (the defaults, exactly as the phase table and the quick-lane table,
+- [x] T038 [P] [US3] `src/commands/status.mjs`: a table of all feature and quick batons.
+- [x] T039 [P] [US3] `baton/templates/phases.yml` (the defaults, exactly as the phase table and the quick-lane table,
   with the `compound-recorded` group) and
   `baton/templates/handoff.md` (the body skeleton).
-- [ ] T040 [US3] Full prompts for `baton/speckit-extension/commands/{receive,handoff}.md`:
+- [x] T040 [US3] Full prompts for `baton/speckit-extension/commands/{receive,handoff}.md`:
   - Keep them thin, and don't repeat upstream instructions.
   - `receive` loads exactly `read_first`, honours `do_not_read`, and stops on exit 3.
   - `handoff` fills the judgement fields through `--from-json`, applies stop-don't-choose, and prints
     `handoff next`.
   - After analyze, `handoff` persists the analyze report verbatim to `specs/<f>/analysis.md` (`--analysis-from`),
     because upstream `speckit-analyze` is read-only and its report exists only in the chat (R13).
-- [ ] T041 [P] [US3] `baton/skills/baton/SKILL.md`: status, the next step, starting a quick lane, gate approval
+- [x] T041 [P] [US3] `baton/skills/baton/SKILL.md`: status, the next step, starting a quick lane, gate approval
   guidance, and escalation.
-- [ ] T042 [P] [US3] `baton/skills/baton-review/SKILL.md`:
+- [x] T042 [P] [US3] `baton/skills/baton-review/SKILL.md`:
   - Take intent from spec, plan and tasks, and pass the installed persona list to ce-review.
   - Always call `ce-review mode:headless` (never interactive/autofix, so no `todo-create` side effects).
   - Normalize the structured findings into `specs/<f>/review.json` (quick lane: `.baton/quick/<slug>.review.json`)
     validated by `findings.schema.json` (T097). Store that path and the blocking count.
   - Map findings to tasks, or dismiss them with a reason.
   - Raise `E_LANE_ESCALATE` in the quick lane.
-- [ ] T043 [P] [US3] `baton/skills/baton-land/SKILL.md`:
+- [x] T043 [P] [US3] `baton/skills/baton-land/SKILL.md`:
   - Run `config.checks` and `validate` before any push, then delegate to `land`.
   - Record `pr.url` and never merge.
   - Suggest `/ce-compound`.
@@ -228,10 +228,10 @@ files and have no unfinished dependencies. Paths are repo-relative.
 
 - [ ] T048 [P] [US1] `test/integration/adopt.test.mjs`: dev paths removed, docs moved, README replaced, manifest
   `source: template`, and the "cannot push" message (AC-US1-1, AC-US1-3).
-- [ ] T049 [P] [US1] `.baton/template-cleanup.yml`: the full plan.md "Template disposition" table (Remove, Replace,
+- [x] T049 [P] [US1] `.baton/template-cleanup.yml`: the full plan.md "Template disposition" table (Remove, Replace,
   Move, Keep dormant, Keep active). Workflows are never in the Remove list. Also the
   `.baton/template-cleanup-pending` marker.
-- [ ] T050 [P] [US1] `baton/templates/README.adopter.md`: a short README for derived repos that links to `docs/baton/`.
+- [x] T050 [P] [US1] `baton/templates/README.adopter.md`: a short README for derived repos that links to `docs/baton/`.
 - [ ] T095 [P] [US1] `baton/templates/workflows/baton.yml` (adopter CI per `contracts/ci.md`: `contents: read`,
   SHA-pinned, `validate --github` then `doctor`) and `baton/templates/gitignore.adopter`. Install `baton.yml` in the
   Baton repo itself and from `init` and `adopt` when absent; `doctor` warns `W_NO_ADOPTER_CI` when it's missing.

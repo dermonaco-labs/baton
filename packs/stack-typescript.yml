@@ -1,0 +1,8 @@
+schema: 1
+id: stack-typescript
+description: TypeScript and frontend race review personas.
+requires: [core]
+conflicts: []
+files:
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/kieran-typescript-reviewer.agent.md, path: .github/agents/kieran-typescript-reviewer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/julik-frontend-races-reviewer.agent.md, path: .github/agents/julik-frontend-races-reviewer.agent.md }

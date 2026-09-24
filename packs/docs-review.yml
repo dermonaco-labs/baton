@@ -1,0 +1,21 @@
+schema: 1
+id: docs-review
+description: Advisory spec and plan prose review.
+requires: [core]
+conflicts: []
+files:
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/document-review/SKILL.md, path: .github/skills/document-review/SKILL.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/document-review/references/findings-schema.json, path: .github/skills/document-review/references/findings-schema.json }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/document-review/references/review-output-template.md, path: .github/skills/document-review/references/review-output-template.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/document-review/references/subagent-template.md, path: .github/skills/document-review/references/subagent-template.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-compound-refresh/SKILL.md, path: .github/skills/ce-compound-refresh/SKILL.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-compound-refresh/assets/resolution-template.md, path: .github/skills/ce-compound-refresh/assets/resolution-template.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-compound-refresh/references/schema.yaml, path: .github/skills/ce-compound-refresh/references/schema.yaml }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-compound-refresh/references/yaml-schema.md, path: .github/skills/ce-compound-refresh/references/yaml-schema.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/coherence-reviewer.agent.md, path: .github/agents/coherence-reviewer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/feasibility-reviewer.agent.md, path: .github/agents/feasibility-reviewer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/scope-guardian-reviewer.agent.md, path: .github/agents/scope-guardian-reviewer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/product-lens-reviewer.agent.md, path: .github/agents/product-lens-reviewer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/design-lens-reviewer.agent.md, path: .github/agents/design-lens-reviewer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/security-lens-reviewer.agent.md, path: .github/agents/security-lens-reviewer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/adversarial-document-reviewer.agent.md, path: .github/agents/adversarial-document-reviewer.agent.md }

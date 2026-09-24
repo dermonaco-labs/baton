@@ -1,0 +1,14 @@
+schema: 1
+id: design
+description: Frontend design and implementation review.
+requires: [core]
+conflicts: []
+files:
+  - { from: atv, upstream_path: .github/skills/frontend-design/SKILL.md, path: .github/skills/frontend-design/SKILL.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/design-implementation-reviewer.agent.md, path: .github/agents/design-implementation-reviewer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/figma-design-sync.agent.md, path: .github/agents/figma-design-sync.agent.md }
+optional_refs:
+  - ref: design-iterator
+    note: Frontend-design offers this agent only for optional multi-pass refinement; its built-in single visual verification pass completes without it.
+  - ref: agent-browser
+    note: Frontend-design first uses existing browser tools; without them it permits mental review and reports that visual verification was skipped.

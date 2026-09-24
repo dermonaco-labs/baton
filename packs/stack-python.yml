@@ -1,0 +1,7 @@
+schema: 1
+id: stack-python
+description: Python review persona.
+requires: [core]
+conflicts: []
+files:
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/kieran-python-reviewer.agent.md, path: .github/agents/kieran-python-reviewer.agent.md }

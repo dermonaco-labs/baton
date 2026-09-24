@@ -1,0 +1,13 @@
+schema: 1
+id: research
+description: Optional Phase 0 research specialists.
+requires: [core]
+conflicts: []
+files:
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/best-practices-researcher.agent.md, path: .github/agents/best-practices-researcher.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/framework-docs-researcher.agent.md, path: .github/agents/framework-docs-researcher.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/git-history-analyzer.agent.md, path: .github/agents/git-history-analyzer.agent.md }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/issue-intelligence-analyst.agent.md, path: .github/agents/issue-intelligence-analyst.agent.md }
+optional_refs:
+  - ref: ce-ideate
+    note: Mentioned only in an agent usage example; issue-intelligence-analyst supports direct invocation and does not dispatch ce-ideate.

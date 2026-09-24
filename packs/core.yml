@@ -1,0 +1,94 @@
+schema: 1
+id: core
+description: Minimal complete feature and quick-lane relay.
+requires: []
+conflicts: []
+files:
+  - { from: speckit, path: .github/skills/speckit-constitution/SKILL.md, role: project-principles }
+  - { from: speckit, path: .github/skills/speckit-specify/SKILL.md, role: "phase-owner:specify" }
+  - { from: speckit, path: .github/skills/speckit-clarify/SKILL.md, role: "phase-owner:clarify" }
+  - { from: speckit, path: .github/skills/speckit-plan/SKILL.md, role: "phase-owner:plan" }
+  - { from: speckit, path: .github/skills/speckit-tasks/SKILL.md, role: "phase-owner:tasks" }
+  - { from: speckit, path: .github/skills/speckit-analyze/SKILL.md, role: "phase-owner:analyze" }
+  - { from: speckit, path: .github/skills/speckit-implement/SKILL.md, role: "phase-owner:implement" }
+  - { from: speckit, path: .github/skills/speckit-converge/SKILL.md, role: implement-re-entry }
+  - { from: speckit, path: .github/skills/speckit-checklist/SKILL.md, role: requirements-quality-gate }
+  - { from: baton, path: .github/skills/speckit-baton-receive/SKILL.md, role: before-hook }
+  - { from: baton, path: .github/skills/speckit-baton-handoff/SKILL.md, role: after-hook }
+  - { from: baton, path: .github/skills/baton/SKILL.md, role: relay-entry }
+  - { from: baton, path: .github/skills/baton-review/SKILL.md, role: "phase-owner:review" }
+  - { from: baton, path: .github/skills/baton-land/SKILL.md, role: "phase-owner:land" }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-brainstorm/SKILL.md, path: .github/skills/ce-brainstorm/SKILL.md, role: "phase-owner:brainstorm" }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-work/SKILL.md, path: .github/skills/ce-work/SKILL.md, role: quick-lane-executor }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-review/SKILL.md, path: .github/skills/ce-review/SKILL.md, role: review-engine }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-review/references/diff-scope.md, path: .github/skills/ce-review/references/diff-scope.md, role: review-reference }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-review/references/findings-schema.json, path: .github/skills/ce-review/references/findings-schema.json, role: review-reference }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-review/references/persona-catalog.md, path: .github/skills/ce-review/references/persona-catalog.md, role: review-reference }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-review/references/resolve-base.sh, path: .github/skills/ce-review/references/resolve-base.sh, role: review-reference }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-review/references/review-output-template.md, path: .github/skills/ce-review/references/review-output-template.md, role: review-reference }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-review/references/subagent-template.md, path: .github/skills/ce-review/references/subagent-template.md, role: review-reference }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-compound/SKILL.md, path: .github/skills/ce-compound/SKILL.md, role: "phase-owner:compound" }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-compound/assets/resolution-template.md, path: .github/skills/ce-compound/assets/resolution-template.md, role: compound-reference }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-compound/references/schema.yaml, path: .github/skills/ce-compound/references/schema.yaml, role: compound-reference }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/ce-compound/references/yaml-schema.md, path: .github/skills/ce-compound/references/yaml-schema.md, role: compound-reference }
+  - { from: atv, upstream_path: pkg/scaffold/templates/skills/land/SKILL.md, path: .github/skills/land/SKILL.md, role: ship-engine }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/correctness-reviewer.agent.md, path: .github/agents/correctness-reviewer.agent.md, role: "review-persona:always" }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/testing-reviewer.agent.md, path: .github/agents/testing-reviewer.agent.md, role: "review-persona:always" }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/maintainability-reviewer.agent.md, path: .github/agents/maintainability-reviewer.agent.md, role: "review-persona:always" }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/project-standards-reviewer.agent.md, path: .github/agents/project-standards-reviewer.agent.md, role: "review-persona:always" }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/agent-native-reviewer.agent.md, path: .github/agents/agent-native-reviewer.agent.md, role: "review-persona:always" }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/learnings-researcher.agent.md, path: .github/agents/learnings-researcher.agent.md, role: review-persona-and-plan-research }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/security-reviewer.agent.md, path: .github/agents/security-reviewer.agent.md, role: "review-persona:conditional" }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/adversarial-reviewer.agent.md, path: .github/agents/adversarial-reviewer.agent.md, role: "review-persona:conditional" }
+  - { from: atv, upstream_path: pkg/scaffold/templates/agents/repo-research-analyst.agent.md, path: .github/agents/repo-research-analyst.agent.md, role: plan-research }
+optional_refs:
+  - ref: todo-create
+    note: ce-review interactive/autofix only; baton-review always uses mode:headless.
+  - ref: performance-reviewer
+    note: Optional review-plus persona; baton-review passes only installed personas.
+  - ref: api-contract-reviewer
+    note: Optional review-plus persona; baton-review passes only installed personas.
+  - ref: data-migrations-reviewer
+    note: Optional review-plus persona; baton-review passes only installed personas.
+  - ref: reliability-reviewer
+    note: Optional review-plus persona; baton-review passes only installed personas.
+  - ref: cli-readiness-reviewer
+    note: Optional review-plus persona; baton-review passes only installed personas.
+  - ref: previous-comments-reviewer
+    note: Optional review-plus persona; baton-review passes only installed personas.
+  - ref: schema-drift-detector
+    note: Optional review-plus agent; baton-review passes only installed agents.
+  - ref: deployment-verification-agent
+    note: Optional review-plus agent; baton-review passes only installed agents.
+  - ref: kieran-python-reviewer
+    note: Optional stack-python persona; baton-review passes only installed personas.
+  - ref: kieran-typescript-reviewer
+    note: Optional stack-typescript persona; baton-review passes only installed personas.
+  - ref: julik-frontend-races-reviewer
+    note: Optional stack-typescript persona; baton-review passes only installed personas.
+  - ref: dhh-rails-reviewer
+    note: Optional stack-rails persona; baton-review passes only installed personas.
+  - ref: kieran-rails-reviewer
+    note: Optional stack-rails persona; baton-review passes only installed personas.
+  - ref: ce-plan
+    note: Upstream planning suggestion is overridden by the Baton phase owner speckit-plan (C2).
+  - ref: document-review
+    note: Advisory only and supplied by the optional docs-review pack; use speckit-checklist for requirements quality.
+  - ref: ce-compound-refresh
+    note: Optional docs-review refinement; ce-compound itself works without it.
+  - ref: simplify
+    note: ce-work explicitly permits reviewing the changed files instead when the skill is absent.
+  - ref: lfg
+    note: Autonomy shortcut is excluded; ce-work/ce-review merely recognize its optional invocation arguments.
+  - ref: slfg
+    note: Autonomy shortcut is excluded; ce-work/ce-review merely recognize its optional invocation arguments.
+  - ref: takeoff
+    note: Land references this optional start-of-session counterpart; Baton status replaces it.
+  - ref: agent-browser
+    note: Optional browser tool is excluded; ce-work can proceed without browser automation.
+  - ref: git-commit
+    note: Upstream optional Git convenience instruction; Baton landing delegates to land without a second Git extension.
+  - ref: git-commit-push-pr
+    note: Upstream optional Git convenience instruction; Baton landing delegates to land without a second Git extension.
+  - ref: speckit-git-commit
+    note: Spec Kit command templates cite this excluded git-extension command only as a hook example; Baton hooks and the phase commands work without it.

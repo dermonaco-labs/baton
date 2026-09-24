@@ -1,0 +1,54 @@
+schema: 1
+# Source: specs/001-baton-template/plan.md, Template disposition.
+remove:
+  - src/
+  - test/
+  - specs/001-baton-template/
+  - packs/
+  - baton/
+  - baton.lock.json
+  - package.json
+  - package-lock.json
+  - tsconfig.json
+  - .npmrc
+  - .markdownlint-cli2.jsonc
+  - .yamllint.yml
+  - CONTRIBUTING.md
+  - SECURITY.md
+  - SUPPORT.md
+  - CODE_OF_CONDUCT.md
+  - .github/CODEOWNERS
+  - .github/ISSUE_TEMPLATE/
+  - .baton/template-cleanup-pending
+replace:
+  README.md: baton/templates/README.adopter.md
+  .specify/memory/constitution.md: .specify/templates/constitution-template.md
+  CHANGELOG.md: fresh Keep a Changelog stub
+  .github/dependabot.yml: github-actions-only configuration
+move:
+  docs/*: docs/baton/*
+move_exceptions:
+  - docs/brainstorms/
+  - docs/solutions/
+keep_dormant:
+  - .github/workflows/ci.yml
+  - .github/workflows/smoke.yml
+  - .github/workflows/upstream-watch.yml
+  - .github/workflows/release.yml
+  - .github/workflows/template-cleanup.yml
+keep_active:
+  - .github/workflows/baton.yml
+  - .github/workflows/copilot-setup-steps.yml
+  - .github/skills/
+  - .github/agents/
+  - .github/copilot-instructions.md
+  - .github/pull_request_template.md
+  - .specify/
+  - .baton/
+  - LICENSE
+  - THIRD_PARTY_NOTICES.md
+  - .editorconfig
+  - .gitattributes
+  - .gitignore
+merge:
+  .gitignore: baton/templates/gitignore.adopter
