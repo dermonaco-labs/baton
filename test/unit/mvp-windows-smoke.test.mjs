@@ -20,3 +20,8 @@ test('the draft PR runs a pinned Windows template-instantiation smoke without wr
     assert.ok(commands.includes(required), `missing ${required}`);
   }
 });
+
+test('npm test selects only intended suites without a shell-dependent glob', async () => {
+  const pkg = JSON.parse(await readFile(join(sourceRoot, 'package.json'), 'utf8'));
+  assert.equal(pkg.scripts.test, 'node test/run.mjs');
+});
