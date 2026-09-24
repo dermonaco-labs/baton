@@ -194,6 +194,12 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - invalid fixtures `E_APPROVER_FORMAT.md`, `E_ACTOR_FORMAT.md` and `E_DENYLIST.md`, and a test that
     `approve --by "@x"`, `--by "Jane Doe"` and `--by "a@b.io"` are rejected while `--by "maintainer" --via
     "direct approval"` is accepted (AC-US3-8). **The test must fail first.**
+  - A5 word grammar (data-model §1.1, words `[a-z]+(-[a-z]+)*`): `valid/` fixtures with
+    `approved_by: "repository owner via control-plane delegation"` and `by: "human:repository-owner"`; invalid cases
+    (in `validate-handoff.test.mjs`, all `E_APPROVER_FORMAT`) for a leading hyphen (`-maintainer`), a double hyphen
+    (`control--plane delegation`), upper case (`Repository owner`) and `@` (`@maintainer`), plus `human:-owner` /
+    `human:Owner` (`E_ACTOR_FORMAT`). The default `config.yml` vocabulary must compile against the phrase pattern
+    (AC-US3-8).
 - [ ] T101 [US3] Check expressions (data-model §2.1): leaf/group grammar with `all_of`/`any_of` in
   `phases.schema.json`, the evaluator in `src/lib/phases.mjs` (all members evaluated, evidence per member), check keys,
   `E_CHECK_UNKNOWN`/`E_CHECK_GROUP`/`E_CHECK_KEY_DUP`, and `W_WEAKENED_CONTRACT` for a built-in moved into an
@@ -398,7 +404,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
 | AC-US3-5 | US3 | relay.test "land requires pr.url and checks" | test-id | fail |
 | AC-US3-6 | US3 | `baton validate --path specs/001-baton-template/handoff.md` | command | fail |
 | AC-US3-7 | US3 | relay.test "checked task stays fresh, reworded task is stale" | test-id | fail |
-| AC-US3-8 | US3 | validate-handoff.test + relay.test "role-only approver; handle/email/name rejected; denylist" | test-id | fail |
+| AC-US3-8 | US3 | validate-handoff.test + relay.test "role-only approver incl. control-plane delegation; handle/email/name, bad hyphens and upper case rejected; denylist" | test-id | fail |
 | AC-US3-9 | US3 | phases.test + relay.test "any_of compound: solution or skip-compound; group errors" | test-id | fail |
 | AC-US3-10 | US3 | relay.test "quick relay new→work→review→land, escalate, feature→quick rejected" | test-id | fail |
 | AC-US4-1 | US4 | models.test "role resolution + overrides" | test-id | fail |

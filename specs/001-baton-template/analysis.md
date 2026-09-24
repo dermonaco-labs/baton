@@ -116,9 +116,9 @@ stays a draft only; the owner files it.
 - The owner or orchestrator approves the gate (`gate.approved_by` in handoff.md), then `/speckit-implement` starts at
   T001. MVP = Setup + Foundational + US3 + US1: T001–T054 plus T095–T098.
 
-## Post-analyze amendment (A1–A4)
+## Post-analyze amendment (A1–A5)
 
-The implement session stopped on four normative gaps (stop, don't choose). The repository owner resolved them via
+The implement session stopped on five normative gaps (stop, don't choose). The repository owner resolved them via
 control-plane delegation, and they are closed in the docs without reopening settled decisions:
 
 | ID | Gap | Resolution | Where | Tasks / ACs |
@@ -127,6 +127,7 @@ control-plane delegation, and they are closed in the docs without reopening sett
 | A2 | Exit criteria with OR (compound) had no syntax | `all_of`/`any_of` check groups, check keys, `E_CHECK_UNKNOWN`/`E_CHECK_GROUP`/`E_CHECK_KEY_DUP`, and `compound-recorded` | data-model §2.1, phase-contracts | T101, AC-US3-9 |
 | A3 | The quick lane's phases, owners, entry checks and transitions weren't representable | The `work` phase, `lane`/`by_lane`, `handoff new --quick`, `--from-quick` escalation, feature → quick rejected, `E_LANE_MISMATCH` and `W_QUICK_LARGE` | data-model §2.2, phase-contracts § Quick lane, cli.md | T102, AC-US3-10 |
 | A4 | `docs-review` shipped `document-review` without the `adversarial-document-reviewer` agent it dispatches, and closure was checked against the whole installed set | Agent added to `docs-review` (not core). Closure is checked per pack (the pack plus its `requires`) and includes dispatched agents | packs.md, handoff-contract | T026, AC-US2-4 |
+| A5 | The A1 word pattern `[a-z]+` rejected the prescribed channel `control-plane delegation`, so the recorded approver form failed `/gate/approved_by` | Words are `[a-z]+(-[a-z]+)*` (internal single hyphens); role and channel are 1–4 words; the actor slug is `human:[a-z]+(-[a-z]+)*`. Nothing else changed | data-model §1.1, handoff-contract | T100, AC-US3-8 |
 
 The metrics above predate the amendment. After it there are 102 tasks and 30 acceptance checks, and every new
 requirement bullet (FR-024, FR-030, FR-052) maps to T100–T102 or T026.
