@@ -42,7 +42,7 @@ Markdown file = YAML frontmatter (the contract) + a short body (for humans and t
 **Body** (≤ 150 lines by default), fixed headings in this order: `## Goal`, `## What changed`,
 `## Next steps` (numbered, must start with the exact command from `baton handoff next`), `## Watch out for`.
 
-**State rules**
+### State rules
 
 - `status: ready` ⇔ all `exit_criteria.met`, no blocking `open_questions`, and (`gate.required` ⇒ `gate.approved_by` set
   before the next phase starts; this is checked on receive).
@@ -87,7 +87,9 @@ Batons never contain a personal name, handle or email. People are recorded by **
 - The patterns exclude `@`, `.`, `_`, `/`, `\`, digits in roles and upper case, so no email, `@handle`, path or
   username fits. The denylist scan (handoff-contract `E_DENYLIST`) still applies and is consistent with the schema: a
   value that passes the schema can only fail the scan through a configured denylist term.
+- Verbatim third-party license emails are exempt from the email rule only in `THIRD_PARTY_NOTICES.md` and vendored LICENSE/NOTICE/COPYING files; mention, home-path and configured-term checks still apply.
 - Errors: `E_APPROVER_FORMAT` (pattern or vocabulary), `E_ACTOR_FORMAT` (pattern or unknown `human:` role).
+
 ## 2. Phase and phase contract — `.baton/phases.yml`
 
 `Phase` enum: `brainstorm`, `specify`, `clarify`, `plan`, `tasks`, `analyze`, `implement`, `review`, `land`,

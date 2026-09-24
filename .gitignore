@@ -1,0 +1,5 @@
+node_modules/
+.baton/conflicts/
+.baton/.tmp/
+.atv/observations*
+.context/

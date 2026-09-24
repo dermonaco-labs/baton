@@ -9,18 +9,16 @@ status: ready
 model_role: implementation
 suggested_model: gpt-6-sol
 summary: >-
-  Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analysis.md). A post-analyze amendment (A1-A5)
-  then closed three gaps raised by implement: role-only gate approvals and actors with a denylist scan (T100),
-  any_of/all_of check groups for exit criteria such as compound (T101), and the quick lane's work phase, by_lane
-  overrides and lane transitions (T102). A4 adds adversarial-document-reviewer to docs-review with a per-pack closure check; A5 allows hyphenated approver words. Now 102 tasks, 30 acceptance checks, constitution 1.0.1. The pre-code gate
-  awaits approval.
+  Analyze resolved 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings. Amendments A1-A5 specify role-only
+  approvals, grouped phase checks, the quick lane, per-pack closure, and hyphenated role words. The
+  pre-code gate was approved by the repository owner via control-plane delegation.
 read_first:
   - { path: specs/001-baton-template/tasks.md, why: "the unit of work, in order, and the Acceptance Registry", sha256: 01d84914bb35828f29bdbe2f4fa0b835512dcccf9f9b8628121d35fde41ac4ca }
-  - { path: specs/001-baton-template/plan.md, why: "structure, template disposition, key decisions, constitution check", sha256: 61a97487f08f17dae41705ab7f22e566b6bd8671e9102c11c2a3bebbe5d27285 }
+  - { path: specs/001-baton-template/plan.md, why: "structure, template disposition, key decisions, constitution check", sha256: 53338c389d7a2452bdd4cebbb98c3b0c79628b541ad3c9368058e309e4c31f86 }
   - { path: specs/001-baton-template/analysis.md, why: "what the analyze pass changed and the FR/SC to task map", sha256: 1e4f61cb3eea76dee792c54e7d0e549ffe4edab8af3d5d7397bf26bc3b66d3a9 }
-  - { path: specs/001-baton-template/data-model.md, why: "baton, phase, config, pack, lock, manifest and findings shapes", sha256: 629bbf408ce60100e16d5baf7d6432c81f85518e05072f943ab42bbbb0aa0463 }
+  - { path: specs/001-baton-template/data-model.md, why: "baton, phase, config, pack, lock, manifest and findings shapes", sha256: 345c111eb1f41a7b03de76921f512312b2ba076220a5cc91fe88b82d893f6353 }
   - { path: specs/001-baton-template/contracts/handoff-contract.md, why: "validator rules and stable error codes", sha256: 4b375903f28d09c9cc08bfe0423c9efdc65b30e225cac9901ef6dd73c9bd7a11 }
-  - { path: specs/001-baton-template/contracts/phase-contracts.md, why: "phase table, check ids, transition rules", sha256: c845a8903cbe2752ca981af78baac5399929b1fbd9e63a889e98a8dddc41ca38 }
+  - { path: specs/001-baton-template/contracts/phase-contracts.md, why: "phase table, check ids, transition rules", sha256: 933326d0abfd56976c4f1c0b5dd426145bac651342bcb9d92f007e3fe54647be }
   - { path: specs/001-baton-template/contracts/cli.md, why: "commands, flags and exit codes (normative)", sha256: 8041ef1180598b58f6c0ed0a3a3fd6482949d2fa02c1a7f45dac2dfefa82dff1 }
   - { path: specs/001-baton-template/contracts/packs.md, why: "core file list, pack storage, closure rules", sha256: aeee9e2f703a27af0ede69f6d43dce0a880e3d374e106e374b1922d800f1703c }
   - { path: specs/001-baton-template/contracts/conflict-rules.md, why: "Spec Kit vs ATV rules C1-C13 (T045)", sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a }
@@ -34,10 +32,10 @@ artifacts:
   - { path: .specify/memory/constitution.md, role: source-of-truth, sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391 }
   - { path: specs/001-baton-template/spec.md, role: source-of-truth, sha256: 873b6732fff91cedd623c335bef4e2a82cbafbe3e4319f6a7cb0143785ed4fda }
   - { path: specs/001-baton-template/research.md, role: evidence, sha256: edc20bbae358ab515baed4cdff5328565abbff768a33602f3c912a6d161229c5 }
-  - { path: specs/001-baton-template/plan.md, role: source-of-truth, sha256: 61a97487f08f17dae41705ab7f22e566b6bd8671e9102c11c2a3bebbe5d27285 }
-  - { path: specs/001-baton-template/data-model.md, role: source-of-truth, sha256: 629bbf408ce60100e16d5baf7d6432c81f85518e05072f943ab42bbbb0aa0463 }
+  - { path: specs/001-baton-template/plan.md, role: source-of-truth, sha256: 53338c389d7a2452bdd4cebbb98c3b0c79628b541ad3c9368058e309e4c31f86 }
+  - { path: specs/001-baton-template/data-model.md, role: source-of-truth, sha256: 345c111eb1f41a7b03de76921f512312b2ba076220a5cc91fe88b82d893f6353 }
   - { path: specs/001-baton-template/contracts/handoff-contract.md, role: source-of-truth, sha256: 4b375903f28d09c9cc08bfe0423c9efdc65b30e225cac9901ef6dd73c9bd7a11 }
-  - { path: specs/001-baton-template/contracts/phase-contracts.md, role: source-of-truth, sha256: c845a8903cbe2752ca981af78baac5399929b1fbd9e63a889e98a8dddc41ca38 }
+  - { path: specs/001-baton-template/contracts/phase-contracts.md, role: source-of-truth, sha256: 933326d0abfd56976c4f1c0b5dd426145bac651342bcb9d92f007e3fe54647be }
   - { path: specs/001-baton-template/contracts/conflict-rules.md, role: source-of-truth, sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a }
   - { path: specs/001-baton-template/contracts/packs.md, role: source-of-truth, sha256: aeee9e2f703a27af0ede69f6d43dce0a880e3d374e106e374b1922d800f1703c }
   - { path: specs/001-baton-template/contracts/cli.md, role: source-of-truth, sha256: 8041ef1180598b58f6c0ed0a3a3fd6482949d2fa02c1a7f45dac2dfefa82dff1 }
@@ -101,6 +99,7 @@ decisions:
   - { id: D14, tag: amendment-a3, decision: "The quick lane is phases work -> review -> land -> compound with by_lane.quick overrides; it starts with handoff new --quick, escalates to specify only from work/review via --from-quick, and feature -> quick is illegal", rationale: "the owner and entry checks of the quick lane must be representable in phases.yml and the baton (phase-contracts Quick lane)", by: "human:repository-owner" }
   - { id: D15, tag: amendment-a4, decision: "adversarial-document-reviewer ships in the docs-review pack (not core); closure is checked per pack (the pack plus its requires) and covers dispatched agents", rationale: "document-review dispatches that agent; MIT upstream ATV content (packs.md Closure rules)", by: "human:repository-owner" }
   - { id: D16, tag: amendment-a5, decision: "Approver and actor words are [a-z]+(-[a-z]+)* (internal single hyphens); role and channel are 1-4 words separated by single spaces; human actors are human:[a-z]+(-[a-z]+)*; nothing else changes", rationale: "the A1 pattern rejected the prescribed channel control-plane delegation (data-model 1.1)", by: "human:repository-owner" }
+  - { id: D17, tag: license-notice-exemption, decision: "Verbatim third-party license emails are exempt from email scanning only in THIRD_PARTY_NOTICES.md and vendored license files; all other privacy checks still apply", rationale: "copyright attribution and full license text are mandatory, while repository-owner data remains prohibited", by: "human:repository-owner" }
 open_questions: []
 assumptions:
   - { id: AS1, text: "The spec assumptions A1-A9 hold (re-checked at analyze, unchanged)", revisit_at: review }
@@ -144,10 +143,9 @@ words, so `repository owner via control-plane delegation` is valid (data-model �
 
 ## Next steps
 
-1. The owner or orchestrator reviews `analysis.md` and approves the pre-code gate. Until T047 exists, record it in this
-   baton by hand (`gate.approved_by`, `gate.approved_at`); afterwards use `baton handoff approve --by "repository owner" --via "control-plane delegation"`.
-   Record roles only, never a handle or email.
-2. `/speckit-implement` in a new session (model role: implementation → gpt-6-sol, reasoning high). Start at T001.
+1. `/speckit-implement` in a new session (model role: implementation → gpt-6-sol, reasoning high). The pre-code gate
+   has already been approved by the repository owner via control-plane delegation.
+2. Work in task order from T001.
    The MVP is Setup + Foundational + US3 + US1: T001–T054 plus T095–T098 and T100–T102 (T096 and T097 are
    Foundational, T098 and T100–T102 are US3, T095 is US1).
 3. After each checkpoint: `npm run check`, commit with the owner's trailer, and update this baton.

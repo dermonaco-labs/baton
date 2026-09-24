@@ -31,11 +31,14 @@ WSL, Git Bash). The `ps` and `py` flavours are available through `baton init --s
 **Performance Goals**: `baton validate` finishes in under 2 s on a repo with 20 features. `init` finishes in
 under 5 s offline.
 **Constraints**:
+
 - no runtime network access for adopters
 - the bundle is under 400 KB
 - CI stays on free runners with `GITHUB_TOKEN` only
 - actions are pinned by SHA
+
 **Scale/Scope**:
+
 - `core` has 28 planned skill/agent files, and SC-002 caps it at 30
 - 10 optional packs
 - 11 phases: 10 in the feature lane, plus `work` in the quick lane (which shares `review`, `land` and `compound`)
