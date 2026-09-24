@@ -32,9 +32,10 @@ Markdown file = YAML frontmatter (the contract) + a short body (for humans and t
 | `assumptions` | array of `{id, text, revisit_at}` | – | agent | `revisit_at` = a phase |
 | `risks` | array of `{id, text, severity}` | – | agent | severity ∈ low, medium, high |
 | `gate` | `{required: bool, approved_by: string or null, approved_at: datetime or null}` | ✓ | CLI | required per phases.yml |
-| `review` | `{findings_path, blocking_findings: int}` | cond. | CLI | required after `review` |
+| `review` | `{findings_path, blocking_findings: int}` | cond. | CLI | required after `review`. `findings_path` points to a Baton-owned `findings.schema.json` file (`specs/<f>/review.json`), never to upstream run artifacts |
+| `analysis` | `{report_path, critical: int, high: int}` | cond. | CLI | required after `analyze`. The report is persisted to `specs/<f>/analysis.md` by `speckit.baton.handoff` |
 | `pr` | `{url, number}` | cond. | CLI | required after `land` |
-| `history` | array (≤ 20, FIFO) of `{phase, at, by, commit}` | ✓ | CLI | a compact trail; git holds the full history |
+| `history` | array (≤ 20, FIFO) of `{phase, at, by, commit}` | ✓ | CLI | a compact trail; git holds the full history. `commit` = short `HEAD` when the entry was written (null before the first commit) |
 | `updated_at` | RFC 3339 datetime | ✓ | CLI | |
 | `updated_by` | string | ✓ | CLI | agent id / `human:<handle>` |
 
@@ -49,6 +50,14 @@ Markdown file = YAML frontmatter (the contract) + a short body (for humans and t
   recorded).
 - Staleness: for every `artifacts[*]` and `read_first[*]` entry that has a sha256, the current file hash MUST be equal,
   otherwise `E_STALE_ARTIFACT`.
+- Hashing: sha256 over the raw bytes, with one exception. For files named `tasks.md` the hash is computed after
+  normalizing task checkboxes (`^(\s*- )\[[xX]\]` → `$1[ ]`), so progress made during implement (including across
+  sessions) never makes the baton stale. Adding, removing or rewording tasks still does.
+- Branching: when a phase has several `next` values, `handoff write` uses the first one unless `--next <phase>` is
+  given. `specify --next plan` (skipping clarify) is legal only when the spec has 0 `[NEEDS CLARIFICATION]`
+  markers, and it sets `gate.required: true`.
+- Brainstorm writes no baton, because no feature dir exists yet. `handoff write --phase specify --from-brainstorm <path>`
+  records the brainstorm doc in `artifacts` (role `evidence`) and adds a `brainstorm` history entry.
 
 ## 2. Phase and phase contract — `.baton/phases.yml`
 
@@ -132,6 +141,8 @@ files:
 optional_refs:
   - ref: performance-reviewer
     note: ce-review selects only installed personas (baton-review passes the list)
+  - ref: todo-create
+    note: only used by ce-review interactive/autofix modes; baton-review always calls mode:headless
 ```
 
 ## 5. Lock — `baton.lock.json` (maintainer side)
@@ -143,19 +154,26 @@ optional_refs:
   "upstreams": {
     "speckit": { "package": "specify-cli", "version": "1.0.11", "repo": "github/spec-kit",
                  "tag": "v1.0.11", "commit": "8147943512404afb9d99c6252cb9bf84369fd0b0",
-                 "license": "MIT", "init_args": ["--integration","copilot","--script","sh"] },
+                 "requirements": "baton/upstream/specify-cli.requirements.txt",
+                 "requirements_sha256": "…", "license": "MIT",
+                 "init_args": ["--integration","copilot","--script","sh"] },
     "atv":     { "package": "atv-starterkit", "version": null, "repo": "All-The-Vibes/ATV-StarterKit",
                  "ref": "main", "commit": "ad996736b879be87c7755df5c5017d5336203bbc",
-                 "tarball_sha256": "<computed at first sync>", "license": "MIT",
+                 "tree": "<git tree id, recorded by sync and verified on every fetch>", "license": "MIT",
                  "note": "pinned to main: v2.6.3 ships corrupted agent templates (fixed in f0a86ef)" }
   },
   "files": [
     { "path": ".github/agents/correctness-reviewer.agent.md", "upstream": "atv",
       "upstream_path": "pkg/scaffold/templates/agents/correctness-reviewer.agent.md",
+      "stored_at": ".github/agents/correctness-reviewer.agent.md",
       "sha256_upstream": "…", "sha256": "…", "license": "MIT", "repair": null, "packs": ["core"] }
   ]
 }
 ```
+
+`stored_at` is the location in the Baton repo. It equals `path` for `core`, and is `packs/<id>/files/<path>` for
+optional packs (FR-053). A repair entry is `{id, reason, upstream_issue}`, where `upstream_issue` is a URL or
+`"pending"` (Principle I).
 
 ## 6. Manifest — `.baton/manifest.json` (adopter side)
 
@@ -185,3 +203,25 @@ A file counts as **user-modified** when its current sha256 differs from `manifes
   `handoffs`, `target`, `user-invocable`, `infer` and `mcp-servers`. The frontmatter MUST start at byte 0 with
   `---\n` and close with `\n---\n`. That is exactly the signature that the corrupted ATV 2.6.3 files violate
   (`E_FRONTMATTER_MALFORMED`).
+
+## 8. Findings — `specs/<feature>/review.json` (quick lane: `.baton/quick/<slug>.review.json`)
+
+This file is Baton-owned (`findings.schema.json`). `baton-review` builds it by normalizing the structured output of
+`ce-review mode:headless`, so the validator never parses upstream run artifacts.
+
+```json
+{
+  "schema": 1,
+  "source": { "engine": "ce-review", "mode": "headless", "run_artifact": ".context/compound-engineering/ce-review/<run-id>/" },
+  "base": "<merge-base sha>", "head": "<sha>",
+  "personas": ["correctness-reviewer", "testing-reviewer"],
+  "findings": [
+    { "id": "F1", "severity": "P1", "title": "…", "file": "src/x.mjs", "line": 42, "persona": "correctness-reviewer",
+      "confidence": 0.8, "task": "T034", "disposition": "open|fixed|dismissed", "reason": null }
+  ]
+}
+```
+
+`severity` ∈ `P0`…`P3`. Findings at `P0`/`P1` with `disposition: open` are **blocking** (they count toward
+`review.blocking_findings`). A `dismissed` finding needs a `reason`, and a finding that isn't dismissed needs a
+`task` (the `findings-mapped-to-tasks-or-dismissed` exit check).

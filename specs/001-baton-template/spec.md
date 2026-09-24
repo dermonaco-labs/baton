@@ -29,9 +29,11 @@ may remain.
 **Acceptance Scenarios**:
 
 1. **Given** a repo created from the template, **When** the first push triggers `template-cleanup`,
-   **Then** Baton's dev files (`src/`, `test/`, `specs/001-baton-template/`, the maintainer workflows and
-   the Baton CHANGELOG) are removed, the README is replaced by the adopter README, and
-   `.baton/manifest.json` records the Baton version it was created from.
+   **Then** Baton's dev files are removed (`src/`, `test/`, `specs/001-baton-template/`, the Baton CHANGELOG and the
+   other paths in plan.md § Template disposition). The constitution is replaced by Spec Kit's pristine template,
+   the README is replaced by the adopter README, and `.baton/manifest.json` records the Baton version it was created
+   from. The cleanup never touches `.github/workflows/`, because `GITHUB_TOKEN` cannot push workflow changes. The
+   maintainer workflows stay dormant (repository guard) and `baton.yml` validates the adopter's batons.
 2. **Given** the cleaned repo, **When** `baton doctor` runs, **Then** it reports the Baton version,
    the upstream pins, the installed packs, checksum integrity (all files unmodified) and any
    missing optional prerequisites (uv/specify, node) as warnings only.
@@ -225,9 +227,10 @@ all on free hosted runners.
 - **FR-010**: `baton.lock.json` MUST pin each upstream by immutable reference (package version plus
   commit SHA) and list every vendored file with its sha256, upstream path, license id and any repair applied.
 - **FR-011**: `baton sync` (maintainer) MUST regenerate the Spec Kit files by running the pinned
-  `specify-cli` (`uvx --from specify-cli==<ver> specify init --here --integration copilot --script sh
-  --force --ignore-agent-tools` in a temp dir). It MUST take ATV files from the pinned git tree
-  (`pkg/scaffold/templates/`), not from the prebuilt binary.
+  `specify-cli` (`specify init --here --integration copilot --script sh --force --ignore-agent-tools` in a temp dir).
+  The CLI is installed from a committed, hash-locked requirements file (`uv pip install --require-hashes`). It MUST
+  take ATV files from the pinned git tree (`pkg/scaffold/templates/`), fetched by commit SHA with the commit and
+  tree ids verified, and not from the prebuilt binary or a generated archive.
 - **FR-012**: `baton sync --check` MUST fail on any difference between the committed snapshot and the
   regenerated one.
 - **FR-013**: Repairs MUST be mechanical, declared in `packs/repairs.yml`, and verified afterwards
@@ -252,14 +255,18 @@ all on free hosted runners.
   - Schema.
   - Legal transition (as defined by phases.yml).
   - Required artifacts exist.
-  - The artifact sha256 values match (staleness).
+  - The artifact sha256 values match (staleness). `tasks.md` is hashed checkbox-insensitively (`[x]`/`[X]` are
+    normalized to `[ ]`), so progress made during a multi-session implement doesn't make the baton stale.
+  - The analyze report is persisted to `specs/<feature>/analysis.md` by the Baton handoff command (Spec Kit analyze
+    is read-only), and implement entry requires it to contain no CRITICAL findings.
   - A blocking open question implies `status ∈ {needs-human, blocked}`.
   - The `read_first` budget: ≤ 12 entries by default, configurable.
   - Pre-registered acceptance checks exist before implement.
   - Human-gate approval is recorded where the phase requires one.
   - Every error has a stable code, listed in the handoff contract.
-- **FR-025**: `baton handoff` subcommands: `new`, `refresh --reason`, `approve --by`, `show`, `next`
-  (prints the next command and the suggested model) and `init --infer`.
+- **FR-025**: `baton handoff` MUST provide at least `new`, `show`, `receive`, `write`, `next` (prints the next
+  command and the suggested model), `approve --by`, `answer`, `refresh --reason`, `escalate`, `init --infer` and
+  `migrate`. [contracts/cli.md](./contracts/cli.md) is normative for flags and exit codes.
 
 **Workflow coherence**
 
@@ -269,8 +276,13 @@ all on free hosted runners.
 - **FR-031**: Baton MUST own `.github/copilot-instructions.md` through the marker-managed section, and
   it must keep Spec Kit's `<!-- SPECKIT START -->`/`<!-- SPECKIT END -->` block intact.
 - **FR-032**: The Copilot coding-agent setup MUST be at `.github/workflows/copilot-setup-steps.yml`
-  (job `copilot-setup-steps`). It installs Node and uv with pinned `specify-cli`, and runs a
+  (job `copilot-setup-steps`). It installs Node and uv, installs `specify-cli` from the hash-locked requirements
+  when that file is present (the Baton repo; derived repos don't need the Spec Kit CLI at runtime), and runs a
   project-defined dependency step.
+- **FR-033**: Every Baton installation (template-derived or `init`) MUST include an adopter workflow
+  `.github/workflows/baton.yml`. It runs `node .baton/bin/baton.mjs validate --github` on pull requests and pushes,
+  with `contents: read` only, which is the CI backstop for skipped hooks. The maintainer workflows MUST be guarded
+  with `if: github.repository == 'dermonaco-labs/baton'`.
 
 **Model routing**
 
@@ -290,13 +302,18 @@ all on free hosted runners.
 - **FR-052**: The dependency closure MUST be checked. A vendored file that references a skill or agent that isn't
   installed fails sync with `E_DANGLING_REF`, unless the reference is declared as an optional reference with a
   graceful-degradation note.
+- **FR-053**: The files of optional packs MUST be stored in the Baton repo under `packs/<id>/files/` (mirroring the
+  install paths) so that `init --packs` works offline from the package. `core` files live in place. In a
+  template-derived repo, where `packs/` has been removed, adding a pack MUST exit 5 and print the exact pinned
+  `npx --yes github:dermonaco-labs/baton#v<manifest version> init --packs <id>` command.
 
 **Documentation & community**
 
 - **FR-060**: Baton MUST ship a README hero and a `docs/` manual with the sections listed in plan.md.
 - **FR-061**: It MUST ship `THIRD_PARTY_NOTICES.md` with full license texts and copyright lines for
   Spec Kit (GitHub, Inc.), ATV (All The Vibes), compound-engineering (Every) and any other vendored
-  source, plus per-file provenance.
+  source, plus per-file provenance. This includes every npm package bundled into `baton.mjs`, including the
+  transitive ones (inventory generated from the esbuild metafile).
 - **FR-062**: It MUST ship CONTRIBUTING, CODE_OF_CONDUCT (Contributor Covenant 2.1), SECURITY (private
   vulnerability reporting), SUPPORT, issue forms (bug, feature, upstream-bump), a PR template with a
   handoff checklist, a CHANGELOG (Keep a Changelog) and dependabot config.

@@ -1,10 +1,13 @@
 <!--
 Sync Impact Report
-- Version change: none → 1.0.0 (initial ratification)
-- Added principles: I–VIII (all new)
-- Added sections: Supply-Chain & Licensing Constraints, Delivery Workflow & Quality Gates, Governance
-- Templates requiring updates: .specify/templates/* are materialized from Spec Kit by `baton sync` (pending, see tasks T023–T028)
+- Version change: 1.0.0 → 1.0.1 (PATCH, clarifications from the analyze pass; see specs/001-baton-template/analysis.md)
+- Modified: Delivery Workflow & Quality Gates (scope gate wording: after clarify, or after specify when clarify is skipped)
+- Modified: Supply-Chain & Licensing Constraints (verification means content hashes or git object ids, including
+  transitive packages)
+- Templates requiring updates: none (.specify/templates/* are still materialized by `baton sync`, tasks T023–T028)
 - Deferred items: none
+- Previous: none → 1.0.0 (initial ratification: principles I–VIII, Supply-Chain & Licensing Constraints, Delivery
+  Workflow & Quality Gates, Governance)
 -->
 
 # Baton Constitution
@@ -89,14 +92,16 @@ flaky or slow, fix it or delete it. Never ignore it.
 - Upstream content without a license, such as `karpathy-guidelines`, MUST NOT be vendored. Link to it instead.
 - Nothing specific to a single adopter, whether domain rules, hostnames, secrets, personal names
   or local paths, may appear in Baton.
-- Downloads made during sync or install are verified against the lockfile (sha256) before they are used.
+- Downloads made during sync or install are verified against the lockfile before they are used: by sha256 for files
+  and packages (including transitive packages, via hash-locked requirements) and by commit and tree id for git fetches.
+  Unverified installers such as a bare `uvx` or `npx` of an unpinned package MUST NOT be used by `sync`.
 
 ## Delivery Workflow & Quality Gates
 
 - Feature work follows this relay: specify → clarify → plan → tasks → analyze → implement →
   review → land → compound. Each arrow is a handoff, and the validator checks each one.
-- Human gates are required after specify and clarify (scope), after analyze (before any code
-  is written) and at land (PR review). There is no auto-merge.
+- Human gates are required for scope (after clarify, or after specify when clarify is skipped),
+  after analyze (before any code is written) and at land (PR review). There is no auto-merge.
 - The quick lane (ce-work → baton-review → baton-land) is allowed only for changes that add no
   new user-facing behaviour or contract. In any other case, escalate to the feature lane.
 - `npm run check`, which is the same as CI, MUST pass locally before `baton-land` pushes.
@@ -109,4 +114,4 @@ Versions follow SemVer. MAJOR is for removing or redefining a principle, MINOR i
 principle or section, and PATCH is for clarifications. Reviewers check compliance with this
 constitution in every PR. Any exception MUST be justified in the plan's Complexity Tracking table.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-24 | **Last Amended**: 2026-09-24
+**Version**: 1.0.1 | **Ratified**: 2026-09-24 | **Last Amended**: 2026-09-24

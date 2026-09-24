@@ -36,7 +36,7 @@ under 5 s offline.
 - CI stays on free runners with `GITHUB_TOKEN` only
 - actions are pinned by SHA
 **Scale/Scope**:
-- `core` is 28 skill/agent files or fewer
+- `core` has 28 planned skill/agent files, and SC-002 caps it at 30
 - 10 optional packs
 - 9 phases
 - ~12 CLI subcommands
@@ -48,16 +48,18 @@ under 5 s offline.
 | Principle | How the plan complies | Status |
 |---|---|---|
 | I. Upstream-first | extension and hooks, wrapper skills, a small append-only preset. No upstream edits. Repairs are declared in `packs/repairs.yml`. | ✅ |
-| II. Pinned & reproducible | `baton.lock.json` holds the SHAs and sha256s. `sync --check` runs in CI. | ✅ |
+| II. Pinned & reproducible | `baton.lock.json` holds the SHAs and sha256s. Spec Kit is installed from a hash-locked requirements file, and ATV is fetched by commit with the commit and tree ids verified. `sync --check` runs in CI. | ✅ |
 | III. Explicit handoffs | `handoff.schema.json` + `phases.yml` + receive/handoff hooks + CI validator | ✅ |
 | IV. Stop, don't choose | the validator enforces `needs-human` on blocking questions. The receive hook stops. | ✅ |
 | V. Pre-registration | acceptance-check registry in the tasks template. Implement entry requires it. | ✅ |
-| VI. Minimal by default | `core` ≤ 28 files with no duplicate roles. Everything else goes in packs. | ✅ |
+| VI. Minimal by default | `core` has 28 planned files (≤ 30) with no duplicate roles. Everything else goes in packs. | ✅ |
 | VII. Model routing | role-based config. No model IDs in prompts. Frontmatter writes are opt-in. | ✅ |
 | VIII. Cheap, strict, local-first | `npm run check` == CI. Free runners. SHA-pinned actions. | ✅ |
 | Licensing | karpathy is excluded. THIRD_PARTY_NOTICES and per-file provenance are included. | ✅ |
 
-The post-design re-check passed (data-model and contracts introduce no violations).
+The post-design re-check passed (data-model and contracts introduce no violations). The analyze re-check
+(2026-09-24, [analysis.md](./analysis.md)) fixed one supply-chain gap. The un-hashed `uvx` install and the codeload
+tarball have been replaced by a hash-locked install and a git fetch whose ids are verified.
 
 ## Project Structure
 
@@ -66,10 +68,11 @@ The post-design re-check passed (data-model and contracts introduce no violation
 ```text
 specs/001-baton-template/
 ├── spec.md              # what & why
-├── research.md          # upstream facts, decisions (R1–R12)
+├── research.md          # upstream facts, decisions (R1–R13)
 ├── plan.md              # this file
 ├── data-model.md        # entities & schemas (baton, phase, config, pack, lock, manifest)
 ├── quickstart.md        # validation scenarios for implement/review
+├── analysis.md          # persisted speckit-analyze report (pre-code gate evidence)
 ├── contracts/
 │   ├── handoff-contract.md   # baton frontmatter, validator rules, error codes
 │   ├── phase-contracts.md    # per-phase entry/exit, transitions, roles, gates
@@ -93,11 +96,13 @@ specs/001-baton-template/
 ├── package.json  package-lock.json  tsconfig.json  .markdownlint-cli2.jsonc  .yamllint.yml
 ├── .editorconfig  .gitattributes (* text=auto eol=lf)  .gitignore
 ├── baton.lock.json                 # MAINTAINER: upstream pins + per-file provenance/sha256
-├── packs/                          # MAINTAINER: pack definitions + repairs
+├── packs/                          # MAINTAINER: pack definitions + repairs + optional-pack payload
 │   ├── core.yml  learning.yml  docs-review.yml  review-plus.yml  security.yml  research.yml
 │   ├── issues.yml  stack-python.yml  stack-typescript.yml  stack-rails.yml  design.yml
+│   ├── <id>/files/…                # optional-pack files, mirroring install paths (written by sync)
 │   └── repairs.yml
 ├── baton/                          # Baton-authored sources (installed into adopters)
+│   ├── upstream/specify-cli.requirements.txt   # hash-locked (uv pip compile --generate-hashes)
 │   ├── speckit-extension/          # Spec Kit extension "baton"
 │   │   ├── extension.yml           # commands + mandatory before_*/after_* hooks
 │   │   ├── commands/receive.md     # speckit.baton.receive
@@ -108,8 +113,8 @@ specs/001-baton-template/
 │   │   └── templates/{tasks-template.md,plan-template.md}
 │   ├── skills/{baton,baton-review,baton-land}/SKILL.md
 │   ├── instructions/copilot-instructions.baton.md   # BATON marker section
-│   ├── templates/{handoff.md,README.adopter.md,config.yml,phases.yml}
-│   └── schemas/{handoff,phases,config,pack,lock,manifest,skill-frontmatter,agent-frontmatter}.schema.json
+│   ├── templates/{handoff.md,README.adopter.md,config.yml,phases.yml,gitignore.adopter,workflows/baton.yml}
+│   └── schemas/{handoff,phases,config,pack,lock,manifest,findings,skill-frontmatter,agent-frontmatter}.schema.json
 ├── src/                            # CLI sources (dev only; stripped by template-cleanup)
 │   ├── cli.mjs
 │   ├── commands/{init,update,doctor,validate,handoff,models,status,adopt,uninstall,sync,lock}.mjs
@@ -131,7 +136,7 @@ specs/001-baton-template/
 │   ├── config.yml                  # models, packs, checks, budgets
 │   ├── phases.yml                  # phase contracts (Baton-managed; overridable by adopter copy)
 │   ├── manifest.json               # installed files + sha256 (adopter side)
-│   ├── template-cleanup.yml        # paths removed in derived repos
+│   ├── template-cleanup.yml        # the disposition table below, machine-readable
 │   └── template-cleanup-pending    # marker (present only in the template)
 ├── .specify/                       # materialized by `baton sync` via real specify-cli 1.0.11
 │   ├── memory/constitution.md      # Baton's own (preserved across sync)
@@ -142,7 +147,7 @@ specs/001-baton-template/
     ├── skills/                     # core pack (speckit-*, speckit-baton-*, ce-*, land, baton*)
     ├── agents/                     # core pack reviewers/researchers
     ├── hooks/speckit.json          # only if extension events require it
-    ├── workflows/{ci.yml,smoke.yml,upstream-watch.yml,release.yml,template-cleanup.yml,copilot-setup-steps.yml}
+    ├── workflows/{baton.yml,ci.yml,smoke.yml,upstream-watch.yml,release.yml,template-cleanup.yml,copilot-setup-steps.yml}
     ├── ISSUE_TEMPLATE/{bug.yml,feature.yml,upstream-bump.yml,config.yml}
     ├── pull_request_template.md  dependabot.yml  CODEOWNERS
 ```
@@ -153,13 +158,28 @@ holds the dev sources.
 - Paths marked *dev only* are listed in `.baton/template-cleanup.yml` and removed in derived repos.
 - `docs/` is moved to `docs/baton/` in derived repos, which leaves `docs/brainstorms/` and `docs/solutions/` at the
   top level.
+- The template disposition is set out in full in the table below, which `.baton/template-cleanup.yml` encodes.
 - Adopter-owned files are never managed after they're installed: `docs/brainstorms`, `docs/solutions`,
   `.specify/memory/constitution.md` and everything under `specs/`.
 
+### Template disposition (derived repos)
+
+| Disposition | Paths |
+|---|---|
+| **Remove** | `src/`, `test/`, `specs/001-baton-template/`, `packs/`, `baton/`, `baton.lock.json`, `package.json`, `package-lock.json`, `tsconfig.json`, `.npmrc`, `.markdownlint-cli2.jsonc`, `.yamllint.yml`, `CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md`, `CODE_OF_CONDUCT.md` (their contacts belong to the Baton project), `.github/CODEOWNERS`, `.github/ISSUE_TEMPLATE/`, `.baton/template-cleanup-pending` |
+| **Replace** | `README.md` → `baton/templates/README.adopter.md`; `.specify/memory/constitution.md` → Spec Kit's pristine `.specify/templates/constitution-template.md` (the adopter README says to run `/speckit-constitution` first); `CHANGELOG.md` → a fresh Keep a Changelog stub; `.github/dependabot.yml` → a `github-actions`-only version (derived repos have no Baton `package.json`) |
+| **Move** | `docs/*` → `docs/baton/*`, with relative links rewritten. `docs/brainstorms/` and `docs/solutions/` stay at the top level. |
+| **Keep (dormant)** | `.github/workflows/{ci,smoke,upstream-watch,release}.yml` (repository guard) and `template-cleanup.yml` (the marker is gone). `GITHUB_TOKEN` cannot push workflow changes (research R12). `baton adopt --prune-workflows`, run locally, removes them. |
+| **Keep (active)** | `.github/workflows/baton.yml`, `.github/workflows/copilot-setup-steps.yml`, `.github/skills/`, `.github/agents/`, `.github/copilot-instructions.md`, `.github/pull_request_template.md` (handoff checklist), `.specify/` (except the constitution), `.baton/` (bin, config, phases, schemas, manifest), `LICENSE`, `THIRD_PARTY_NOTICES.md`, `.editorconfig`, `.gitattributes`, `.gitignore` (merged with `gitignore.adopter`) |
+
+`LICENSE` stays because the vendored and Baton-authored files keep their MIT terms. The adopter README explains
+that adopters may relicense their own code, and that the notices must remain for the vendored files.
+
 ## Key Design Decisions
 
-1. **Vendoring = hybrid D** (research R4). The maintainer runs `baton sync`, which uses the real `specify init` in a
-   temp dir and reads ATV templates from the tarball at the pinned SHA. Nobody runs the ATV binary.
+1. **Vendoring = hybrid D** (research R4). The maintainer runs `baton sync`, which uses the real `specify init`
+   (installed from the hash-locked requirements file) in a temp dir, and reads the ATV templates from a git fetch
+   of the pinned commit (the commit and tree ids are verified). Nobody runs the ATV binary.
 2. **ATV is pinned to main@ad99673** rather than 2.6.3, because of the corrupted agents (R3). A repair rule is kept,
    but it is only used for the adopter-side `init --repair` of an existing corrupted install.
 3. **Hooks over patches** (R5). Every core Spec Kit command gets a mandatory `before_*` hook
@@ -184,8 +204,10 @@ holds the dev sources.
    - Always included: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher.
    - Also included: security-reviewer and adversarial-reviewer.
    - The other conditional personas go to `review-plus`.
-   - `baton-review` passes ce-review the list of installed persona agents, so that it selects only the ones that
-     are available. This is the documented graceful degradation.
+   - `baton-review` calls `ce-review mode:headless` and passes the list of installed persona agents, so that
+     ce-review selects only the ones that are available. This is the documented graceful degradation.
+   - It normalizes the structured output into `specs/<feature>/review.json` (`findings.schema.json`, Baton-owned;
+     research R13).
 9. **Dependency closure check.** Sync scans each vendored skill or agent for references to other
    skills and agents (`/name`, `agent: name`, `compound-engineering:*:name`). It fails with `E_DANGLING_REF`
    unless the reference is installed in the same pack set or is declared in `packs/*.yml` under
@@ -230,4 +252,5 @@ holds the dev sources.
 | Bundled CLI committed in repo | offline validation in adopter CI, no npm publish | `npx` on every CI run means network access, supply-chain exposure and slowness |
 | Sync tool running real `specify init` | authentic Spec Kit manifests, clean `specify integration upgrade` | hand-copying templates drifts and breaks Spec Kit's own manifests |
 | Template-cleanup workflow | the repo is both product and dogfood | separate template repo doubles the maintenance, and the owner has one repo |
+| Dormant maintainer workflows in derived repos | `GITHUB_TOKEN` cannot push workflow changes | a PAT secret for cleanup breaks the "`GITHUB_TOKEN` only" rule (Principle VIII) |
 | Small preset (append-only) | the pre-registration section must sit inside tasks.md where agents look | a separate file is often ignored by the tasks agent |

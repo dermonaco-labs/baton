@@ -15,8 +15,11 @@ npm run check        # lint:md, lint:yaml, typecheck, build --check, lock verify
 
 ```sh
 tmp=$(mktemp -d); git archive HEAD | tar -x -C "$tmp"; cd "$tmp"; git init -q
-BATON_FORCE_CLEANUP=1 node .baton/bin/baton.mjs adopt
-test ! -e src && test ! -e test && test ! -e specs/001-baton-template && test -d docs/baton
+git add -A; git -c user.name=t -c user.email=t@t commit -qm base
+BATON_FORCE_CLEANUP=1 node .baton/bin/baton.mjs adopt --no-workflows      # same call as template-cleanup.yml
+test ! -e src && test ! -e test && test ! -e specs/001-baton-template && test ! -e package.json && test -d docs/baton
+test -f .github/workflows/baton.yml && test -z "$(git status --porcelain -- .github/workflows)"   # workflows untouched
+! grep -q 'Baton Constitution' .specify/memory/constitution.md                  # placeholder constitution
 node .baton/bin/baton.mjs doctor --strict && node .baton/bin/baton.mjs validate
 ```
 
@@ -25,6 +28,8 @@ Expected results:
 - Every command exits 0.
 - `.baton/manifest.json` has `source: template` and the Baton version.
 - `README.md` starts with the adopter README heading.
+- `.github/workflows/` is unchanged (`GITHUB_TOKEN` can't push workflow changes), and `baton.yml` is present.
+- Every other row of the plan.md "Template disposition" table holds (checked in detail by adopt.test, AC-US1-5).
 
 ## S2: Overlay onto existing repos (US2)
 
@@ -63,6 +68,8 @@ Headless relay:
 4. `receive --phase plan` exits 0 and prints the `read_first` list.
 5. Edit spec.md; `receive` now fails with `E_STALE_ARTIFACT`.
 6. `refresh --reason test` makes `receive` exit 0 again.
+7. Advance to `implement`, check one box in tasks.md, and run `receive --phase implement --mode converge`: it
+   exits 0 (checkbox-insensitive hashing). Rewording a task makes it fail with `E_STALE_ARTIFACT` (AC-US3-7).
 
 ## S4: Model routing (US4)
 

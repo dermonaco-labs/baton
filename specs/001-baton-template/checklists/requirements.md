@@ -36,8 +36,8 @@
 
 ## Supply Chain & Licensing
 
-- [x] CHK018 Every upstream is pinned by an immutable reference (a version plus a commit SHA, and the tarball sha256
-  recorded at the first sync)
+- [x] CHK018 Every upstream is pinned by an immutable reference (a version plus a commit SHA; the ATV fetch is verified by
+  commit and tree id, and Spec Kit is installed from hash-locked requirements, including transitive packages)
 - [x] CHK019 License and attribution duties are identified for every vendored source, and unlicensed content is
   excluded
 - [x] CHK020 No project-specific content from the reference installation is carried over (only generalized

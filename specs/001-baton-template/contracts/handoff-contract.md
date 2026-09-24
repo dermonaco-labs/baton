@@ -92,15 +92,17 @@ sequenceDiagram
 | `E_SCHEMA` | error | The frontmatter fails `handoff.schema.json` (the message includes the JSON pointer). |
 | `E_BODY_SECTIONS` | error | The body is missing a required heading, or the headings are out of order. |
 | `E_BUDGET` | error | `read_first` has more entries than the budget, or the body is longer than the line budget. |
-| `E_TRANSITION` | error | `phase_completed → next_phase` is not allowed by `phases.yml`. |
+| `E_TRANSITION` | error | `phase_completed → next_phase` is not allowed by `phases.yml`, or `specify → plan` is used while `[NEEDS CLARIFICATION]` markers remain. |
 | `E_OWNER` | error | `next_owner` ≠ `phases.yml[next_phase].owner`, and no recorded decision overrides it. |
 | `E_MISSING_ARTIFACT` | error | A required artifact or a `read_first` path does not exist. |
-| `E_STALE_ARTIFACT` | error | A listed sha256 ≠ the current file hash. Fix it by re-running the phase or with `baton handoff refresh --reason`. |
+| `E_STALE_ARTIFACT` | error | A listed sha256 ≠ the current file hash (`tasks.md` is hashed checkbox-insensitively, see data-model §1). Fix it by re-running the phase or with `baton handoff refresh --reason`. |
 | `E_BLOCKING_OPEN` | error | There is a blocking open question and `status` = `ready`. |
 | `E_EXIT_UNMET` | error | `status: ready`, but some `exit_criteria.met` is false. |
 | `E_GATE_PENDING` | error (on receive) | The previous phase requires a human gate and `gate.approved_by` is null. |
 | `E_NO_PREREG` | error | `next_phase: implement` and any in-scope user story has no `acceptance_checks`. |
-| `E_REVIEW_MISSING` | error | `phase_completed: review` without `review.findings_path`, or the path isn't valid findings JSON. |
+| `E_ANALYSIS_MISSING` | error | `phase_completed: analyze` without `analysis.report_path`, or the file doesn't exist. |
+| `E_ANALYSIS_CRITICAL` | error (on receive of implement) | `analysis.critical > 0`. |
+| `E_REVIEW_MISSING` | error | `phase_completed: review` without `review.findings_path`, or the file fails `findings.schema.json`. |
 | `E_REVIEW_BLOCKING` | error (on receive of land) | `review.blocking_findings > 0`. |
 | `E_PR_MISSING` | error | `phase_completed: land` without `pr.url`. |
 | `E_LANE_ESCALATE` | error | Quick lane: the review found new behaviour or a new contract. Move to the feature lane (`baton handoff escalate`). |
@@ -119,10 +121,12 @@ Validator codes outside batons (the same output format, listed in `docs/referenc
 | `E_LOCK_MISMATCH` | A locked file's sha256 ≠ the working tree (`lock verify`). |
 | `E_SYNC_DRIFT` | `sync --check` output ≠ the committed snapshot. |
 | `E_DANGLING_REF` | A vendored file references a skill or agent that isn't installed and isn't in `optional_refs`. |
-| `E_LICENSE` | An upstream file has no MIT-compatible license. |
+| `E_LICENSE` | An upstream file, or an npm package bundled into `baton.mjs`, has no MIT-compatible license or no entry in `THIRD_PARTY_NOTICES.md`. |
 | `E_UNDOCUMENTED` | An installed core skill, agent or command is missing from `docs/reference/`. |
 | `E_BUNDLE_STALE` | `.baton/bin/baton.mjs` doesn't match a fresh build. |
+| `E_UPSTREAM_VERIFY` | A fetched upstream doesn't match the lock: the ATV commit or tree id, a Spec Kit requirement hash, or a file's `sha256_upstream`. |
 | `W_SETUP_STEPS_MISPLACED` | `.github/copilot-setup-steps.yml` exists (it belongs under `.github/workflows/`). |
+| `W_NO_ADOPTER_CI` | `.github/workflows/baton.yml` is missing, so skipped hooks would go unnoticed. |
 
 Exit codes: `0` ok, `1` errors, `2` usage error, `3` stopped because `needs-human` (receive only). Output is human
 text by default. `--json` emits `{ok, errors:[{code, file, pointer?, message, fix}]}`, and `--github` emits workflow

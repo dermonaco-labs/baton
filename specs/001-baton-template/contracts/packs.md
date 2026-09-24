@@ -2,7 +2,10 @@
 
 Packs are declared in `packs/<id>.yml` (schema: [data-model §4](../data-model.md)). `sync` resolves the files,
 `init --packs` installs them, and `doctor` reports them. The file names below are the installed paths. Their upstream
-paths are recorded in `baton.lock.json`.
+paths are recorded in `baton.lock.json`. Storage in the Baton repo: `core` files live at their installed paths (the
+template is a working install); optional pack files live under `packs/<id>/files/<installed path>` (lock field
+`stored_at`, FR-053). Derived repos don't carry `packs/`, so they add optional packs through the pinned
+`npx --yes github:dermonaco-labs/baton#vX.Y.Z init --packs <id>`.
 
 ## `core` (always installed): 28 files
 
@@ -24,7 +27,7 @@ paths are recorded in `baton.lock.json`.
 | 14 | `.github/skills/baton-land/SKILL.md` | baton | phase-owner:land (wraps land) |
 | 15 | `.github/skills/ce-brainstorm/SKILL.md` | atv | phase-owner:brainstorm |
 | 16 | `.github/skills/ce-work/SKILL.md` | atv | quick-lane executor |
-| 17 | `.github/skills/ce-review/SKILL.md` (+ `references/`) | atv | review engine |
+| 17 | `.github/skills/ce-review/SKILL.md` (+ `references/`) | atv | review engine (always called as `mode:headless` by baton-review; its interactive `todo-create` dependency is an `optional_ref`) |
 | 18 | `.github/skills/ce-compound/SKILL.md` | atv | phase-owner:compound |
 | 19 | `.github/skills/land/SKILL.md` | atv | ship engine |
 | 20 | `.github/agents/correctness-reviewer.agent.md` | atv | review-persona:always |
@@ -43,6 +46,10 @@ Supporting files (not counted toward SC-002):
 - `.baton/*`
 - the instructions marker section
 - `.github/workflows/copilot-setup-steps.yml`
+- `.github/workflows/baton.yml` (adopter CI, FR-033)
+- `.gitignore` additions from `baton/templates/gitignore.adopter` (`.context/` for ce-review run artifacts,
+  `.baton/conflicts/`, `.baton/.tmp/`)
+- `.baton/schemas/findings.schema.json` (review.json, data-model §8)
 
 If the dependency closure (T026) shows that `ce-brainstorm` requires the `brainstorming` skill, `brainstorming` is
 added as #29. That is still within SC-002 (≤ 30). Any further required reference fails the closure check and needs a

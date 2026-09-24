@@ -22,32 +22,33 @@ Global flags: `--cwd <dir>`, `--json` (machine output), `--github` (workflow ann
 
 | Command | Behaviour | Key flags |
 |---|---|---|
-| `init` | Installs the `core` pack (plus the selected packs) into the cwd, merges the marker sections and writes the manifest. Idempotent. It never overwrites unmanaged or user-modified files. It writes conflicts to `.baton/conflicts/<path>.new` and prints a report. | `--packs a,b`, `--script sh\|ps\|py`, `--adopt-upstream <glob>`, `--keep <glob>`, `--repair` (fix known-corrupted ATV files), `--dry-run` |
+| `init` | Installs the `core` pack (plus the selected packs, read from `packs/<id>/files/`) into the cwd, merges the marker sections, installs `.github/workflows/baton.yml` and writes the manifest. Idempotent. It never overwrites unmanaged or user-modified files. It writes conflicts to `.baton/conflicts/<path>.new` and prints a report. In a derived repo (no `packs/` dir), `--packs` with an optional pack exits 5 and prints the pinned `npx --yes github:dermonaco-labs/baton#vX.Y.Z init --packs …` command. | `--packs a,b`, `--script sh\|ps\|py`, `--adopt-upstream <glob>`, `--keep <glob>`, `--repair` (fix known-corrupted ATV files), `--dry-run` |
 | `update` | Moves to the version of the running CLI (or `--to`, which re-invokes the pinned `npx`). It updates managed, unmodified files and reports the rest. | `--to vX.Y.Z`, `--dry-run` |
 | `doctor` | Reports the version, pins, packs, manifest integrity, prerequisites (node, git, bash/pwsh, uv), hook registration in `.specify/extensions.yml`, a misplaced `.github/copilot-setup-steps.yml`, corrupted agents and models that aren't allowed. Warnings only, unless `--strict`. | `--strict` |
-| `validate` | Checks every baton, `phases.yml`, `config.yml`, the manifest, and skill/agent frontmatter. It also checks model enforcement and docs coverage (only when `docs/reference` exists). | `--changed` (only files changed vs `origin/HEAD`), `--path <file>` |
+| `validate` | Checks every baton, `phases.yml`, `config.yml`, the manifest, `packs/*.yml` (when present), `review.json` files, and skill/agent frontmatter. It also checks model enforcement and docs coverage (only when `docs/reference` exists). | `--changed` (only files changed vs `origin/HEAD`), `--path <file>` |
 | `status` | Shows every feature and quick baton: phase, next, owner, status, gate and staleness. | |
 | `handoff new` | Creates a baton for a feature dir (after specify) or a quick slug. | `--feature`, `--quick <slug>` |
+| `handoff show [--feature F]` | Prints the current baton (frontmatter summary, `read_first`, open questions, gate) without running checks. | `--json` |
 | `handoff receive --phase P` | Runs the entry checks for P. It prints the `read_first` list, or stops (exit 3) with the reason. Called by the before_* hooks. | `--mode converge` |
-| `handoff write --phase P` | Fills the deterministic fields, validates the exit criteria and prints what the agent must still fill. Called by the after_* hooks. | `--from-json <file>` (agent-supplied fields) |
+| `handoff write --phase P` | Fills the deterministic fields, validates the exit criteria and prints what the agent must still fill. Called by the after_* hooks. | `--from-json <file>` (agent-supplied fields), `--next <phase>` (branching phases; default = first `next`), `--from-brainstorm <path>` (with `--phase specify`), `--analysis-from <file>` (with `--phase analyze`: persists the report to `analysis.md`) |
 | `handoff next` | Prints the next command and the suggested model (for example `/speckit-tasks · model role planning → claude-opus-5.5`). | |
 | `handoff approve --by H` | Records the gate approval. | `--note` |
 | `handoff answer ID "choice" --by H` | Resolves an open question into a decision. | |
 | `handoff refresh --reason R` | Re-hashes the artifacts after an intentional edit and adds a decision entry. | |
-| `handoff escalate` | Quick → feature lane. It creates `specs/NNN-slug/` from the quick baton. | |
+| `handoff escalate` | Quick → feature lane. It sets the quick baton to `next_phase: specify` with the reason and prints `/speckit-specify` with the quick baton as input. It never creates feature dirs (Spec Kit owns numbering). | `--reason` |
 | `handoff init --infer` | Builds a baton for a feature that started before Baton (`status: needs-human`). | |
 | `handoff migrate` | Upgrades batons to the current schema version. | `--dry-run` |
 | `models apply` | Writes `model:` into managed agent frontmatter from the role config (only when `apply_to_agents: true`, or with `--force`). Idempotent. | `--dry-run` |
-| `adopt` | Runs the template cleanup locally (the same logic as `template-cleanup.yml`). | `--dry-run` |
+| `adopt` | Runs the template cleanup (plan.md "Template disposition"). It refuses to run in the Baton source repo (`GITHUB_REPOSITORY` or the `origin` remote is `dermonaco-labs/baton`; `baton.lock.json` alone is not a signal, because a fresh derived repo still has it) unless `BATON_FORCE_CLEANUP=1`. The `template-cleanup.yml` workflow calls `adopt --no-workflows`, because `GITHUB_TOKEN` cannot change `.github/workflows/`. | `--dry-run`, `--no-workflows`, `--prune-workflows` (deletes the dormant maintainer workflows; run locally) |
 | `uninstall` | Removes managed, unmodified files and the marker sections. It keeps `specs/`, `docs/brainstorms`, `docs/solutions` and the constitution. | `--dry-run` |
 
 ## Maintainer commands (only in the Baton repo; they refuse if `baton.lock.json` is absent)
 
 | Command | Behaviour | Key flags |
 |---|---|---|
-| `sync` | Runs `uvx --from specify-cli==<pin> specify init --here --integration copilot --script sh --force --ignore-agent-tools` in a temp dir. It installs the Baton extension and preset with the pinned CLI and copies the curated Spec Kit files. It downloads the ATV tarball at the pinned commit, verifies `tarball_sha256` and copies the pack files. It applies repairs, runs the closure and license checks, and writes `baton.lock.json` and `docs/reference/upstream-diff.md`. It preserves `.specify/memory/constitution.md`. | `--check` (exit 1 on any diff, no writes), `--bump speckit=<v>\|atv=<sha>` |
+| `sync` | Creates a temp venv and runs `uv pip install --require-hashes -r baton/upstream/specify-cli.requirements.txt`, then `specify init --here --integration copilot --script sh --force --ignore-agent-tools` in a temp dir. It installs the Baton extension and preset with the pinned CLI and copies the curated Spec Kit files. It runs `git fetch --depth 1 <atv repo> <commit>`, verifies the commit and tree ids against the lock and copies the pack files (core into place, optional packs to `packs/<id>/files/`). It applies repairs, runs the closure and license checks, and writes `baton.lock.json` and `docs/reference/upstream-diff.md`. It preserves `.specify/memory/constitution.md`. | `--check` (exit 1 on any diff, no writes; also fails if the pinned ATV commit is unreachable), `--bump speckit=<v>\|atv=<sha>` (regenerates the hashed requirements with `uv pip compile --generate-hashes`) |
 | `lock verify` | Checks that the sha256 of every locked file matches the working tree (offline, fast; used in CI). | |
-| `build` | Bundles `src/` into `.baton/bin/baton.mjs` (esbuild) and writes `.baton/bin/baton.mjs.sha256`. | `--check` |
+| `build` | Bundles `src/` into `.baton/bin/baton.mjs` (esbuild), writes `.baton/bin/baton.mjs.sha256` and derives the bundled-package license inventory from the esbuild metafile (checked against `THIRD_PARTY_NOTICES.md`). | `--check` |
 
 ## Output conventions
 
