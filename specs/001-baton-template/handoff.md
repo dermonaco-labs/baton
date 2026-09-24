@@ -103,7 +103,7 @@ risks:
   - { id: RK2, text: "ATV is pinned to an unreleased commit. Mitigation: provenance in the lock, upstream-watch, T074 drafts an upstream release request for the owner", severity: medium }
   - { id: RK3, text: "Spec Kit release churn (5 releases in 10 days). Mitigation: sync --check plus the weekly watch; bump deliberately", severity: medium }
   - { id: RK4, text: "Windows adopters without bash cannot run the sh scripts. Mitigation: init --script ps|py (requires uv) and a doctor warning", severity: low }
-gate: { required: true, approved_by: null, approved_at: null }
+gate: { required: true, approved_by: "repository owner via control-plane delegation", approved_at: 2026-09-24T07:57:21Z }
 history:
   - { phase: specify, at: 2026-09-24T07:39:15Z, by: planning-session, commit: 8aeed8a }
   - { phase: plan, at: 2026-09-24T07:39:15Z, by: planning-session, commit: 8aeed8a }
