@@ -12,7 +12,7 @@ summary: "Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analys
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
-    sha256: f51cc07db2f08b6be4975dab7a67be0a05f1ef55121837810f38004db93038c2
+    sha256: 781a7c8a6c7e32b79b31757d6f3f1c87994422f79c1b70e24100ae9e620c5b63
   - path: specs/001-baton-template/plan.md
     why: structure, template disposition, key decisions, constitution check
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
@@ -92,7 +92,7 @@ artifacts:
     sha256: 1ce6f86f51c89e87f3b5645da5778c9faf07eda7b735e07be652323b3ca32926
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: f51cc07db2f08b6be4975dab7a67be0a05f1ef55121837810f38004db93038c2
+    sha256: 781a7c8a6c7e32b79b31757d6f3f1c87994422f79c1b70e24100ae9e620c5b63
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
@@ -398,6 +398,10 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Record A7 post-v0.1 roadmap
     by: implementation-session
+  - id: D30
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Mark T075 README hero done
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -446,7 +450,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-27T10:28:03.302Z
+updated_at: 2026-09-27T17:13:58.260Z
 updated_by: implementation-session
 ---
 ## Goal
