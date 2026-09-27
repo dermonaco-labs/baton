@@ -30,7 +30,7 @@ read_first:
     sha256: d9395b14ddded8ba7eac84752fcb36acee7b9f397748487a9b8e58e6d9a089e7
   - path: specs/001-baton-template/contracts/cli.md
     why: commands, flags and exit codes (normative)
-    sha256: 8041ef1180598b58f6c0ed0a3a3fd6482949d2fa02c1a7f45dac2dfefa82dff1
+    sha256: 5caa307b18a8b4edbfda4b289959344a5377e2a6a51a4fb75887db6027570050
   - path: specs/001-baton-template/contracts/packs.md
     why: core file list, pack storage, closure rules
     sha256: 75dcc68ac03b9caa0b731635e3ccfd5895ed0d00e05b19fca8cd6b438be4bbf4
@@ -83,7 +83,7 @@ artifacts:
     sha256: 75dcc68ac03b9caa0b731635e3ccfd5895ed0d00e05b19fca8cd6b438be4bbf4
   - path: specs/001-baton-template/contracts/cli.md
     role: source-of-truth
-    sha256: 8041ef1180598b58f6c0ed0a3a3fd6482949d2fa02c1a7f45dac2dfefa82dff1
+    sha256: 5caa307b18a8b4edbfda4b289959344a5377e2a6a51a4fb75887db6027570050
   - path: specs/001-baton-template/contracts/ci.md
     role: source-of-truth
     sha256: af7ae56e257b3370985701b612500c8a704f771fdb293bd373249eb216c55c14
@@ -402,6 +402,14 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Mark T075 README hero done
     by: implementation-session
+  - id: D31
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: US2 CLI contract clarifies standalone update payload; T055-T062 implemented while remaining feature tasks stay open
+    by: implementation-session
+  - id: D32
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: US2 overlay CLI contract refined for explicit uv regeneration; T055-T063 are implemented and locally exercised; other feature tasks remain open
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -450,7 +458,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-27T17:13:58.260Z
+updated_at: 2026-09-27T17:38:00.260Z
 updated_by: implementation-session
 ---
 ## Goal

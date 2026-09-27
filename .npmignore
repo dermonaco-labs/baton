@@ -1,0 +1,9 @@
+node_modules/
+.baton/conflicts/
+.baton/.tmp/
+.atv/observations*
+.context/
+test/
+specs/
+docs/
+src/
