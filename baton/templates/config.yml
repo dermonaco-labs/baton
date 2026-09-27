@@ -9,6 +9,8 @@ gates:
 denylist:
   terms_file: null
 models:
+  # Suggested defaults as of 2026-09; choose models available to your team.
+  # Skill-owned phases use handoff next; only managed custom agents receive frontmatter.
   roles:
     planning: { model: claude-opus-5.5, reasoning: high }
     implementation: { model: gpt-6-sol, reasoning: high }
@@ -17,7 +19,7 @@ models:
   phase_roles: {}
   allowed: []
   enforce: warn
-  apply_to_agents: false
+  apply_to_agents: false # Opt in to models apply; --force applies once without changing this setting.
 checks:
   - name: baton
     run: node .baton/bin/baton.mjs validate

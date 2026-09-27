@@ -3,7 +3,8 @@ import { join, relative, extname } from 'node:path';
 import YAML from 'yaml';
 import { BatonError } from '../lib/report.mjs';
 import { loadSchemas, validateSchema } from '../lib/schema.mjs';
-import { validateHandoff, modelPolicyIssue } from '../lib/handoff.mjs';
+import { validateHandoff } from '../lib/handoff.mjs';
+import { loadModelSettings, modelPolicyIssue, configuredModelIssues } from '../lib/models.mjs';
 import { parseFrontmatter } from '../lib/frontmatter.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
 import { scanPersonalData, denylistTerms, isLicenseNotice } from '../lib/denylist.mjs';
@@ -53,8 +54,16 @@ export async function run(root, args) {
 
   const schemas = await loadSchemas(root);
   const terms = await denylistTerms(root);
+  /** @type {Array<{code:string,file?:string,message:string,pointer?:string,fix?:string}>} */
   const errors = [];
+  /** @type {Array<{code:string,file?:string,message:string,pointer?:string,fix?:string}>} */
   const warnings = [];
+  const models = await loadModelSettings(root);
+  if (!selected || selected === '.baton/config.yml') {
+    for (const issue of configuredModelIssues(models)) {
+      (issue.code === 'E_MODEL_NOT_ALLOWED' ? errors : warnings).push(issue);
+    }
+  }
   let manifest;
   try {
     manifest = JSON.parse(await readFile(withinRoot(root, '.baton/manifest.json'), 'utf8'));
@@ -120,7 +129,7 @@ export async function run(root, args) {
       errors.push(...issues);
       if (!issues.some((issue) => issue.code === 'E_FRONTMATTER_MALFORMED')) {
         const { data } = parseFrontmatter(await readFile(absolute, 'utf8'));
-        const modelIssue = await modelPolicyIssue(root, path, data.suggested_model);
+        const modelIssue = modelPolicyIssue(models, data.suggested_model, path);
         if (modelIssue?.code === 'W_MODEL_NOT_ALLOWED') warnings.push(modelIssue);
         if (data.lane === 'quick') {
           let config;
@@ -144,6 +153,13 @@ export async function run(root, args) {
       try {
         const { data } = parseFrontmatter(await readFile(absolute, 'utf8'));
         errors.push(...validateSchema(schemas, type, data).map((issue) => ({ ...issue, code: 'E_FRONTMATTER_MALFORMED', file: path })));
+        if (type === 'agent-frontmatter') {
+          for (const value of Array.isArray(data.model) ? data.model : [data.model]) {
+            const issue = modelPolicyIssue(models, value, path);
+            if (!issue) continue;
+            (issue.code === 'E_MODEL_NOT_ALLOWED' ? errors : warnings).push(issue);
+          }
+        }
         if (type === 'skill-frontmatter' && data.name !== path.split('/')[2]) errors.push({ code: 'E_FRONTMATTER_MALFORMED', file: path, message: 'Skill name differs from directory' });
       } catch (error) {
         errors.push({ code: 'E_FRONTMATTER_MALFORMED', file: path, message: error instanceof Error ? error.message : String(error) });

@@ -2,7 +2,6 @@ import { readFile, readdir, writeFile, mkdir, copyFile } from 'node:fs/promises'
 import { dirname } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import YAML from 'yaml';
 import { BatonError } from '../lib/report.mjs';
 import { readHandoff, writeHandoff, validateHandoff, gateVocabulary, approvedRole } from '../lib/handoff.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
@@ -10,6 +9,7 @@ import { hashFile } from '../lib/hash.mjs';
 import { loadPhases, phaseForLane, evaluateChecks } from '../lib/phases.mjs';
 import { evaluateBuiltIn } from '../lib/checks.mjs';
 import { serializeFrontmatter } from '../lib/frontmatter.mjs';
+import { loadModelSettings, resolveModel, modelPolicyIssue } from '../lib/models.mjs';
 
 const execFileAsync = promisify(execFile);
 /** @param {string} next */
@@ -23,21 +23,13 @@ async function commitId(root) {
     throw error;
   }
 }
-/** @param {string} root @param {string} role */
-async function suggestedModel(root, role) {
-  try {
-    const config = YAML.parse(await readFile(withinRoot(root, '.baton/config.yml'), 'utf8'));
-    return config.models?.roles?.[role]?.model ?? null;
-  } catch (error) {
-    if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return null;
-    throw error;
-  }
-}
-/** @param {string} root @param {Record<string,any>} data @param {string} actor */
-async function updateMetadata(root, data, actor) {
+/** @param {string} root @param {Record<string,any>} data @param {string} actor @param {string} phase */
+async function updateMetadata(root, data, actor, phase) {
   data.updated_at = new Date().toISOString();
   data.updated_by = actor;
-  data.suggested_model = await suggestedModel(root, data.model_role);
+  const routing = resolveModel(await loadModelSettings(root), phase, data.model_role);
+  data.model_role = routing.role;
+  data.suggested_model = routing.model;
   for (const item of [...(data.read_first ?? []), ...(data.artifacts ?? [])]) {
     if (item.sha256) item.sha256 = await hashFile(withinRoot(root, item.path));
   }
@@ -117,8 +109,9 @@ export async function run(root, args) {
     const data = {
       baton: 1, lane: 'feature', feature: options.feature, phase_completed: 'specify',
       next_phase: 'clarify', next_owner: phases.phases.clarify.owner,
-      status: inferred ? 'needs-human' : 'ready', model_role: phases.phases.clarify.model_role,
-      suggested_model: await suggestedModel(root, phases.phases.clarify.model_role),
+      status: inferred ? 'needs-human' : 'ready',
+      model_role: resolveModel(await loadModelSettings(root), 'clarify', phases.phases.clarify.model_role).role,
+      suggested_model: resolveModel(await loadModelSettings(root), 'clarify', phases.phases.clarify.model_role).model,
       summary: inferred ? 'Confirm the inferred phase of the existing feature' : 'Specification ready for clarification',
       read_first: [{ path: spec, why: 'Specification and scope', sha256: digest }],
       artifacts: [{ path: spec, role: 'source-of-truth', sha256: digest }],
@@ -151,7 +144,8 @@ export async function run(root, args) {
     const data = {
       baton: 1, lane: 'quick', feature: options.quick, phase_completed: 'none',
       next_phase: 'work', next_owner: contract.owner, status: 'ready',
-      model_role: contract.model_role, suggested_model: await suggestedModel(root, contract.model_role),
+      model_role: resolveModel(await loadModelSettings(root), 'work', contract.model_role).role,
+      suggested_model: resolveModel(await loadModelSettings(root), 'work', contract.model_role).model,
       summary: `Quick-lane change: ${options.reason}`, read_first: [{ path, why: 'Quick-lane scope and reason' }],
       artifacts: [], entry_checked: [], exit_criteria: [], open_questions: [],
       decisions: [{ id: 'D1', decision: 'Start a quick lane', tag: 'quick-eligible', rationale: options.reason, by: 'baton' }],
@@ -212,7 +206,7 @@ export async function run(root, args) {
     data.status = 'ready';
     data.decisions ??= [];
     data.decisions.push({ id: nextId(data.decisions, 'D'), decision: 'Escalate to feature lane', rationale: options.reason, tag: 'escalated', by: 'baton' });
-    await updateMetadata(root, data, 'baton');
+    await updateMetadata(root, data, 'baton', 'specify');
     await writeHandoff(root, path, data, body);
     return { data: { command: '/speckit-specify', from_quick: path } };
   }
@@ -229,7 +223,7 @@ export async function run(root, args) {
     data.decisions ??= [];
     data.decisions.push({ id: nextId(data.decisions, 'D'), decision: answer.choice, rationale: question.question, by: `human:${options.by.replaceAll(' ', '-')}` });
     data.status = /** @type {Array<{blocking:boolean}>} */ (data.open_questions).some((item) => item.blocking) ? 'needs-human' : 'ready';
-    await updateMetadata(root, data, `human:${options.by.replaceAll(' ', '-')}`);
+    await updateMetadata(root, data, `human:${options.by.replaceAll(' ', '-')}`, data.next_phase);
     await writeHandoff(root, path, data, body);
     return { data: { question: answer.id, status: data.status } };
   }
@@ -324,7 +318,9 @@ export async function run(root, args) {
     data.model_role = next === 'done' ? contract.model_role : phases.phases[next].model_role;
     data.gate = { required: contract.human_gate || (options.phase === 'specify' && next === 'plan'), approved_by: null, approved_at: null };
     data.status = next === 'done' ? 'done' : /** @type {Array<{blocking:boolean}>} */ (data.open_questions ?? []).some((item) => item.blocking) ? 'needs-human' : 'ready';
-    await updateMetadata(root, data, contract.owner);
+    await updateMetadata(root, data, contract.owner, next);
+    const policy = modelPolicyIssue(await loadModelSettings(root), data.suggested_model, path);
+    if (policy?.code === 'E_MODEL_NOT_ALLOWED') return { errors: [policy], exitCode: 1 };
     const results = await evaluateChecks(phaseForLane(contract, data.lane).exit, (check) => evaluateBuiltIn(root, path, data, check));
     data.exit_criteria = results;
     data.history = [...(data.history ?? []), { phase: options.phase, at: data.updated_at, by: contract.owner, commit: await commitId(root) }].slice(-20);
@@ -364,7 +360,7 @@ export async function run(root, args) {
       return { errors: [], data: { path, next_phase: next, exit_criteria: results } };
     }
     await writeHandoff(root, path, data, body);
-    return { errors: unmet, data: { path, next_phase: next, exit_criteria: results } };
+    return { errors: unmet, warnings: policy ? [policy] : [], data: { path, next_phase: next, exit_criteria: results } };
   }
   if (action === 'approve') {
     if (typeof options.by !== 'string') throw new BatonError('E_USAGE', 'approve requires --by <role>', 2);
@@ -401,7 +397,11 @@ export async function run(root, args) {
   }
   if (action === 'show' || action === 'next') {
     const { data } = await readHandoff(root, path);
-    return { data: action === 'show' ? data : { command: `/${data.next_owner}`, role: data.model_role, model: data.suggested_model } };
+    if (action === 'show') return { data };
+    const routing = resolveModel(await loadModelSettings(root), data.next_phase, data.model_role);
+    const command = `/${data.next_owner}`;
+    return { data: { command, role: routing.role, model: routing.model,
+      instruction: routing.model ? `Switch model to ${routing.model}, then run ${command}` : `Run ${command} (inherit current model)` } };
   }
   throw new BatonError('E_USAGE', `Unsupported handoff action: ${action}`, 2);
 }

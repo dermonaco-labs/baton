@@ -99,7 +99,8 @@ being built.
 | Pinned upstream sync with lock verification (`sync --check`, `lock verify`) | ✅ available (maintainers) |
 | Adopter CI (`baton.yml`) | ✅ available |
 | Overlay onto an existing repo (`baton init`), `init --packs`, `uninstall` | ✅ available |
-| `update`, `models apply` | 🚧 planned for v0.1.0 release |
+| `models apply` (opt-in, managed agents only) | ✅ available |
+| `update` | 🚧 planned for v0.1.0 release |
 | Full manual under `docs/` | 🚧 in progress. This README is the manual for now |
 
 Commands that aren't implemented yet exit with code 2 and change nothing.
@@ -374,7 +375,7 @@ models:
     fast:           { model: claude-haiku-4.5 }
   phase_roles: {}        # override the role of a phase, e.g. { tasks: fast }
   allowed: []            # optional allow list; empty = any model
-  enforce: warn          # warn | error
+  enforce: warn          # off | warn | error
   apply_to_agents: false # opt-in: write `model:` into agent frontmatter
 ```
 
@@ -384,8 +385,13 @@ The defaults are dated suggestions, not requirements. Change them to whatever yo
 - `node .baton/bin/baton.mjs handoff next --feature <NNN-slug>` prints the next command, role and model.
 - Start the next session with that model: `/model` in Copilot CLI, the model picker in VS Code, or the model
   setting of the cloud agent.
-- `doctor` warns when a configured model isn't in your `allowed` list. Upstream prompts that mention specific models
-  are advisory; your config decides.
+- `validate` checks the configured role models, baton suggestions and custom-agent frontmatter against `allowed`.
+  With `enforce: error`, a disallowed suggestion also prevents `handoff write` from persisting it.
+- With `apply_to_agents: true`, `node .baton/bin/baton.mjs models apply --dry-run` previews managed agents.
+  Otherwise pass `--force --dry-run` to preview and `--force` to apply without changing the opt-in setting.
+  Locally modified agents are skipped even with `--force`. Reapplying unchanged settings writes nothing.
+  Frontmatter `model:` is supported for custom agents, not skills, and does not set the main session model.
+  Upstream prompts that mention specific models are advisory; your config decides.
 
 ## Packs
 

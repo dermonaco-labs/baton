@@ -299,16 +299,16 @@ files and have no unfinished dependencies. Paths are repo-relative.
 **Goal**: Role-based, configurable model suggestions, with optional enforcement.
 **Independent Test**: quickstart S4.
 
-- [ ] T064 [US4] Check current docs.github.com for custom-agent frontmatter `model` support, and for how the CLI,
+- [X] T064 [US4] Check current docs.github.com for custom-agent frontmatter `model` support, and for how the CLI,
   VS Code and the coding agent treat it. Update research.md R7 and `apply_to_agents` guidance. If `model` is
   unsupported where it matters, **stop and ask** before building T067.
-- [ ] T065 [P] [US4] `test/unit/models.test.mjs`: resolution, `phase_roles` overrides, `enforce` off/warn/error, and
+- [X] T065 [P] [US4] `test/unit/models.test.mjs`: resolution, `phase_roles` overrides, `enforce` off/warn/error, and
   apply idempotency (AC-US4-1..3).
-- [ ] T066 [US4] `src/lib/models.mjs`: resolution and `allowed` enforcement (`E_MODEL_NOT_ALLOWED`), wired into
+- [X] T066 [US4] `src/lib/models.mjs`: resolution and `allowed` enforcement (`E_MODEL_NOT_ALLOWED`), wired into
   `validate` and `handoff write`.
-- [ ] T067 [US4] `src/commands/models.mjs`: `models apply`, which touches only managed agents, supports `--dry-run`
+- [X] T067 [US4] `src/commands/models.mjs`: `models apply`, which touches only managed agents, supports `--dry-run`
   and is idempotent.
-- [ ] T068 [US4] `handoff next` output (the command plus the role and model), and a commented `baton/templates/config.yml`
+- [X] T068 [US4] `handoff next` output (the command plus the role and model), and a commented `baton/templates/config.yml`
   that says the defaults are suggestions dated 2026-09.
 
 ## Phase 7: User Story 5 — Update safely (P2)

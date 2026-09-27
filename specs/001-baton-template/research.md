@@ -161,13 +161,23 @@ The full rules are in `contracts/conflict-rules.md`. Summary:
 
 ## R7. Model routing
 
-- The Copilot custom agent frontmatter supports `model` (VS Code and CLI) and `tools`. `handoffs` works only in VS Code.
-  `target` is ignored by the CLI. **Verify against docs.github.com during implementation** (task T064).
-  Skills don't carry `model`.
+- **Rechecked 2026-09-27** against GitHub's current documentation:
+  [custom agent configuration](https://docs.github.com/en/copilot/reference/custom-agents-configuration)
+  lists `model` as an optional string for custom agent profiles in GitHub.com, CLI and supported IDEs; omitting it
+  inherits the default. The [VS Code creation guide](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/cloud-agent/create-custom-agents-in-your-ide?tool=vscode)
+  explicitly instructs adding `model:` from the model picker. The
+  [CLI guide](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/create-custom-agents-for-cli)
+  describes selecting agents with `/agent`, by inference, or `copilot --agent`, and restarting the CLI to load
+  changes. Its shared configuration reference documents `model`, but the CLI guide does not promise that an
+  agent profile controls the main session's model. The
+  [cloud-agent creation guide](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/create-custom-agents)
+  only explicitly recommends `model` for profiles used in IDEs; do not depend on cloud-agent honoring it.
+  `handoffs` is ignored by GitHub.com's cloud agent (per the configuration reference). Skills don't carry `model`.
 - The phase owner is usually a *skill*, not an agent. Model routing therefore can't rely only on frontmatter.
   **Decision**: the baton carries `model_role` and `suggested_model`, and `baton handoff next` prints a ready
-  command (for example `copilot --model <m>` or "switch model to <m>, then run /speckit-tasks"). Writing agent
-  frontmatter is opt-in.
+  command (switch model to `<m>`, then run `/speckit-tasks`). Writing `model:` to managed custom agents is opt-in
+  (`apply_to_agents` or explicit `models apply --force`), never a guarantee about the main CLI session or cloud
+  coding agent; omitted `model` continues to inherit the runtime default.
 - Lessons from the reference project, generalized:
   - High-reasoning models for specify, clarify, plan, tasks, analyze and review.
   - A strong coding model for implement.

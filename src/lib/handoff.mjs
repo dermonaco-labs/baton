@@ -6,6 +6,7 @@ import { withinRoot } from './manifest.mjs';
 import { hashFile } from './hash.mjs';
 import { loadPhases, phaseForLane, checkKey } from './phases.mjs';
 import { scanPersonalData, denylistTerms } from './denylist.mjs';
+import { loadModelSettings, modelPolicyIssue } from './models.mjs';
 
 const headings = ['## Goal', '## What changed', '## Next steps', '## Watch out for'];
 const defaultRoles = ['repository owner', 'maintainer', 'reviewer', 'release manager', 'security lead'];
@@ -50,25 +51,6 @@ export function approvedRole(value, vocabulary) {
 export function actorRole(value, vocabulary) {
   if (!actorPattern.test(value)) return false;
   return !value.startsWith('human:') || vocabulary.roles.some((role) => `human:${role.replaceAll(' ', '-')}` === value);
-}
-
-/** @param {string} root @param {string} path @param {unknown} model */
-export async function modelPolicyIssue(root, path, model) {
-  if (typeof model !== 'string' || !model) return null;
-  let config;
-  try {
-    const { default: YAML } = await import('yaml');
-    config = YAML.parse(await readFile(withinRoot(root, '.baton/config.yml'), 'utf8'));
-  } catch (error) {
-    if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return null;
-    throw error;
-  }
-  const { allowed, enforce } = config.models ?? {};
-  if (!Array.isArray(allowed) || !allowed.length || enforce === 'off' || allowed.includes(model)) return null;
-  return {
-    code: enforce === 'error' ? 'E_MODEL_NOT_ALLOWED' : 'W_MODEL_NOT_ALLOWED',
-    file: path, message: `Suggested model ${model} is not in models.allowed`,
-  };
 }
 
 /** @param {string} root @param {string} path @param {string} [source] */
@@ -127,7 +109,7 @@ export async function validateHandoff(root, path, source) {
   if (data.status === 'ready' && /** @type {Array<{met:boolean}>} */ (data.exit_criteria ?? []).some((check) => !check.met)) {
     errors.push({ code: 'E_EXIT_UNMET', file: path, message: 'Ready handoff has unmet exit criteria' });
   }
-  const modelIssue = await modelPolicyIssue(root, path, data.suggested_model);
+  const modelIssue = modelPolicyIssue(await loadModelSettings(root), data.suggested_model, path);
   if (modelIssue?.code === 'E_MODEL_NOT_ALLOWED') errors.push(modelIssue);
   const completed = phases.phases[data.phase_completed];
   const target = phases.phases[data.next_phase];
