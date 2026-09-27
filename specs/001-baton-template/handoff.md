@@ -5,10 +5,10 @@ feature: 001-baton-template
 phase_completed: analyze
 next_phase: implement
 next_owner: speckit-implement
-status: ready
+status: needs-human
 model_role: implementation
 suggested_model: gpt-6-sol
-summary: "Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analysis.md). Post-analyze amendments A1-A6 closed the gaps raised by implement: role-only approvals with a denylist scan (T100), any_of/all_of exit groups (T101), the quick lane (T102), per-pack closure incl. dispatched agents (A4), hyphenated approver words (A5) and reasoned optional_refs for names absent upstream or provided by packs (A6, T026); A7 records a post-v0.1 roadmap only. Now 102 tasks, 31 acceptance checks, constitution 1.0.1. The pre-code gate is approved."
+summary: "Implement added public references and coverage, guarded maintainer CI and smoke, release dry-run workflow, and community files. Local check passes. PR-triggered acceptance conflicts with the requested tag/manual-only workflow rule; the owner must resolve that contract before implement can hand off to review. Release publication and npm publishing have not occurred."
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
@@ -422,7 +422,18 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: US5 T069-T074 implemented and locally checked; full feature implement remains open; networked sync --check blocked by missing specify-cli 1.0.11 in internal PyPI feed
     by: implementation-session
-open_questions: []
+  - id: D36
+    decision: New maintainer workflows use tag or manual triggers, separate OS jobs without a matrix, and no release is cut during implementation
+    rationale: The current task's explicit release rules take precedence over the earlier PR-triggered matrix in ci.md; AC-US7-1 remains unverified pending a contract decision
+    by: implementation-session
+open_questions:
+  - id: Q2
+    question: Should the PR-triggered CI and smoke acceptance contract be amended for tag/manual workflows, or may these new workflows also trigger on pull requests?
+    blocking: true
+    options:
+      - Keep tag/manual only and formally amend AC-US7-1 and the ci.md PR trigger and smoke matrix requirements
+      - Permit PR triggers and the smoke matrix as an explicit exception to the new-workflow restriction
+    owner: repository owner
 assumptions:
   - id: AS1
     text: The spec assumptions A1-A9 hold (re-checked at analyze, unchanged)
@@ -470,7 +481,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-27T18:12:40.428Z
+updated_at: 2026-09-27T18:45:37.010Z
 updated_by: implementation-session
 ---
 ## Goal
@@ -485,7 +496,13 @@ optional packs, cheap CI and a public manual.
 findings. All of them are fixed in the planning docs, and the persisted report is `analysis.md`. The constitution is
 now 1.0.1 (PATCH: gate wording and download verification). New requirements are FR-033 (adopter `baton.yml`) and
 FR-053 (optional pack storage). New tasks T095–T099 sit in the phases where they belong; T001–T094 keep their IDs.
-No implementation code exists yet.
+The remaining work from US2, US4, US5 and the first eight US6 manual tasks has landed on main. This implement
+pass added the public reference, documentation coverage check, workflow files, release dry-run path and
+community templates. The local gate passes. The pinned `sync --check` cannot run against the required
+internal PyPI mirror because it lacks `specify-cli==1.0.11`; the hosted release dry run will check that pin.
+GitHub private vulnerability reporting is currently disabled, so the owner must enable it before T090
+can be checked. AC-US7-1 conflicts with the instruction that new workflows may run only on tags or manual
+dispatch; T083, T084 and T088 stay open until the contract is resolved and hosted evidence exists.
 
 Post-analyze amendment A1–A3 (owner decisions D12–D14) closed the three gaps the implement session stopped on:
 role-only approvals and the `E_DENYLIST` scan (data-model §1.1, handoff-contract), `all_of`/`any_of` check groups
@@ -501,18 +518,18 @@ adds `roadmap.md`, a post-v0.1 backlog. It changes no v0.1 task or check; don't 
 
 1. `/speckit-implement` in a new session (model role: implementation → gpt-6-sol, reasoning high). The pre-code gate
    has already been approved by the repository owner via control-plane delegation.
-2. Work in task order from T001.
-   The MVP is Setup + Foundational + US3 + US1: T001–T054 plus T095–T098 and T100–T102 (T096 and T097 are
-   Foundational, T098 and T100–T102 are US3, T095 is US1).
-3. After each checkpoint: `npm run check`, commit with the owner's trailer, and update this baton.
+2. Answer Q2 before checking T083, T084 or T088; preserve the tag/manual-only rule until the owner
+   explicitly changes it. Review the hosted checks and release dry run once the workflows are available.
+3. Enable GitHub private vulnerability reporting for T090. Finish T082, T085 and T093, then
+   write the implement-to-review handoff only when every v0.1 task is green.
 
 ## Watch out for
 
 - Never hand-edit upstream files. They come only from `baton sync` (T025/T028). Repairs are declared in `packs/repairs.yml`.
 - `sync` must not use bare `uvx` or codeload tarballs: hash-locked requirements (T096) and a verified git fetch (T023).
 - Template cleanup must never modify `.github/workflows/` (`GITHUB_TOKEN` can't push those changes).
-- Use `registry.npmjs.org` only. A developer machine may have a private npm registry configured, and it must never
-  leak into `package-lock.json` or `.npmrc`.
+- Keep the repository's public registry pin. For this workstation use the internal npm and PyPI mirrors via
+  environment overrides, with `npm_config_package_lock=false`; never leak those overrides into the lockfile.
 - ATV is pinned to main, not npm 2.6.3. Don't "downgrade" to the published package.
 - `ce-review` persona degradation, its headless output shape and the `extensions.yml` format are re-checked at the
   pins by T029. Stop and ask if they fail.

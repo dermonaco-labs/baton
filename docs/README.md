@@ -16,7 +16,14 @@ this manual lives at `docs/baton/`.
 | [Troubleshooting](08-troubleshooting.md) | Common failures and safe recovery |
 | [Credits and licensing](09-credits-and-licensing.md) | Provenance, notices and exclusions |
 
-The [upstream diff](reference/upstream-diff.md) records the pinned input and
-materialized changes. For exact CLI usage, run
-`node .baton/bin/baton.mjs --help` or `<command> --help`; the proposed
-`docs/reference/` catalog is not yet complete.
+## Reference
+
+| Page | Use it for |
+|---|---|
+| [Commands](reference/commands.md) | CLI commands and when to run them |
+| [Skills](reference/skills.md) | Core slash skills and optional pack skills |
+| [Agents](reference/agents.md) | Core and optional agent roles |
+| [CLI syntax](reference/cli.md) | Flags, exit codes and handoff actions |
+| [Schemas](reference/schemas.md) | Artifact shapes and validation |
+| [Error codes](reference/error-codes.md) | Diagnose and recover from findings |
+| [Upstream diff](reference/upstream-diff.md) | Pinned input and materialized changes |

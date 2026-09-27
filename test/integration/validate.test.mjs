@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { runCli, sourceRoot } from '../helpers/index.mjs';
+import { run as validate } from '../../src/commands/validate.mjs';
 
 test('validate --path scans personal data in selected files and fixtures', async () => {
   const root = await mkdtemp(join(tmpdir(), 'baton-validate-'));
@@ -71,6 +72,38 @@ test('validate --changed retains the license-notice denylist', async () => {
     await writeFile(join(root, 'README.md'), '# Clean change\n');
     const unchanged = await runCli(root, ['validate', '--changed', '--json'], { BATON_DENYLIST_FILE: termsFile });
     assert.ok(!JSON.parse(unchanged.stdout).errors.some((error) => error.code === 'E_DENYLIST'), unchanged.stdout);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('validate reports E_UNDOCUMENTED for missing core references and accepts documented entries', async () => {
+  const root = await mkdtemp(join(sourceRoot, 'test/fixtures/docs-coverage-'));
+  try {
+    await cp(join(sourceRoot, 'baton/schemas'), join(root, 'baton/schemas'), { recursive: true });
+    await mkdir(join(root, '.github/skills/sample'), { recursive: true });
+    await mkdir(join(root, '.github/agents'), { recursive: true });
+    await mkdir(join(root, 'docs/reference'), { recursive: true });
+    await writeFile(join(root, '.github/skills/sample/SKILL.md'), '---\nname: sample\ndescription: Sample\n---\n');
+    await writeFile(join(root, '.github/agents/sample-reviewer.agent.md'), '---\nname: sample-reviewer\ndescription: Sample\n---\n');
+    await writeFile(join(root, 'docs/reference/skills.md'), '# Skills\n\n### `sample`\n\nWhen to use: now. Hands off to: review.\n');
+    await writeFile(join(root, 'docs/reference/agents.md'), '# Agents\n');
+    await writeFile(join(root, 'docs/reference/commands.md'), '# Commands\n');
+    const missing = await validate(root, []);
+    const missingIssues = missing.errors.filter((issue) => issue.code === 'E_UNDOCUMENTED');
+    assert.ok(missingIssues.some((issue) => issue.message.includes('sample-reviewer')));
+    assert.ok(missingIssues.some((issue) => issue.message.includes('validate')));
+
+    await writeFile(join(root, 'docs/reference/agents.md'), '# Agents\n\n### `sample-reviewer`\n\nWhen to use: now. Hands off to: review.\n');
+    await writeFile(join(root, 'docs/reference/commands.md'),
+      '# Commands\n\n' + ['build', 'manifest', 'lock', 'sync', 'validate', 'handoff', 'status', 'adopt',
+        'doctor', 'init', 'update', 'models', 'uninstall'].map((name) =>
+        `### \`${name}\`\n\nWhen to use: now. Hands off to: next.\n`).join('\n'));
+    const valid = await validate(root, []);
+    assert.ok(!valid.errors.some((issue) => issue.code === 'E_UNDOCUMENTED'), JSON.stringify(valid.errors));
+    await rm(join(root, 'docs/reference/commands.md'));
+    const absent = await validate(root, []);
+    assert.ok(absent.errors.some((issue) => issue.code === 'E_UNDOCUMENTED' && issue.message.includes('validate')));
   } finally {
     await rm(root, { recursive: true, force: true });
   }

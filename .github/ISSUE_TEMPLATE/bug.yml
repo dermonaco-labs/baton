@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a reproducible Baton defect.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the command, expected result and observed result.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Use a minimal repository and remove private data.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Baton version
+      description: Output of `node .baton/bin/baton.mjs --version`.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Linux, macOS, Windows]
+    validations:
+      required: true

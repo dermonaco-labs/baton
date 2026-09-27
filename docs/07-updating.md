@@ -62,3 +62,19 @@ separate human-reviewed step. The weekly `upstream-watch` workflow reports
 new upstreams and `sync --check` drift in one tracking issue; it **does not
 push, open a PR or bump anything**. See [troubleshooting](08-troubleshooting.md)
 for restricted registries.
+
+## Maintainer: prepare a release
+
+The owner cuts the tag only after review and land. Update the
+`CHANGELOG.md` version section and its **Upstream** subsection, run
+`npm run check` and `baton sync --check`, then manually dispatch
+`release.yml` with `dry_run: true`. Its dry run builds the CLI, template
+archive, lockfile, checksums, notes, and attestations without creating
+a tag or GitHub release. Verify the downloaded assets before the owner
+pushes `vX.Y.Z`; only that matching tag invokes the publication step.
+No workflow publishes to npm.
+
+`ci.yml` and `smoke.yml` are tag/manual-only to conserve runner minutes.
+The existing `baton.yml` and Windows smoke workflow remain the PR
+backstops; the manual CI and smoke runs are available for a release
+candidate. Source-only jobs are guarded so adopters do not run them.
