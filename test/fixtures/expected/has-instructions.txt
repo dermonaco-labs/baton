@@ -1,0 +1,10 @@
+.baton/bin/baton.mjs
+.baton/config.yml
+.baton/manifest.json
+.baton/phases.yml
+.github/workflows/baton.yml
+.github/copilot-instructions.md
+.specify/extensions.yml
+.specify/feature.json
+.specify/memory/constitution.md
+specs/002-project/spec.md

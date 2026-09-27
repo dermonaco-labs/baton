@@ -1,0 +1,3 @@
+.baton/conflicts/.github/agents/correctness-reviewer.agent.md.new
+.baton/conflicts/.github/agents/testing-reviewer.agent.md.new
+.baton/conflicts/report.json

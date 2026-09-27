@@ -98,7 +98,8 @@ being built.
 | Spec Kit hooks, `/baton`, `/baton-review`, `/baton-land`, quick lane | ✅ available |
 | Pinned upstream sync with lock verification (`sync --check`, `lock verify`) | ✅ available (maintainers) |
 | Adopter CI (`baton.yml`) | ✅ available |
-| Overlay onto an existing repo (`baton init`), `init --packs`, `update`, `uninstall`, `models apply` | 🚧 planned for v0.1.0 release |
+| Overlay onto an existing repo (`baton init`), `init --packs`, `uninstall` | ✅ available |
+| `update`, `models apply` | 🚧 planned for v0.1.0 release |
 | Full manual under `docs/` | 🚧 in progress. This README is the manual for now |
 
 Commands that aren't implemented yet exit with code 2 and change nothing.
@@ -141,9 +142,21 @@ Commands that aren't implemented yet exit with code 2 and change nothing.
 
 ### Add Baton to an existing repository
 
-The overlay installer (`npx github:dermonaco-labs/baton#v0.1.0 init`) is planned for the v0.1.0 release. Until
-then, start from the template, or copy `.baton/`, `.specify/` and the core `.github/skills` and `.github/agents` by
-hand, then run `doctor`.
+From the root of an existing repository, preview the pinned overlay before applying it:
+
+```bash
+npx --yes github:dermonaco-labs/baton#main init --dry-run
+npx --yes github:dermonaco-labs/baton#main init
+```
+
+Until this change merges, use `#dermonaco-baton-us2-init-and-uninstall` instead of `#main`. The installer adds
+the core relay and adopter CI without replacing existing instructions, Spec Kit feature data, or user-modified files.
+Use `--packs core,learning` to opt into the learning pack, `--repair` for known-corrupted ATV agents, and
+`--keep <glob>` or `--adopt-upstream <glob>` to resolve conflicts reported under `.baton/conflicts/`.
+`node .baton/bin/baton.mjs uninstall --dry-run` previews safe removal; `uninstall` preserves project specs,
+brainstorms, solutions, the constitution and every modified managed file.
+On a workstation with `uv` and the pinned Spec Kit wheel available, `init --script ps` or `--script py`
+regenerates the matching Spec Kit scripts; without either prerequisite it exits 5 with guidance.
 
 ## How the relay works
 
@@ -394,7 +407,7 @@ plus `repo-research-analyst` and `learnings-researcher`). Everything else is an 
 Packs are **closed**: every skill or agent a pack's files reference or dispatch must be in the pack, in core, or
 listed as an optional reference with a reason. `sync` fails with `E_DANGLING_REF` otherwise. When core refers to
 something a pack provides, `validate` and `doctor` print `W_PACK_RECOMMENDED`, a warning that tells you which pack
-would enable it. `init --packs <ids>` for installing packs is planned; see [Project status](#project-status).
+would enable it. Run `npx --yes github:dermonaco-labs/baton#main init --packs <ids>` to add a pack to an existing installation.
 
 ## How the two kits are combined
 

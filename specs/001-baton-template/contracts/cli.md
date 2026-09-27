@@ -23,7 +23,7 @@ Global flags: `--cwd <dir>`, `--json` (machine output), `--github` (workflow ann
 | Command | Behaviour | Key flags |
 |---|---|---|
 | `init` | Installs the `core` pack (plus the selected packs, read from `packs/<id>/files/`) into the cwd, merges the marker sections, installs `.github/workflows/baton.yml` and writes the manifest. Idempotent. It never overwrites unmanaged or user-modified files. It writes conflicts to `.baton/conflicts/<path>.new` and prints a report. In a derived repo (no `packs/` dir), `--packs` with an optional pack exits 5 and prints the pinned `npx --yes github:dermonaco-labs/baton#vX.Y.Z init --packs …` command. | `--packs a,b`, `--script sh\|ps\|py`, `--adopt-upstream <glob>`, `--keep <glob>`, `--repair` (fix known-corrupted ATV files), `--dry-run` |
-| `update` | Moves to the version of the running CLI (or `--to`, which re-invokes the pinned `npx`). It updates managed, unmodified files and reports the rest. | `--to vX.Y.Z`, `--dry-run` |
+| `update` | Moves to the version of the running CLI (or `--to`, which re-invokes the pinned `npx`). It updates managed, unmodified files and reports the rest. The standalone asset resolves its payload with `--from`. | `--to vX.Y.Z`, `--dry-run`, `--from <baton-template-vX.tar.gz>` |
 | `doctor` | Reports the version, pins, packs, manifest integrity, prerequisites (node, git, bash/pwsh, uv), hook registration in `.specify/extensions.yml`, a misplaced `.github/copilot-setup-steps.yml`, corrupted agents and models that aren't allowed. Warnings only, unless `--strict`. | `--strict` |
 | `validate` | Checks every baton, `phases.yml`, `config.yml`, the manifest, `packs/*.yml` (when present), `review.json` files, and skill/agent frontmatter. It also checks model enforcement and docs coverage (only when `docs/reference` exists). | `--changed` (only files changed vs `origin/HEAD`), `--path <file>` |
 | `status` | Shows every feature and quick baton: phase, next, owner, status, gate and staleness. | |
@@ -56,5 +56,6 @@ Global flags: `--cwd <dir>`, `--json` (machine output), `--github` (workflow ann
 - `--json` returns `{ ok, command, version, errors: [...], warnings: [...], data }`, and the shape is stable
   within a minor version.
 - `--github` prints `::error file=…,title=CODE::message` lines.
-- The CLI never makes network calls, except `update --to`, `sync` and `npx` bootstrap. This is documented in the
+- The CLI never makes network calls, except `init --script ps|py` (hash-locked `uv` regeneration),
+  `update --to`, `sync` and `npx` bootstrap. This is documented in the
   manual.
