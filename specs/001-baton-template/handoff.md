@@ -8,11 +8,11 @@ next_owner: speckit-implement
 status: ready
 model_role: implementation
 suggested_model: gpt-6-sol
-summary: "Implement added public references and coverage, guarded tag/manual CI and three-OS smoke, release dry-run workflow, and community files. The owner resolved the PR-check contract: existing Linux baton plus Windows MVP smoke serve PRs. Local check passes; hosted release dry run, annotation evidence, visual review, private reporting, end-to-end evidence and implement-to-review handoff remain open. No tag, release or npm publication."
+summary: Implement added public references, coverage, guarded CI and smoke, release workflow, and community files. Owner-dispatched dry run 36343485321 passed hosted check/sync and produced checksum-verified assets with verified provenance; T085 is complete. README visual review, hosted annotation, private reporting, S1-S7/timed newcomer evidence and implement-to-review handoff remain open. No tag, release or npm publication.
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
-    sha256: b0f2c15032b59993acd5dc885ae0abd36eca9ff033284118b649d13ba66b5416
+    sha256: 92e7ddb6fe969a24a252f7e28a429ab2e77415e97a5d4889fa3efa4ffa3ff5c2
   - path: specs/001-baton-template/plan.md
     why: structure, template disposition, key decisions, constitution check
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
@@ -92,7 +92,7 @@ artifacts:
     sha256: cd0573e95d97f0b8d0c8b99b7209e2987668a9dc346abaae284fa3d59b80f611
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: b0f2c15032b59993acd5dc885ae0abd36eca9ff033284118b649d13ba66b5416
+    sha256: 92e7ddb6fe969a24a252f7e28a429ab2e77415e97a5d4889fa3efa4ffa3ff5c2
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
@@ -434,6 +434,10 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Record owner-approved CI contract and updated acceptance registry
     by: implementation-session
+  - id: D39
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record verified release dry-run assets and provenance in T085; retain open manual gates
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -482,7 +486,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-27T18:53:14.582Z
+updated_at: 2026-09-27T19:17:27.406Z
 updated_by: implementation-session
 ---
 ## Goal
@@ -500,9 +504,27 @@ FR-053 (optional pack storage). New tasks T095–T099 sit in the phases where th
 The remaining work from US2, US4, US5 and the first eight US6 manual tasks has landed on main. This implement
 pass added the public reference, documentation coverage check, tag/manual workflow files, release dry-run
 path and community templates. D37 resolved Q2: PRs keep the Linux baton and Windows MVP smoke checks; full
-three-OS smoke is tag/manual only. The local gate passes. The pinned `sync --check` cannot run against the
-required internal PyPI mirror because it lacks `specify-cli==1.0.11`; the hosted release dry run will
-check that pin.
+three-OS smoke is tag/manual only. The earlier local gate passed, but local `sync --check` cannot run against the
+required internal PyPI mirror because it lacks `specify-cli==1.0.11`. The owner-dispatched
+[release dry run 36343485321](https://github.com/dermonaco-labs/baton/actions/runs/36343485321)
+on `main` at `6593a8fe0fd7c3b51a907a6ae227379d3bd35076` succeeded: hosted `npm run check` and
+`sync --check` passed. In this worktree `npm run check` stops at `markdownlint-cli2` because dependencies
+are absent; a permitted `npm ci` against the internal feed returned 404 for `ignore@7.0.10`. The lockfile
+was not changed. Its [downloadable artifact](https://github.com/dermonaco-labs/baton/actions/runs/36343485321/artifacts/10939627078)
+(`baton-release-dry-run`, 799498 bytes) contains `baton.mjs`, `baton-template-v0.1.0.tar.gz`,
+`baton.lock.json`, `SHA256SUMS` and `release-notes.md`. All three SHA256SUMS entries matched the downloaded bytes;
+`gh attestation verify` succeeded for both build subjects (`baton.mjs` SHA-256
+`cc46b24a9d657a9ee961e22270e49644f5622ab0d284d9255ccf0bc5a906264d` and archive SHA-256
+`d42791694222f2a4bc994c0fd6fe6a4333b96362a49747fd25e8d60cc1ebf820`), with signed provenance
+identifying release.yml on `main`, the same source SHA, and run 36343485321/attempts/1. Publish was skipped;
+there is no `v0.1.0` tag or release.
+
+[PR #16](https://github.com/dermonaco-labs/baton/pull/16) had green Linux `baton`
+([run 36343300299](https://github.com/dermonaco-labs/baton/actions/runs/36343300299), 9 s job)
+and Windows MVP `smoke` ([run 36343300308](https://github.com/dermonaco-labs/baton/actions/runs/36343300308),
+70 s job), within the PR budget. GitHub's HTML README API rendered an article, headings, tables, links and a
+Mermaid enrichment container for commit `6593a8fe`; this is not a browser visual check or proof of a rendered
+client-side diagram. No full three-OS smoke dispatch or malformed-frontmatter annotation is evidenced here.
 
 Post-analyze amendment A1–A3 (owner decisions D12–D14) closed the three gaps the implement session stopped on:
 role-only approvals and the `E_DENYLIST` scan (data-model §1.1, handoff-contract), `all_of`/`any_of` check groups
@@ -518,12 +540,13 @@ adds `roadmap.md`, a post-v0.1 backlog. It changes no v0.1 task or check; don't 
 
 1. `/speckit-implement` in a new session (model role: implementation → gpt-6-sol, reasoning high). The pre-code gate
    has already been approved by the repository owner via control-plane delegation.
-2. T082 needs a live GitHub README visual check. T085 needs the release dry run after the workflow
-   reaches main; the owner will dispatch it. T088 still needs the hosted malformed-frontmatter
-   annotation (a local fixture proves only the format). T090 needs the owner to enable GitHub
+2. T082 needs a live GitHub README visual check (HTML-only render is partial). T085 is complete from the verified
+   dry run above. T088 has green PR Linux/Windows checks within budget but still needs the hosted
+   malformed-frontmatter annotation and the full three-OS tag/manual checks (no dispatch here).
+   T090 needs the owner to enable GitHub
    private vulnerability reporting, currently disabled.
-3. T093 needs complete S1–S7 hosted evidence, a timed newcomer walkthrough through the first
-   validated baton and a hosted `sync --check` because the internal PyPI mirror lacks the pin.
+3. T093 needs complete S1–S7 evidence and a timed newcomer walkthrough through the first
+   validated baton; the hosted `sync --check` pin verification is evidenced by run 36343485321.
    T094 (implement→review) follows only after every other v0.1 task is checked.
 
 ## Watch out for
@@ -533,6 +556,8 @@ adds `roadmap.md`, a post-v0.1 backlog. It changes no v0.1 task or check; don't 
 - Template cleanup must never modify `.github/workflows/` (`GITHUB_TOKEN` can't push those changes).
 - Keep the repository's public registry pin. For this workstation use the internal npm and PyPI mirrors via
   environment overrides, with `npm_config_package_lock=false`; never leak those overrides into the lockfile.
+  The internal npm mirror currently lacks `ignore@7.0.10`, blocking local `npm ci`/`npm run check`. The hosted
+  check passed at the dry-run source commit, not on this documentation-only evidence branch.
 - ATV is pinned to main, not npm 2.6.3. Don't "downgrade" to the published package.
 - `ce-review` persona degradation, its headless output shape and the `extensions.yml` format are re-checked at the
   pins by T029. Stop and ask if they fail.
