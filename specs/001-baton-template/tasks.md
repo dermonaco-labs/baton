@@ -341,12 +341,12 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - a "Use this template" link and the `npx … init` overlay command
   - the Mermaid relay diagram
   - "what's inside" (core pack counts), and links to the manual and the credits
-- [ ] T076 [P] [US6] `docs/README.md` (index), `docs/01-what-and-why.md` and `docs/02-quickstart.md`.
-- [ ] T077 [P] [US6] `docs/03-workflow.md` (both lanes, gates, roles and the full conflict rules) and
+- [X] T076 [P] [US6] `docs/README.md` (index), `docs/01-what-and-why.md` and `docs/02-quickstart.md`.
+- [X] T077 [P] [US6] `docs/03-workflow.md` (both lanes, gates, roles and the full conflict rules) and
   `docs/04-handoffs.md` (anatomy, annotated example, fixing each error).
-- [ ] T078 [P] [US6] `docs/05-model-routing.md` and `docs/06-packs-and-customization.md`.
-- [ ] T079 [P] [US6] `docs/07-updating.md` (adopter and maintainer) and `docs/08-troubleshooting.md`.
-- [ ] T080 [P] [US6] `docs/09-credits-and-licensing.md` and `THIRD_PARTY_NOTICES.md`:
+- [X] T078 [P] [US6] `docs/05-model-routing.md` and `docs/06-packs-and-customization.md`.
+- [X] T079 [P] [US6] `docs/07-updating.md` (adopter and maintainer) and `docs/08-troubleshooting.md`.
+- [X] T080 [P] [US6] `docs/09-credits-and-licensing.md` and `THIRD_PARTY_NOTICES.md`:
   - full MIT texts and copyright lines for Spec Kit (GitHub, Inc.), ATV (All The Vibes), Compound Engineering
     (Every), awesome-copilot (GitHub), and every bundled npm package from the T005 license inventory (ajv, ajv-formats,
     yaml, fast-uri (BSD-3-Clause), fast-deep-equal, json-schema-traverse, require-from-string, …)
