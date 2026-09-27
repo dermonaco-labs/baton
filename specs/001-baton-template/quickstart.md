@@ -130,7 +130,11 @@ Expected results:
 
 ## S7: CI (US7)
 
-- Push a branch and confirm that `ci / lint`, `ci / test`, `smoke (ubuntu-latest)` and `smoke (windows-latest)` are
-  green and each is within the budget in [contracts/ci.md](./contracts/ci.md).
-- A throwaway commit that breaks an agent's frontmatter must fail `lint` with a `::error … E_FRONTMATTER_MALFORMED`
-  annotation. Revert it afterwards.
+- Push a branch and confirm that Linux `baton` and Windows MVP smoke are
+  green within the PR budget in [contracts/ci.md](./contracts/ci.md). The
+  tag/manual `ci.yml` lint/test and separate Linux, macOS and Windows
+  `smoke.yml` jobs are release-candidate checks; dispatch them after the
+  workflows are on the default branch, not on every PR.
+- A throwaway commit that breaks an agent's frontmatter must fail `baton`
+  with a `::error … E_FRONTMATTER_MALFORMED` annotation. Revert it
+  afterwards; a local fixture alone is not hosted acceptance evidence.

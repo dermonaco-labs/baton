@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and verify assets without publishing
+        type: boolean
+        default: true
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'dermonaco-labs/baton'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v6.6.1
+      - name: Check tag and changelog
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p "JSON.parse(require('fs').readFileSync('package.json')).version")
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            test "$DRY_RUN" = true || { echo "::error::Manual dispatch must be a dry_run"; exit 1; }
+          else
+            test "${GITHUB_REF_NAME}" = "v$version" ||
+              { echo "::error::Tag does not match package.json version"; exit 1; }
+          fi
+          VERSION="$version" node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const version = process.env.VERSION;
+          const changelog = readFileSync('CHANGELOG.md', 'utf8');
+          const section = changelog.split(/^## \[/m).find(part => part.startsWith(`${version}]`));
+          if (!section || !/^### Upstream\s*$/m.test(section)) {
+            console.error(`::error::CHANGELOG.md needs a ${version} section with an Upstream subsection`);
+            process.exitCode = 1;
+          }
+          NODE
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run check
+      - run: node .baton/bin/baton.mjs sync --check
+      - name: Build assets, checksums and release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p "JSON.parse(require('fs').readFileSync('package.json')).version")
+          mkdir -p dist
+          cp .baton/bin/baton.mjs dist/baton.mjs
+          cp baton.lock.json dist/baton.lock.json
+          git archive --format=tar HEAD | gzip -n > "dist/baton-template-v${version}.tar.gz"
+          (cd dist && sha256sum baton.mjs "baton-template-v${version}.tar.gz" baton.lock.json > SHA256SUMS)
+          VERSION="$version" node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const changelog = readFileSync('CHANGELOG.md', 'utf8');
+          const lock = JSON.parse(readFileSync('baton.lock.json', 'utf8')).upstreams;
+          const version = process.env.VERSION;
+          const section = changelog.split(/^## \[/m).find(part => part.startsWith(`${version}]`));
+          writeFileSync('dist/release-notes.md', `${section.slice(section.indexOf('\n') + 1).trim()}\n\n` +
+            `| Upstream | Pin |\n| --- | --- |\n| Spec Kit | ${lock.speckit.version} |\n| ATV | ${lock.atv.commit} |\n\n` +
+            'Verify downloads with `sha256sum -c SHA256SUMS` and `gh attestation verify <asset> --repo dermonaco-labs/baton`.\n');
+          NODE
+          cd dist && sha256sum -c SHA256SUMS
+      - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-path: |
+            dist/baton.mjs
+            dist/baton-template-v*.tar.gz
+      - name: Upload dry-run assets
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: baton-release-dry-run
+          path: dist/
+      - name: Publish only the owner's existing tag
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p "JSON.parse(require('fs').readFileSync('package.json')).version")
+          gh release create "v$version" dist/baton.mjs "dist/baton-template-v${version}.tar.gz" \
+            dist/baton.lock.json dist/SHA256SUMS --verify-tag \
+            --title "Baton v$version — Spec Kit $(node -p "require('./baton.lock.json').upstreams.speckit.version") · ATV $(node -p "require('./baton.lock.json').upstreams.atv.ref")" \
+            --notes-file dist/release-notes.md

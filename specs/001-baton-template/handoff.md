@@ -8,11 +8,11 @@ next_owner: speckit-implement
 status: ready
 model_role: implementation
 suggested_model: gpt-6-sol
-summary: "Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analysis.md). Post-analyze amendments A1-A6 closed the gaps raised by implement: role-only approvals with a denylist scan (T100), any_of/all_of exit groups (T101), the quick lane (T102), per-pack closure incl. dispatched agents (A4), hyphenated approver words (A5) and reasoned optional_refs for names absent upstream or provided by packs (A6, T026); A7 records a post-v0.1 roadmap only. Now 102 tasks, 31 acceptance checks, constitution 1.0.1. The pre-code gate is approved."
+summary: "Implement added public references and coverage, guarded tag/manual CI and three-OS smoke, release dry-run workflow, and community files. The owner resolved the PR-check contract: existing Linux baton plus Windows MVP smoke serve PRs. Local check passes; hosted release dry run, annotation evidence, visual review, private reporting, end-to-end evidence and implement-to-review handoff remain open. No tag, release or npm publication."
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
-    sha256: 781a7c8a6c7e32b79b31757d6f3f1c87994422f79c1b70e24100ae9e620c5b63
+    sha256: b0f2c15032b59993acd5dc885ae0abd36eca9ff033284118b649d13ba66b5416
   - path: specs/001-baton-template/plan.md
     why: structure, template disposition, key decisions, constitution check
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
@@ -39,10 +39,10 @@ read_first:
     sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a
   - path: specs/001-baton-template/contracts/ci.md
     why: workflows, smoke steps, budgets, release
-    sha256: af7ae56e257b3370985701b612500c8a704f771fdb293bd373249eb216c55c14
+    sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
   - path: specs/001-baton-template/quickstart.md
     why: the executable acceptance scenarios S1-S7
-    sha256: 1ce6f86f51c89e87f3b5645da5778c9faf07eda7b735e07be652323b3ca32926
+    sha256: cd0573e95d97f0b8d0c8b99b7209e2987668a9dc346abaae284fa3d59b80f611
   - path: .specify/memory/constitution.md
     why: principles I-VIII (v1.0.1); stop, don't choose
     sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
@@ -59,7 +59,7 @@ artifacts:
     sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
   - path: specs/001-baton-template/spec.md
     role: source-of-truth
-    sha256: 164b84bb62c38331ff347f8e873db226c429c578fbc6ca2af675c604c9c057cc
+    sha256: af38490d3093545c1ea3c533f24ba09311eafce04de57fc2d510ec60f0e4ca9d
   - path: specs/001-baton-template/research.md
     role: evidence
     sha256: afdc07d728b0eb6c412c427ef9c976268fe0337f0b376b7c0c96c262a1572bda
@@ -86,13 +86,13 @@ artifacts:
     sha256: 5caa307b18a8b4edbfda4b289959344a5377e2a6a51a4fb75887db6027570050
   - path: specs/001-baton-template/contracts/ci.md
     role: source-of-truth
-    sha256: af7ae56e257b3370985701b612500c8a704f771fdb293bd373249eb216c55c14
+    sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
   - path: specs/001-baton-template/quickstart.md
     role: derived
-    sha256: 1ce6f86f51c89e87f3b5645da5778c9faf07eda7b735e07be652323b3ca32926
+    sha256: cd0573e95d97f0b8d0c8b99b7209e2987668a9dc346abaae284fa3d59b80f611
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: 781a7c8a6c7e32b79b31757d6f3f1c87994422f79c1b70e24100ae9e620c5b63
+    sha256: b0f2c15032b59993acd5dc885ae0abd36eca9ff033284118b649d13ba66b5416
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
@@ -259,7 +259,7 @@ acceptance_checks:
     expect_initial: n/a
   - id: AC-US7-1
     story: US7
-    check: PR checks green within SC-007 budget
+    check: PR Linux baton and Windows MVP smoke green within SC-007 budget; full three-OS smoke on tag or manual dispatch
     kind: manual
     expect_initial: n/a
   - id: AC-US7-2
@@ -422,6 +422,18 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: US5 T069-T074 implemented and locally checked; full feature implement remains open; networked sync --check blocked by missing specify-cli 1.0.11 in internal PyPI feed
     by: implementation-session
+  - id: D36
+    decision: New maintainer workflows use tag or manual triggers, separate OS jobs without a matrix, and no release is cut during implementation
+    rationale: The current task's explicit release rules take precedence over the earlier PR-triggered matrix in ci.md; owner resolution is recorded in D37
+    by: implementation-session
+  - id: D37
+    decision: PR CI remains Linux baton validation plus Windows MVP smoke; full lint, tests and separate Linux, macOS and Windows smoke run only on tags or manual dispatch
+    rationale: Repository owner resolved Q2 through control-plane delegation to conserve GitHub Actions minutes; spec AC-US7-1, FR-070/071, ci.md, quickstart S7 and tasks T083/T084 now match
+    by: human:repository-owner
+  - id: D38
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record owner-approved CI contract and updated acceptance registry
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -470,7 +482,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-27T18:12:40.428Z
+updated_at: 2026-09-27T18:53:14.582Z
 updated_by: implementation-session
 ---
 ## Goal
@@ -485,7 +497,12 @@ optional packs, cheap CI and a public manual.
 findings. All of them are fixed in the planning docs, and the persisted report is `analysis.md`. The constitution is
 now 1.0.1 (PATCH: gate wording and download verification). New requirements are FR-033 (adopter `baton.yml`) and
 FR-053 (optional pack storage). New tasks T095–T099 sit in the phases where they belong; T001–T094 keep their IDs.
-No implementation code exists yet.
+The remaining work from US2, US4, US5 and the first eight US6 manual tasks has landed on main. This implement
+pass added the public reference, documentation coverage check, tag/manual workflow files, release dry-run
+path and community templates. D37 resolved Q2: PRs keep the Linux baton and Windows MVP smoke checks; full
+three-OS smoke is tag/manual only. The local gate passes. The pinned `sync --check` cannot run against the
+required internal PyPI mirror because it lacks `specify-cli==1.0.11`; the hosted release dry run will
+check that pin.
 
 Post-analyze amendment A1–A3 (owner decisions D12–D14) closed the three gaps the implement session stopped on:
 role-only approvals and the `E_DENYLIST` scan (data-model §1.1, handoff-contract), `all_of`/`any_of` check groups
@@ -501,18 +518,21 @@ adds `roadmap.md`, a post-v0.1 backlog. It changes no v0.1 task or check; don't 
 
 1. `/speckit-implement` in a new session (model role: implementation → gpt-6-sol, reasoning high). The pre-code gate
    has already been approved by the repository owner via control-plane delegation.
-2. Work in task order from T001.
-   The MVP is Setup + Foundational + US3 + US1: T001–T054 plus T095–T098 and T100–T102 (T096 and T097 are
-   Foundational, T098 and T100–T102 are US3, T095 is US1).
-3. After each checkpoint: `npm run check`, commit with the owner's trailer, and update this baton.
+2. T082 needs a live GitHub README visual check. T085 needs the release dry run after the workflow
+   reaches main; the owner will dispatch it. T088 still needs the hosted malformed-frontmatter
+   annotation (a local fixture proves only the format). T090 needs the owner to enable GitHub
+   private vulnerability reporting, currently disabled.
+3. T093 needs complete S1–S7 hosted evidence, a timed newcomer walkthrough through the first
+   validated baton and a hosted `sync --check` because the internal PyPI mirror lacks the pin.
+   T094 (implement→review) follows only after every other v0.1 task is checked.
 
 ## Watch out for
 
 - Never hand-edit upstream files. They come only from `baton sync` (T025/T028). Repairs are declared in `packs/repairs.yml`.
 - `sync` must not use bare `uvx` or codeload tarballs: hash-locked requirements (T096) and a verified git fetch (T023).
 - Template cleanup must never modify `.github/workflows/` (`GITHUB_TOKEN` can't push those changes).
-- Use `registry.npmjs.org` only. A developer machine may have a private npm registry configured, and it must never
-  leak into `package-lock.json` or `.npmrc`.
+- Keep the repository's public registry pin. For this workstation use the internal npm and PyPI mirrors via
+  environment overrides, with `npm_config_package_lock=false`; never leak those overrides into the lockfile.
 - ATV is pinned to main, not npm 2.6.3. Don't "downgrade" to the published package.
 - `ce-review` persona degradation, its headless output shape and the `extensions.yml` format are re-checked at the
   pins by T029. Stop and ask if they fail.

@@ -351,7 +351,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
     (Every), awesome-copilot (GitHub), and every bundled npm package from the T005 license inventory (ajv, ajv-formats,
     yaml, fast-uri (BSD-3-Clause), fast-deep-equal, json-schema-traverse, require-from-string, …)
   - the exclusions and why (karpathy-guidelines: no license)
-- [ ] T081 [P] [US6] `docs/reference/{commands,skills,agents,cli,schemas,error-codes}.md`: every core item with "when to
+- [X] T081 [P] [US6] `docs/reference/{commands,skills,agents,cli,schemas,error-codes}.md`: every core item with "when to
   use" and "hands off to", and every optional pack item.
 - [ ] T082 [US6] Docs coverage check in `validate` (`E_UNDOCUMENTED`) plus a test (AC-US6-1). README visual review
   (AC-US6-2).
@@ -361,20 +361,21 @@ files and have no unfinished dependencies. Paths are repo-relative.
 **Goal**: The same strict checks run locally and in CI, on free runners.
 **Independent Test**: quickstart S7.
 
-- [ ] T083 [US7] `.github/workflows/ci.yml` (lint and test jobs per `contracts/ci.md`, SHA-pinned, least privilege).
-- [ ] T084 [US7] `.github/workflows/smoke.yml` (matrix ubuntu and windows, steps S1–S5, and `sync --check` behind a
-  paths filter).
+- [X] T083 [US7] `.github/workflows/ci.yml` (tag/manual lint and test jobs per `contracts/ci.md`, SHA-pinned,
+  least privilege; PRs retain the existing `baton.yml` and Windows MVP smoke).
+- [X] T084 [US7] `.github/workflows/smoke.yml` (separate ubuntu, macos and windows jobs without a matrix,
+  steps S1–S5, and `sync --check` behind a paths filter; tag/manual only).
 - [ ] T085 [US7] `.github/workflows/release.yml`:
   - preconditions: the tag matches the version, the CHANGELOG has an Upstream section, and the checks pass
   - assets plus `SHA256SUMS`, and attest-build-provenance
   - a `dry_run` dispatch (AC-US7-3)
-- [ ] T086 [P] [US7] `.github/workflows/copilot-setup-steps.yml` (job `copilot-setup-steps`: node 20, uv,
+- [X] T086 [P] [US7] `.github/workflows/copilot-setup-steps.yml` (job `copilot-setup-steps`: node 20, uv,
   `specify-cli` from `uv pip install --require-hashes -r baton/upstream/specify-cli.requirements.txt` when that file
   exists, a documented project-defined dependency step (FR-032, e.g. `npm ci` when `package-lock.json` exists), and
   `baton doctor`).
-- [ ] T087 [P] [US7] `.github/dependabot.yml` (github-actions and npm, weekly). Verify that every `uses:` is pinned
+- [X] T087 [P] [US7] `.github/dependabot.yml` (github-actions and npm, weekly). Verify that every `uses:` is pinned
   by SHA with a version comment.
-- [ ] T099 [US7] Guard every job of `ci.yml`, `smoke.yml`, `upstream-watch.yml` and `release.yml` with
+- [X] T099 [US7] Guard every job of `ci.yml`, `smoke.yml`, `upstream-watch.yml` and `release.yml` with
   `if: github.repository == 'dermonaco-labs/baton'`. Add a validate check (Baton repo only) that fails when a maintainer
   workflow job lacks the guard, plus a test.
 - [ ] T088 [US7] Push the branch, confirm green checks within budget (AC-US7-1), and confirm the broken-frontmatter
@@ -382,15 +383,15 @@ files and have no unfinished dependencies. Paths are repo-relative.
 
 ## Phase 10: Polish & Community
 
-- [ ] T089 [P] `CONTRIBUTING.md`: setup, `npm run check` before push, how upstream bumps work, the maintainer release
+- [X] T089 [P] `CONTRIBUTING.md`: setup, `npm run check` before push, how upstream bumps work, the maintainer release
   checklist, how to add a pack, and the registry-restricted workstation note (ephemeral Linux container plus hosted
   CI; never disable TLS).
 - [ ] T090 [P] `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, attributed), `SECURITY.md` (GitHub private
   vulnerability reporting, supported versions) and `SUPPORT.md`.
-- [ ] T091 [P] `.github/ISSUE_TEMPLATE/{bug,feature,config}.yml`, `.github/pull_request_template.md` (checklist:
+- [X] T091 [P] `.github/ISSUE_TEMPLATE/{bug,feature,config}.yml`, `.github/pull_request_template.md` (checklist:
   check passes, CHANGELOG, baton valid, no upstream hand-edits) and `.github/CODEOWNERS` (the maintainer handle,
   removed by template cleanup).
-- [ ] T092 `CHANGELOG.md`: Keep a Changelog, with `[Unreleased]` and a planned `0.1.0` that includes an Upstream
+- [X] T092 `CHANGELOG.md`: Keep a Changelog, with `[Unreleased]` and a planned `0.1.0` that includes an Upstream
   subsection.
 - [ ] T093 Run quickstart S1–S7 end to end, and record the evidence per acceptance check in the baton. Also run the timed
   newcomer walkthrough for SC-001 (template → first validated baton in ≤ 10 min, following only the README; AC-US1-4).
@@ -429,7 +430,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
 | AC-US5-3 | US5 | upstream-watch `workflow_dispatch` updates one issue, no push | manual | n/a |
 | AC-US6-1 | US6 | validate.test "missing reference → E_UNDOCUMENTED" | test-id | fail |
 | AC-US6-2 | US6 | README renders hero, both quick starts, diagram, credits | manual | n/a |
-| AC-US7-1 | US7 | PR checks green within SC-007 budget | manual | n/a |
+| AC-US7-1 | US7 | PR Linux `baton` and Windows MVP smoke checks green within SC-007 budget; full three-OS smoke runs on tag/manual dispatch | manual | n/a |
 | AC-US7-2 | US7 | broken-frontmatter commit yields `E_FRONTMATTER_MALFORMED` annotation | manual | n/a |
 | AC-US7-3 | US7 | release `dry_run` produces assets + SHA256SUMS | manual | n/a |
 

@@ -1,0 +1,22 @@
+name: Feature request
+description: Propose a change to the Baton relay or template.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Problem and user need
+      description: Describe the outcome rather than prescribing an implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and acceptance criteria
+      description: Note affected phases, human gates and public contracts.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

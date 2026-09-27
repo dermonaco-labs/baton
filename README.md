@@ -10,6 +10,8 @@ and reviews are passed between agents and humans like a relay baton. Each pass c
 runner needs, and each pass is validated.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/dermonaco-labs/baton/actions/workflows/ci.yml/badge.svg)](https://github.com/dermonaco-labs/baton/actions/workflows/ci.yml)
+[![Release](https://github.com/dermonaco-labs/baton/actions/workflows/release.yml/badge.svg)](https://github.com/dermonaco-labs/baton/actions/workflows/release.yml)
 [![Spec Kit 1.0.11](https://img.shields.io/badge/Spec%20Kit-1.0.11-6f42c1.svg)](https://github.com/github/spec-kit/releases/tag/v1.0.11)
 [![ATV pinned](https://img.shields.io/badge/ATV-main%40ad99673-0a7bbb.svg)](https://github.com/All-The-Vibes/ATV-StarterKit/tree/ad996736b879be87c7755df5c5017d5336203bbc)
 ![Status: v0.1 MVP](https://img.shields.io/badge/status-v0.1%20MVP-orange.svg)
@@ -88,8 +90,8 @@ Baton fixes this with a small set of rules and one file per feature: the **baton
 
 ## Project status
 
-Baton is at **v0.1 (MVP)**. The relay and the template path work today; some convenience commands are still
-being built.
+Baton is at **v0.1 (pre-release)**. The relay, template, overlay and public manual are available;
+the owner has not cut the v0.1.0 tag or release yet.
 
 | Area | Status |
 |---|---|
@@ -101,9 +103,7 @@ being built.
 | Overlay onto an existing repo (`baton init`), `init --packs`, `uninstall` | ✅ available |
 | `models apply` (opt-in, managed agents only) | ✅ available |
 | `update` (managed, unmodified files; conflicts preserved) | ✅ available |
-| Full manual under `docs/` | 🚧 in progress. This README is the manual for now |
-
-Commands not yet implemented exit with code 2 and change nothing.
+| Full manual under `docs/` | ✅ available |
 
 ## Quick start
 
@@ -150,7 +150,7 @@ npx --yes github:dermonaco-labs/baton#main init --dry-run
 npx --yes github:dermonaco-labs/baton#main init
 ```
 
-Until this change merges, use `#dermonaco-baton-us2-init-and-uninstall` instead of `#main`. The installer adds
+Before the owner cuts v0.1.0, use a reviewed commit ref instead of `#main` for a stable install. The installer adds
 the core relay and adopter CI without replacing existing instructions, Spec Kit feature data, or user-modified files.
 Use `--packs core,learning` to opt into the learning pack, `--repair` for known-corrupted ATV agents, and
 `--keep <glob>` or `--adopt-upstream <glob>` to resolve conflicts reported under `.baton/conflicts/`.

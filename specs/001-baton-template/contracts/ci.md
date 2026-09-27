@@ -2,21 +2,28 @@
 
 Maintainer workflows (`ci`, `smoke`, `upstream-watch`, `release`) carry `if: github.repository == 'dermonaco-labs/baton'`
 on every job, so they stay dormant in derived repos. All workflows use actions pinned by full commit SHA (with a `# vX.Y.Z` comment), `permissions: {}` at the top level
-with explicit per-job grants, `concurrency` groups with `cancel-in-progress` for PRs, and `timeout-minutes` on every
+with explicit per-job grants, concurrency groups, and `timeout-minutes` on every
 job. Only `GITHUB_TOKEN` is used; there are no other secrets. Dependabot updates the `github-actions` and `npm`
 ecosystems weekly.
+
+Owner decision D37: to conserve Actions minutes, new maintainer `ci.yml` and
+`smoke.yml` run on version tags or manual dispatch only, with separate OS jobs
+rather than a matrix. PRs retain the existing Linux `baton.yml` and Windows
+MVP smoke workflow. The full Linux/macOS/Windows checks are a release-candidate
+gate, not required PR jobs.
 
 ## Workflows
 
 | File | Trigger | Jobs (runner, timeout) | Permissions | Purpose |
 |---|---|---|---|---|
-| `ci.yml` | `pull_request`, `push` to main | `lint` (ubuntu, 5 min), `test` (ubuntu, 5 min) | `contents: read` | fast, meaningful checks (maintainer; dormant in derived repos) |
+| `ci.yml` | `push` tags `v*.*.*`, `workflow_dispatch` | `lint` (ubuntu, 5 min), `test` (ubuntu, 5 min) | `contents: read` | full local-equivalent gate on demand or release (maintainer; dormant in derived repos) |
 | `baton.yml` | `pull_request`, `push` to main | `baton` (ubuntu, 5 min): checkout, setup-node, `node .baton/bin/baton.mjs validate --github`, then `doctor` | `contents: read` | **adopter CI**: the server-side backstop when local hooks are skipped (RK1). Active in both the Baton repo and derived repos, shipped by `init`/`adopt` from `baton/templates/workflows/baton.yml` |
-| `smoke.yml` | `pull_request`, `push` to main, `workflow_dispatch` | `smoke` matrix {ubuntu-latest, windows-latest} (10 min) | `contents: read` | e2e: instantiate the template + overlay the fixtures (maintainer; dormant in derived repos) |
+| `mvp-windows-smoke.yml` | `pull_request` | `smoke` (windows, 10 min): local check + template adoption | `contents: read` | PR backstop (maintainer; dormant in derived repos) |
+| `smoke.yml` | `push` tags `v*.*.*`, `workflow_dispatch` | separate `ubuntu`, `macos`, `windows` jobs (10 min each; no matrix) | `contents: read` | e2e: instantiate the template + overlay the fixtures (maintainer; dormant in derived repos) |
 | `upstream-watch.yml` | `schedule` (weekly, Mon 06:00 UTC), `workflow_dispatch` | `watch` (ubuntu, 5 min) | `contents: read`, `issues: write` | one tracking issue for new upstream releases/commits (maintainer; dormant) |
 | `release.yml` | `push` tags `v*.*.*`, `workflow_dispatch` (`dry_run: true`: builds and verifies, publishes nothing) | `release` (ubuntu, 10 min) | `contents: write`, `id-token: write`, `attestations: write` | build + publish assets (maintainer; dormant) |
 | `template-cleanup.yml` | `push` to the default branch | `cleanup` (ubuntu, 5 min), guarded by `if: github.repository != 'dermonaco-labs/baton'` plus a marker file check | `contents: write` | derived-repo cleanup (US1). Runs `baton adopt --no-workflows` and commits. It never touches `.github/workflows/`, because `GITHUB_TOKEN` cannot push workflow changes (research R12); the maintainer workflows stay behind their guards and the adopter can delete them with `baton adopt --prune-workflows` |
-| `copilot-setup-steps.yml` | `workflow_dispatch`, `push`/`pull_request` touching itself | `copilot-setup-steps` (ubuntu, 10 min) | `contents: read` | coding-agent environment: node 20, uv, `specify-cli` installed with `uv pip install --require-hashes -r baton/upstream/specify-cli.requirements.txt` (maintainer) or skipped when the file is absent (derived repos need no Spec Kit CLI at runtime), `baton doctor` |
+| `copilot-setup-steps.yml` | `workflow_dispatch` | `copilot-setup-steps` (ubuntu, 10 min) | `contents: read` | coding-agent environment: node 20, uv, `specify-cli` installed with `uv pip install --require-hashes -r baton/upstream/specify-cli.requirements.txt` (maintainer) or skipped when the file is absent (derived repos need no Spec Kit CLI at runtime), `baton doctor` |
 
 ## `ci.yml` steps
 
@@ -25,8 +32,8 @@ ecosystems weekly.
   2. setup-node 20 with the npm cache
   3. `npm ci --ignore-scripts`
   4. `npm run lint:md` (markdownlint-cli2)
-  5. `npm run lint:yaml` (yamllint via `pipx run yamllint`, pinned)
-  6. actionlint (the pinned action)
+  5. `npm run lint:yaml` (yamllint via pinned `uvx`)
+  6. actionlint (pinned CLI version via `go run`)
   7. `npm run typecheck`
   8. `node .baton/bin/baton.mjs build --check` (bundle freshness)
   9. `node .baton/bin/baton.mjs lock verify`
@@ -59,7 +66,8 @@ ecosystems weekly.
 5. **Update**:
    - Install the previous release fixture (`test/fixtures/prev-release/`), modify one file and run `update`.
    - Assert that the modified file is untouched and that `.baton/conflicts/<path>.new` exists.
-6. **Upstream reproducibility** (ubuntu only, when `baton.lock.json` or `packs/` changed; `dorny/paths-filter` pinned):
+6. **Upstream reproducibility** (ubuntu only, when the previous commit changed `baton.lock.json`, `packs/`,
+   `baton/upstream/` or `.specify/`; the shell path filter does not add another action):
    - install uv, then run `baton sync --check`.
 
 ## Budget (SC-007)
@@ -69,9 +77,11 @@ ecosystems weekly.
 | lint | ≤ 3 min |
 | test | ≤ 2 min |
 | smoke ubuntu | ≤ 4 min (+3 for sync --check when triggered) |
+| smoke macos | ≤ 6 min (tag/manual dispatch only) |
 | smoke windows | ≤ 6 min (2× billing multiplier; free on public repos) |
 
-The jobs run in parallel, so the PR wall-clock stays within 10 minutes.
+The PR runs only `baton` and Windows MVP smoke (≤ 10 min wall-clock,
+≤ 25 billable-equivalent minutes). Full CI and smoke run on demand or tags.
 
 ## `upstream-watch.yml`
 

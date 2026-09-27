@@ -3757,8 +3757,19 @@
       ],
       "format": "esm"
     },
+    "src/lib/maintainer-workflows.mjs": {
+      "bytes": 910,
+      "imports": [
+        {
+          "path": "node_modules/yaml/dist/index.js",
+          "kind": "import-statement",
+          "original": "yaml"
+        }
+      ],
+      "format": "esm"
+    },
     "src/commands/validate.mjs": {
-      "bytes": 11009,
+      "bytes": 14376,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3824,6 +3835,11 @@
           "path": "src/lib/packs.mjs",
           "kind": "import-statement",
           "original": "../lib/packs.mjs"
+        },
+        {
+          "path": "src/lib/maintainer-workflows.mjs",
+          "kind": "import-statement",
+          "original": "../lib/maintainer-workflows.mjs"
         }
       ],
       "format": "esm"
@@ -4171,7 +4187,7 @@
       "format": "esm"
     },
     "src/commands/update.mjs": {
-      "bytes": 9579,
+      "bytes": 9402,
       "imports": [
         {
           "path": "node:fs",
@@ -5299,8 +5315,11 @@
         "src/lib/checks.mjs": {
           "bytesInOutput": 7114
         },
+        "src/lib/maintainer-workflows.mjs": {
+          "bytesInOutput": 491
+        },
         "src/commands/validate.mjs": {
-          "bytesInOutput": 5770
+          "bytesInOutput": 7359
         },
         "src/commands/handoff.mjs": {
           "bytesInOutput": 16215
@@ -5339,7 +5358,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 376810
+      "bytes": 378890
     }
   }
 }

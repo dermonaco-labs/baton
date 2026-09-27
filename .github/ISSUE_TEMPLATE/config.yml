@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/dermonaco-labs/baton/security/advisories/new
+    about: Report security concerns privately.
+  - name: Usage guidance
+    url: https://github.com/dermonaco-labs/baton/blob/main/docs/08-troubleshooting.md
+    about: Troubleshoot Baton before opening an issue.

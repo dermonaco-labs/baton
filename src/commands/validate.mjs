@@ -11,6 +11,7 @@ import { scanPersonalData, denylistTerms, isLicenseNotice } from '../lib/denylis
 import { loadPhases } from '../lib/phases.mjs';
 import { changedFiles } from '../lib/checks.mjs';
 import { missingRecommendations, recommendationWarnings } from '../lib/packs.mjs';
+import { maintainerWorkflowIssues, maintainerWorkflows } from '../lib/maintainer-workflows.mjs';
 
 /** @param {string} directory @returns {AsyncGenerator<string>} */
 async function* walk(directory) {
@@ -33,6 +34,16 @@ async function exists(root, path) {
   try {
     await readFile(withinRoot(root, path));
     return true;
+  } catch (error) {
+    if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
+/** @param {string} root @param {string} path */
+async function directoryExists(root, path) {
+  try {
+    return (await stat(withinRoot(root, path))).isDirectory();
   } catch (error) {
     if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return false;
     throw error;
@@ -163,6 +174,71 @@ export async function run(root, args) {
         if (type === 'skill-frontmatter' && data.name !== path.split('/')[2]) errors.push({ code: 'E_FRONTMATTER_MALFORMED', file: path, message: 'Skill name differs from directory' });
       } catch (error) {
         errors.push({ code: 'E_FRONTMATTER_MALFORMED', file: path, message: error instanceof Error ? error.message : String(error) });
+      }
+    }
+  }
+
+  if (!selected && !changed) {
+    if ((!process.env.GITHUB_REPOSITORY || process.env.GITHUB_REPOSITORY === 'dermonaco-labs/baton') &&
+        await exists(root, 'baton.lock.json') && await exists(root, 'packs/core.yml')) {
+      for (const file of maintainerWorkflows) {
+        const path = `.github/workflows/${file}`;
+        if (!await exists(root, path)) continue;
+        try {
+          errors.push(...maintainerWorkflowIssues(file, await readFile(withinRoot(root, path), 'utf8')));
+        } catch (error) {
+          errors.push({ code: 'E_WORKFLOW_GUARD', file: path,
+            message: error instanceof Error ? error.message : String(error) });
+        }
+      }
+    }
+    const reference = await directoryExists(root, 'docs/reference')
+      ? 'docs/reference' : await directoryExists(root, 'docs/baton/reference')
+        ? 'docs/baton/reference' : null;
+    if (reference) {
+      const commandNames = ['build', 'manifest', 'lock', 'sync', 'validate', 'handoff',
+        'status', 'adopt', 'doctor', 'init', 'update', 'models', 'uninstall'];
+      /** @type {Array<[string,string[]]>} */
+      const catalogues = [
+        ['commands.md', commandNames],
+        ['skills.md', []],
+        ['agents.md', []],
+      ];
+      /** @type {string[]} */
+      const managed = [];
+      if (Array.isArray(manifest?.files)) {
+        managed.push(...manifest.files.filter((/** @type {{pack?:unknown,path?:unknown}} */ file) =>
+          file?.pack === 'core' && typeof file.path === 'string')
+          .map((/** @type {{path:string}} */ file) => file.path));
+      } else {
+        for (const directory of ['.github/skills', '.github/agents']) {
+          for await (const file of walk(join(root, directory))) {
+            managed.push(relative(root, file).replaceAll('\\', '/'));
+          }
+        }
+      }
+      for (const path of managed) {
+        const skill = /^\.github\/skills\/([^/]+)\/SKILL\.md$/.exec(path);
+        const agent = /^\.github\/agents\/([^/]+)\.agent\.md$/.exec(path);
+        if (skill) catalogues[1][1].push(skill[1]);
+        if (agent) catalogues[2][1].push(agent[1]);
+      }
+      for (const [file, names] of catalogues) {
+        const docPath = `${reference}/${file}`;
+        let source = '';
+        try {
+          source = await readFile(withinRoot(root, docPath), 'utf8');
+        } catch (error) {
+          if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+        }
+        for (const name of names) {
+          const section = source.split(/^### `([^`]+)`[^\n]*$/m);
+          const index = section.findIndex((value, i) => i % 2 === 1 && value === name);
+          if (index >= 0 && /when\s+to\s+use/i.test(section[index + 1]) &&
+              /hands\s+off\s+to/i.test(section[index + 1])) continue;
+          errors.push({ code: 'E_UNDOCUMENTED', file: docPath,
+            message: `${name} needs a reference entry with "When to use" and "Hands off to"` });
+        }
       }
     }
   }
