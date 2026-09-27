@@ -1783,7 +1783,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 20583,
+      "bytes": 22960,
       "imports": [
         {
           "path": "node:fs",
@@ -3635,7 +3635,7 @@
       "format": "esm"
     },
     "src/lib/models.mjs": {
-      "bytes": 2303,
+      "bytes": 2255,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4171,23 +4171,68 @@
       "format": "esm"
     },
     "src/commands/update.mjs": {
-      "bytes": 575,
+      "bytes": 9579,
       "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:os",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
         {
           "path": "src/lib/report.mjs",
           "kind": "import-statement",
           "original": "../lib/report.mjs"
         },
         {
+          "path": "src/lib/manifest.mjs",
+          "kind": "import-statement",
+          "original": "../lib/manifest.mjs"
+        },
+        {
+          "path": "src/lib/overlay.mjs",
+          "kind": "import-statement",
+          "original": "../lib/overlay.mjs"
+        },
+        {
+          "path": "src/lib/markers.mjs",
+          "kind": "import-statement",
+          "original": "../lib/markers.mjs"
+        },
+        {
           "path": "src/lib/payload.mjs",
           "kind": "import-statement",
           "original": "../lib/payload.mjs"
+        },
+        {
+          "path": "src/commands/init.mjs",
+          "kind": "import-statement",
+          "original": "./init.mjs"
         }
       ],
       "format": "esm"
     },
     "src/commands/models.mjs": {
-      "bytes": 3720,
+      "bytes": 3649,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4659,6 +4704,31 @@
           "external": true
         },
         {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:os",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
           "path": "node:fs/promises",
           "kind": "import-statement",
           "external": true
@@ -4924,7 +4994,7 @@
           "bytesInOutput": 1657
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 10479
+          "bytesInOutput": 12005
         },
         "node_modules/ajv/dist/compile/codegen/code.js": {
           "bytesInOutput": 2551
@@ -5257,7 +5327,7 @@
           "bytesInOutput": 10084
         },
         "src/commands/update.mjs": {
-          "bytesInOutput": 336
+          "bytesInOutput": 4908
         },
         "src/commands/models.mjs": {
           "bytesInOutput": 1978
@@ -5269,7 +5339,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 370712
+      "bytes": 376810
     }
   }
 }

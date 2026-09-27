@@ -100,10 +100,10 @@ being built.
 | Adopter CI (`baton.yml`) | ✅ available |
 | Overlay onto an existing repo (`baton init`), `init --packs`, `uninstall` | ✅ available |
 | `models apply` (opt-in, managed agents only) | ✅ available |
-| `update` | 🚧 planned for v0.1.0 release |
+| `update` (managed, unmodified files; conflicts preserved) | ✅ available |
 | Full manual under `docs/` | 🚧 in progress. This README is the manual for now |
 
-Commands that aren't implemented yet exit with code 2 and change nothing.
+Commands not yet implemented exit with code 2 and change nothing.
 
 ## Quick start
 
@@ -543,8 +543,12 @@ Upstream content is **vendored, pinned and checksummed**, never hand-edited:
 ATV is pinned to a commit on `main` rather than npm `atv-starterkit` 2.6.3, because most agent templates in that
 release have broken frontmatter; the fix is unreleased as of this writing.
 
-For adopters, `baton update` (a three-way update that keeps your local changes and reports conflicts) is planned for
-the v0.1.0 release.
+For adopters, `node .baton/bin/baton.mjs update` updates only unmodified managed files to the version of the
+running CLI. It leaves local edits and unmanaged files untouched, writes proposed versions to
+`.baton/conflicts/<path>.new`, and exits 4 when conflicts need review. Use `--dry-run` to preview changes,
+`--to vX.Y.Z` to invoke a pinned release through `npx`, or `--from <archive>` with the standalone asset.
+Maintainers use `sync --bump speckit=<version>` or `sync --bump atv=<full-commit>` and copy the diff summary
+from `docs/reference/upstream-diff.md` into the PR body.
 
 ## Troubleshooting
 
