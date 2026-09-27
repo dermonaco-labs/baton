@@ -83,6 +83,7 @@ specs/001-baton-template/
 ├── data-model.md        # entities & schemas (baton, phase, config, pack, lock, manifest)
 ├── quickstart.md        # validation scenarios for implement/review
 ├── analysis.md          # persisted speckit-analyze report (pre-code gate evidence)
+├── roadmap.md           # post-v0.1 backlog RM1–RM18 (A7; not v0.1 scope)
 ├── contracts/
 │   ├── handoff-contract.md   # baton frontmatter, validator rules, error codes
 │   ├── phase-contracts.md    # per-phase entry/exit, transitions, roles, gates
@@ -258,6 +259,13 @@ that adopters may relicense their own code, and that the notices must remain for
    template cleanup failed.
 9. **Credits & licensing**: both upstreams and the bundled authors, full notices, what is excluded and why.
 10. **Reference**: every command, skill and agent, with "when to use" and "hands off to"; CLI; schemas; error codes.
+
+## Roadmap
+
+The post-v0.1 backlog is in `roadmap.md` (amendment A7): v0.2 strengthens the core promise (RM1–RM10), v0.3 adds
+parallel implement, task-level routing, relay evals and review → compound proposals (RM11–RM14), and RM15–RM18 are
+optional packs. Every item becomes its own Spec Kit feature, and new baton data starts under `x-*` keys, so v0.1
+contracts don't change.
 
 ## Complexity Tracking
 

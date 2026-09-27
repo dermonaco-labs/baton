@@ -8,17 +8,17 @@ next_owner: speckit-implement
 status: ready
 model_role: implementation
 suggested_model: gpt-6-sol
-summary: "Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analysis.md). Post-analyze amendments A1-A6 closed the gaps raised by implement: role-only approvals with a denylist scan (T100), any_of/all_of exit groups (T101), the quick lane (T102), per-pack closure incl. dispatched agents (A4), hyphenated approver words (A5) and reasoned optional_refs for names absent upstream or provided by packs (A6, T026). Now 102 tasks, 31 acceptance checks, constitution 1.0.1. The pre-code gate was approved by the repository owner via control-plane delegation."
+summary: "Analyze fixed 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW findings (analysis.md). Post-analyze amendments A1-A6 closed the gaps raised by implement: role-only approvals with a denylist scan (T100), any_of/all_of exit groups (T101), the quick lane (T102), per-pack closure incl. dispatched agents (A4), hyphenated approver words (A5) and reasoned optional_refs for names absent upstream or provided by packs (A6, T026); A7 records a post-v0.1 roadmap only. Now 102 tasks, 31 acceptance checks, constitution 1.0.1. The pre-code gate is approved."
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
     sha256: f51cc07db2f08b6be4975dab7a67be0a05f1ef55121837810f38004db93038c2
   - path: specs/001-baton-template/plan.md
     why: structure, template disposition, key decisions, constitution check
-    sha256: 53338c389d7a2452bdd4cebbb98c3b0c79628b541ad3c9368058e309e4c31f86
+    sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
   - path: specs/001-baton-template/analysis.md
     why: what the analyze pass changed and the FR/SC to task map
-    sha256: d3394921d7f5b9898695d0c9a18f9c308f34d56872c5c64d0509320a63e99e1d
+    sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
   - path: specs/001-baton-template/data-model.md
     why: baton, phase, config, pack, lock, manifest and findings shapes
     sha256: 533817b9fa44a312103a924eff7b26f1bc750335080db8c825fcec8f4bbb2a7b
@@ -51,19 +51,21 @@ do_not_read:
     why: folded into plan.md; open it only to verify a pin, SHA or upstream fact
   - path: specs/001-baton-template/spec.md
     why: prose beyond FR/SC is not needed; analysis.md maps every FR/SC to tasks; open it to check wording
+  - path: specs/001-baton-template/roadmap.md
+    why: post-v0.1 backlog (A7); nothing in it is v0.1 work
 artifacts:
   - path: .specify/memory/constitution.md
     role: source-of-truth
     sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
   - path: specs/001-baton-template/spec.md
     role: source-of-truth
-    sha256: c0f625c9d166b70568cc08594694e0f011105a4285edc1d5729538857a31fb6f
+    sha256: 164b84bb62c38331ff347f8e873db226c429c578fbc6ca2af675c604c9c057cc
   - path: specs/001-baton-template/research.md
     role: evidence
     sha256: e9145d4fd79727f737ed04dad250208c3bc61ad18a85ee9d1492eaa43ccc9daf
   - path: specs/001-baton-template/plan.md
     role: source-of-truth
-    sha256: 53338c389d7a2452bdd4cebbb98c3b0c79628b541ad3c9368058e309e4c31f86
+    sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
   - path: specs/001-baton-template/data-model.md
     role: source-of-truth
     sha256: 533817b9fa44a312103a924eff7b26f1bc750335080db8c825fcec8f4bbb2a7b
@@ -93,7 +95,7 @@ artifacts:
     sha256: f51cc07db2f08b6be4975dab7a67be0a05f1ef55121837810f38004db93038c2
   - path: specs/001-baton-template/analysis.md
     role: evidence
-    sha256: d3394921d7f5b9898695d0c9a18f9c308f34d56872c5c64d0509320a63e99e1d
+    sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
   - path: specs/001-baton-template/checklists/requirements.md
     role: evidence
     sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017
@@ -387,6 +389,15 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Recorded verified MVP tasks and corrected seven-hook runtime evidence
     by: implementation-session
+  - id: D28
+    tag: amendment-a7
+    decision: Record the post-v0.1 backlog RM1-RM18 in roadmap.md (v0.2 core-promise items, v0.3 differentiators, optional packs); every item becomes its own Spec Kit feature, new baton data starts under x-* keys, and v0.1 scope, tasks and acceptance checks are unchanged
+    rationale: keeps the MVP stable while preserving the optimization and integration ideas (analysis A7)
+    by: human:repository-owner
+  - id: D29
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record A7 post-v0.1 roadmap
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -435,7 +446,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-24T13:32:36.572Z
+updated_at: 2026-09-27T10:28:03.302Z
 updated_by: implementation-session
 ---
 ## Goal
@@ -459,7 +470,8 @@ the new acceptance checks are AC-US3-8..10. Amendment A4 (D15) adds `adversarial
 the `docs-review` pack and makes the closure check per pack (T026, AC-US2-4). Amendment A5 (D16) allows internal hyphens in approver
 words, so `repository owner via control-plane delegation` is valid (data-model §1.1, T100). Amendment A6 (D18,
 resolves implement Q1) requires a `reason` on every `optional_refs` entry and classifies each dangling reference at
-the pin (packs.md § Reference classification at the pin; T020, T026, T053, T074, AC-US2-5).
+the pin (packs.md § Reference classification at the pin; T020, T026, T053, T074, AC-US2-5). Amendment A7 (D28)
+adds `roadmap.md`, a post-v0.1 backlog. It changes no v0.1 task or check; don't read it during implement.
 
 ## Next steps
 
