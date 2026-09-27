@@ -5,14 +5,14 @@ feature: 001-baton-template
 phase_completed: analyze
 next_phase: implement
 next_owner: speckit-implement
-status: needs-human
+status: ready
 model_role: implementation
 suggested_model: gpt-6-sol
-summary: "Implement added public references and coverage, guarded maintainer CI and smoke, release dry-run workflow, and community files. Local check passes. PR-triggered acceptance conflicts with the requested tag/manual-only workflow rule; the owner must resolve that contract before implement can hand off to review. Release publication and npm publishing have not occurred."
+summary: "Implement added public references and coverage, guarded tag/manual CI and three-OS smoke, release dry-run workflow, and community files. The owner resolved the PR-check contract: existing Linux baton plus Windows MVP smoke serve PRs. Local check passes; hosted release dry run, annotation evidence, visual review, private reporting, end-to-end evidence and implement-to-review handoff remain open. No tag, release or npm publication."
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
-    sha256: 781a7c8a6c7e32b79b31757d6f3f1c87994422f79c1b70e24100ae9e620c5b63
+    sha256: b0f2c15032b59993acd5dc885ae0abd36eca9ff033284118b649d13ba66b5416
   - path: specs/001-baton-template/plan.md
     why: structure, template disposition, key decisions, constitution check
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
@@ -39,10 +39,10 @@ read_first:
     sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a
   - path: specs/001-baton-template/contracts/ci.md
     why: workflows, smoke steps, budgets, release
-    sha256: af7ae56e257b3370985701b612500c8a704f771fdb293bd373249eb216c55c14
+    sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
   - path: specs/001-baton-template/quickstart.md
     why: the executable acceptance scenarios S1-S7
-    sha256: 1ce6f86f51c89e87f3b5645da5778c9faf07eda7b735e07be652323b3ca32926
+    sha256: cd0573e95d97f0b8d0c8b99b7209e2987668a9dc346abaae284fa3d59b80f611
   - path: .specify/memory/constitution.md
     why: principles I-VIII (v1.0.1); stop, don't choose
     sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
@@ -59,7 +59,7 @@ artifacts:
     sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
   - path: specs/001-baton-template/spec.md
     role: source-of-truth
-    sha256: 164b84bb62c38331ff347f8e873db226c429c578fbc6ca2af675c604c9c057cc
+    sha256: af38490d3093545c1ea3c533f24ba09311eafce04de57fc2d510ec60f0e4ca9d
   - path: specs/001-baton-template/research.md
     role: evidence
     sha256: afdc07d728b0eb6c412c427ef9c976268fe0337f0b376b7c0c96c262a1572bda
@@ -86,13 +86,13 @@ artifacts:
     sha256: 5caa307b18a8b4edbfda4b289959344a5377e2a6a51a4fb75887db6027570050
   - path: specs/001-baton-template/contracts/ci.md
     role: source-of-truth
-    sha256: af7ae56e257b3370985701b612500c8a704f771fdb293bd373249eb216c55c14
+    sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
   - path: specs/001-baton-template/quickstart.md
     role: derived
-    sha256: 1ce6f86f51c89e87f3b5645da5778c9faf07eda7b735e07be652323b3ca32926
+    sha256: cd0573e95d97f0b8d0c8b99b7209e2987668a9dc346abaae284fa3d59b80f611
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: 781a7c8a6c7e32b79b31757d6f3f1c87994422f79c1b70e24100ae9e620c5b63
+    sha256: b0f2c15032b59993acd5dc885ae0abd36eca9ff033284118b649d13ba66b5416
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
@@ -259,7 +259,7 @@ acceptance_checks:
     expect_initial: n/a
   - id: AC-US7-1
     story: US7
-    check: PR checks green within SC-007 budget
+    check: PR Linux baton and Windows MVP smoke green within SC-007 budget; full three-OS smoke on tag or manual dispatch
     kind: manual
     expect_initial: n/a
   - id: AC-US7-2
@@ -424,16 +424,17 @@ decisions:
     by: implementation-session
   - id: D36
     decision: New maintainer workflows use tag or manual triggers, separate OS jobs without a matrix, and no release is cut during implementation
-    rationale: The current task's explicit release rules take precedence over the earlier PR-triggered matrix in ci.md; AC-US7-1 remains unverified pending a contract decision
+    rationale: The current task's explicit release rules take precedence over the earlier PR-triggered matrix in ci.md; owner resolution is recorded in D37
     by: implementation-session
-open_questions:
-  - id: Q2
-    question: Should the PR-triggered CI and smoke acceptance contract be amended for tag/manual workflows, or may these new workflows also trigger on pull requests?
-    blocking: true
-    options:
-      - Keep tag/manual only and formally amend AC-US7-1 and the ci.md PR trigger and smoke matrix requirements
-      - Permit PR triggers and the smoke matrix as an explicit exception to the new-workflow restriction
-    owner: repository owner
+  - id: D37
+    decision: PR CI remains Linux baton validation plus Windows MVP smoke; full lint, tests and separate Linux, macOS and Windows smoke run only on tags or manual dispatch
+    rationale: Repository owner resolved Q2 through control-plane delegation to conserve GitHub Actions minutes; spec AC-US7-1, FR-070/071, ci.md, quickstart S7 and tasks T083/T084 now match
+    by: human:repository-owner
+  - id: D38
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record owner-approved CI contract and updated acceptance registry
+    by: implementation-session
+open_questions: []
 assumptions:
   - id: AS1
     text: The spec assumptions A1-A9 hold (re-checked at analyze, unchanged)
@@ -481,7 +482,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-27T18:45:37.010Z
+updated_at: 2026-09-27T18:53:14.582Z
 updated_by: implementation-session
 ---
 ## Goal
@@ -497,12 +498,11 @@ findings. All of them are fixed in the planning docs, and the persisted report i
 now 1.0.1 (PATCH: gate wording and download verification). New requirements are FR-033 (adopter `baton.yml`) and
 FR-053 (optional pack storage). New tasks T095–T099 sit in the phases where they belong; T001–T094 keep their IDs.
 The remaining work from US2, US4, US5 and the first eight US6 manual tasks has landed on main. This implement
-pass added the public reference, documentation coverage check, workflow files, release dry-run path and
-community templates. The local gate passes. The pinned `sync --check` cannot run against the required
-internal PyPI mirror because it lacks `specify-cli==1.0.11`; the hosted release dry run will check that pin.
-GitHub private vulnerability reporting is currently disabled, so the owner must enable it before T090
-can be checked. AC-US7-1 conflicts with the instruction that new workflows may run only on tags or manual
-dispatch; T083, T084 and T088 stay open until the contract is resolved and hosted evidence exists.
+pass added the public reference, documentation coverage check, tag/manual workflow files, release dry-run
+path and community templates. D37 resolved Q2: PRs keep the Linux baton and Windows MVP smoke checks; full
+three-OS smoke is tag/manual only. The local gate passes. The pinned `sync --check` cannot run against the
+required internal PyPI mirror because it lacks `specify-cli==1.0.11`; the hosted release dry run will
+check that pin.
 
 Post-analyze amendment A1–A3 (owner decisions D12–D14) closed the three gaps the implement session stopped on:
 role-only approvals and the `E_DENYLIST` scan (data-model §1.1, handoff-contract), `all_of`/`any_of` check groups
@@ -518,10 +518,13 @@ adds `roadmap.md`, a post-v0.1 backlog. It changes no v0.1 task or check; don't 
 
 1. `/speckit-implement` in a new session (model role: implementation → gpt-6-sol, reasoning high). The pre-code gate
    has already been approved by the repository owner via control-plane delegation.
-2. Answer Q2 before checking T083, T084 or T088; preserve the tag/manual-only rule until the owner
-   explicitly changes it. Review the hosted checks and release dry run once the workflows are available.
-3. Enable GitHub private vulnerability reporting for T090. Finish T082, T085 and T093, then
-   write the implement-to-review handoff only when every v0.1 task is green.
+2. T082 needs a live GitHub README visual check. T085 needs the release dry run after the workflow
+   reaches main; the owner will dispatch it. T088 still needs the hosted malformed-frontmatter
+   annotation (a local fixture proves only the format). T090 needs the owner to enable GitHub
+   private vulnerability reporting, currently disabled.
+3. T093 needs complete S1–S7 hosted evidence, a timed newcomer walkthrough through the first
+   validated baton and a hosted `sync --check` because the internal PyPI mirror lacks the pin.
+   T094 (implement→review) follows only after every other v0.1 task is checked.
 
 ## Watch out for
 

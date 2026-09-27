@@ -361,9 +361,10 @@ files and have no unfinished dependencies. Paths are repo-relative.
 **Goal**: The same strict checks run locally and in CI, on free runners.
 **Independent Test**: quickstart S7.
 
-- [ ] T083 [US7] `.github/workflows/ci.yml` (lint and test jobs per `contracts/ci.md`, SHA-pinned, least privilege).
-- [ ] T084 [US7] `.github/workflows/smoke.yml` (matrix ubuntu and windows, steps S1–S5, and `sync --check` behind a
-  paths filter).
+- [X] T083 [US7] `.github/workflows/ci.yml` (tag/manual lint and test jobs per `contracts/ci.md`, SHA-pinned,
+  least privilege; PRs retain the existing `baton.yml` and Windows MVP smoke).
+- [X] T084 [US7] `.github/workflows/smoke.yml` (separate ubuntu, macos and windows jobs without a matrix,
+  steps S1–S5, and `sync --check` behind a paths filter; tag/manual only).
 - [ ] T085 [US7] `.github/workflows/release.yml`:
   - preconditions: the tag matches the version, the CHANGELOG has an Upstream section, and the checks pass
   - assets plus `SHA256SUMS`, and attest-build-provenance
@@ -429,7 +430,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
 | AC-US5-3 | US5 | upstream-watch `workflow_dispatch` updates one issue, no push | manual | n/a |
 | AC-US6-1 | US6 | validate.test "missing reference → E_UNDOCUMENTED" | test-id | fail |
 | AC-US6-2 | US6 | README renders hero, both quick starts, diagram, credits | manual | n/a |
-| AC-US7-1 | US7 | PR checks green within SC-007 budget | manual | n/a |
+| AC-US7-1 | US7 | PR Linux `baton` and Windows MVP smoke checks green within SC-007 budget; full three-OS smoke runs on tag/manual dispatch | manual | n/a |
 | AC-US7-2 | US7 | broken-frontmatter commit yields `E_FRONTMATTER_MALFORMED` annotation | manual | n/a |
 | AC-US7-3 | US7 | release `dry_run` produces assets + SHA256SUMS | manual | n/a |
 

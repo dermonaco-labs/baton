@@ -173,17 +173,20 @@ documented, which is checked automatically by comparing the docs index to the in
 
 ### User Story 7 - Maintain Baton with cheap, meaningful CI (Priority: P3)
 
-A contributor opens a PR. CI lints Markdown, YAML and workflows, validates the schemas and all
-skill and agent frontmatter, runs the unit tests and runs the e2e smoke on Linux and Windows,
-all on free hosted runners.
+A contributor opens a PR. The adopter-compatible Linux `baton` check validates
+handoffs and frontmatter, and the existing Windows smoke checks the local gate and
+template instantiation. Full lint, test and e2e smoke on Linux, macOS and Windows
+run only for tags or manual dispatch, conserving PR runner minutes.
 
 **Independent Test**: The workflows pass on the Baton repo. A deliberately broken fixture PR
 (invalid frontmatter) fails with a precise annotation.
 
 **Acceptance Scenarios**:
 
-1. **Given** a PR, **When** CI runs, **Then** the `lint`, `test` and `smoke (ubuntu, windows)` jobs
-   complete within the budget in SC-007 using only `GITHUB_TOKEN`.
+1. **Given** a PR, **When** CI runs, **Then** the Linux `baton` and Windows smoke jobs
+   complete within the budget in SC-007 using only `GITHUB_TOKEN`. **Given** a
+   tag or manual dispatch, **Then** full lint, tests and smoke on Linux, macOS
+   and Windows run without an OS matrix.
 2. **Given** a `vX.Y.Z` tag, **When** `release` runs, **Then** it publishes `baton.mjs`, a template
    archive, `SHA256SUMS` and build-provenance attestations. The release notes list the upstream pins
    and the CHANGELOG section.
@@ -326,10 +329,12 @@ all on free hosted runners.
 
 **CI & release**
 
-- **FR-070**: CI MUST lint Markdown, YAML and workflows (actionlint). It MUST compile all JSON Schemas,
+- **FR-070**: Tag/manual CI MUST lint Markdown, YAML and workflows (actionlint). It MUST compile all JSON Schemas,
   validate every skill and agent frontmatter, validate all batons in `specs/` and all pack files,
   verify the lock checksums, and check internal links.
-- **FR-071**: CI MUST run the unit tests and an e2e smoke on `ubuntu-latest` and `windows-latest`.
+- **FR-071**: PR CI MUST run the Linux `baton` validation and the existing Windows smoke.
+  Tag/manual CI MUST run the unit tests and an e2e smoke on `ubuntu-latest`, `macos-latest`
+  and `windows-latest` as separate jobs (no matrix).
   The smoke covers template instantiation plus cleanup, overlay into 3 fixture repos, idempotent re-run
   and update from the previous fixture.
 - **FR-072**: A scheduled `upstream-watch` (weekly) MUST detect new upstream versions and run

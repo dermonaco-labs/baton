@@ -75,6 +75,6 @@ pushes `vX.Y.Z`; only that matching tag invokes the publication step.
 No workflow publishes to npm.
 
 `ci.yml` and `smoke.yml` are tag/manual-only to conserve runner minutes.
-The existing `baton.yml` and Windows smoke workflow remain the PR
-backstops; the manual CI and smoke runs are available for a release
+The existing Linux `baton.yml` and Windows smoke workflow remain the PR
+backstops; separate Linux, macOS and Windows smoke jobs run for a release
 candidate. Source-only jobs are guarded so adopters do not run them.

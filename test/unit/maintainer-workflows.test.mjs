@@ -72,8 +72,9 @@ test('CI, smoke and release expose the required checks and dry-run boundary', as
   assert.match(JSON.stringify(ci.jobs.lint), /validate --github/);
   assert.match(JSON.stringify(ci.jobs.test), /npm test/);
   const smoke = YAML.parse(await readFile(path('smoke'), 'utf8'));
-  assert.ok(smoke.jobs.ubuntu && smoke.jobs.windows);
-  for (const job of [smoke.jobs.ubuntu, smoke.jobs.windows]) {
+  assert.ok(smoke.jobs.ubuntu && smoke.jobs.macos && smoke.jobs.windows);
+  assert.equal(smoke.jobs.macos['runs-on'], 'macos-latest');
+  for (const job of [smoke.jobs.ubuntu, smoke.jobs.macos, smoke.jobs.windows]) {
     const steps = JSON.stringify(job.steps);
     for (const check of ['adopt --no-workflows', 'init', 'handoff', 'update']) {
       assert.ok(steps.includes(check), check);
