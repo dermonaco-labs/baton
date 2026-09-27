@@ -390,6 +390,9 @@ all on free hosted runners.
   besides Copilot (Spec Kit supports them, and Baton may add them later).
 - Autonomous end-to-end pipelines (`lfg`/`slfg`). A gated `baton next --auto` is a later feature.
 - Publishing to the Spec Kit community extension catalog (it's in the backlog once v0.1 is stable).
+- The post-v0.1 backlog (cloud agent dispatch, path-specific instructions, context budgets, `handoff diff`, parallel
+  implement, relay evals, optional memory/docs/agentic-workflow packs and more) is in `roadmap.md` (amendment A7).
+  None of it is a v0.1 requirement.
 
 ## Open Questions
 

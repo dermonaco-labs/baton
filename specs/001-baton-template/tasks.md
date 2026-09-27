@@ -334,7 +334,8 @@ files and have no unfinished dependencies. Paths are repo-relative.
 **Goal**: A newcomer can adopt, operate, customize and troubleshoot Baton from the docs alone.
 **Independent Test**: quickstart S6.
 
-- [ ] T075 [US6] Write the `README.md` hero:
+- [x] T075 [US6] Write the `README.md` hero. Done in the extended README; the `npx … init` overlay line stays marked
+  "planned" until T058/T063 ship it:
   - the name, the tagline "Spec-driven relays for Copilot agents", and a one-paragraph pitch
   - badges (CI, release, license)
   - a "Use this template" link and the `npx … init` overlay command
