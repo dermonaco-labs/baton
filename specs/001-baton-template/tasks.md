@@ -316,14 +316,14 @@ files and have no unfinished dependencies. Paths are repo-relative.
 **Goal**: Reproducible upstream bumps, and adopter updates that never clobber local edits.
 **Independent Test**: quickstart S5.
 
-- [ ] T069 [P] [US5] `test/fixtures/prev-release/` and `test/integration/update.test.mjs` (AC-US5-2).
-- [ ] T070 [US5] `src/commands/update.mjs`: update managed, unmodified files, skip and report the rest with a
+- [X] T069 [P] [US5] `test/fixtures/prev-release/` and `test/integration/update.test.mjs` (AC-US5-2).
+- [X] T070 [US5] `src/commands/update.mjs`: update managed, unmodified files, skip and report the rest with a
   `.new` copy, and rewrite the manifest. `--to` re-invokes the pinned `npx`.
-- [ ] T071 [US5] `sync --bump speckit=<v>|atv=<sha>` and a human-readable upstream diff summary for the PR body.
-- [ ] T072 [US5] `.github/workflows/upstream-watch.yml` per `contracts/ci.md`. It keeps a single tracking issue and
+- [X] T071 [US5] `sync --bump speckit=<v>|atv=<sha>` and a human-readable upstream diff summary for the PR body.
+- [X] T072 [US5] `.github/workflows/upstream-watch.yml` per `contracts/ci.md`. It keeps a single tracking issue and
   never pushes (AC-US5-3). It also runs `baton sync --check` (FR-072, AS3).
-- [ ] T073 [P] [US5] `.github/ISSUE_TEMPLATE/upstream-bump.yml`.
-- [ ] T074 [US5] Draft an issue for All-The-Vibes/ATV-StarterKit that asks for a release containing f0a86ef (the agent
+- [X] T073 [P] [US5] `.github/ISSUE_TEMPLATE/upstream-bump.yml`.
+- [X] T074 [US5] Draft an issue for All-The-Vibes/ATV-StarterKit that asks for a release containing f0a86ef (the agent
   frontmatter fix), in `specs/001-baton-template/upstream-issue-draft.md`. It also lists the names referenced at the
   pin but absent upstream (A6): `linting-agent` (ce-work), `compound`, `research`, `cora-test-reviewer`,
   `every-style-editor` (ce-compound, best-practices-researcher) and `cso` (atv-security). **The owner files it.**

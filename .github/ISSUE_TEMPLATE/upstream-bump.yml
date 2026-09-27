@@ -1,0 +1,44 @@
+name: Upstream bump
+description: Propose a reviewed update to a pinned Spec Kit or ATV upstream.
+title: "chore: bump upstream "
+labels: ["upstream-bump"]
+body:
+  - type: dropdown
+    id: upstream
+    attributes:
+      label: Upstream
+      options:
+        - Spec Kit (specify-cli)
+        - ATV Starter Kit
+    validations:
+      required: true
+  - type: input
+    id: pin
+    attributes:
+      label: Proposed immutable pin
+      description: Specify the exact PyPI version or ATV commit SHA.
+      placeholder: "specify-cli 1.0.12 or a 40-character ATV commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: changelog
+    attributes:
+      label: Release notes or commit comparison
+      placeholder: "https://github.com/..."
+    validations:
+      required: true
+  - type: textarea
+    id: assessment
+    attributes:
+      label: Changes and compatibility
+      description: Note license, provenance, repair, pack and workflow effects.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Maintainer verification (complete before landing)
+      options:
+        - label: I ran the corresponding `baton sync --bump speckit=<version>` or `baton sync --bump atv=<commit>` locally and reviewed the diff.
+        - label: I ran `baton sync --check`, `baton lock verify` and the repository checks on the new pin.
+        - label: The update is reviewed before release; no automated upstream changes were pushed.

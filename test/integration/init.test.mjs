@@ -228,8 +228,8 @@ test('update resolves the adjacent payload or explains a missing standalone arch
     assert.equal(missing.code, 5, missing.stdout + missing.stderr);
     assert.match(missing.stdout + missing.stderr, /archive|payload/i);
     const available = await cli(root, ['update']);
-    assert.equal(available.code, 2);
-    assert.match(available.stdout + available.stderr, /outside the current MVP/);
+    assert.equal(available.code, 5);
+    assert.match(available.stdout + available.stderr, /manifest/);
   } finally { await cleanup(); }
 });
 

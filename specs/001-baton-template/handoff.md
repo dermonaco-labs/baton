@@ -418,6 +418,10 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: US4 T064-T068 implemented and locally validated; implement baton remains open for later feature stories before review
     by: implementation-session
+  - id: D35
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: US5 T069-T074 implemented and locally checked; full feature implement remains open; networked sync --check blocked by missing specify-cli 1.0.11 in internal PyPI feed
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -466,7 +470,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-27T17:57:43.121Z
+updated_at: 2026-09-27T18:12:40.428Z
 updated_by: implementation-session
 ---
 ## Goal
