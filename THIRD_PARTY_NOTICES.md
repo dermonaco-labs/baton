@@ -1,15 +1,22 @@
 # Third-party notices
 
 Baton redistributes the following upstream materials under their respective
-licenses. Their original license files and file-level provenance remain in the
-vendored snapshot and `baton.lock.json`.
+licenses. File-level provenance is recorded in `baton.lock.json` in the source
+repository. The upstream root LICENSE files are not copied into the installed
+payload; this notice preserves their copyright and permission terms. A template
+derivative retains this file; an overlay installation must retain a copy when
+redistributing the installed files.
 
 ## MIT-licensed materials
 
-- GitHub Spec Kit (`specify-cli`): Copyright GitHub, Inc.
-- ATV Starter Kit: Copyright (c) 2026 All The Vibes.
-- Compound Engineering material included in ATV: Copyright (c) 2025 Every.
-- awesome-copilot material included in ATV: Copyright GitHub, Inc.
+- [GitHub Spec Kit (`specify-cli`)](https://github.com/github/spec-kit/blob/8147943512404afb9d99c6252cb9bf84369fd0b0/LICENSE):
+  Copyright GitHub, Inc.
+- [ATV Starter Kit](https://github.com/All-The-Vibes/ATV-StarterKit/blob/ad996736b879be87c7755df5c5017d5336203bbc/LICENSE):
+  Copyright (c) 2026 All The Vibes.
+- [Compound Engineering material included in ATV](https://github.com/EveryInc/compound-engineering-plugin/blob/a763b392c3c05faa1a383c0d228b7e95200ecc90/LICENSE):
+  Copyright (c) 2025 Every.
+- [awesome-copilot material included in ATV](https://github.com/github/awesome-copilot/blob/6c4d33b9cfca967a28bb2962ef4d55e4a384c88c/LICENSE):
+  Copyright GitHub, Inc.
 - `ajv`: Copyright (c) 2015-2021 Evgeny Poberezkin.
 - `ajv-formats`: Copyright (c) 2020 Evgeny Poberezkin.
 - `fast-deep-equal`: Copyright (c) 2017 Evgeny Poberezkin.
