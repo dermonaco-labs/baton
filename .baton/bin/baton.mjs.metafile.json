@@ -1783,7 +1783,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 22960,
+      "bytes": 22991,
       "imports": [
         {
           "path": "node:fs",
@@ -1792,6 +1792,11 @@
         },
         {
           "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:util",
           "kind": "import-statement",
           "external": true
         },
@@ -3758,7 +3763,7 @@
       "format": "esm"
     },
     "src/lib/maintainer-workflows.mjs": {
-      "bytes": 910,
+      "bytes": 888,
       "imports": [
         {
           "path": "node_modules/yaml/dist/index.js",
@@ -4525,6 +4530,11 @@
           "external": true
         },
         {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
           "path": "node:fs/promises",
           "kind": "import-statement",
           "external": true
@@ -5010,7 +5020,7 @@
           "bytesInOutput": 1657
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 12005
+          "bytesInOutput": 12022
         },
         "node_modules/ajv/dist/compile/codegen/code.js": {
           "bytesInOutput": 2551
@@ -5358,7 +5368,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 378890
+      "bytes": 378907
     }
   }
 }
