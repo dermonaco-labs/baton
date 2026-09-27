@@ -17,6 +17,7 @@ these as success.
 | Model unavailable / `E_MODEL_NOT_ALLOWED` | A suggestion doesn't change the host model. Select an available model and adjust `models.roles`/`models.allowed`, or ask the project owner to do so; preview `models apply --dry-run` before touching managed agents. |
 | Template cleanup cannot push | The workflow cannot push modifications under `.github/workflows/` with `GITHUB_TOKEN`. Run `baton adopt` locally; optionally `baton adopt --prune-workflows` locally after reviewing the dormant maintainer workflows. Do not use a PAT workaround. |
 | `E_LOCK_MISMATCH`, `E_SYNC_DRIFT`, `E_DANGLING_REF` | Don't edit vendored files by hand. `lock verify` compares offline hashes; `sync --check` reproduces pins online and checks closure. Investigate a proposed bump and its diff before syncing. |
+| `E_UPSTREAM_VERIFY` during `sync --check` | The generated upstream content differs from the locked snapshot; do not update the lock just to pass the check. For generated JSON registries and manifests, sync preserves committed bytes when the parsed content matches after retaining installation timestamps, regardless of object-key order. Added, removed or changed file hashes still fail verification. |
 | `E_LICENSE` | The bundle or vendored snapshot lacks a compatible license or a required notice. Review the upstream LICENSE and the bundled-package inventory; do not suppress the check. |
 
 ## Restricted package mirrors

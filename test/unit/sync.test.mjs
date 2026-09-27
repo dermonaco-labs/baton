@@ -35,3 +35,33 @@ test('generated registry preserves verified bytes when only installation time ch
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('generated Spec Kit manifest preserves locked bytes when file keys are reordered', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'baton-manifest-'));
+  try {
+    const path = '.specify/integrations/speckit.manifest.json';
+    const target = join(root, path);
+    await mkdir(join(root, '.specify/integrations'), { recursive: true });
+    const original = Buffer.from(JSON.stringify({
+      integration: 'speckit',
+      installed_at: '2026-09-24T00:00:00Z',
+      files: { 'scripts/b.sh': 'hash-b', 'scripts/a.sh': 'hash-a' },
+    }, null, 2));
+    await writeFile(target, original);
+    const generated = Buffer.from(JSON.stringify({
+      integration: 'speckit',
+      installed_at: '2026-09-27T00:00:00Z',
+      files: { 'scripts/a.sh': 'hash-a', 'scripts/b.sh': 'hash-b' },
+    }, null, 2));
+    assert.deepEqual(generatedStable(generated, path, root), original);
+
+    const changed = Buffer.from(JSON.stringify({
+      integration: 'speckit',
+      installed_at: '2026-09-27T00:00:00Z',
+      files: { 'scripts/a.sh': 'changed-hash', 'scripts/b.sh': 'hash-b' },
+    }, null, 2));
+    assert.notDeepEqual(generatedStable(changed, path, root), original);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

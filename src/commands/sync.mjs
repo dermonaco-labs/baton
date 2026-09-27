@@ -1,5 +1,6 @@
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import YAML from 'yaml';
 import { validatePackClosure } from '../lib/packs.mjs';
 import { assertFrontmatter, repairAtv } from '../lib/repairs.mjs';
@@ -87,7 +88,7 @@ export function generatedStable(bytes, path, root) {
       for (const key of Object.keys(next)) keepDates(prior[key], next[key]);
     };
     keepDates(current, proposed);
-    if (JSON.stringify(current) === JSON.stringify(proposed)) return readFileSync(target);
+    if (isDeepStrictEqual(current, proposed)) return readFileSync(target);
     return Buffer.from(`${JSON.stringify(proposed, null, 2)}\n`);
   } catch {
     return bytes;
