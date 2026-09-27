@@ -34,6 +34,16 @@ export function formatResult(result, flags = {}) {
     const widths = headings.map((name, index) => Math.max(name.length, ...rows.map((row) => row[index].length)));
     return [headings, ...rows].map((row) => row.map((cell, index) => cell.padEnd(widths[index])).join('  ').trimEnd()).join('\n');
   }
+  if (result.command === 'handoff' && result.data && typeof result.data === 'object' && 'instruction' in result.data) {
+    const next = /** @type {{instruction:string,role:string,model:string|null}} */ (result.data);
+    return `${next.instruction} (model role: ${next.role}${next.model ? ` -> ${next.model}` : ' -> inherit'})`;
+  }
+  if (result.command === 'models' && !errors.length && result.data && typeof result.data === 'object' && 'changed' in result.data) {
+    const applied = /** @type {{changed:string[],dry_run?:boolean,message?:string}} */ (result.data);
+    lines.push(applied.message ?? `${applied.dry_run ? 'Would update' : 'Updated'} ${applied.changed.length} managed agent(s)`);
+    lines.push(...applied.changed);
+    return lines.join('\n');
+  }
   if (lines.length === 0) lines.push(`${result.command}: OK`);
   return lines.join('\n');
 }

@@ -62,7 +62,7 @@ artifacts:
     sha256: 164b84bb62c38331ff347f8e873db226c429c578fbc6ca2af675c604c9c057cc
   - path: specs/001-baton-template/research.md
     role: evidence
-    sha256: e9145d4fd79727f737ed04dad250208c3bc61ad18a85ee9d1492eaa43ccc9daf
+    sha256: afdc07d728b0eb6c412c427ef9c976268fe0337f0b376b7c0c96c262a1572bda
   - path: specs/001-baton-template/plan.md
     role: source-of-truth
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
@@ -410,6 +410,14 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: US2 overlay CLI contract refined for explicit uv regeneration; T055-T063 are implemented and locally exercised; other feature tasks remain open
     by: implementation-session
+  - id: D33
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: T064 updated research R7 after verifying current GitHub agent model documentation
+    by: implementation-session
+  - id: D34
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: US4 T064-T068 implemented and locally validated; implement baton remains open for later feature stories before review
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -458,7 +466,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-27T17:38:00.260Z
+updated_at: 2026-09-27T17:57:43.121Z
 updated_by: implementation-session
 ---
 ## Goal
