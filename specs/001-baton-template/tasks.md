@@ -365,10 +365,16 @@ files and have no unfinished dependencies. Paths are repo-relative.
   least privilege; PRs retain the existing `baton.yml` and Windows MVP smoke).
 - [X] T084 [US7] `.github/workflows/smoke.yml` (separate ubuntu, macos and windows jobs without a matrix,
   steps S1–S5, and `sync --check` behind a paths filter; tag/manual only).
-- [ ] T085 [US7] `.github/workflows/release.yml`:
+- [X] T085 [US7] `.github/workflows/release.yml`:
   - preconditions: the tag matches the version, the CHANGELOG has an Upstream section, and the checks pass
   - assets plus `SHA256SUMS`, and attest-build-provenance
   - a `dry_run` dispatch (AC-US7-3)
+  - Evidence: [owner-dispatched run 36343485321](https://github.com/dermonaco-labs/baton/actions/runs/36343485321)
+    succeeded on `main` at `6593a8fe`; hosted `npm run check` and `sync --check` passed. Downloaded artifact
+    `baton-release-dry-run` (ID 10939627078, 799498 bytes) has `baton.mjs`, `baton-template-v0.1.0.tar.gz`,
+    `baton.lock.json`, `SHA256SUMS` and release notes; all three checksum entries match. `gh attestation verify`
+    validated both build subjects and their SHA-256 digests against the workflow_dispatch invocation; publish was
+    skipped. No tag or release was created.
 - [X] T086 [P] [US7] `.github/workflows/copilot-setup-steps.yml` (job `copilot-setup-steps`: node 20, uv,
   `specify-cli` from `uv pip install --require-hashes -r baton/upstream/specify-cli.requirements.txt` when that file
   exists, a documented project-defined dependency step (FR-032, e.g. `npm ci` when `package-lock.json` exists), and
