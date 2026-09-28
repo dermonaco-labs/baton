@@ -353,7 +353,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - the exclusions and why (karpathy-guidelines: no license)
 - [X] T081 [P] [US6] `docs/reference/{commands,skills,agents,cli,schemas,error-codes}.md`: every core item with "when to
   use" and "hands off to", and every optional pack item.
-- [ ] T082 [US6] Docs coverage check in `validate` (`E_UNDOCUMENTED`) plus a test (AC-US6-1). README visual review
+- [ ] T082 [US6] DEFERRED (owner-pending: README visual review). Docs coverage check in `validate` (`E_UNDOCUMENTED`) plus a test (AC-US6-1). README visual review
   (AC-US6-2).
   - [x] Agent: coverage validation and missing-reference test are present; AC-US6-1 exercised locally.
   - [ ] Owner pending: visually inspect the live GitHub README (AC-US6-2).
@@ -386,17 +386,18 @@ files and have no unfinished dependencies. Paths are repo-relative.
 - [X] T099 [US7] Guard every job of `ci.yml`, `smoke.yml`, `upstream-watch.yml` and `release.yml` with
   `if: github.repository == 'dermonaco-labs/baton'`. Add a validate check (Baton repo only) that fails when a maintainer
   workflow job lacks the guard, plus a test.
-- [ ] T088 [US7] Push the branch, confirm green checks within budget (AC-US7-1), and confirm the broken-frontmatter
+- [ ] T088 [US7] DEFERRED (owner-pending: three-OS run). Push the branch, confirm green checks within budget (AC-US7-1), and confirm the broken-frontmatter
   annotation with a throwaway commit (AC-US7-2).
   - [x] Agent: hosted `E_FRONTMATTER_MALFORMED` annotation confirmed on the throwaway commit (run 36451117145).
-  - [ ] Pending: green final PR checks and the single three-OS smoke dispatch.
+  - [x] Agent: Linux `baton` run 36451849802 (12 s) and Windows `smoke` run 36451849770 (1 m 28 s) passed within budget.
+  - [ ] Owner pending: decide whether to dispatch the three-OS smoke once (no dispatch by this agent).
 
 ## Phase 10: Polish & Community
 
 - [X] T089 [P] `CONTRIBUTING.md`: setup, `npm run check` before push, how upstream bumps work, the maintainer release
   checklist, how to add a pack, and the registry-restricted workstation note (ephemeral Linux container plus hosted
   CI; never disable TLS).
-- [ ] T090 [P] `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, attributed), `SECURITY.md` (GitHub private
+- [ ] T090 [P] DEFERRED (owner-pending: private vulnerability reporting). `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, attributed), `SECURITY.md` (GitHub private
   vulnerability reporting, supported versions) and `SUPPORT.md`.
   - [x] Agent: community files are present; code of conduct attributes Contributor Covenant 2.1.
   - [ ] Owner pending: enable GitHub private vulnerability reporting in repository settings.
@@ -405,11 +406,15 @@ files and have no unfinished dependencies. Paths are repo-relative.
   removed by template cleanup).
 - [X] T092 `CHANGELOG.md`: Keep a Changelog, with `[Unreleased]` and a planned `0.1.0` that includes an Upstream
   subsection.
-- [ ] T093 Run quickstart S1–S7 end to end, and record the evidence per acceptance check in the baton. Also run the timed
+- [ ] T093 DEFERRED (owner-pending: timed newcomer and three-OS runs). Run quickstart S1–S7 end to end, and record the evidence per acceptance check in the baton. Also run the timed
   newcomer walkthrough for SC-001 (template → first validated baton in ≤ 10 min, following only the README; AC-US1-4).
+  - [x] Agent: S1–S6 local evidence and S7 PR/annotation evidence recorded per acceptance check in the baton.
   - [ ] Owner pending: timed newcomer walkthrough (AC-US1-4) and visual README check (AC-US6-2).
 - [ ] T094 Write the baton `phase_completed: implement → next_phase: review` (`baton handoff write --phase implement`).
   Do not tag. Tagging `v0.1.0` is a human action after review and land.
+  - [ ] Blocked here: the configured `local-checks-pass` executes `npm run check`, but this workstation's required
+    internal npm feed lacks the pinned `ignore` package. Run the handoff on a registry-enabled machine or devcontainer;
+    hosted CI evidence must not be substituted into this local exit check.
 
 ## Acceptance Registry
 
@@ -481,8 +486,8 @@ The original checks and expected initial results above are unchanged. "Owner pen
 | AC-US5-3 | n/a — owner pending: upstream-watch manual dispatch and single-issue check. |
 | AC-US6-1 | green — S6 missing-reference `E_UNDOCUMENTED` test passed (4/4 validate tests). |
 | AC-US6-2 | n/a — owner pending: live GitHub README visual review. |
-| AC-US7-1 | n/a — pending this PR's checks and three-OS dispatch. |
-| AC-US7-2 | green — throwaway agent frontmatter failed hosted `baton` run 36451117145 with `E_FRONTMATTER_MALFORMED`; the agent is removed in the next commit. |
+| AC-US7-1 | partial — Linux `baton` 36451849802 (12 s) and Windows `smoke` 36451849770 (1 m 28 s) passed within budget; owner pending three-OS run. |
+| AC-US7-2 | green — throwaway agent frontmatter failed hosted `baton` run 36451117145 with `E_FRONTMATTER_MALFORMED`; probe removed before green checks. |
 | AC-US7-3 | green — owner dry run 36343485321 produced checksum-verified assets and attestations; no release. |
 
 ## Dependencies & Execution Order
