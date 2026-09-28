@@ -6,17 +6,17 @@ with explicit per-job grants, concurrency groups, and `timeout-minutes` on every
 job. Only `GITHUB_TOKEN` is used; there are no other secrets. Dependabot updates the `github-actions` and `npm`
 ecosystems weekly.
 
-Owner decision D37: to conserve Actions minutes, new maintainer `ci.yml` and
-`smoke.yml` run on version tags or manual dispatch only, with separate OS jobs
-rather than a matrix. PRs retain the existing Linux `baton.yml` and Windows
-MVP smoke workflow. The full Linux/macOS/Windows checks are a release-candidate
-gate, not required PR jobs.
+Owner decision D37: to conserve Actions minutes, maintainer `smoke.yml` runs
+on version tags or manual dispatch only, with separate OS jobs rather than a
+matrix. D69 adds Linux `ci.yml` to PRs so the pinned F39 ps-flavour install is
+verified on public PyPI. PRs also retain Linux `baton.yml` and Windows MVP
+smoke. The full Linux/macOS/Windows smoke remains a release-candidate gate.
 
 ## Workflows
 
 | File | Trigger | Jobs (runner, timeout) | Permissions | Purpose |
 |---|---|---|---|---|
-| `ci.yml` | `push` tags `v*.*.*`, `workflow_dispatch` | `lint` (ubuntu, 5 min), `test` (ubuntu, 5 min) | `contents: read` | full local-equivalent gate on demand or release (maintainer; dormant in derived repos) |
+| `ci.yml` | `pull_request`, `push` tags `v*.*.*`, `workflow_dispatch` | `lint` (ubuntu, 5 min), `test` (ubuntu, 5 min; includes uv for F39) | `contents: read` | PR test verification and full local-equivalent gate on demand or release (maintainer; dormant in derived repos) |
 | `baton.yml` | `pull_request`, `push` to main | `baton` (ubuntu, 5 min): checkout, setup-node, `node .baton/bin/baton.mjs validate --github`, then `doctor` | `contents: read` | **adopter CI**: the server-side backstop when local hooks are skipped (RK1). Active in both the Baton repo and derived repos, shipped by `init`/`adopt` from `baton/templates/workflows/baton.yml` |
 | `mvp-windows-smoke.yml` | `pull_request` | `smoke` (windows, 10 min): local check + template adoption | `contents: read` | PR backstop (maintainer; dormant in derived repos) |
 | `smoke.yml` | `push` tags `v*.*.*`, `workflow_dispatch` | separate `ubuntu`, `macos`, `windows` jobs (10 min each; no matrix) | `contents: read` | e2e: instantiate the template + overlay the fixtures (maintainer; dormant in derived repos) |
@@ -41,7 +41,7 @@ gate, not required PR jobs.
       model enforcement)
   11. lychee link check, offline mode for relative links only (external links are covered by a weekly job inside
       `upstream-watch`)
-- **`test`**: `npm test` (`node --test`, unit + integration, fixture repos).
+- **`test`**: set up uv, then `npm test` (`node --test`, unit + integration, fixture repos). Hosted runs must execute the pinned Spec Kit F39 integration test rather than skip it.
 - `npm run check` runs the same steps locally (Principle VIII). CONTRIBUTING requires it before every push.
 
 ## `smoke.yml` steps (per OS)
@@ -80,8 +80,9 @@ gate, not required PR jobs.
 | smoke macos | ≤ 6 min (tag/manual dispatch only) |
 | smoke windows | ≤ 6 min (2× billing multiplier; free on public repos) |
 
-The PR runs only `baton` and Windows MVP smoke (≤ 10 min wall-clock,
-≤ 25 billable-equivalent minutes). Full CI and smoke run on demand or tags.
+The PR runs `baton`, Linux `ci.yml` checks and Windows MVP smoke (target ≤ 10 min
+wall-clock and ≤ 25 billable-equivalent minutes under SC-007). Full smoke runs on
+demand or tags.
 
 ## `upstream-watch.yml`
 

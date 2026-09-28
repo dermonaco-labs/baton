@@ -39,6 +39,17 @@ async function put(root, path, content) {
   await writeFile(join(root, path), content);
 }
 
+const scriptReference = /\.specify\/scripts\/[\w-]+\/[\w.-]+\.(?:sh|ps1|py)\b/g;
+
+async function assertScriptReferencesExist(root, manifest) {
+  for (const { path } of manifest.files) {
+    const content = await readFile(join(root, path), 'utf8');
+    for (const [reference] of content.matchAll(scriptReference)) {
+      assert.ok(await exists(root, reference), `${path} references missing script ${reference}`);
+    }
+  }
+}
+
 async function installedRepo(args = []) {
   const repo = await tempRepo('repos/empty');
   const result = await runCli(repo.root, ['init', ...args]);
@@ -136,17 +147,33 @@ for (const script of ['ps', 'py']) {
       assert.ok(bash.length > 0);
       for (const file of bash) await rm(join(root, file.path));
       manifest.files = manifest.files.filter(file => !bash.includes(file));
-      const selected = `.specify/scripts/${script === 'ps' ? 'powershell' : 'python'}/common.${script === 'ps' ? 'ps1' : 'py'}`;
+      const directory = script === 'ps' ? 'powershell' : 'python';
+      const extension = script === 'ps' ? 'ps1' : 'py';
+      const selected = `.specify/scripts/${directory}/common.${extension}`;
       const contents = `${script} script retained\n`;
       await put(root, selected, contents);
       manifest.files.push({ path: selected, sha256: digest(contents), pack: 'core', owner: 'speckit', managed: true });
-      const skill = '.github/skills/speckit-plan/SKILL.md';
-      const flavoured = (await readFile(join(root, skill), 'utf8')).replaceAll('.specify/scripts/bash/', `.specify/scripts/${script === 'ps' ? 'powershell' : 'python'}/`);
-      assert.notEqual(flavoured, await readFile(join(root, skill), 'utf8'));
-      await writeFile(join(root, skill), flavoured);
-      manifest.files.find(file => file.path === skill).sha256 = digest(flavoured);
+      const references = new Set();
+      for (const file of manifest.files) {
+        const original = await readFile(join(root, file.path), 'utf8');
+        const flavoured = original.replace(/\.specify\/scripts\/bash\/([\w.-]+)\.sh\b/g,
+          (_, name) => `.specify/scripts/${directory}/${name}.${extension}`);
+        if (flavoured === original) continue;
+        await writeFile(join(root, file.path), flavoured);
+        file.sha256 = digest(flavoured);
+        for (const [reference] of flavoured.matchAll(scriptReference)) references.add(reference);
+      }
+      assert.ok(references.size > 0, 'fixture must include flavour-specific script calls');
+      for (const reference of references) {
+        if (reference !== selected) {
+          const bytes = `${script} script retained: ${reference}\n`;
+          await put(root, reference, bytes);
+          manifest.files.push({ path: reference, sha256: digest(bytes), pack: 'core', owner: 'speckit', managed: true });
+        }
+      }
       manifest.script = script;
       await writeFile(join(root, manifestPath), JSON.stringify(manifest, null, 2) + '\n');
+      await assertScriptReferencesExist(root, manifest);
 
       const result = await runCli(root, ['update', '--json']);
       assert.equal(result.code, 0, result.stdout + result.stderr);
@@ -154,12 +181,19 @@ for (const script of ['ps', 'py']) {
       assert.equal(JSON.parse(await readFile(join(root, integrationPath), 'utf8')).integration_settings.copilot.script, script);
       assert.ok(await exists(root, selected), `${script} script must remain installed`);
       assert.equal(await exists(root, bash[0].path), false, 'update must not switch back to bash scripts');
-      assert.doesNotMatch(await readFile(join(root, skill), 'utf8'), /\.specify\/scripts\/bash\//, 'skills must keep calling the installed flavour');
       assert.equal(await exists(root, `.baton/conflicts/${selected}.new`), false);
       const updated = JSON.parse(await readFile(join(root, manifestPath), 'utf8'));
       assert.equal(updated.script, script);
       assert.equal(updated.files.find(file => file.path === selected)?.sha256,
         digest(await readFile(join(root, selected))), 'manifest must track the selected script');
+      await assertScriptReferencesExist(root, updated);
+
+      const fallback = await runCli(root, ['update', '--json'], { UV_OFFLINE: '1', UV_NO_CACHE: '1' });
+      assert.equal(fallback.code, 0, fallback.stdout + fallback.stderr);
+      assert.match(fallback.stdout, /W_SCRIPT_UNREFRESHED/, 'unavailable upstream must preserve the installed flavour');
+      const preserved = JSON.parse(await readFile(join(root, manifestPath), 'utf8'));
+      assert.equal(preserved.script, script);
+      await assertScriptReferencesExist(root, preserved);
     } finally { await cleanup(); }
   });
 }

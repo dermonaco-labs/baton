@@ -3,45 +3,22 @@ baton: 1
 lane: feature
 feature: 001-baton-template
 phase_completed: review
-next_phase: implement
-next_owner: speckit-implement
-status: needs-human
+next_phase: land
+next_owner: baton-land
+status: ready
 model_role: implementation
 suggested_model: gpt-6-sol
-summary: "Re-review of the fix pass (763d81f..658ba43): 21 prior findings verified, 6 reopened (F02 F03 F04 F05 F09 F27), F21-F23 deferrals accepted for v0.1; 23 new findings (1 P1, 8 P2, 14 P3). 5 open P0/P1 block land, so the relay returns to implement."
+summary: Fix-pass review verified relay regressions, evidence-bound waivers, and canonical findings. No P0/P1 finding remains open; F39 awaits hosted public-PyPI verification and AC-US7-1's three-OS portion remains owner-pending.
 read_first:
   - path: specs/001-baton-template/review.json
-    why: re-review verdicts, reopened and new findings with x-fix and x-evidence
-    sha256: c65c18c953c76cde798630717cc4fcdf1aafec44f2b18dcc7fb3b5f4df00b7f0
-  - path: src/commands/handoff.mjs
-    why: "F02 F03 F04 F05 F31 F32 F35 F36: specify receive/write, review routing, findings_path, write preflight"
-    sha256: 1223181ea660498c8310e7c21f2fe9210a59574daf7fa19e494b82071378bbd1
-  - path: src/lib/checks.mjs
-    why: "F09 F33 F34 F37: diff base, diff-nonempty scope, acceptance-evidence policy"
-    sha256: b702059c8b8f5f5dfea360ced93b3dc20732eeaad8b37ac5d650924554b507ad
-  - path: .specify/extensions/baton/commands/handoff.md
-    why: "F03 F05: hook-shaped converge and first specify writes"
-    sha256: 687dc583093b8e15986382a6640b5614e71f92aa6629ba8a45ba38194d34be30
-  - path: .github/skills/baton-review/SKILL.md
-    why: "F27: shipped skill copy is stale against baton/skills"
-    sha256: fe6767040b1e2196aeb3587f4235acb2ba39cbf1420a21fa680a5329f8217d8b
-  - path: src/commands/init.mjs
-    why: "F39: ps/py flavour drops bash scripts used by locked skills"
-    sha256: 71d853e942e7f28a396dc26933ecd947a06128c223bfab81e7082a4a690851d0
-  - path: test/integration/relay.test.mjs
-    why: F02 masked quick test; add hook-shaped regression tests
-    sha256: be8192a2aa9229dfb4c22016259c9da9e980e1572b6f8a24b3da09da48146900
-  - path: specs/001-baton-template/contracts/phase-contracts.md
-    why: review routing, diff-nonempty and acceptance-evidence contract text
-    sha256: b682cc069db155eb0ecbfcc41b46cfda255e25a686e822aa5287bdee1cbdf275
+    why: Canonical reviewed findings and residual dispositions
   - path: specs/001-baton-template/tasks.md
-    why: finding-to-task mapping and evidence claims (F37 F45)
-    sha256: b9ffef1a35dd7d1953fff6237b232ff21fba5edd056b065dfa4eabf36d8100de
+    why: Four recovered red results and 17 check-specific waivers
+  - path: specs/001-baton-template/contracts/ci.md
+    why: Hosted F39 verification and CI budget
 do_not_read:
-  - path: specs/001-baton-template/research.md
-    why: pinned upstream facts are already reflected in the plan
   - path: specs/001-baton-template/roadmap.md
-    why: later release scope, not this fix pass
+    why: Later release scope
 artifacts:
   - path: .specify/memory/constitution.md
     role: source-of-truth
@@ -63,7 +40,7 @@ artifacts:
     sha256: 00ad8887f102c3724a90cba41728fdc4e36517932699b17bdb4a1c4bd328db7c
   - path: specs/001-baton-template/contracts/phase-contracts.md
     role: source-of-truth
-    sha256: b682cc069db155eb0ecbfcc41b46cfda255e25a686e822aa5287bdee1cbdf275
+    sha256: 09ca56b0f602cfef2be87fe2d02b0e39e56ad4cbf49d1dce092da99a9cdf951b
   - path: specs/001-baton-template/contracts/conflict-rules.md
     role: source-of-truth
     sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a
@@ -75,13 +52,13 @@ artifacts:
     sha256: 7b1ca7afc1f05024b283f6387c63af3fb9addd01ea4f8130019b5a2a0235db23
   - path: specs/001-baton-template/contracts/ci.md
     role: source-of-truth
-    sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
+    sha256: d53d49253b384bf7cd5e0de044f38faba7b57ca4bd72948e5c22fc190d91fb03
   - path: specs/001-baton-template/quickstart.md
     role: derived
     sha256: 286706951ad3f80db0ebf81084d49690b6f01b92a906b0517c811d68656aff04
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: b9ffef1a35dd7d1953fff6237b232ff21fba5edd056b065dfa4eabf36d8100de
+    sha256: 66b8a25a7ddcadd95046fc3e91b036d35dd42f7bffca78280f023ea5627b18a1
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
@@ -90,7 +67,7 @@ artifacts:
     sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017
   - path: specs/001-baton-template/review.json
     role: evidence
-    sha256: c65c18c953c76cde798630717cc4fcdf1aafec44f2b18dcc7fb3b5f4df00b7f0
+    sha256: 0d8b357064f4482360a0b807e543fd07ab87e2d417194bedbbca645c24ffd6fe
 entry_checked:
   - id: tasks-exists
     ok: true
@@ -545,13 +522,174 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Clarify check-specific human waiver procedure in phase contract
     by: implementation-session
-open_questions:
-  - id: Q1
-    question: "The original red runs were not retained for 21 fail-registered acceptance checks (AC-US1-1/2/3/5, AC-US2-1/2/3/4/5, AC-US3-1/4/5/6/7/8/9, AC-US4-1/2/3, AC-US5-1, AC-US7-1). Does the repository owner authorize check-specific waivers acknowledging partial evidence, or keep the implement exit unmet?"
-    blocking: true
-    options:
-      - Authorize check-specific waivers for the 21 partial checks
-      - Keep the 21 checks unmet until red-first evidence is recovered
+  - id: D68
+    decision: Recover red-first evidence first and waive only check-specific results that cannot be recovered locally
+    rationale: control-plane delegation, 2026-09-28
+    by: human:repository-owner
+  - id: D69
+    decision: Run Linux CI tests on this PR so the F39 pinned ps-flavour install is verified in hosted CI; do not dispatch the three-OS smoke
+    rationale: control-plane delegation, 2026-09-28; supersedes D37 for this F39 verification
+    by: human:repository-owner
+  - id: D70
+    tag: acceptance-waiver
+    x-check: AC-US1-2
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US1-2, not the S1 green check
+    rationale: "Control-plane delegation, 2026-09-28; exact S1 script creates a forbidden OS temp directory in this replay environment. Green: prior local S1 archive/adopt/doctor/validate passed; no run ID was recorded."
+    by: human:repository-owner
+  - id: D71
+    tag: acceptance-waiver
+    x-check: AC-US1-3
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US1-3
+    rationale: "Control-plane delegation, 2026-09-28; the pre-MVP workflow assertion already passes. Green: adopt test 'cleanup workflow tells the adopter to run baton adopt if push fails'."
+    by: human:repository-owner
+  - id: D72
+    tag: acceptance-waiver
+    x-check: AC-US1-5
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US1-5
+    rationale: "Control-plane delegation, 2026-09-28; old adopt omits config and stops before the workflow/constitution assertions; next usable source passes. Green: adopt test 'adopt replaces the constitution, README and manifest without touching workflows'."
+    by: human:repository-owner
+  - id: D73
+    tag: acceptance-waiver
+    x-check: AC-US2-2
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US2-2
+    rationale: "Control-plane delegation, 2026-09-28; pre-US2 init is unsupported, so the exact idempotent rerun is never reached. Green: init test 'init installs the locked core file set and is byte-for-byte idempotent'."
+    by: human:repository-owner
+  - id: D74
+    tag: acceptance-waiver
+    x-check: AC-US2-3
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US2-3
+    rationale: "Control-plane delegation, 2026-09-28; pre-US2 init is unsupported, so the pack assertion is never reached. Green: init test 'init installs core plus learning and merges existing Copilot hooks by command'."
+    by: human:repository-owner
+  - id: D75
+    tag: acceptance-waiver
+    x-check: AC-US2-4
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US2-4
+    rationale: "Control-plane delegation, 2026-09-28; closure already passes at the earliest usable validator source. Green: pack tests 'each shipped pack has a closed dependency set' and 'a docs-review pack missing its dispatched persona fails closed'."
+    by: human:repository-owner
+  - id: D76
+    tag: acceptance-waiver
+    x-check: AC-US3-4
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US3-4
+    rationale: "Control-plane delegation, 2026-09-28; preregistration rejection already passes at earliest complete relay. Green: relay test 'missing preregistration and landing PR are explicit errors'."
+    by: human:repository-owner
+  - id: D77
+    tag: acceptance-waiver
+    x-check: AC-US3-5
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US3-5
+    rationale: "Control-plane delegation, 2026-09-28; missing-PR rejection already passes at earliest complete relay. Green: relay test 'missing preregistration and landing PR are explicit errors'."
+    by: human:repository-owner
+  - id: D78
+    tag: acceptance-waiver
+    x-check: AC-US3-6
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US3-6
+    rationale: "Control-plane delegation, 2026-09-28; old CLI fails on unrelated artifact checksum mismatch, not missing validation behavior. Green: prior local baton validate --path specs/001-baton-template/handoff.md passed; no run ID was recorded."
+    by: human:repository-owner
+  - id: D79
+    tag: acceptance-waiver
+    x-check: AC-US3-7
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US3-7
+    rationale: "Control-plane delegation, 2026-09-28; replay fails on a pending-gate assertion before the checkbox/rewording assertions. Green: relay test 'stale artifact then refresh and checkbox-insensitive progress'."
+    by: human:repository-owner
+  - id: D80
+    tag: acceptance-waiver
+    x-check: AC-US3-8
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US3-8
+    rationale: "Control-plane delegation, 2026-09-28; role-format assertion already passes at earliest complete relay. Green: validate-handoff test 'role-only A5 examples reject malformed approvers and actors with their stable codes'."
+    by: human:repository-owner
+  - id: D81
+    tag: acceptance-waiver
+    x-check: AC-US3-9
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US3-9
+    rationale: "Control-plane delegation, 2026-09-28; compound assertion already passes at earliest complete relay. Green: relay test 'compound requires solution evidence or a reasoned skip and reports every unmet member'."
+    by: human:repository-owner
+  - id: D82
+    tag: acceptance-waiver
+    x-check: AC-US4-1
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US4-1
+    rationale: "Control-plane delegation, 2026-09-28; pre-US4 source lacks models.mjs and the exact test cannot import. Green: models test 'role resolution uses phase override and inherits when no role model is set'."
+    by: human:repository-owner
+  - id: D83
+    tag: acceptance-waiver
+    x-check: AC-US4-2
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US4-2
+    rationale: "Control-plane delegation, 2026-09-28; pre-US4 source lacks models.mjs and the exact test cannot import. Green: models test 'allow list enforcement is off, warning or error for configured and agent models'."
+    by: human:repository-owner
+  - id: D84
+    tag: acceptance-waiver
+    x-check: AC-US4-3
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing red-first evidence for AC-US4-3
+    rationale: "Control-plane delegation, 2026-09-28; pre-US4 source lacks models.mjs and the exact test cannot import. Green: models test 'models apply dry-run, managed-only, byte-preserving and idempotent'."
+    by: human:repository-owner
+  - id: D85
+    tag: acceptance-waiver
+    x-check: AC-US5-1
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive missing local red-first evidence for AC-US5-1, not the sync outcome
+    rationale: "Control-plane delegation, 2026-09-28; approved mirror lacks pinned specify-cli==1.0.11. Green: hosted sync --check run 36343485321 at its recorded source SHA."
+    by: human:repository-owner
+  - id: D86
+    tag: acceptance-waiver
+    x-check: AC-US7-1
+    x-evidence-sha256: 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553
+    decision: Waive historical red-first evidence only for AC-US7-1; three-OS dispatch remains owner-pending
+    rationale: "Control-plane delegation, 2026-09-28; hosted timing and dispatch have no local historical-red selector. Green: Linux 36451849802 and Windows 36451849770 passed within budget; full three-OS smoke remains owner-pending and is not claimed complete."
+    by: human:repository-owner
+  - id: D87
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record owner-delegated check-specific waivers and recovered red evidence
+    by: implementation-session
+  - id: D88
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Keep CI maintainer guard exact while adding Linux PR verification
+    by: implementation-session
+  - id: D89
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Update PR CI contract test for F39
+    by: implementation-session
+  - id: D90
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Apply review fixes, bind waivers to approved evidence, and retain spec and plan freshness
+    by: implementation-session
+  - id: D91
+    decision: Record the fix-pass implementation base for scoped review
+    rationale: The incoming review baton predates automatic diff-base recording; this fix pass started at d61a7237, the verified branch merge-base with origin/main.
+    tag: diff-base
+    x-base-commit: d61a7237bd7215615050aa594b6777a3197de2db
+    by: baton
+  - id: D92
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Retain scoped review base and update reviewed code and skill hashes
+    by: implementation-session
+  - id: D93
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Align model guard test with human-directed next instruction
+    by: implementation-session
+  - id: D94
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record headless review findings and scoped diff-base contract
+    by: implementation-session
+  - id: D95
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 17016a08a9beb16fd7456b4b1f4d28825f63f6e5
+    by: baton
+open_questions: []
 assumptions:
   - id: AS1
     text: The spec assumptions A1-A9 hold (re-checked at analyze, unchanged)
@@ -566,17 +704,14 @@ assumptions:
     text: Custom-agent `model:` frontmatter is supported where it matters (verified by T064, stop-and-ask otherwise)
     revisit_at: implement
 risks:
-  - id: RK1
-    text: "Spec Kit extension hooks are prompt-driven (the agent must obey EXECUTE_COMMAND); an agent can skip them. Mitigation: the adopter baton.yml workflow validates every PR, and baton-land's pre-push check catches missing or stale batons"
-    severity: high
-  - id: RK2
-    text: "ATV is pinned to an unreleased commit. Mitigation: provenance in the lock, upstream-watch, T074 drafts an upstream release request for the owner"
+  - id: R-F39
+    text: F39 requires a hosted public-PyPI CI run that passes without skipping.
     severity: medium
-  - id: RK3
-    text: "Spec Kit release churn (5 releases in 10 days). Mitigation: sync --check plus the weekly watch; bump deliberately"
+  - id: R-3OS
+    text: AC-US7-1 full three-OS acceptance remains owner-pending; no smoke dispatch in this fix pass.
     severity: medium
-  - id: RK4
-    text: "Windows adopters without bash cannot run the sh scripts. Mitigation: init --script ps|py (requires uv) and a doctor warning"
+  - id: R-DEFER
+    text: F47, F51 and F59 are deferred coverage or refactors; F60 and F61 are pre-existing out-of-scope contract gaps.
     severity: low
 gate:
   required: false
@@ -619,11 +754,23 @@ history:
     at: 2026-09-28T18:59:27.923Z
     by: baton-review
     commit: 658ba43
-updated_at: 2026-09-28T19:44:24.467Z
-updated_by: implementation-session
+  - phase: implement
+    at: 2026-09-28T20:11:26.681Z
+    by: speckit-implement
+    commit: 17016a0
+  - phase: implement
+    at: 2026-09-28T20:13:44.759Z
+    by: speckit-implement
+    commit: 17016a0
+  - phase: review
+    at: 2026-09-28T20:35:51.905Z
+    by: baton-review
+    commit: 17016a0
+updated_at: 2026-09-28T20:35:51.905Z
+updated_by: baton-review
 review:
   findings_path: specs/001-baton-template/review.json
-  blocking_findings: 5
+  blocking_findings: 0
 ---
 ## Goal
 

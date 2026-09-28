@@ -217,6 +217,7 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
     }
     case 'acceptance-evidence': {
       const tasks = await text('tasks.md') ?? '';
+      const evidenceHash = await hashFile(withinRoot(root, `${dir}/tasks.md`));
       const lines = tasks.split(/\r?\n/);
       /** @param {string} line */
       const isRow = (line) => line.trim() !== '' && /(?<!\\)\|/.test(line);
@@ -251,10 +252,11 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
       const notApplicablePattern = new RegExp(`^n\\/a\\b${separator}(.+)$`, 'i');
       const partialPattern = new RegExp(`^partial\\b${separator}(.+)$`, 'i');
       const vocabulary = await gateVocabulary(root);
-      const humanDecisions = /** @type {Array<{decision?:string,rationale?:string,by?:string,tag?:string,'x-check'?:string}>} */ (data.decisions ?? [])
+      const humanDecisions =       /** @type {Array<{decision?:string,rationale?:string,by?:string,tag?:string,'x-check'?:string,'x-evidence-sha256'?:string}>} */ (data.decisions ?? [])
         .filter((item) => typeof item.by === 'string' && item.by.startsWith('human:') && actorRole(item.by, vocabulary));
       /** @param {string} id */
-      const waived = (id) => humanDecisions.some((item) => item.tag === 'acceptance-waiver' && item['x-check'] === id);
+      const waived = (id) => humanDecisions.some((item) => item.tag === 'acceptance-waiver' &&
+        item['x-check'] === id && item['x-evidence-sha256'] === evidenceHash);
       /** @type {string[]} */
       const missing = [];
       for (const item of /** @type {Array<{story:string,id:string,expect_initial?:string}>} */ (accepted)) {

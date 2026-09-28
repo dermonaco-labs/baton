@@ -335,8 +335,10 @@ test('F39 live init --script ps installs every script its Spec Kit skills refere
   const { root, cleanup } = await tempRepo('repos/empty');
   try {
     const result = await cli(root, ['init', '--script', 'ps']);
-    if (result.code !== 0 && /\buv\b|specify-cli|wheel/i.test(result.stdout + result.stderr)) {
-      t.skip('uv with the pinned specify-cli wheel is unavailable here');
+    const unavailableOnMirror = result.result.errors?.some(({ code, message }) =>
+      code === 'E_PREREQUISITE' && /no version of specify-cli==1\.0\.11\b/i.test(message));
+    if (result.code !== 0 && unavailableOnMirror && process.env.GITHUB_ACTIONS !== 'true') {
+      t.skip('approved local registry lacks the pinned specify-cli==1.0.11 wheel');
       return;
     }
     assert.equal(result.code, 0, result.stdout + result.stderr);

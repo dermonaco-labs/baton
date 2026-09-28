@@ -13,6 +13,14 @@ structure/contracts and `tasks.md` (for a quick baton, its recorded
 intent), not the PR description alone. Load only `read_first`, honor
 `do_not_read`, and inspect the changed files.
 
+Run `baton handoff show --json` and select the latest `diff-base` decision
+whose `x-base-commit` exists as a commit in this clone (`git cat-file -e
+<sha>^{commit}`). Pass that exact commit as `base:<sha>` to
+`/ce-review mode:headless`, and verify its reported base and reviewed file
+set match the baton review scope. Stop if no usable recorded base exists
+or ce-review cannot honor it; never silently review against `origin/HEAD`
+or an unrelated merge-base.
+
 Enumerate installed `.github/agents/*.agent.md` persona files; pass
 **only that installed list** to `/ce-review mode:headless`, with an
 explicit instruction that its Stage 3 selection and Stage 4 dispatch

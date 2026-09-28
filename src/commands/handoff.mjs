@@ -133,7 +133,13 @@ async function entryErrors(root, path, data, contract, phase, writing = false) {
     errors.push({ code: 'E_REVIEW_BLOCKING', file: path, message: 'Land requires the canonical review findings file' });
   }
   if (!errors.length) {
-    const checks = await evaluateChecks(phaseForLane(contract, data.lane).entry.filter((check) => !writing || check.id !== 'fresh'),
+    const entry = phaseForLane(contract, data.lane).entry.flatMap((check) => {
+      if (!writing || check.id !== 'fresh') return [check];
+      if (phase !== 'implement' || !check.names) return [];
+      const names = check.names.filter((name) => name !== 'tasks');
+      return names.length ? [{ ...check, names }] : [];
+    });
+    const checks = await evaluateChecks(entry,
       (check) => evaluateBuiltIn(root, path, data, check));
     for (const check of checks.filter((item) => !item.met)) {
       const code = check.id === 'gate-approved' ? 'E_GATE_PENDING'
@@ -339,7 +345,10 @@ export async function run(root, args) {
     data.decisions.push({
       id: nextId(data.decisions, 'D'), decision: answer.choice, rationale: question.question,
       by: `human:${options.by.replaceAll(' ', '-')}`,
-      ...(check && /^Waive\b/i.test(answer.choice) ? { tag: 'acceptance-waiver', 'x-check': check } : {}),
+      ...(check && /^Waive\b/i.test(answer.choice) ? {
+        tag: 'acceptance-waiver', 'x-check': check,
+        'x-evidence-sha256': await hashFile(withinRoot(root, `${dirname(path)}/tasks.md`)),
+      } : {}),
     });
     data.status = /** @type {Array<{blocking:boolean}>} */ (data.open_questions).some((item) => item.blocking) ? 'needs-human' : 'ready';
     await updateMetadata(root, data, `human:${options.by.replaceAll(' ', '-')}`, data.next_phase);
@@ -634,8 +643,8 @@ export async function run(root, args) {
     return { data: { command, role: routing.role, model: routing.model,
       status: data.status, gate: { required: data.gate?.required ?? false, approved_by: data.gate?.approved_by ?? null },
       blocking_questions: questions, blocked,
-      instruction: questions.length ? `Run baton handoff answer ${questions[0]} <choice> --by <role> before ${command}`
-        : gatePending ? `Run baton handoff approve --by <role> before ${command}`
+      instruction: questions.length ? `Show baton handoff answer ${questions[0]} <choice> --by <role> to an authorized human and wait before ${command}`
+        : gatePending ? `Show baton handoff approve --by <role> to an authorized human and wait before ${command}`
           : routing.model ? `Switch model to ${routing.model}, then run ${command}` : `Run ${command} (inherit current model)` } };
   }
   throw new BatonError('E_USAGE', `Unsupported handoff action: ${action}`, 2);

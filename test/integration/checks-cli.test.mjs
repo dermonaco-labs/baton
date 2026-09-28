@@ -258,11 +258,14 @@ test('F37 partial evidence needs a tagged human acceptance-waiver; an untagged "
     assert.equal(untagged.code, 1, untagged.output);
     assert.match(untagged.output, /AC-US1-1 \(partial; needs a tagged human waiver\)/);
 
-    // No CLI command records a tagged human waiver yet, so the fixture stands in for the human-recorded decision.
     await editBaton(root, (data) => {
-      data.decisions.push({ id: 'D90', decision: 'Waive AC-US1-1 Windows run', rationale: 'Windows run tracked separately',
-        tag: 'acceptance-waiver', 'x-check': 'AC-US1-1', by: 'human:maintainer' });
+      data.status = 'needs-human';
+      data.open_questions = [{ id: 'Q2', blocking: true, question: 'Waive this specific partial result?',
+        'x-check': 'AC-US1-1', options: ['Waive this partial result', 'Keep unmet'] }];
     });
+    const tagged = await baton(root, ['handoff', 'answer', 'Q2', 'Waive this partial result',
+      '--feature', feature, '--by', 'maintainer']);
+    assert.equal(tagged.code, 0, tagged.output);
     const waived = await writeImplement(root);
     assert.equal(waived.code, 0, waived.output);
     assert.equal((await readBaton(root)).next_phase, 'review');

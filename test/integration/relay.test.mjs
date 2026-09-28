@@ -697,6 +697,27 @@ test('F09 first review still sees implementation after origin advances', async (
       }
     });
 
+test('approved spec and plan changes cannot be rehashed by implement write', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const batonPath = join(root, handoff);
+    assert.equal((await runCli(root, ['handoff', 'receive', '--phase', 'implement', '--feature', feature])).code, 0);
+    const original = await readFile(batonPath, 'utf8');
+    for (const name of ['spec', 'plan']) {
+      const path = join(root, 'specs', feature, `${name}.md`);
+      const before = await readFile(path, 'utf8');
+      await writeFile(path, `${before}\nNew unapproved ${name} decision.\n`);
+      await writeInput(root, { summary: 'Do not erase pre-code approval scope.' });
+      const result = await runCli(root, ['handoff', 'write', '--phase', 'implement', '--feature', feature,
+        '--from-json', 'handoff-input.json', '--json']);
+      assert.equal(result.code, 1, result.stdout + result.stderr);
+      assert.ok(JSON.parse(result.stdout).errors.some(({ code }) => code === 'E_STALE_ARTIFACT'), name);
+      assert.equal(await readFile(batonPath, 'utf8'), original);
+      await writeFile(path, before);
+    }
+  } finally { await cleanup(); }
+});
+
     test('F35 refresh revokes an approved gate when derived tasks change', async () => {
       const { root, cleanup } = await repo();
       try {
@@ -750,7 +771,13 @@ test('F35 an agent cannot relabel an existing source artifact', async () => {
         await editBaton(root, (data) => { data.gate.approved_by = null; data.gate.approved_at = null; });
         const result = await runHandoff(root, ['next', '--feature', feature]);
         assert.equal(result.data.blocked, true);
-        assert.match(result.data.instruction, /handoff approve/);
+        assert.match(result.data.instruction, /Show baton handoff approve.*to an authorized human and wait/);
+        await editBaton(root, (data) => {
+          data.status = 'needs-human';
+          data.open_questions = [{ id: 'Q1', question: 'Who approves?', blocking: true, options: ['Wait'] }];
+        });
+        const question = await runHandoff(root, ['next', '--feature', feature]);
+        assert.match(question.data.instruction, /Show baton handoff answer Q1.*to an authorized human and wait/);
       } finally {
         await cleanup();
       }
@@ -802,6 +829,7 @@ test('F35 an agent cannot relabel an existing source artifact', async () => {
             'x-check': 'AC-US1-1', options: ['Waive missing red evidence', 'Keep unmet'],
           }];
         });
+
         const answered = await runCli(root, ['handoff', 'answer', 'Q1', 'Waive missing red evidence',
           '--feature', feature, '--by', 'maintainer', '--json']);
         assert.equal(answered.code, 0, answered.stdout + answered.stderr);
@@ -816,6 +844,27 @@ test('F35 an agent cannot relabel an existing source artifact', async () => {
         await cleanup();
       }
     });
+test('changing partial evidence invalidates the earlier human waiver', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const tasks = join(root, 'specs', feature, 'tasks.md');
+    const evidence = '\n## Evidence\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | partial — original red result missing; green assertion passes |\n';
+    await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('- [ ] T001', '- [x] T001') + evidence);
+    await editBaton(root, (data) => {
+      data.status = 'needs-human';
+      data.open_questions = [{ id: 'Q1', blocking: true, question: 'Waive this recorded result?',
+        'x-check': 'AC-US1-1', options: ['Waive missing red evidence', 'Keep unmet'] }];
+    });
+    assert.equal((await runCli(root, ['handoff', 'answer', 'Q1', 'Waive missing red evidence',
+      '--feature', feature, '--by', 'repository owner', '--json'])).code, 0);
+    await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('green assertion passes', 'different green assertion passes'));
+    await writeInput(root, { summary: 'Changed partial result needs renewed approval.' });
+    const result = await runCli(root, ['handoff', 'write', '--phase', 'implement', '--feature', feature,
+      '--from-json', 'handoff-input.json', '--json']);
+    assert.equal(result.code, 1, result.stdout + result.stderr);
+    assert.match(result.stdout, /acceptance-evidence.*partial.*tagged human waiver/s);
+  } finally { await cleanup(); }
+});
 test('F03/F20 converge receive can be followed by a converged implement write', async () => {
   const { root, cleanup } = await quickRepo();
   try {

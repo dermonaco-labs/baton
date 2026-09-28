@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { evaluateBuiltIn } from '../../src/lib/checks.mjs';
+import { hashFile } from '../../src/lib/hash.mjs';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -366,11 +367,12 @@ test('F37 n/a is accepted only for checks registered n/a; partial needs a tagged
       const decisions = [{ id: 'D1', decision: 'Waive AC-US1-1', rationale: 'Owner pending', tag: 'acceptance-waiver', 'x-check': 'AC-US1-1', by: 'implementation-session' }];
       assert.equal((await evaluate({ acceptance_checks: [check('n/a')], decisions })).met, false);
     });
-    const tagged = (check, by = 'human:maintainer') => [{ id: 'D1', decision: `Waive ${check} partial result`,
-      rationale: 'Three-OS dispatch is tracked separately', tag: 'acceptance-waiver', 'x-check': check, by }];
+    const tagged = async (id, by = 'human:maintainer') => [{ id: 'D1', decision: `Waive ${id} partial result`,
+      rationale: 'Three-OS dispatch is tracked separately', tag: 'acceptance-waiver', 'x-check': id,
+      'x-evidence-sha256': await hashFile(tasks), by }];
     await t.test('a tagged human waiver for another check does not count', async () => {
       await writeFile(tasks, registry('n/a') + evidence(partial));
-      assert.equal((await evaluate({ acceptance_checks: [check('n/a')], decisions: tagged('AC-US1-2') })).met, false);
+      assert.equal((await evaluate({ acceptance_checks: [check('n/a')], decisions: await tagged('AC-US1-2') })).met, false);
     });
     await t.test('an untagged human "Waive" answer does not count', async () => {
       await writeFile(tasks, registry('n/a') + evidence(partial));
@@ -382,11 +384,11 @@ test('F37 n/a is accepted only for checks registered n/a; partial needs a tagged
     });
     await t.test('a tagged human waiver accepts partial evidence', async () => {
       await writeFile(tasks, registry('n/a') + evidence(partial));
-      assert.equal((await evaluate({ acceptance_checks: [check('n/a')], decisions: tagged('AC-US1-1') })).met, true);
+      assert.equal((await evaluate({ acceptance_checks: [check('n/a')], decisions: await tagged('AC-US1-1') })).met, true);
     });
     await t.test('a tagged waiver from an unconfigured human role does not count', async () => {
       await writeFile(tasks, registry('n/a') + evidence(partial));
-      assert.equal((await evaluate({ acceptance_checks: [check('n/a')], decisions: tagged('AC-US1-1', 'human:intern') })).met, false);
+      assert.equal((await evaluate({ acceptance_checks: [check('n/a')], decisions: await tagged('AC-US1-1', 'human:intern') })).met, false);
     });
     await t.test('no waiver turns n/a into evidence for a check registered fail', async () => {
       await writeFile(tasks, registry('fail') + evidence(notRetained));

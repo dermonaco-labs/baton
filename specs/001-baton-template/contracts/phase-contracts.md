@@ -53,6 +53,8 @@ The sole exception is an unchecked task whose row explicitly contains both
 That marker is reserved for the task whose deliverable is writing this very implement → review handoff;
 the write satisfies that task, so requiring its checkbox beforehand would deadlock the exit check.
 An unchecked task without both the marker and the command still blocks the handoff.
+At implement write, tasks.md progress is exempt from receive-time freshness, but the approved spec.md and
+plan.md hashes remain mandatory; changes to either source require refresh and renewed pre-code approval.
 `acceptance-evidence` requires a matching row in the Acceptance Registry and a separate
 `Check | Result and evidence` table row for each registered check. The result must contain
 substantive red and green outcomes (in that order), or an explained `n/a`; headers and
@@ -151,7 +153,9 @@ findings file is `.baton/quick/<slug>.review.json`. `{quick_dir}` in check paths
   `fail` check. `partial — <evidence>` stays unmet unless a configured `human:<role>` recorded a decision tagged
   `acceptance-waiver` with `x-check: <id>`. To record this through the CLI, a blocking question must carry
   `x-check: <registered id>` and offer a `Waive …` choice; `handoff answer Qn "Waive …" --by <role>` records
-  the tagged decision. A different choice remains untagged. Never answer for a human without their approval.
+  the tagged decision and the SHA-256 of the tasks evidence at approval time. A different choice remains untagged;
+  edited tasks or evidence invalidate the old waiver and require a new human decision. Never answer for a human
+  without their approval.
 - `local-checks-pass`: runs each `config.checks[*].run` and records the exit codes as evidence.
 - `findings-json-valid`: validates `review.json` against Baton's own `.baton/schemas/findings.schema.json`. `baton-review`
   runs `ce-review mode:headless` and normalizes its structured findings into that file (data-model §8), so no
