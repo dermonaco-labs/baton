@@ -3,10 +3,16 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/20260924-baton-v0-1-review/"
+    "run_artifact": ".context/compound-engineering/ce-review/20260928-baton-v0-1-rereview/",
+    "x-prior-run": {
+      "base": "8aeed8a2b18f2bc73a4ce7e5335a3a9486825a6d",
+      "head": "0673c664db3692b384abd751e030480461eb4bce",
+      "run_artifact": ".context/compound-engineering/ce-review/20260924-baton-v0-1-review/"
+    },
+    "x-scope": "Re-review of the fix pass 763d81f..658ba43 (PR 22) plus verification of F01-F30. safe_auto fixes were not applied: review-role session."
   },
-  "base": "8aeed8a2b18f2bc73a4ce7e5335a3a9486825a6d",
-  "head": "0673c664db3692b384abd751e030480461eb4bce",
+  "base": "763d81f9fe240730e8a68e0b9927dc5130c6dd7e",
+  "head": "658ba43e5aadb92c00cb9e020fe9d8a7ea1d2bdf",
   "personas": [
     "correctness-reviewer",
     "testing-reviewer",
@@ -30,70 +36,100 @@
       "disposition": "fixed",
       "reason": "Write now enforces pending gates, blocking questions and phase entry checks; relay regressions cover bypass attempts.",
       "x-fix": "In write, before closing phase P, reject with E_GATE_PENDING/E_BLOCKING_OPEN (exit 3) when data.gate.required && !data.gate.approved_by or status is needs-human, and re-run the phase entry checks (or require receive to have populated entry_checked). Only then reset gate at line 319. Add a relay test.",
-      "x-evidence": "Line 289 only compares next_phase; line 319 replaces gate with approved_by:null. receive (175-176) enforces the gate but write does not, so skipping receive erases an unapproved scope or pre-code gate (C6)."
+      "x-evidence": "Line 289 only compares next_phase; line 319 replaces gate with approved_by:null. receive (175-176) enforces the gate but write does not, so skipping receive erases an unapproved scope or pre-code gate (C6).",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "Write runs entryErrors before merging --from-json; pending gate and needs-human exit 3 with the baton unchanged (correctness, adversarial, testing)."
+      }
     },
     {
       "id": "F02",
       "severity": "P1",
       "title": "Review write trusts agent-asserted blocking_findings and defaults next to land instead of routing to implement/work",
       "file": "src/commands/handoff.mjs",
-      "line": 310,
-      "persona": "correctness-reviewer",
-      "confidence": 0.95,
+      "line": 480,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.9,
       "task": "T037",
-      "disposition": "fixed",
-      "reason": "Validated findings supply the blocking count; review routes back to implement/work and land recomputes blockers.",
-      "x-fix": "In write --phase review, derive review.blocking_findings from review.json (open P0/P1) and ignore the supplied count; when >0 set next to implement (feature) or work (quick) automatically per phase-contracts; make no-blocking-findings (checks.mjs:207) recompute from the file.",
+      "disposition": "open",
+      "reason": "Reopened: the feature lane now derives the count and routes to implement, but the quick lane cannot. Quick review exit findings-fixed-or-dismissed fails for any open finding, so write returns E_EXIT_UNMET before saving and the baton stays at next_phase review; receive/write work then fail E_TRANSITION. relay.test.mjs:502 only asserts result.data.next_phase and guards persistence with if (!result.errors?.length), so it passes while the write fails. See also F31 (findings_path not pinned).",
+      "x-fix": "When review routes to work/implement because blocking_findings > 0, evaluate only findings-json-valid (and quick-scope-held); apply findings-fixed-or-dismissed / findings-mapped only when next is land. Make the quick relay test assert no errors and next_phase work on disk.",
       "x-evidence": "Reproduced: review.json with an open P0 and asserted blocking_findings:0 wrote next=land and receive --phase land exited 0. An honest count without --next still produced next=land status=ready. phase-contracts.md says Review -> implement is chosen automatically.",
       "x-agreement": [
         "adversarial-reviewer",
-        "agent-native-reviewer"
-      ]
+        "agent-native-reviewer",
+        "testing-reviewer"
+      ],
+      "x-prior-reason": "Validated findings supply the blocking count; review routes back to implement/work and land recomputes blockers.",
+      "x-rereview": {
+        "verdict": "reopened"
+      }
     },
     {
       "id": "F03",
       "severity": "P1",
       "title": "Converge re-entry cannot be written: after_converge handoff always fails with E_TRANSITION",
       "file": "src/commands/handoff.mjs",
-      "line": 289,
+      "line": 403,
       "persona": "correctness-reviewer",
-      "confidence": 0.9,
+      "confidence": 0.75,
       "task": "T037",
-      "disposition": "fixed",
-      "reason": "Converge receive and implement write can re-enter the review transition.",
-      "x-fix": "Mirror the receive exception (line 172): accept write --phase implement --mode converge when phase_completed is implement, keep next_phase review, and append history. Add a relay test for the write side.",
+      "disposition": "open",
+      "reason": "Reopened: the CLI accepts converge re-entry only with --mode converge, but the mandatory after_converge hook prompt (.specify/extensions/baton/commands/handoff.md and baton/speckit-extension/commands/handoff.md) says only that after_converge maps to implement and never passes --mode converge. The hook-shaped `handoff write --phase implement` with next_phase review still throws E_TRANSITION, as in the original evidence.",
+      "x-fix": "Either accept an implement write when phase_completed is implement and next_phase is review (converge re-entry) without the flag, or add `--mode converge` for after_converge to both handoff.md hook prompts; add a hook-shaped relay test.",
       "x-evidence": "Reproduced: after receive --mode converge, write --phase implement (with or without --mode converge) exits 1 \"Expected review, not implement\"; the handoff hook maps after_converge to implement. relay.test.mjs:241 only covers receive.",
       "x-agreement": [
         "agent-native-reviewer"
-      ]
+      ],
+      "x-prior-reason": "Converge receive and implement write can re-enter the review transition.",
+      "x-rereview": {
+        "verdict": "reopened"
+      }
     },
     {
       "id": "F04",
       "severity": "P1",
       "title": "before_specify receive has no first-phase path: crashes with E_INTERNAL (exit 10) or rejects an escalated quick baton",
       "file": "src/commands/handoff.mjs",
-      "line": 69,
-      "persona": "agent-native-reviewer",
+      "line": 159,
+      "persona": "correctness-reviewer",
       "confidence": 0.9,
       "task": "T037",
-      "disposition": "fixed",
-      "reason": "First specify receive handles absent feature directories and escalated quick context.",
-      "x-fix": "In receive --phase specify, return a first-phase result (exit 0, read_first from --from-brainstorm/--from-quick or empty) when no feature baton exists; guard readdir(specs) and a missing handoff.md with E_MISSING_ARTIFACT instead of ENOENT; accept an escalated quick baton (next_phase specify) despite lane feature (line 171).",
-      "x-evidence": "Reproduced: fresh repo -> E_INTERNAL scandir specs exit 10; feature dir without baton -> E_INTERNAL ENOENT handoff.md exit 10. receive.md promises a CLI first-phase result."
+      "disposition": "open",
+      "reason": "Reopened: the first-phase short-circuit (handoff.mjs:159) fires only when specs/ has no feature directory. Reproduced in a clone of 658ba43: with specs/001-baton-template present, `handoff receive --phase specify` exits 1 E_TRANSITION \"Expected review, received specify\"; with two features and a non-feature branch it exits 2 E_USAGE. The mandatory before_specify hook therefore blocks every feature after the first. F04 tests cover only an empty specs/ and a single dir without a baton.",
+      "x-fix": "For receive --phase specify without --feature/--quick, return the first-phase result unless a located baton actually has next_phase specify; add relay tests with one finished feature and with two features on a non-feature branch.",
+      "x-evidence": "Reproduced: fresh repo -> E_INTERNAL scandir specs exit 10; feature dir without baton -> E_INTERNAL ENOENT handoff.md exit 10. receive.md promises a CLI first-phase result.",
+      "x-prior-reason": "First specify receive handles absent feature directories and escalated quick context.",
+      "x-rereview": {
+        "verdict": "reopened"
+      },
+      "x-agreement": [
+        "correctness-reviewer",
+        "testing-reviewer",
+        "orchestrator"
+      ]
     },
     {
       "id": "F05",
       "severity": "P1",
       "title": "after_specify write has no plain-feature path, and handoff new --feature hardcodes next_phase clarify so specify --next plan is impossible",
       "file": "src/commands/handoff.mjs",
-      "line": 111,
-      "persona": "agent-native-reviewer",
+      "line": 375,
+      "persona": "correctness-reviewer",
       "confidence": 0.85,
       "task": "T037",
-      "disposition": "fixed",
-      "reason": "Plain first specify write creates the baton and can skip clarify when the contract permits.",
-      "x-fix": "Let write --phase specify --feature F create the first baton when none exists (like --from-brainstorm without a source), or have handoff new set phase_completed none/next_phase specify; keep the NEEDS CLARIFICATION guard for --next plan.",
-      "x-evidence": "Reproduced: write --phase specify --feature 001-alpha without a baton -> E_INTERNAL ENOENT; after handoff new --feature -> E_TRANSITION \"Expected clarify, not specify\". README/quickstart allow skipping clarify."
+      "disposition": "open",
+      "reason": "Reopened: the plain first specify write works only with --feature. The after_specify hook prompt runs `handoff write --phase <phase> --from-json <file>` without --feature. Reproduced on branch 002-next-thing with specs/002-next-thing/spec.md: exit 10 E_INTERNAL ENOENT on specs/002-next-thing/handoff.md, because handoff.mjs:375 rethrows unless options.feature is a string although locate() already resolved the path.",
+      "x-fix": "Derive the feature from the resolved path (basename(dirname(path))) when --feature is absent; allow the same for --from-quick/--from-brainstorm or make the hook pass --feature; add a hook-shaped test.",
+      "x-evidence": "Reproduced: write --phase specify --feature 001-alpha without a baton -> E_INTERNAL ENOENT; after handoff new --feature -> E_TRANSITION \"Expected clarify, not specify\". README/quickstart allow skipping clarify.",
+      "x-prior-reason": "Plain first specify write creates the baton and can skip clarify when the contract permits.",
+      "x-rereview": {
+        "verdict": "reopened"
+      },
+      "x-agreement": [
+        "correctness-reviewer",
+        "orchestrator"
+      ]
     },
     {
       "id": "F06",
@@ -107,7 +143,11 @@
       "disposition": "fixed",
       "reason": "Feature resolution uses branch or feature metadata before the single-directory fallback.",
       "x-fix": "Implement contracts/cli.md:32: infer the feature from the NNN-slug branch name or .specify/feature.json before falling back to the single-dir rule; include the candidate list in the E_USAGE message.",
-      "x-evidence": "Reproduced: two specs dirs -> handoff next exits 2 E_USAGE. receive.md/handoff.md hook prompts never pass --feature."
+      "x-evidence": "Reproduced: two specs dirs -> handoff next exits 2 E_USAGE. receive.md/handoff.md hook prompts never pass --feature.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "locate() infers the feature from an NNN-slug branch, then .specify/feature.json; E_USAGE lists candidates. Branch test is weak (see F51)."
+      }
     },
     {
       "id": "F07",
@@ -121,7 +161,11 @@
       "disposition": "fixed",
       "reason": "Update remerges adopter Spec Kit and Copilot hooks before comparing managed bytes.",
       "x-fix": "Apply the same mergeExtensions/mergeHooks step as init.mjs:238-253 to the staged desired bytes before comparing and writing; add an update test with an adopter hook in extensions.yml.",
-      "x-evidence": "update stages init into an empty dir (line 81), so desired is the unmerged payload; when the merged file is unmodified since install (line 112 passes) it is replaced at line 127."
+      "x-evidence": "update stages init into an empty dir (line 81), so desired is the unmerged payload; when the merged file is unmodified since install (line 112 passes) it is replaced at line 127.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "update merges adopter extensions.yml and copilot-hooks.json; two integration tests with real init + adopter content."
+      }
     },
     {
       "id": "F08",
@@ -135,24 +179,34 @@
       "disposition": "fixed",
       "reason": "Shipped troubleshooting now describes approved registry mirrors without organisation-specific hostnames.",
       "x-fix": "Replace the two feed URLs with a generic \"your organisation's approved npm/PyPI mirror\" and show the env vars (npm_config_registry, UV_DEFAULT_INDEX) with placeholder values.",
-      "x-evidence": "constitution.md:93 forbids adopter-specific hostnames in Baton; lines 27-28 contain them and the denylist does not catch hostnames."
+      "x-evidence": "constitution.md:93 forbids adopter-specific hostnames in Baton; lines 27-28 contain them and the denylist does not catch hostnames.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "docs/08-troubleshooting.md is registry-neutral; the hostname only survives in a test literal (see F44)."
+      }
     },
     {
       "id": "F09",
       "severity": "P2",
       "title": "diff-nonempty is empty once implement increments are merged to main and trivially true from baton bookkeeping",
       "file": "src/lib/checks.mjs",
-      "line": 178,
-      "persona": "adversarial-reviewer",
-      "confidence": 0.9,
+      "line": 80,
+      "persona": "correctness-reviewer",
+      "confidence": 0.75,
       "task": "T035",
-      "disposition": "fixed",
-      "reason": "Diff checks use the recorded review/base commit across merged increments and exclude baton bookkeeping.",
-      "x-fix": "Evaluate against a base recorded in the baton (e.g. the commit of the phase that started implement) or accept an explicit base, and exclude specs/*/handoff.md, .baton/ and untracked scratch files from the count.",
+      "disposition": "open",
+      "reason": "Reopened: nothing in the CLI, hooks or skills records the diff-base decision, and review.json does not exist at a first review receive. This re-review received only because the previous review.json supplied base 8aeed8a. A first review after merged increments still falls back to merge-base HEAD origin/HEAD and reports 0 changed files; the durable-base tests inject the decision by hand. Related trivially-true and supersede gaps: F33, F34.",
+      "x-fix": "Have the CLI append a deterministic diff-base decision (x-base-commit = HEAD) when it writes analyze -> implement or at the first implement receive; add a relay test that merges implement commits into origin/HEAD before review receive.",
       "x-evidence": "This review hit it: receive --phase review failed \"0 changed files\" on origin/main because PRs #1-#20 were merged; changedFiles (line 61) diffs merge-base HEAD origin/HEAD and adds untracked files. Override recorded as a baton decision.",
       "x-agreement": [
-        "orchestrator"
-      ]
+        "correctness-reviewer",
+        "testing-reviewer",
+        "adversarial-reviewer"
+      ],
+      "x-prior-reason": "Diff checks use the recorded review/base commit across merged increments and exclude baton bookkeeping.",
+      "x-rereview": {
+        "verdict": "reopened"
+      }
     },
     {
       "id": "F10",
@@ -169,7 +223,11 @@
       "x-evidence": "Any line with the id followed by the words red, green or n/a passes, including the registry row header text.",
       "x-agreement": [
         "testing-reviewer"
-      ]
+      ],
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "Registry and evidence tables are parsed; headers, placeholders and regex ids no longer satisfy the check. Policy gap on n/a recorded as F37."
+      }
     },
     {
       "id": "F11",
@@ -186,7 +244,11 @@
       "x-evidence": "Object.assign(data, supplied) at line 293 overwrites arrays; handoff answer (213-227) is the only intended path to resolve a question.",
       "x-agreement": [
         "agent-native-reviewer"
-      ]
+      ],
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "decisions/open_questions are append-only; new human:* decisions rejected. New-id forgery branch is untested (F51)."
+      }
     },
     {
       "id": "F12",
@@ -203,7 +265,11 @@
       "x-evidence": "A quick baton listed in its own artifacts becomes permanently stale after refresh; the gate survives changed artifacts.",
       "x-agreement": [
         "correctness-reviewer"
-      ]
+      ],
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "refresh skips the self path, initialises decisions and revokes approval on a source-of-truth edit. Derived-artifact gap recorded as F35."
+      }
     },
     {
       "id": "F13",
@@ -220,7 +286,11 @@
       "x-evidence": "checkWeakenedContracts uses phaseForLane(defaults, lane).exit only.",
       "x-agreement": [
         "maintainability-reviewer"
-      ]
+      ],
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "checkWeakenedContracts compares entry, exit and human_gate; phases.test covers removed entry checks and disabled gates."
+      }
     },
     {
       "id": "F14",
@@ -234,7 +304,11 @@
       "disposition": "fixed",
       "reason": "Update leaves protected adopter constitution content untouched.",
       "x-fix": "Skip protected paths (init.mjs:15 protectedPath) in update exactly as init does, instead of comparing them to the pristine template.",
-      "x-evidence": "init plans the constitution from the template (init.mjs:217-219); an adopter edit makes the digest differ from the manifest, so line 112 writes a conflict every update."
+      "x-evidence": "init plans the constitution from the template (init.mjs:217-219); an adopter edit makes the digest differ from the manifest, so line 112 writes a conflict every update.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "protectedPath skips the constitution in update; test asserts exit 0 and no .new file."
+      }
     },
     {
       "id": "F15",
@@ -248,7 +322,11 @@
       "disposition": "fixed",
       "reason": "Manifest tracks script flavour so ps/py installs remain on the same flavour after update.",
       "x-fix": "Record the script flavour in the manifest at init and pass --script <flavour> when staging in update.",
-      "x-evidence": "Only --packs and --from are forwarded, so ps/py script installs are replaced by sh scripts or reported as conflicts."
+      "x-evidence": "Only --packs and --from are forwarded, so ps/py script installs are replaced by sh scripts or reported as conflicts.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "installedScript keeps the flavour and update restages with it. Tests only exercise the uv fallback (F51); init regression recorded as F39."
+      }
     },
     {
       "id": "F16",
@@ -262,7 +340,11 @@
       "disposition": "fixed",
       "reason": "Validation emits W_NO_BATON and W_ASSUMPTION_DUE with focused coverage.",
       "x-fix": "Emit W_NO_BATON for a specs dir with spec.md and no handoff.md (suggest handoff init --infer) and W_ASSUMPTION_DUE when an assumption revisit_at equals next_phase; add validate tests.",
-      "x-evidence": "handoff-contract.md:115-118 defines both; no source file references either code."
+      "x-evidence": "handoff-contract.md:115-118 defines both; no source file references either code.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "validate emits W_NO_BATON and W_ASSUMPTION_DUE with tests."
+      }
     },
     {
       "id": "F17",
@@ -279,7 +361,11 @@
       "x-evidence": "findings-json-valid is meant to report invalid findings files, but a parse error escapes evaluateBuiltIn.",
       "x-agreement": [
         "correctness-reviewer"
-      ]
+      ],
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "findings-* and no-blocking-findings wrap JSON.parse and return unmet."
+      }
     },
     {
       "id": "F18",
@@ -293,7 +379,11 @@
       "disposition": "fixed",
       "reason": "Failed local checks are reported with a check failure rather than a missing artifact.",
       "x-fix": "Map local-checks-pass to a dedicated code (e.g. E_CHECK_FAILED) or E_EXIT_UNMET with the per-check exit codes, and test a failing configured check.",
-      "x-evidence": "The receive code mapping falls through to E_MISSING_ARTIFACT for every unlisted check id, which misleads the land phase."
+      "x-evidence": "The receive code mapping falls through to E_MISSING_ARTIFACT for every unlisted check id, which misleads the land phase.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "local-checks-pass maps to E_CHECK_FAILED; the code is undocumented (F42)."
+      }
     },
     {
       "id": "F19",
@@ -307,7 +397,11 @@
       "disposition": "fixed",
       "reason": "Lock verification covers match, tamper and malformed JSON with E_LOCK_MISMATCH.",
       "x-fix": "Add tests for a matching lock, a tampered file (E_LOCK_MISMATCH) and malformed JSON mapped to a documented code.",
-      "x-evidence": "No test references lock verify or E_LOCK_MISMATCH although CI relies on it."
+      "x-evidence": "No test references lock verify or E_LOCK_MISMATCH although CI relies on it.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "lock verify maps malformed JSON and bad entries to E_LOCK_MISMATCH; new lock.test.mjs."
+      }
     },
     {
       "id": "F20",
@@ -321,7 +415,11 @@
       "disposition": "fixed",
       "reason": "Relay tests cover converge write, pending-gate write and answer/approve guards.",
       "x-fix": "Add relay cases: converge receive+write, write while a gate is pending (expect exit 3), answer with an unknown id or choice, approve twice.",
-      "x-evidence": "Only the converge receive is asserted; F01/F03 would have been caught."
+      "x-evidence": "Only the converge receive is asserted; F01/F03 would have been caught.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "Converge write, pending-gate write, answer guards and double approval are covered. The quick F02 test is masked (see F02)."
+      }
     },
     {
       "id": "F21",
@@ -336,7 +434,11 @@
       "reason": "Deferred: archive verification needs an agreed checksum-distribution and failure contract; no archive install is part of this fix-pass delivery.",
       "x-deferred": true,
       "x-fix": "Verify the archive digest against a SHA256SUMS file next to it (or a --sha256 flag) before extracting.",
-      "x-evidence": "contracts/ci.md:110 publishes SHA256SUMS; src has no reference to it."
+      "x-evidence": "contracts/ci.md:110 publishes SHA256SUMS; src has no reference to it.",
+      "x-rereview": {
+        "verdict": "deferral-accepted",
+        "evidence": "Re-review verdict: deferral acceptable for v0.1, non-blocking. --from takes an operator-chosen local archive and Baton downloads nothing; release.yml publishes SHA256SUMS plus provenance and its notes say to verify them. Before the first public release add a verify-before---from line to docs/07-updating.md."
+      }
     },
     {
       "id": "F22",
@@ -351,7 +453,11 @@
       "reason": "Deferred: enforcing a trust boundary on configured project checks changes the reviewer execution contract; requires explicit policy decision.",
       "x-deferred": true,
       "x-fix": "Document the trust boundary and print the commands before running them in receive land; optionally require config.yml checks to match the default branch.",
-      "x-evidence": "A PR that edits config.yml checks gets command execution when a reviewer runs the land receive."
+      "x-evidence": "A PR that edits config.yml checks gets command execution when a reviewer runs the land receive.",
+      "x-rereview": {
+        "verdict": "deferral-accepted",
+        "evidence": "Re-review verdict: deferral acceptable for v0.1, non-blocking, documentation expected. No workflow runs handoff receive/write, so no pull_request-to-secrets path exists; exposure equals running npm test on a checked-out branch. The F01 fix widened it (land write preflight now also runs the checks), so document the trust boundary in README and SECURITY.md."
+      }
     },
     {
       "id": "F23",
@@ -366,7 +472,11 @@
       "reason": "Deferred: scanning code spans requires an agreed placeholder allowlist and false-positive policy before changing privacy validation.",
       "x-deferred": true,
       "x-fix": "Scan code spans too but allow documented placeholder domains (example.com/.invalid) instead of skipping all code.",
-      "x-evidence": "Lines 31-33 remove fenced and inline code before matching."
+      "x-evidence": "Lines 31-33 remove fenced and inline code before matching.",
+      "x-rereview": {
+        "verdict": "deferral-accepted",
+        "evidence": "Re-review verdict: deferral acceptable for v0.1, non-blocking. Frontmatter is scanned in full and configured terms scan the whole text; only Markdown code spans in bodies are skipped. It is an accidental-leak false negative, not a trust-boundary break. Document the limitation."
+      }
     },
     {
       "id": "F24",
@@ -380,7 +490,11 @@
       "disposition": "fixed",
       "reason": "Windows smoke is inventoried as a dormant maintainer workflow and removed by adopter pruning.",
       "x-fix": "Add mvp-windows-smoke.yml to maintainerWorkflows and the template-cleanup dormant list.",
-      "x-evidence": "The workflow is guarded (line 10) but not listed."
+      "x-evidence": "The workflow is guarded (line 10) but not listed.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "mvp-windows-smoke.yml is in maintainerWorkflows and keep_dormant; --prune-workflows removes it."
+      }
     },
     {
       "id": "F25",
@@ -394,7 +508,11 @@
       "disposition": "fixed",
       "reason": "The adopter command rows form one contiguous Markdown table.",
       "x-fix": "Move the implement -> review paragraph below the table (after the uninstall row).",
-      "x-evidence": "Lines 42-44 interrupt the table."
+      "x-evidence": "Lines 42-44 interrupt the table.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "The adopter command table in cli.md is contiguous; docs test guards it."
+      }
     },
     {
       "id": "F26",
@@ -408,21 +526,34 @@
       "disposition": "fixed",
       "reason": "Next output includes status, gate and blocking question identifiers.",
       "x-fix": "Include status, gate.required/approved_by and blocking question ids in the next payload.",
-      "x-evidence": "The payload has command, role, model and instruction only."
+      "x-evidence": "The payload has command, role, model and instruction only.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "handoff next returns status, gate and blocking_questions. Instruction text when gated recorded as F41."
+      }
     },
     {
       "id": "F27",
-      "severity": "P3",
+      "severity": "P2",
       "title": "baton-review skill does not specify the --from-json payload shape or --next implement for blocking findings",
-      "file": "baton/skills/baton-review/SKILL.md",
-      "line": 45,
+      "file": ".github/skills/baton-review/SKILL.md",
+      "line": 43,
       "persona": "agent-native-reviewer",
-      "confidence": 0.65,
+      "confidence": 0.9,
       "task": "T042",
-      "disposition": "fixed",
-      "reason": "Review skill documents the findings_path payload and CLI-derived blocking count and routing.",
-      "x-fix": "Document the review object ({findings_path, blocking_findings}) and require --next implement/work while F02 is open.",
-      "x-evidence": "Agents must read handoff.mjs to learn the allowed keys."
+      "disposition": "open",
+      "reason": "Reopened and raised to P2: only the sync source baton/skills/baton-review/SKILL.md changed. The shipped copy .github/skills/baton-review/SKILL.md (packs/core.yml maps it; init installs it) is still the pre-fix blob and tells agents to record the exact blocking count themselves. The two files hash differently; release.yml runs sync --check, which will flag the drift. The F27 tests read only baton/skills.",
+      "x-fix": "Regenerate the shipped copy through baton sync (or byte-copy and confirm with a hosted sync --check) and add a check that every from: baton skill in packs/*.yml equals its baton/skills source.",
+      "x-evidence": "Agents must read handoff.mjs to learn the allowed keys.",
+      "x-prior-reason": "Review skill documents the findings_path payload and CLI-derived blocking count and routing.",
+      "x-rereview": {
+        "verdict": "reopened"
+      },
+      "x-agreement": [
+        "agent-native-reviewer",
+        "project-standards-reviewer",
+        "security-reviewer"
+      ]
     },
     {
       "id": "F28",
@@ -436,7 +567,11 @@
       "disposition": "fixed",
       "reason": "Interrupted fixture repositories are ignored by a scoped .gitignore rule; relay test covers it.",
       "x-fix": "Create temp repos under os.tmpdir() or add the prefixes to .gitignore.",
-      "x-evidence": "An interrupted test run leaves untracked dirs that also feed diff-nonempty/changedFiles."
+      "x-evidence": "An interrupted test run leaves untracked dirs that also feed diff-nonempty/changedFiles.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "Relay temp repos are gitignored. Other new in-tree temp prefixes recorded as F52."
+      }
     },
     {
       "id": "F29",
@@ -450,7 +585,11 @@
       "disposition": "fixed",
       "reason": "Defaults and template are deep-equality tested, including quick-lane gate values.",
       "x-fix": "Add a unit test asserting deep equality between phaseDefaults and the parsed template (or generate one from the other at build).",
-      "x-evidence": "Only exit checks are compared today."
+      "x-evidence": "Only exit checks are compared today.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "phases-defaults.test deep-equals phaseDefaults with baton/templates/phases.yml."
+      }
     },
     {
       "id": "F30",
@@ -464,7 +603,374 @@
       "disposition": "fixed",
       "reason": "Malformed --from-json yields E_USAGE with the input file.",
       "x-fix": "Catch JSON.parse and throw E_USAGE exit 2 naming the file.",
-      "x-evidence": "JSON.parse is unguarded."
+      "x-evidence": "JSON.parse is unguarded.",
+      "x-rereview": {
+        "verdict": "verified",
+        "evidence": "Malformed --from-json is E_USAGE exit 2 naming the file. Out-of-repo or missing file recorded as F53."
+      }
+    },
+    {
+      "id": "F31",
+      "severity": "P1",
+      "title": "review.findings_path is agent-supplied and never pinned, so an open P0 in the canonical review.json still reaches land",
+      "file": "src/commands/handoff.mjs",
+      "line": 443,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.85,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "In write --phase review and in no-blocking-findings require findings_path to equal {feature_dir}/review.json (feature) or .baton/quick/<slug>.review.json (quick); reject review in --from-json outside the review phase; add a relay test with a clean decoy file.",
+      "x-evidence": "Reproduced in a clone of 658ba43: canonical review.json with an open P0, clean copy at specs/001-baton-template/clean.json, write --phase review with {review:{findings_path:\"specs/001-baton-template/clean.json\"}} -> next_phase land; receive --phase land passed no-blocking-findings (only local-checks-pass failed in the clone).",
+      "x-agreement": [
+        "adversarial-reviewer",
+        "orchestrator"
+      ]
+    },
+    {
+      "id": "F32",
+      "severity": "P2",
+      "title": "Write preflight re-runs fresh:* entry checks after the phase edited its own artifacts, so implement and review writes fail E_STALE_ARTIFACT until an unprompted refresh",
+      "file": "src/commands/handoff.mjs",
+      "line": 406,
+      "persona": "correctness-reviewer",
+      "confidence": 0.85,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "At write time re-check only gate, needs-human and blocking-question conditions (freshness belongs to receive), or have write rely on entry_checked recorded at receive; add relay tests that edit tasks.md between receive and write.",
+      "x-evidence": "Reproduced: appending a task line to tasks.md then write --phase review -> exit 1 E_STALE_ARTIFACT \"fresh:tasks unmet: stale: tasks\". Implement adds evidence rows to tasks.md, so every canonical implement write hits it; refresh is the documented workaround (error-codes.md) and the fix pass itself used it (D56-D61).",
+      "x-severity-note": "correctness rated P1; kept at P2 because error-codes.md documents handoff refresh as the remediation."
+    },
+    {
+      "id": "F33",
+      "severity": "P2",
+      "title": "diff-nonempty is trivially true again: specs/<feature>/ planning artifacts, analysis.md and review.json count, and a prior review base keeps it true forever",
+      "file": "src/lib/checks.mjs",
+      "line": 227,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.7,
+      "task": "T035",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Exclude specs/<feature>/ Baton and Spec Kit artifacts (or count only paths outside specs/<feature>/) for the review entry, and record the reviewed head as the next base so a re-review of an unchanged tree fails; update phase-contracts.md.",
+      "x-evidence": "Reproduced by adversarial: only a tasks.md checkbox and analysis.md changed -> met:true \"2 changed files\". review.json base stays at the first review base, so re-review passes with no new code."
+    },
+    {
+      "id": "F34",
+      "severity": "P2",
+      "title": "A wrong or unreachable diff-base cannot be corrected: reviewBase uses the first matching decision and an unknown SHA reports \"No merge-base available\"",
+      "file": "src/lib/checks.mjs",
+      "line": 80,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.75,
+      "task": "T035",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Use the last diff-base decision (findLast) and verify the base with git cat-file -e <sha>^{commit}, reporting \"Recorded diff base <sha> is not in this clone\" and falling back to merge-base.",
+      "x-evidence": "Reproduced: D1 diff-base deadbeefcafe plus D2 diff-base HEAD with a new file -> met:false \"No merge-base available\"; decisions are append-only after F11."
+    },
+    {
+      "id": "F35",
+      "severity": "P2",
+      "title": "refresh keeps the pre-code approval after a derived tasks.md edit or an artifact role change",
+      "file": "src/commands/handoff.mjs",
+      "line": 546,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.7,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "When a gate is required, clear approval on refresh if any hashed artifact or read_first entry changed (treat a missing prior sha256 as a change), and do not let --from-json change the role of an existing artifact.",
+      "x-evidence": "Reproduced: analyze baton approved; tasks.md T001 reworded -> receive implement E_STALE_ARTIFACT; refresh succeeds with approval kept; receive implement then passes."
+    },
+    {
+      "id": "F36",
+      "severity": "P2",
+      "title": "Implement write can drop pre-registered acceptance_checks, so acceptance-evidence only checks what the agent kept",
+      "file": "src/commands/handoff.mjs",
+      "line": 425,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.75,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Make acceptance_checks append-only after the tasks phase (reuse appendOnly) and have the implement exit compare them with the tasks.md Acceptance Registry.",
+      "x-evidence": "Reproduced: AC-US1-2 lacked evidence; write --phase implement with acceptance_checks [AC-US1-1] succeeded and saved the shrunken list.",
+      "x-pre-existing": true
+    },
+    {
+      "id": "F37",
+      "severity": "P2",
+      "title": "acceptance-evidence accepts n/a for checks registered expect_initial fail, and the fix pass relabelled partial and missing-red results as n/a without a human decision",
+      "file": "src/lib/checks.mjs",
+      "line": 200,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.75,
+      "task": "T035",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Accept n/a only when the registry row expects n/a; add a partial result that is unmet unless a tagged human decision waives it; restore AC-US7-1 to partial and record a human waiver (or report unmet) for fail-registered checks without a retained red run.",
+      "x-evidence": "Constitution V: a partial result is reported as partial; checks are not redefined without a recorded human decision. tasks.md:489 AC-US7-1 changed from \"partial\" to \"n/a\"; fail-registered checks read \"n/a - original red run was not retained\"; D60 is by implementation-session.",
+      "x-owner": "human"
+    },
+    {
+      "id": "F38",
+      "severity": "P2",
+      "title": "findings.schema requires task on every non-dismissed finding, so a quick-lane review with a fixed finding fails findings-json-valid",
+      "file": "baton/schemas/findings.schema.json",
+      "line": 45,
+      "persona": "agent-native-reviewer",
+      "confidence": 0.85,
+      "task": "T097",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Require task only for feature-lane open findings (move the rule into findings-mapped-to-tasks-or-dismissed) and state the quick-lane rule in the baton-review skill.",
+      "x-evidence": "Probe: quick review.json with {disposition:\"fixed\"} and no task -> E_EXIT_UNMET \"/findings/0/task: must have required property task\"; the quick lane has no tasks.",
+      "x-pre-existing": true
+    },
+    {
+      "id": "F39",
+      "severity": "P2",
+      "title": "init/update with a ps or py flavour now drop the bash scripts while the locked speckit skills still call .specify/scripts/bash/*.sh",
+      "file": "src/commands/init.mjs",
+      "line": 171,
+      "persona": "correctness-reviewer",
+      "confidence": 0.7,
+      "task": "T058",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Take the flavour-specific speckit skills/commands from the generated project together with its scripts, or keep the bash scripts until they are regenerated; add a test that every script path referenced by an installed speckit skill exists after init --script ps.",
+      "x-evidence": "init.mjs:171 skips lock entries under .specify/scripts/bash/ when a generated project exists; .github/skills/speckit-*/SKILL.md from the lock reference .specify/scripts/bash/check-prerequisites.sh.",
+      "x-requires-verification": true
+    },
+    {
+      "id": "F40",
+      "severity": "P3",
+      "title": "diff-nonempty subject filter only counts untracked files under src|test|docs|specs|packs|baton|.github, missing new adopter files elsewhere",
+      "file": "src/lib/checks.mjs",
+      "line": 67,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.68,
+      "task": "T035",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Replace the directory allowlist with the exclusion list (.baton/, specs/*/handoff.md, scratch/tmp) or make roots configurable; replace the boolean|subject parameter with an options object.",
+      "x-evidence": "Tracked and staged changes still count; only unstaged new files such as app/x.ts are missed (maintainability rated P2)."
+    },
+    {
+      "id": "F41",
+      "severity": "P3",
+      "title": "handoff next still tells the agent to run the next phase and exits 0 while the gate is pending or a blocking question is open",
+      "file": "src/commands/handoff.mjs",
+      "line": 570,
+      "persona": "agent-native-reviewer",
+      "confidence": 0.68,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "When gated or blocked, set instruction to the required approve/answer command and add blocked: true (or exit 3); update the cli.md handoff next row, which also omits the new fields.",
+      "x-evidence": "Probe: gate required and unapproved -> instruction \"Switch model to gpt-6-sol, then run /speckit-implement\", exit 0."
+    },
+    {
+      "id": "F42",
+      "severity": "P3",
+      "title": "E_CHECK_FAILED is not in the error-code catalogue",
+      "file": "src/commands/handoff.mjs",
+      "line": 135,
+      "persona": "correctness-reviewer",
+      "confidence": 0.7,
+      "task": "T081",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Add E_CHECK_FAILED (exit 1) to docs/reference/error-codes.md and the handoff-contract error table.",
+      "x-evidence": "grep finds E_CHECK_FAILED only in src and review.json."
+    },
+    {
+      "id": "F43",
+      "severity": "P3",
+      "title": "acceptance-evidence parser rejects GFM rows without a trailing pipe and red->green arrow notation",
+      "file": "src/lib/checks.mjs",
+      "line": 181,
+      "persona": "correctness-reviewer",
+      "confidence": 0.6,
+      "task": "T035",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Strip optional outer pipes, honour escaped pipes, accept arrows as separators and anchor green on a separator; add tests.",
+      "x-evidence": "cells() uses split(\"|\").slice(1,-1); the separator class excludes arrows although phase-contracts says red->green."
+    },
+    {
+      "id": "F44",
+      "severity": "P3",
+      "title": "The F08 regression test puts the organisation-specific feed hostname back into the repository",
+      "file": "test/unit/review-fix-docs.test.mjs",
+      "line": 9,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.7,
+      "task": "T079",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Assert a generic rule (no concrete registry host other than documented placeholders) instead of the literal hostname.",
+      "x-evidence": "It is now the only occurrence of the hostname; constitution Supply-Chain forbids adopter-specific hostnames."
+    },
+    {
+      "id": "F45",
+      "severity": "P3",
+      "title": "The red-first claim overstates history: the fix commit also adds and relaxes tests",
+      "file": "specs/001-baton-template/tasks.md",
+      "line": 493,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.65,
+      "task": "T094",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Name the red-first commits and list tests added or relaxed in 778f4a6 (F06 metadata, persisted base, F02 land accepting E_TRANSITION, F28 wording) with reasons.",
+      "x-evidence": "778f4a6 adds relay and checks tests and relaxes the F02 land and F28 assertions."
+    },
+    {
+      "id": "F46",
+      "severity": "P3",
+      "title": "data-model.md does not document the manifest script field or the diff-base/x-base-commit decision",
+      "file": "specs/001-baton-template/data-model.md",
+      "line": 311,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.6,
+      "task": "T009",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Add script to the section 6 manifest example and diff-base (x-base-commit) to the section 1 tagged-decision examples.",
+      "x-evidence": "manifest.schema.json and phase-contracts.md were updated; data-model.md was not."
+    },
+    {
+      "id": "F47",
+      "severity": "P3",
+      "title": "Findings parse/validate/blocking-count logic is repeated in three places and land checks both the saved count and the file",
+      "file": "src/lib/checks.mjs",
+      "line": 272,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.8,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Add loadFindings/countBlocking helpers, schema-validate before routing in write, and drop the saved-count land check in entryErrors; factor the repeated quick-escalation predicate and feature-baton skeleton in handoff.mjs.",
+      "x-evidence": "handoff.mjs write (Array.isArray only) and checks.mjs:245-273 duplicate the rule."
+    },
+    {
+      "id": "F48",
+      "severity": "P3",
+      "title": "installedScript lets a never-written x-script alias override the canonical manifest script field",
+      "file": "src/lib/manifest.mjs",
+      "line": 21,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.7,
+      "task": "T015",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Read script first (x-script only as a fallback) and switch update.test to set and assert manifest.script.",
+      "x-evidence": "init and update write only script; update.test exercises only x-script."
+    },
+    {
+      "id": "F49",
+      "severity": "P3",
+      "title": "Maintainer workflow list is still duplicated in maintainer-workflows.mjs and template-cleanup.yml, and tests pin only one entry",
+      "file": "test/unit/review-fix-docs.test.mjs",
+      "line": 27,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.7,
+      "task": "T099",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Assert set equality between maintainerWorkflows and keep_dormant (minus template-cleanup.yml) and that every workflow file is classified.",
+      "x-evidence": "Both lists had to be patched by hand for mvp-windows-smoke.yml."
+    },
+    {
+      "id": "F50",
+      "severity": "P3",
+      "title": "escalate sets status ready while a blocking question is open",
+      "file": "src/commands/handoff.mjs",
+      "line": 295,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.8,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Keep needs-human (or refuse with exit 3) while blocking questions remain.",
+      "x-evidence": "The resulting quick baton fails validation and --from-quick reports E_BLOCKING_OPEN on the quick baton.",
+      "x-pre-existing": true
+    },
+    {
+      "id": "F51",
+      "severity": "P3",
+      "title": "Regression-test gaps in the fix pass: new-id human forgery, invalid base guard, weak F06 branch test, F15 fallback-only, no-blocking-findings malformed file",
+      "file": "test/integration/relay.test.mjs",
+      "line": 665,
+      "persona": "testing-reviewer",
+      "confidence": 0.8,
+      "task": "T033",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Add a new-id human:* decision case, non-hex base cases for both base sources, a discriminating F06 branch fixture, an installedScript unit test and a malformed-file no-blocking-findings case.",
+      "x-evidence": "Security and testing personas list these as untested branches added by the fix pass."
+    },
+    {
+      "id": "F52",
+      "severity": "P3",
+      "title": "The fix pass adds in-tree, non-gitignored temp-dir prefixes (the pattern F28 fixed for relay)",
+      "file": "test/unit/checks.test.mjs",
+      "line": 11,
+      "persona": "testing-reviewer",
+      "confidence": 0.8,
+      "task": "T006",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Create temp roots under os.tmpdir() (helpers/tempRepo) or ignore the prefixes, and extend the F28 test to every mkdtemp root.",
+      "x-evidence": "checks.test.mjs:11 mkdtemp(join(sourceRoot, \"test/fixtures\", prefix))."
+    },
+    {
+      "id": "F53",
+      "severity": "P3",
+      "title": "A --from-json path outside the repository or a missing file surfaces as E_INTERNAL exit 10",
+      "file": "src/commands/handoff.mjs",
+      "line": 412,
+      "persona": "orchestrator",
+      "confidence": 0.8,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "New in re-review of the fix pass; not fixed in this review-role session.",
+      "x-fix": "Map withinRoot escapes and ENOENT for --from-json to E_USAGE exit 2 naming the file, and tell hooks to stage payloads under .baton/.tmp/.",
+      "x-evidence": "Reproduced: a payload in the OS temp dir -> E_INTERNAL \"Path escapes repository\", exit 10.",
+      "x-pre-existing": true
     }
-  ]
+  ],
+  "x-rereview-summary": {
+    "prior_claimed_fixed": 27,
+    "verified": 21,
+    "reopened": [
+      "F02",
+      "F03",
+      "F04",
+      "F05",
+      "F09",
+      "F27"
+    ],
+    "deferred_accepted": [
+      "F21",
+      "F22",
+      "F23"
+    ],
+    "new_findings": {
+      "P0": 0,
+      "P1": 1,
+      "P2": 8,
+      "P3": 14
+    },
+    "blocking_open": [
+      "F02",
+      "F03",
+      "F04",
+      "F05",
+      "F31"
+    ]
+  }
 }

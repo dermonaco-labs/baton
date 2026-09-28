@@ -2,44 +2,41 @@
 baton: 1
 lane: feature
 feature: 001-baton-template
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Review fix pass: F01-F20 and seven trivial P3 findings fixed; F21-F23 deferred with reasons. Red-first regressions and 204/204 local tests pass. Re-review the changes from base 8aeed8a before land."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Re-review of the fix pass (763d81f..658ba43): 21 prior findings verified, 6 reopened (F02 F03 F04 F05 F09 F27), F21-F23 deferrals accepted for v0.1; 23 new findings (1 P1, 8 P2, 14 P3). 5 open P0/P1 block land, so the relay returns to implement."
 read_first:
   - path: specs/001-baton-template/review.json
-    why: per-finding fixed and deferred dispositions with original evidence
-    sha256: 6767d664969962d057f67096d70070b3b2dc82df0d09a747f1a022cb9915dc32
-  - path: specs/001-baton-template/tasks.md
-    why: acceptance registry and 204-test fix-pass evidence
-    sha256: f45db714dadfdca169718d95e6e8b17a96d3bd671fb1f7851adfa92c812c3a9b
-  - path: specs/001-baton-template/spec.md
-    why: FR and SC intent for the re-review
-    sha256: af38490d3093545c1ea3c533f24ba09311eafce04de57fc2d510ec60f0e4ca9d
-  - path: specs/001-baton-template/plan.md
-    why: architecture and feature constraints
-    sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
-  - path: specs/001-baton-template/contracts/phase-contracts.md
-    why: review baseline, gate and transition contracts
-    sha256: 11c328fc761c932a668797c2a1b92c079993b216c8ab7596a107bc39fcdb9450
-  - path: specs/001-baton-template/contracts/cli.md
-    why: first-phase, update, review-routing and lock error contracts
-    sha256: e81172c8a9294843165a3f39b21ba5681f4476fbf68bc4bbc456b818dde1ec1b
+    why: re-review verdicts, reopened and new findings with x-fix and x-evidence
+    sha256: a0fef9f0a5bba0b150e4ed5d70ed3854a8aab6b7a0f63030e19be933e4fbdc7f
   - path: src/commands/handoff.mjs
-    why: gate and transition changes for F01-F06, F11-F12 and F18
+    why: "F02 F03 F04 F05 F31 F32 F35 F36: specify receive/write, review routing, findings_path, write preflight"
     sha256: 96b61b20706d6f9adcf593bda8396a2322a6e4cbd992403cf585e7a22938959a
   - path: src/lib/checks.mjs
-    why: baseline diff, acceptance and findings checks for F02 and F09-F10
+    why: "F09 F33 F34 F37: diff base, diff-nonempty scope, acceptance-evidence policy"
     sha256: 3aedcddebc6594d2140ef61a2ba6f94a67daf2dae25e7a67dfc946360ad0bf5c
-  - path: src/commands/update.mjs
-    why: adopter hook, constitution and script-flavour preservation
-    sha256: 223df7670bd393d433882082e995805efdd3d53e609f7d78e78300038b17a34d
+  - path: .specify/extensions/baton/commands/handoff.md
+    why: "F03 F05: hook-shaped converge and first specify writes"
+    sha256: 548265571f3fcdddfee8244aa65c5d35c08b421e3229b695d3f1056760eee2da
+  - path: .github/skills/baton-review/SKILL.md
+    why: "F27: shipped skill copy is stale against baton/skills"
+    sha256: f9d25205df5882ef3e4a4c129f79dafa0150baddc4e596907d1037260df14ef3
+  - path: src/commands/init.mjs
+    why: "F39: ps/py flavour drops bash scripts used by locked skills"
+    sha256: eb53110a8b9d4976fffaf11ce52d5c838a48c455dbb99afb03d2e0deefd8e8a1
   - path: test/integration/relay.test.mjs
-    why: red-first relay reproduction and green results
+    why: F02 masked quick test; add hook-shaped regression tests
     sha256: 913dc6c9c6234dd6b7b97807853e97ddd110a0fb21dee1288966a1a7fcd2c1f4
+  - path: specs/001-baton-template/contracts/phase-contracts.md
+    why: review routing, diff-nonempty and acceptance-evidence contract text
+    sha256: 11c328fc761c932a668797c2a1b92c079993b216c8ab7596a107bc39fcdb9450
+  - path: specs/001-baton-template/tasks.md
+    why: finding-to-task mapping and evidence claims (F37 F45)
+    sha256: f45db714dadfdca169718d95e6e8b17a96d3bd671fb1f7851adfa92c812c3a9b
 do_not_read:
   - path: specs/001-baton-template/research.md
     why: pinned upstream facts are already reflected in the plan
@@ -93,7 +90,7 @@ artifacts:
     sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017
   - path: specs/001-baton-template/review.json
     role: evidence
-    sha256: 6767d664969962d057f67096d70070b3b2dc82df0d09a747f1a022cb9915dc32
+    sha256: a0fef9f0a5bba0b150e4ed5d70ed3854a8aab6b7a0f63030e19be933e4fbdc7f
 entry_checked:
   - id: tasks-exists
     ok: true
@@ -101,15 +98,12 @@ entry_checked:
     ok: true
     evidence: analyzed at 23b1a1d; the artifacts were then amended by the analyze fixes and amendments A1-A6 and re-hashed here
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
+    evidence: specs/001-baton-template/review.json
+  - id: findings-mapped-to-tasks-or-dismissed
     met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: "baton: 0"
+    evidence: 0 findings unresolved
 analysis:
   report_path: specs/001-baton-template/analysis.md
   critical: 0
@@ -529,6 +523,20 @@ decisions:
     decision: Defer F21-F23 with explicit reasons in review.json while re-reviewing the completed P1, P2 and trivial P3 fixes
     rationale: Archive checksum distribution, configured-check trust boundaries and denylist placeholder policy each need a separately approved public contract; this pass does not silently choose one
     by: implementation-session
+  - tag: rereview-scope
+    decision: Re-review scope is the fix-pass diff 763d81f..658ba43 plus verification of every prior finding; review.json base moves to 763d81f
+    id: D63
+    rationale: receive --phase review passed via the prior review.json base (8aeed8a); the fix pass is the new review subject, so the next diff base is the head of the previous review
+    by: baton-review
+  - decision: Review-role session records findings only; no safe_auto fixes applied and ce-review ran headless with the 8 installed personas
+    id: D64
+    rationale: The requester scoped this session to review artifacts; personas were limited to the installed .github/agents list (repo-research-analyst not needed)
+    by: baton-review
+  - tag: deferral-review
+    decision: F21, F22 and F23 deferrals are acceptable for v0.1 and do not block release; each needs a docs note before the first public release
+    id: D65
+    rationale: F21 --from uses an operator-chosen local archive with published SHA256SUMS; F22 checks never run in CI and equal running npm test on the branch; F23 is an accidental-leak false negative with frontmatter fully scanned. A human still decides at the land/PR gate
+    by: baton-review
 open_questions: []
 assumptions:
   - id: AS1
@@ -593,11 +601,15 @@ history:
     at: 2026-09-28T18:28:20.727Z
     by: speckit-implement
     commit: aa42bc9
-updated_at: 2026-09-28T18:28:20.727Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-09-28T18:59:27.923Z
+    by: baton-review
+    commit: 658ba43
+updated_at: 2026-09-28T18:59:27.923Z
+updated_by: baton-review
 review:
   findings_path: specs/001-baton-template/review.json
-  blocking_findings: 7
+  blocking_findings: 5
 ---
 ## Goal
 
@@ -607,40 +619,41 @@ optional packs, cheap CI and a public manual.
 
 ## What changed
 
-All **7 P1 (F01–F07)** and **13 P2 (F08–F20)** review findings have red-first regression
-coverage and fixes. Seven low-priority findings (F24–F30) are also fixed. `review.json` keeps
-F21–F23 open with explicit deferral reasons; archive checksum distribution, project-check
-trust policy and denylist placeholder handling require separate contract decisions.
+Re-review of the fix pass `763d81f..658ba43` with the 8 installed personas (headless, no
+fixes applied). Of the prior findings, **21 are verified** fixed and **6 are reopened**:
+F02, F03, F04 and F05 (P1), F09 (P2), and F27, raised to P2. The F21–F23 deferrals are
+**accepted for v0.1**, each with a documentation note required before public release.
 
-The relay now rechecks gates on write, derives review blockers from findings, accepts converge
-re-entry and first-phase specify, preserves decisions and human answers, and uses a durable
-review baseline after merged increments. Updates preserve adopter hooks, constitution and
-script flavour. The committed CLI bundle, SHA256 and metafile were regenerated.
-
-The tests were committed red before their fixes (e226606, ac7affb, 657c03e, aa42bc9).
-`npm ci` and `npm run check` on approved restricted feeds pass **204/204** tests.
-`baton validate` and the implement exit checks pass locally. The internal PyPI mirror
-does not carry the pinned specify-cli, so `sync --check` evidence remains hosted run
-36343485321 at its recorded source SHA; that run is not evidence for this new head.
+There are 23 new findings (0 P0, 1 P1, 8 P2, 14 P3). The P1 is F31: `findings_path` is not
+pinned, so a clean decoy file can route to land while the canonical `review.json` still
+holds an open P0. Five P0/P1 findings are open (F02, F03, F04, F05, F31), so the CLI routed
+back to implement. `review.json` base is now `763d81f`, and every finding has `x-fix`
+and/or `x-evidence`.
 
 ## Next steps
 
-1. Run `/baton-review` → `/ce-review mode:headless` on this fix-pass PR. Use the review
-   baseline in `review.json` (`8aeed8a`) and inspect the actual changed files, not only the
-   prior findings. Re-review must independently confirm zero open P0/P1 before land.
-2. Keep owner-only deferrals separate: visual README review, private vulnerability
-   reporting, timed newcomer run, upstream-watch dispatch and full three-OS smoke.
+1. Run `/speckit-implement` on the reopened and new findings in `review.json`, P1 first:
+   - F31: pin `findings_path`.
+   - F02: the quick-lane route to work.
+   - F03: add `--mode converge` to the hook prompt.
+   - F04: specify receive for the 2nd and later features.
+   - F05: specify write without `--feature`.
+2. Add red-first regression tests that follow the real hook prompts in
+   `.specify/extensions/baton/commands/`, not synthetic CLI calls. The masked test at
+   `relay.test.mjs` for F02 must be corrected.
+3. Fix or explicitly defer the P2 findings F09 and F27, then F32–F39, and add the F21–F23
+   docs notes.
+4. Then return to `/baton-review` for another re-review against base `763d81f`.
 
 ## Watch out for
 
-- `review.blocking_findings: 7` above records the **previous** review, not a new verdict.
-  The next review must replace it using the actual new findings file; the CLI will derive
-  the count and route back to implement if any P0/P1 remains open.
-- `diff-nonempty` uses the recorded review baseline after merged increments and ignores
-  baton bookkeeping; review the full code diff from `8aeed8a`, not only this worktree.
+- Editing `tasks.md` after a `handoff write` makes the next write fail with
+  `E_STALE_ARTIFACT` (F32); run `handoff refresh` after derived artifact edits.
+- The first review after merged increments still counts 0 changed files unless
+  `review.json` supplies a base (F09); nothing records `diff-base` yet.
 - Never hand-edit upstream files. They come only from `baton sync`, and repairs live in `packs/repairs.yml`.
 - `sync` must not use bare `uvx` or codeload tarballs: hash-locked requirements and a verified git fetch.
 - Template cleanup must never modify `.github/workflows/`.
 - Keep public registry pins. A workstation behind an approved mirror uses per-command
-  overrides and never commits mirror settings. The hosted sync evidence predates this PR.
+  overrides and never commits mirror settings.
 - Nothing from any private reference project may enter this repo.
