@@ -101,6 +101,17 @@ test('adopt refuses to clean the source repository', async () => {
   }
 });
 
+test('adopt --prune-workflows removes the dormant Windows smoke workflow', async () => {
+  const { root, cleanup } = await derivedCopy();
+  try {
+    const result = await runSource(root, ['adopt', '--prune-workflows'], { BATON_FORCE_CLEANUP: '1' });
+    assert.equal(result.code, 0, result.stderr || result.stdout);
+    await assert.rejects(stat(join(root, '.github/workflows/mvp-windows-smoke.yml')), { code: 'ENOENT' });
+  } finally {
+    await cleanup();
+  }
+});
+
 test('adopt preflights required templates before moving adopter files', async () => {
   const { root, cleanup } = await derivedCopy();
   try {
