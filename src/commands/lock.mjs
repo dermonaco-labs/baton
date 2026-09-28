@@ -7,10 +7,16 @@ export function verifyLock({ cwd = process.cwd() } = {}) {
   const root = resolve(cwd);
   const file = join(root, 'baton.lock.json');
   if (!existsSync(file)) throw new UpstreamError('E_LOCK_MISMATCH', 'baton.lock.json is missing');
-  const lock = JSON.parse(readFileSync(file, 'utf8'));
+  let lock;
+  try {
+    lock = JSON.parse(readFileSync(file, 'utf8'));
+  } catch (error) {
+    if (error instanceof SyntaxError) throw new UpstreamError('E_LOCK_MISMATCH', `baton.lock.json is not valid JSON: ${error.message}`);
+    throw error;
+  }
   /** @type {string[]} */
   const mismatch = [];
-  if (lock.schema !== 1 || !Array.isArray(lock.files)) {
+  if (!lock || lock.schema !== 1 || !Array.isArray(lock.files)) {
     throw new UpstreamError('E_LOCK_MISMATCH', 'Unsupported or malformed lock format');
   }
   /** @param {string|undefined} path @param {string|undefined} hash */
@@ -37,6 +43,10 @@ export function verifyLock({ cwd = process.cwd() } = {}) {
   /** @type {Set<string>} */
   const unique = new Set();
   for (const entry of lock.files) {
+    if (!entry || typeof entry !== 'object') {
+      mismatch.push('invalid lock entry');
+      continue;
+    }
     if (unique.has(entry.stored_at)) mismatch.push(`duplicate ${entry.stored_at}`);
     unique.add(entry.stored_at);
     check(entry.stored_at, entry.sha256);

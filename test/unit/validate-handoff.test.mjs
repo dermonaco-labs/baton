@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
 import { resolve, join } from 'node:path';
+import { promisify } from 'node:util';
 import { validateHandoff } from '../../src/lib/handoff.mjs';
 import { parseFrontmatter, serializeFrontmatter } from '../../src/lib/frontmatter.mjs';
 import { evaluateBuiltIn } from '../../src/lib/checks.mjs';
@@ -14,6 +16,7 @@ const root = resolve(import.meta.dirname, '../..');
 const fixtureRoot = resolve(root, 'test/fixtures/handoffs');
 const featurePath = 'specs/001-sample/handoff.md';
 const quickPath = '.baton/quick/sample-fix.md';
+const execFileAsync = promisify(execFile);
 
 async function fixtureRepo() {
   const workspace = await mkdtemp(join(fixtureRoot, '.unit-'));
@@ -71,6 +74,15 @@ test('each invalid baton fixture reports its named stable error, without unrelat
             const result = await runHandoff(workspace, ['receive', '--feature', '001-sample', '--phase', code === 'E_GATE_PENDING' ? 'plan' : 'land']);
             errors = result.errors.map((item) => item.code);
           } else if (code === 'E_LANE_ESCALATE') {
+            await execFileAsync('git', ['init', '-q'], { cwd: workspace });
+            await execFileAsync('git', ['add', '.'], { cwd: workspace });
+            await execFileAsync('git', ['-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid',
+              'commit', '-qm', 'base'], { cwd: workspace });
+            const { stdout: base } = await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: workspace });
+            await execFileAsync('git', ['update-ref', 'refs/remotes/origin/main', base.trim()], { cwd: workspace });
+            await execFileAsync('git', ['symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main'], { cwd: workspace });
+            await mkdir(join(workspace, 'src'), { recursive: true });
+            await writeFile(join(workspace, 'src/fix.mjs'), 'export const fixed = true;\n');
             await writeFile(join(workspace, quickPath), await readFile(fixture));
             await writeFile(join(workspace, 'review-input.json'), JSON.stringify({
               review: { findings_path: '.baton/quick/sample-fix.review.json', blocking_findings: 0 },

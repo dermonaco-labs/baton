@@ -7,9 +7,9 @@ import { BatonError } from '../lib/report.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
 import { hashFile } from '../lib/hash.mjs';
 import { loadPacks, recommendedPacks } from '../lib/packs.mjs';
+import { maintainerWorkflows } from '../lib/maintainer-workflows.mjs';
 
 const execFileAsync = promisify(execFile);
-const maintainerWorkflows = ['ci.yml', 'smoke.yml', 'upstream-watch.yml', 'release.yml'];
 const preservedDocs = new Set(['brainstorms', 'solutions']);
 
 /** @param {string} path */

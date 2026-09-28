@@ -53,6 +53,10 @@ The sole exception is an unchecked task whose row explicitly contains both
 That marker is reserved for the task whose deliverable is writing this very implement → review handoff;
 the write satisfies that task, so requiring its checkbox beforehand would deadlock the exit check.
 An unchecked task without both the marker and the command still blocks the handoff.
+`acceptance-evidence` requires a matching row in the Acceptance Registry and a separate
+`Check | Result and evidence` table row for each registered check. The result must contain
+substantive red and green outcomes (in that order), or an explained `n/a`; headers and
+placeholders do not count.
 
 Entry and exit cells use the check keys of data-model §2.1. The phase table is the feature lane; `review`, `land`
 and `compound` are shared with the quick lane, which overrides them through `by_lane.quick` (below).
@@ -114,6 +118,11 @@ findings file is `.baton/quick/<slug>.review.json`. `{quick_dir}` in check paths
 
 - `artifact-exists:<glob>`: the path is relative to the feature dir unless it starts with `docs/` or `.`.
 - `fresh:<names>`: sha256 comparison against the `artifacts` recorded in the current baton.
+- `diff-nonempty`: use the `x-base-commit` SHA on the baton decision tagged `diff-base`, if recorded; otherwise
+  use `review.json`'s `base` when available, then fall back to the merge-base with `origin/HEAD`. A durable base
+  keeps review meaningful when implementation commits have already merged to main. Count tracked changes and
+  untracked source, test, documentation, pack or workflow files, but not root scratch files, scratch/temp files,
+  `.baton/` bookkeeping or `specs/<feature>/handoff.md`.
 - `markers-bounded`: counts `[NEEDS CLARIFICATION` occurrences (Spec Kit's convention) and allows at most 3.
 - `tasks-reference-stories`: each `- [ ] T\d{3}` line in a story phase carries `[US\d+]`.
 - `acceptance-registered`: tasks.md has a `## Acceptance Registry` table (added by the `baton-templates` preset).
@@ -122,6 +131,8 @@ findings file is `.baton/quick/<slug>.review.json`. `{quick_dir}` in check paths
 - `findings-json-valid`: validates `review.json` against Baton's own `.baton/schemas/findings.schema.json`. `baton-review`
   runs `ce-review mode:headless` and normalizes its structured findings into that file (data-model §8), so no
   upstream-internal schema or file layout is load-bearing.
+- `no-blocking-findings`: read and validate the review findings file at land entry, then count findings that
+  remain `open` at severity P0 or P1. A saved `review.blocking_findings: 0` cannot override the file.
 - `analysis-recorded`: `analysis.report_path` exists. Spec Kit's `speckit-analyze` is strictly read-only and only
   prints its report, so `speckit.baton.handoff` (after_analyze hook) writes the chat report verbatim to
   `specs/<f>/analysis.md` and fills `analysis.critical`/`analysis.high`.

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import YAML from 'yaml';
 import { sourceRoot } from '../helpers/index.mjs';
 import { hashFile } from '../../src/lib/hash.mjs';
-import { parseFrontmatter } from '../../src/lib/frontmatter.mjs';
+import { parseFrontmatter, serializeFrontmatter } from '../../src/lib/frontmatter.mjs';
 import { resolveModel, modelPolicyIssue, agentModelRole } from '../../src/lib/models.mjs';
 import { run as applyModels } from '../../src/commands/models.mjs';
 import { run as validate } from '../../src/commands/validate.mjs';
@@ -163,6 +163,11 @@ test('handoff write respects phase_roles and rejects disallowed next-phase model
     await mkdir(location, { recursive: true });
     await cp(join(sourceRoot, 'test/fixtures/handoffs/valid/feature/analyze.md'), join(location, 'handoff.md'));
     await cp(join(sourceRoot, 'test/fixtures/features/sample'), location, { recursive: true });
+    const handoffPath = join(location, 'handoff.md');
+    const { data, body } = parseFrontmatter(await readFile(handoffPath, 'utf8'));
+    data.gate.approved_by = 'maintainer';
+    data.gate.approved_at = '2026-09-24';
+    await writeFile(handoffPath, serializeFrontmatter(data, body));
     const configPath = join(root, '.baton/config.yml');
     const config = YAML.parse(await readFile(configPath, 'utf8'));
     config.models.phase_roles = { review: 'fast' };
@@ -172,10 +177,11 @@ test('handoff write respects phase_roles and rejects disallowed next-phase model
     await writeFile(join(root, 'input.json'), JSON.stringify({
       summary: 'Implemented', read_first: [{ path: `specs/${feature}/tasks.md`, why: 'Review scope' }],
     }));
-    const before = await readFile(join(location, 'handoff.md'), 'utf8');
+    assert.deepEqual((await handoff(root, ['receive', '--feature', feature, '--phase', 'implement'])).errors, []);
+    const before = await readFile(handoffPath, 'utf8');
     const rejected = await handoff(root, ['write', '--feature', feature, '--phase', 'implement', '--from-json', 'input.json']);
     assert.ok(rejected.errors.some(({ code }) => code === 'E_MODEL_NOT_ALLOWED'));
-    assert.equal(await readFile(join(location, 'handoff.md'), 'utf8'), before);
+    assert.equal(await readFile(handoffPath, 'utf8'), before);
   } finally {
     await cleanup();
   }

@@ -67,6 +67,32 @@ test('weakened contract detects moving mandatory exit into a disjunction', () =>
   assert.ok(checkWeakenedContracts(override).some((entry) => entry.message.includes('tasks-reference-stories')));
 });
 
+test('weakened contracts report removed entry checks, including quick-lane entry overrides', () => {
+  const config = { ...phaseDefaults, phases: {
+    ...phaseDefaults.phases,
+    plan: { ...phaseDefaults.phases.plan, entry: phaseDefaults.phases.plan.entry.filter(({ id }) => id !== 'gate-approved') },
+    review: { ...phaseDefaults.phases.review, by_lane: {
+      ...phaseDefaults.phases.review.by_lane,
+      quick: { ...phaseDefaults.phases.review.by_lane.quick, entry: [] },
+    } },
+  } };
+  const warnings = checkWeakenedContracts(config).filter(({ code }) => code === 'W_WEAKENED_CONTRACT');
+  assert.deepEqual([
+    warnings.some(({ message }) => message.includes('plan/feature') && message.includes('gate-approved')),
+    warnings.some(({ message }) => message.includes('review/quick') && message.includes('diff-nonempty')),
+  ], [true, true]);
+});
+
+test('weakened contracts report disabled human gates without flagging unchanged defaults', () => {
+  assert.deepEqual(checkWeakenedContracts(phaseDefaults), []);
+  const config = { ...phaseDefaults, phases: {
+    ...phaseDefaults.phases,
+    analyze: { ...phaseDefaults.phases.analyze, human_gate: false },
+  } };
+  assert.ok(checkWeakenedContracts(config).some(({ code, message }) =>
+    code === 'W_WEAKENED_CONTRACT' && message.includes('analyze/feature') && message.includes('human_gate')));
+});
+
 test('shipped phase template is valid and never weakens its built-in contracts', async () => {
   const source = await readFile(new URL('../../baton/templates/phases.yml', import.meta.url), 'utf8');
   const template = YAML.parse(source);

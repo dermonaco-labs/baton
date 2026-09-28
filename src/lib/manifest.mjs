@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve, dirname, sep } from 'node:path';
 import { hashFile } from './hash.mjs';
+import { BatonError } from './report.mjs';
 
 /** @param {string} root @param {string} path */
 export function withinRoot(root, path) {
@@ -13,6 +14,23 @@ export function withinRoot(root, path) {
 /** @param {string} root */
 export async function readManifest(root) {
   return JSON.parse(await readFile(withinRoot(root, '.baton/manifest.json'), 'utf8'));
+}
+
+/** @param {string} root @param {{script?:string,'x-script'?:string}|undefined} manifest */
+export async function installedScript(root, manifest) {
+  let script = manifest?.['x-script'] ?? manifest?.script;
+  if (script === undefined) {
+    try {
+      script = JSON.parse(await readFile(withinRoot(root, '.specify/init-options.json'), 'utf8')).script;
+    } catch (error) {
+      if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+    }
+  }
+  script ??= 'sh';
+  if (!['sh', 'ps', 'py'].includes(script)) {
+    throw new BatonError('E_MANIFEST', `Invalid installed script flavour: ${script}`);
+  }
+  return script;
 }
 
 /** @param {string} root @param {unknown} manifest */

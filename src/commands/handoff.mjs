@@ -1,7 +1,7 @@
 import { readFile, readdir, writeFile, mkdir, copyFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { basename, dirname } from 'node:path';
 import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
+import { isDeepStrictEqual, promisify } from 'node:util';
 import { BatonError } from '../lib/report.mjs';
 import { readHandoff, writeHandoff, validateHandoff, gateVocabulary, approvedRole } from '../lib/handoff.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
@@ -23,15 +23,16 @@ async function commitId(root) {
     throw error;
   }
 }
-/** @param {string} root @param {Record<string,any>} data @param {string} actor @param {string} phase */
-async function updateMetadata(root, data, actor, phase) {
+/** @param {string} root @param {Record<string,any>} data @param {string} actor @param {string} phase @param {string} [batonPath] */
+async function updateMetadata(root, data, actor, phase, batonPath) {
   data.updated_at = new Date().toISOString();
   data.updated_by = actor;
   const routing = resolveModel(await loadModelSettings(root), phase, data.model_role);
   data.model_role = routing.role;
   data.suggested_model = routing.model;
   for (const item of [...(data.read_first ?? []), ...(data.artifacts ?? [])]) {
-    if (item.sha256) item.sha256 = await hashFile(withinRoot(root, item.path));
+    if (batonPath && item.path === batonPath) delete item.sha256;
+    else if (item.sha256) item.sha256 = await hashFile(withinRoot(root, item.path));
   }
 }
 /** @param {Array<{id:string}>} entries @param {string} prefix */
@@ -66,9 +67,76 @@ async function locate(root, options) {
     if (!/^\d{3}-[a-z0-9-]+$/.test(options.feature)) throw new BatonError('E_USAGE', 'Feature name must be NNN-slug', 2);
     return `specs/${options.feature}/handoff.md`;
   }
-  const entries = (await readdir(withinRoot(root, 'specs'), { withFileTypes: true })).filter((entry) => /^\d{3}-/.test(entry.name));
-  if (entries.length !== 1) throw new BatonError('E_USAGE', 'Specify --feature NNN-slug when zero or multiple features exist', 2);
+  const entries = (await readdir(withinRoot(root, 'specs'), { withFileTypes: true }).catch((error) => {
+    if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return [];
+    throw error;
+  })).filter((entry) => entry.isDirectory() && /^\d{3}-[a-z0-9-]+$/.test(entry.name));
+  if (entries.length !== 1) {
+    const names = entries.map((entry) => entry.name);
+    try {
+      const branch = (await execFileAsync('git', ['symbolic-ref', '--quiet', '--short', 'HEAD'], { cwd: root, windowsHide: true })).stdout.trim();
+      const candidate = branch.match(/(?:^|\/)(\d{3}-[a-z0-9-]+)$/)?.[1];
+      if (candidate && names.includes(candidate)) return `specs/${candidate}/handoff.md`;
+    } catch (error) {
+      if (![1, 128, 'ENOENT'].includes(/** @type {{code?:number|string}} */ (error).code ?? '')) throw error;
+    }
+    try {
+      const selected = JSON.parse(await readFile(withinRoot(root, '.specify/feature.json'), 'utf8'));
+      const candidate = basename(selected.feature_directory ?? '');
+      if (names.includes(candidate)) return `specs/${candidate}/handoff.md`;
+    } catch (error) {
+      if (!(error instanceof SyntaxError) && /** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+    }
+    throw new BatonError('E_USAGE', `Specify --feature NNN-slug; candidates: ${names.join(', ') || '(none)'}`, 2);
+  }
   return `specs/${entries[0].name}/handoff.md`;
+}
+
+/** @param {Record<string,any>} data @param {string} field @param {Array<Record<string,any>>} incoming */
+function appendOnly(data, field, incoming) {
+  if (!Array.isArray(incoming)) throw new BatonError('E_USAGE', `${field} must be an array`, 2);
+  const existing = data[field] ?? [];
+  const byId = new Map(/** @type {Array<{id:string}>} */ (existing).map((item) => [item.id, item]));
+  /** @type {Array<Record<string,any>>} */
+  const additions = [];
+  for (const item of incoming) {
+    if (typeof item?.id !== 'string') throw new BatonError('E_USAGE', `${field} entries need an id`, 2);
+    if (byId.has(item.id)) {
+      if (!isDeepStrictEqual(byId.get(item.id), item)) throw new BatonError('E_USAGE', `${field} ${item.id} cannot be changed by write`, 2);
+    } else {
+      if (field === 'decisions' && typeof item.by === 'string' && item.by.startsWith('human:')) {
+        throw new BatonError('E_USAGE', 'Human decisions can only be recorded through handoff answer', 2);
+      }
+      if (additions.some((other) => other.id === item.id)) throw new BatonError('E_USAGE', `Duplicate ${field} id ${item.id}`, 2);
+      additions.push(item);
+    }
+  }
+  data[field] = [...existing, ...additions];
+}
+
+/** @param {string} root @param {string} path @param {Record<string,any>} data @param {import('../lib/phases.mjs').Phase} contract @param {string} phase */
+async function entryErrors(root, path, data, contract, phase) {
+  const errors = [];
+  if (data.gate?.required && !data.gate.approved_by) errors.push({ code: 'E_GATE_PENDING', file: path, message: 'Human approval is required before receiving this phase' });
+  if (data.status === 'needs-human') errors.push({ code: 'E_BLOCKING_OPEN', file: path, message: 'A human decision is required' });
+  if (phase === 'land' && data.review?.blocking_findings > 0) {
+    errors.push({ code: 'E_REVIEW_BLOCKING', file: path, message: 'Resolve blocking review findings before landing' });
+  }
+  if (!errors.length) {
+    const checks = await evaluateChecks(phaseForLane(contract, data.lane).entry,
+      (check) => evaluateBuiltIn(root, path, data, check));
+    for (const check of checks.filter((item) => !item.met)) {
+      const code = check.id === 'gate-approved' ? 'E_GATE_PENDING'
+        : check.id.startsWith('fresh:') ? 'E_STALE_ARTIFACT'
+        : check.id === 'acceptance-registered' ? 'E_NO_PREREG'
+        : check.id === 'from-phase' || check.id === 'no-feature-tasks' ? 'E_TRANSITION'
+        : check.id === 'no-blocking-findings' ? 'E_REVIEW_BLOCKING'
+        : check.id === 'no-blocking-questions' ? 'E_BLOCKING_OPEN'
+        : check.id === 'local-checks-pass' ? 'E_CHECK_FAILED' : 'E_MISSING_ARTIFACT';
+      errors.push({ code, file: path, message: `${check.id} unmet: ${check.evidence}${check.members ? ` (${check.members.map((item) => `${item.id}: ${item.met}`).join(', ')})` : ''}` });
+    }
+  }
+  return errors;
 }
 
 /** @param {string} root @param {string[]} args */
@@ -83,6 +151,15 @@ export async function run(root, args) {
     rest = raw.slice(2);
   }
   const options = parseOptions(rest);
+  if (action === 'receive' && options.phase === 'specify' && !options.feature && !options.quick) {
+    const entries = await readdir(withinRoot(root, 'specs')).catch((error) => {
+      if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return [];
+      throw error;
+    });
+    if (!entries.some((name) => /^\d{3}-[a-z0-9-]+$/.test(name))) {
+      return { errors: [], data: { read_first: [], do_not_read: [] }, exitCode: 0 };
+    }
+  }
   const path = await locate(root, options);
   if (action === 'new' && typeof options.feature === 'string' || action === 'init') {
     if (typeof options.feature !== 'string' || options.quick ||
@@ -163,7 +240,36 @@ export async function run(root, args) {
   }
   if (action === 'receive') {
     if (typeof options.phase !== 'string') throw new BatonError('E_USAGE', 'receive requires --phase', 2);
-    const { data } = await readHandoff(root, path);
+    if (options.phase === 'specify' && typeof options.quick === 'string') {
+      const { data } = await readHandoff(root, path);
+      const errors = await validateHandoff(root, path);
+      if (data.lane !== 'quick' || data.status !== 'ready' || data.next_phase !== 'specify' ||
+          !['work', 'review'].includes(data.phase_completed)) {
+        errors.push({ code: 'E_TRANSITION', file: path, message: 'Quick baton must be escalated from work or review first' });
+      }
+      return { errors, data: errors.length ? null : { read_first: [{ path, why: 'Escalated quick-lane baton' }], do_not_read: [] },
+        exitCode: errors.length ? 1 : 0 };
+    }
+    let handoff;
+    try {
+      handoff = await readHandoff(root, path);
+    } catch (error) {
+      if (options.phase !== 'specify' || /** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+      const source = options['from-quick'] ?? options['from-brainstorm'];
+      if (typeof source === 'string') {
+        if (options['from-quick']) {
+          const parsed = await readHandoff(root, source);
+          const errors = await validateHandoff(root, source);
+          if (parsed.data.lane !== 'quick' || parsed.data.status !== 'ready' || parsed.data.next_phase !== 'specify' ||
+              !['work', 'review'].includes(parsed.data.phase_completed)) {
+            errors.push({ code: 'E_TRANSITION', file: source, message: 'Quick baton must be escalated from work or review first' });
+          }
+          if (errors.length) return { errors, exitCode: 1 };
+        } else await readFile(withinRoot(root, source));
+      }
+      return { errors: [], data: { read_first: source ? [{ path: source, why: 'Source of the feature handoff' }] : [], do_not_read: [] }, exitCode: 0 };
+    }
+    const { data } = handoff;
     const errors = await validateHandoff(root, path);
     const { config: phases } = await loadPhases(root);
     const contract = phases.phases[options.phase];
@@ -172,24 +278,7 @@ export async function run(root, args) {
     if (data.next_phase !== options.phase && !(options.phase === 'implement' && options.mode === 'converge' && data.phase_completed === 'implement')) {
       errors.push({ code: 'E_TRANSITION', file: path, message: `Expected ${data.next_phase}, received ${options.phase}` });
     }
-    if (data.gate?.required && !data.gate.approved_by) errors.push({ code: 'E_GATE_PENDING', file: path, message: 'Human approval is required before receiving this phase' });
-    if (data.status === 'needs-human') errors.push({ code: 'E_BLOCKING_OPEN', file: path, message: 'A human decision is required' });
-    if (options.phase === 'land' && data.review?.blocking_findings > 0) {
-      errors.push({ code: 'E_REVIEW_BLOCKING', file: path, message: 'Resolve blocking review findings before landing' });
-    }
-    if (!errors.length) {
-      const checks = await evaluateChecks(phaseForLane(contract, data.lane).entry,
-        (check) => evaluateBuiltIn(root, path, data, check));
-      for (const check of checks.filter((item) => !item.met)) {
-        const code = check.id === 'gate-approved' ? 'E_GATE_PENDING'
-          : check.id.startsWith('fresh:') ? 'E_STALE_ARTIFACT'
-          : check.id === 'acceptance-registered' ? 'E_NO_PREREG'
-          : check.id === 'from-phase' || check.id === 'no-feature-tasks' ? 'E_TRANSITION'
-          : check.id === 'no-blocking-findings' ? 'E_REVIEW_BLOCKING'
-          : check.id === 'no-blocking-questions' ? 'E_BLOCKING_OPEN' : 'E_MISSING_ARTIFACT';
-        errors.push({ code, file: path, message: `${check.id} unmet: ${check.evidence}${check.members ? ` (${check.members.map((item) => `${item.id}: ${item.met}`).join(', ')})` : ''}` });
-      }
-    }
+    if (!errors.length) errors.push(...await entryErrors(root, path, data, contract, options.phase));
     return {
       errors,
       data: errors.length ? null : { read_first: data.read_first, do_not_read: data.do_not_read ?? [] },
@@ -280,16 +369,59 @@ export async function run(root, args) {
       };
       body = headingBody('speckit-specify');
     } else {
-      ({ data, body } = await readHandoff(root, path));
+      try {
+        ({ data, body } = await readHandoff(root, path));
+      } catch (error) {
+        if (options.phase !== 'specify' || typeof options.feature !== 'string' ||
+            /** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+        const spec = `${dirname(path).replaceAll('\\', '/')}/spec.md`;
+        let digest;
+        try {
+          digest = await hashFile(withinRoot(root, spec));
+        } catch (missing) {
+          if (/** @type {NodeJS.ErrnoException} */ (missing).code !== 'ENOENT') throw missing;
+          return { errors: [{ code: 'E_MISSING_ARTIFACT', file: spec, message: 'Specification must exist before the first handoff' }], exitCode: 1 };
+        }
+        data = {
+          baton: 1, lane: 'feature', feature: options.feature, phase_completed: 'none',
+          next_phase: 'specify', next_owner: 'speckit-specify', status: 'ready',
+          model_role: 'planning', suggested_model: null, summary: 'First feature handoff',
+          read_first: [{ path: spec, why: 'Specification and scope', sha256: digest }],
+          artifacts: [{ path: spec, role: 'source-of-truth', sha256: digest }],
+          entry_checked: [], exit_criteria: [], open_questions: [], decisions: [],
+          gate: { required: false, approved_by: null, approved_at: null },
+          history: [], updated_at: new Date().toISOString(), updated_by: 'baton',
+        };
+        body = headingBody('speckit-specify');
+      }
     }
     const { config: phases, errors } = await loadPhases(root);
     if (errors.length) return { errors, exitCode: 1 };
     const contract = phases.phases[options.phase];
     if (!contract || !contract.lane.includes(data.lane)) throw new BatonError('E_LANE_MISMATCH', `Phase ${options.phase} does not accept ${data.lane}`, 1);
-    if (data.next_phase !== options.phase) throw new BatonError('E_TRANSITION', `Expected ${data.next_phase}, not ${options.phase}`, 1);
-    const supplied = JSON.parse(await readFile(withinRoot(root, options['from-json']), 'utf8'));
+    if (data.next_phase !== options.phase &&
+        !(options.phase === 'implement' && options.mode === 'converge' && data.phase_completed === 'implement')) {
+      throw new BatonError('E_TRANSITION', `Expected ${data.next_phase}, not ${options.phase}`, 1);
+    }
+    const preflight = await entryErrors(root, path, data, contract, options.phase);
+    if (preflight.length) {
+      return { errors: preflight, exitCode: preflight.some((issue) => ['E_GATE_PENDING', 'E_BLOCKING_OPEN'].includes(issue.code)) ? 3 : 1 };
+    }
+    let supplied;
+    try {
+      supplied = JSON.parse(await readFile(withinRoot(root, options['from-json']), 'utf8'));
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      throw new BatonError('E_USAGE', `Invalid JSON in ${options['from-json']}: ${error.message}`, 2);
+    }
     const allowed = new Set(['summary', 'read_first', 'do_not_read', 'artifacts', 'decisions', 'open_questions', 'assumptions', 'risks', 'acceptance_checks', 'review', 'analysis', 'pr']);
     if (!supplied || typeof supplied !== 'object' || Array.isArray(supplied) || Object.keys(supplied).some((key) => !allowed.has(key))) throw new BatonError('E_USAGE', 'Agent data contains unexpected or deterministic fields', 2);
+    for (const field of ['decisions', 'open_questions']) {
+      if (Object.hasOwn(supplied, field)) {
+        appendOnly(data, field, supplied[field]);
+        delete supplied[field];
+      }
+    }
     Object.assign(data, supplied);
     if (brainstorm || quick) {
       const source = /** @type {string} */ (brainstorm ?? quick);
@@ -307,7 +439,26 @@ export async function run(root, args) {
       await copyFile(withinRoot(root, options['analysis-from']), withinRoot(root, destination));
       data.analysis.report_path = destination;
     }
-    const next = typeof options.next === 'string' ? options.next : phaseForLane(contract, data.lane).next[0];
+    if (options.phase === 'review') {
+      const findingsPath = data.review?.findings_path;
+      if (typeof findingsPath !== 'string') {
+        return { errors: [{ code: 'E_REVIEW_MISSING', file: path, message: 'Review findings path is required' }], exitCode: 1 };
+      }
+      let findings;
+      try {
+        findings = JSON.parse(await readFile(withinRoot(root, findingsPath), 'utf8'));
+      } catch (error) {
+        return { errors: [{ code: 'E_REVIEW_MISSING', file: findingsPath, message: error instanceof Error ? error.message : String(error) }], exitCode: 1 };
+      }
+      if (!Array.isArray(findings.findings)) {
+        return { errors: [{ code: 'E_REVIEW_MISSING', file: findingsPath, message: 'Review findings must be an array' }], exitCode: 1 };
+      }
+      data.review.blocking_findings = findings.findings.filter((/** @type {{severity:string,disposition:string}} */ item) =>
+        ['P0', 'P1'].includes(item.severity) && item.disposition === 'open').length;
+    }
+    const next = options.phase === 'review' && data.review.blocking_findings > 0
+      ? data.lane === 'quick' ? 'work' : 'implement'
+      : typeof options.next === 'string' ? options.next : phaseForLane(contract, data.lane).next[0];
     if (!phaseForLane(contract, data.lane).next.includes(next)) throw new BatonError('E_TRANSITION', `Cannot transition ${options.phase} to ${next}`, 1);
     if (options.phase === 'specify' && next === 'plan' && /\[NEEDS CLARIFICATION/i.test(await readFile(withinRoot(root, `${dirname(path)}/spec.md`), 'utf8'))) {
       throw new BatonError('E_TRANSITION', 'Clarification markers require the clarify phase', 1);
@@ -318,7 +469,7 @@ export async function run(root, args) {
     data.model_role = next === 'done' ? contract.model_role : phases.phases[next].model_role;
     data.gate = { required: contract.human_gate || (options.phase === 'specify' && next === 'plan'), approved_by: null, approved_at: null };
     data.status = next === 'done' ? 'done' : /** @type {Array<{blocking:boolean}>} */ (data.open_questions ?? []).some((item) => item.blocking) ? 'needs-human' : 'ready';
-    await updateMetadata(root, data, contract.owner, next);
+    await updateMetadata(root, data, contract.owner, next, path);
     const policy = modelPolicyIssue(await loadModelSettings(root), data.suggested_model, path);
     if (policy?.code === 'E_MODEL_NOT_ALLOWED') return { errors: [policy], exitCode: 1 };
     const results = await evaluateChecks(phaseForLane(contract, data.lane).exit, (check) => evaluateBuiltIn(root, path, data, check));
@@ -385,10 +536,22 @@ export async function run(root, args) {
   if (action === 'refresh') {
     if (typeof options.reason !== 'string') throw new BatonError('E_USAGE', 'refresh requires --reason', 2);
     const { data, body } = await readHandoff(root, path);
-    for (const item of [...data.read_first, ...data.artifacts]) {
-      item.sha256 = await hashFile(withinRoot(root, item.path));
+    let sourceChanged = false;
+    for (const item of [...(data.read_first ?? []), ...(data.artifacts ?? [])]) {
+      if (item.path === path) {
+        delete item.sha256;
+        continue;
+      }
+      const current = await hashFile(withinRoot(root, item.path));
+      if (item.role === 'source-of-truth' && item.sha256 && item.sha256 !== current) sourceChanged = true;
+      item.sha256 = current;
     }
-    const id = `D${Math.max(0, .../** @type {Array<{id:string}>} */ (data.decisions).map((decision) => Number(/^D(\d+)$/.exec(decision.id)?.[1] ?? 0))) + 1}`;
+    if (sourceChanged && data.gate?.required) {
+      data.gate.approved_by = null;
+      data.gate.approved_at = null;
+    }
+    data.decisions ??= [];
+    const id = nextId(data.decisions, 'D');
     data.decisions.push({ id, decision: 'Artifact hashes refreshed after intentional edit', rationale: options.reason, by: 'implementation-session' });
     data.updated_at = new Date().toISOString();
     data.updated_by = 'implementation-session';
@@ -401,6 +564,9 @@ export async function run(root, args) {
     const routing = resolveModel(await loadModelSettings(root), data.next_phase, data.model_role);
     const command = `/${data.next_owner}`;
     return { data: { command, role: routing.role, model: routing.model,
+      status: data.status, gate: { required: data.gate?.required ?? false, approved_by: data.gate?.approved_by ?? null },
+      blocking_questions: /** @type {Array<{id:string,blocking:boolean}>} */ (data.open_questions ?? [])
+        .filter((question) => question.blocking).map((question) => question.id),
       instruction: routing.model ? `Switch model to ${routing.model}, then run ${command}` : `Run ${command} (inherit current model)` } };
   }
   throw new BatonError('E_USAGE', `Unsupported handoff action: ${action}`, 2);

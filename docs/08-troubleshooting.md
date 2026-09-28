@@ -22,15 +22,15 @@ these as success.
 
 ## Restricted package mirrors
 
-On a workstation that cannot reach public registries over TLS, use the
-approved internal npm feed
-`https://packagefeedproxy.microsoft.io/npm/` and PyPI feed
-`https://packagefeedproxy.microsoft.io/pypi/simple/` **for local
-validation only**. Do not commit mirror settings, disable TLS checks or
-change the lockfile for this workaround. The internal npm mirror may be
-missing `ignore@7.0.10`, which a tool's dependency graph requires:
+On a workstation that cannot reach public registries over TLS, use a
+restricted or internal registry mirror approved by your organisation **for local
+validation only**. Set `npm_config_registry` to your approved npm mirror and
+`UV_DEFAULT_INDEX` to your approved PyPI mirror in the local process
+environment. Do not commit mirror settings, disable TLS checks or
+change the lockfile for this workaround. A restricted npm mirror may be
+missing a pinned transitive dependency:
 `npm ci` can fail even though Baton's own dependencies are healthy.
-The internal PyPI mirror may lack `specify-cli`, so `sync --check` and
+A restricted PyPI mirror may lack `specify-cli`, so `sync --check` and
 Spec Kit script regeneration cannot run there. A cache miss is a feed
 availability issue, not evidence that a pin should be changed.
 

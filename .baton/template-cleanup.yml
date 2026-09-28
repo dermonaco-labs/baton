@@ -33,6 +33,7 @@ move_exceptions:
 keep_dormant:
   - .github/workflows/ci.yml
   - .github/workflows/smoke.yml
+  - .github/workflows/mvp-windows-smoke.yml
   - .github/workflows/upstream-watch.yml
   - .github/workflows/release.yml
   - .github/workflows/template-cleanup.yml
