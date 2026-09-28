@@ -188,8 +188,10 @@ for (const script of ['ps', 'py']) {
       await assertScriptReferencesExist(root, updated);
       const skillReferences = [];
       for (const { path } of updated.files.filter(file => file.path.startsWith('.github/skills/speckit-'))) {
-        skillReferences.push(...(await readFile(join(root, path), 'utf8')).matchAll(scriptReference)
-          .map(([reference]) => reference));
+        skillReferences.push(...Array.from(
+          (await readFile(join(root, path), 'utf8')).matchAll(scriptReference),
+          ([reference]) => reference
+        ));
       }
       assert.ok(skillReferences.length > 0, 'updated Spec Kit skills must call scripts');
       assert.ok(skillReferences.every(reference => reference.startsWith(`.specify/scripts/${directory}/`)),
