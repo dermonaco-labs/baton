@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 001-baton-template
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Owner-directed fix-pass continuation: four red-first checks recovered, 17 check-specific waivers audited; F39 passed hosted CI. An independent review session must review this implementation before land. AC-US7-1 full three-OS remains owner-pending."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Re-review 2 of fix pass 2 (d61a7237..815ca0bd, PR 24): 46 prior findings verified, 5 partial, 4 reopened (F08, F22, F44, F60 at P2). F62 blocks v0.1: add writer identity and E_SELF_REVIEW. New blockers: F63, because the 17 acceptance waivers carry the raw rather than the checkbox-normalized tasks.md hash, so acceptance-evidence is unmet via the CLI; and F64, because a quick-lane review can never satisfy the diff-base rule. The waiver audit files findings on D71, D76, D77, D80, D81 and D82. Also F84: write --dry-run performs a real write. Returns to implement."
 read_first:
   - path: specs/001-baton-template/spec.md
     why: Review scope and acceptance criteria
@@ -21,7 +21,7 @@ read_first:
     sha256: 66b8a25a7ddcadd95046fc3e91b036d35dd42f7bffca78280f023ea5627b18a1
   - path: specs/001-baton-template/review.json
     why: Review fixed and deferred findings, including owner-raised F62
-    sha256: d8c51eb67a09e09c34f94acefb6c1c773c33c60f72a4ecc6e1ad0163c0c402dc
+    sha256: 8a050c081c76c0b091d985fc61b01aa6b72e2d17f41aad0b9e19b5e3bf39e91c
   - path: specs/001-baton-template/contracts/ci.md
     why: Review F39 hosted verification and restored link check
     sha256: 11da9f97fbca470073853e55d51d819e9ea373a55364beb45eafff21d31074ab
@@ -76,7 +76,7 @@ artifacts:
     sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017
   - path: specs/001-baton-template/review.json
     role: evidence
-    sha256: d8c51eb67a09e09c34f94acefb6c1c773c33c60f72a4ecc6e1ad0163c0c402dc
+    sha256: 8a050c081c76c0b091d985fc61b01aa6b72e2d17f41aad0b9e19b5e3bf39e91c
 entry_checked:
   - id: tasks-exists
     ok: true
@@ -84,15 +84,9 @@ entry_checked:
     ok: true
     evidence: analyzed at 23b1a1d; the artifacts were then amended by the analyze fixes and amendments A1-A6 and re-hashed here
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
-    met: true
-    evidence: Four recovered red checks; 17 individually audited owner waivers bind to the tasks evidence hash; manual three-OS owner gate remains pending
-  - id: local-checks-pass
-    met: true
-    evidence: npm run check and baton validate passed locally before the independent review handoff
+    evidence: specs/001-baton-template/review.json
 analysis:
   report_path: specs/001-baton-template/analysis.md
   critical: 0
@@ -711,6 +705,20 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Owner-directed implement-to-review correction, waiver replay audit, hosted F39 evidence and CI repairs
     by: implementation-session
+  - id: D100
+    decision: "Review-role session: headless ce-review safe_auto fixes were not applied"
+    rationale: The review phase records findings only; fixes belong to the implement phase (C4, owner instruction for this re-review).
+    by: baton-review
+  - id: D101
+    decision: F62 self-review/self-land blocks v0.1
+    rationale: "No actor identity exists and history.by records contract.owner, so an implement session can review and land its own work undetected. Fix: per-checkout writer token, E_SELF_REVIEW on review/land by the implement writer, a handoff next session break, and relay tests (review.json F62 x-fix)."
+    by: baton-review
+  - id: D102
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 815ca0bd754fe288b4dd80f641a60d0320568488
+    by: baton
 open_questions: []
 assumptions:
   - id: AS1
@@ -726,15 +734,15 @@ assumptions:
     text: Custom-agent `model:` frontmatter is supported where it matters (verified by T064, stop-and-ask otherwise)
     revisit_at: implement
 risks:
-  - id: R-F39
-    text: Hosted CI job 109131737677 passed the live PowerShell-flavour test without a skip; independent review still needs to verify the fix pass.
-    severity: low
   - id: R-3OS
     text: AC-US7-1 full three-OS smoke remains owner-pending and is not dispatched by this fix pass.
     severity: medium
-  - id: R-LINK
-    text: The unallowlisted lychee action was replaced with a checksum-verified standalone lychee release; CI must confirm this gate remains green.
-    severity: low
+  - id: R-WAIVERS
+    text: All 17 acceptance waivers (D70-D86) must be re-recorded through handoff answer against the normalized tasks.md hash after F44/F66; six cite tests too weak for their check (F71-F74, F76, F77).
+    severity: high
+  - id: R-UPSTREAM-WATCH
+    text: upstream-watch fails at startup on the blocked lychee action, so upstream drift detection is not running (F70).
+    severity: medium
 gate:
   required: false
   approved_by: null
@@ -784,11 +792,15 @@ history:
     at: 2026-09-28T20:13:44.759Z
     by: speckit-implement
     commit: 17016a0
-updated_at: 2026-09-28T21:07:44.022Z
-updated_by: implementation-session
+  - phase: review
+    at: 2026-09-28T21:49:34.381Z
+    by: baton-review
+    commit: 815ca0b
+updated_at: 2026-09-28T21:49:34.381Z
+updated_by: baton-review
 review:
   findings_path: specs/001-baton-template/review.json
-  blocking_findings: 1
+  blocking_findings: 3
 pr:
   url: https://github.com/dermonaco-labs/baton/pull/24
   number: 24
