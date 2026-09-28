@@ -27,7 +27,7 @@ Markdown file = YAML frontmatter (the contract) + a short body (for humans and t
 | `entry_checked` | array of `{id, ok, note?, members?}` | ✓ | CLI | results of receive for the completed phase. `id` is the check key (§2.1); `members` (same shape) is present only for groups |
 | `exit_criteria` | array of `{id, met, evidence?, members?}` | ✓ | CLI+agent | one entry per top-level exit check in phases.yml, keyed by its check key (§2.1); every one must be `met: true` for `status: ready`. Groups carry `members: [{id, met, evidence?}]` |
 | `acceptance_checks` | array of `{id, story, check, kind, expect_initial}` | cond. | agent | required when `next_phase` = `implement` (kind ∈ `command`,`test-id`,`manual`; `expect_initial` ∈ `fail`,`n/a`) |
-| `decisions` | array of `{id, decision, rationale, by, tag?}` | – | agent | `by` is an Actor (§1.1). `tag` (kebab-case) makes a decision machine-checkable, e.g. `skip-compound`, `quick-eligible`, `escalated` |
+| `decisions` | array of `{id, decision, rationale, by, tag?}` | – | agent | `by` is an Actor (§1.1). `tag` (kebab-case) makes a decision machine-checkable, e.g. `skip-compound`, `quick-eligible`, `escalated`, or `diff-base` with an `x-base-commit` SHA that fixes the `diff-nonempty` review base |
 | `open_questions` | array of `{id, question, blocking, options?, owner?}` | – | agent | blocking ⇒ status ≠ ready |
 | `assumptions` | array of `{id, text, revisit_at}` | – | agent | `revisit_at` = a phase |
 | `risks` | array of `{id, text, severity}` | – | agent | severity ∈ low, medium, high |
@@ -313,6 +313,7 @@ optional packs (FR-053). A repair entry is `{id, reason, upstream_issue}`, where
   "baton_version": "0.1.0",
   "installed_at": "2026-09-24T12:00:00Z",
   "source": "template|init",
+  "script": "sh|ps|py",
   "upstreams": { "speckit": "1.0.11@8147943", "atv": "main@ad99673" },
   "packs": ["core"],
   "recommended_packs": [ { "pack": "review-plus", "refs": ["performance-oracle"] } ],
@@ -323,6 +324,8 @@ optional packs (FR-053). A repair entry is `{id, reason, upstream_issue}`, where
 
 A file counts as **user-modified** when its current sha256 differs from `manifest.files[].sha256`. `update` and
 `uninstall` never touch user-modified files.
+`script` records the Spec Kit script flavour chosen at `init --script` (default `sh`); `update` keeps it.
+A legacy `x-script` alias is read only when `script` is absent.
 `recommended_packs` preserves optional pack recommendations when template cleanup removes `packs/`; warnings for
 packs already in `packs` are suppressed. It is advisory and never causes `doctor --strict` to fail.
 
@@ -356,5 +359,6 @@ This file is Baton-owned (`findings.schema.json`). `baton-review` builds it by n
 ```
 
 `severity` ∈ `P0`…`P3`. Findings at `P0`/`P1` with `disposition: open` are **blocking** (they count toward
-`review.blocking_findings`). A `dismissed` finding needs a `reason`, and a finding that isn't dismissed needs a
-`task` (the `findings-mapped-to-tasks-or-dismissed` exit check).
+`review.blocking_findings`). A `dismissed` finding needs a `reason`. In the feature lane, a finding that isn't
+dismissed needs a `task` (the `findings-mapped-to-tasks-or-dismissed` exit check). The quick lane has no tasks, so
+`task` is optional there; every finding must be `fixed` or `dismissed` (the `findings-fixed-or-dismissed` exit check).

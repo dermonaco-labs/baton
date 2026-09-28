@@ -16,6 +16,9 @@ node .baton/bin/baton.mjs validate
 A standalone `baton.mjs` asset does not contain its payload: supply
 `--from <baton-template-vX.tar.gz>` or use the package-based CLI. Missing
 payloads exit 5 with guidance.
+Before using `--from`, verify the archive against the release's `SHA256SUMS`
+obtained from the trusted release page; `--from` does not verify the archive
+checksum itself.
 
 The manifest tracks managed files, their hashes and marker sections. Only
 managed, unmodified files update automatically; modified or unmanaged files

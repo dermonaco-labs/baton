@@ -57,11 +57,12 @@ test('all maintainer jobs are guarded, bounded and SHA-pinned', async () => {
   }
 });
 
-test('new workflows run on tags or manual dispatch without OS matrices', async () => {
+test('only Linux CI joins PR checks; full smoke remains tag/manual without matrices', async () => {
   for (const name of ['ci', 'smoke', 'release', 'copilot-setup-steps']) {
     const workflow = YAML.parse(await readFile(path(name), 'utf8'));
     assert.ok(workflow.on?.workflow_dispatch || workflow.on?.push?.tags, name);
-    assert.equal(workflow.on?.pull_request, undefined, `${name}: PR trigger`);
+    if (name === 'ci') assert.equal(workflow.on?.pull_request, null, 'CI verifies F39 on PR');
+    else assert.equal(workflow.on?.pull_request, undefined, `${name}: PR trigger`);
     for (const job of Object.values(workflow.jobs)) assert.equal(job.strategy?.matrix, undefined, `${name}: matrix`);
   }
 });
@@ -71,6 +72,14 @@ test('CI, smoke and release expose the required checks and dry-run boundary', as
   assert.ok(ci.jobs.lint && ci.jobs.test);
   assert.match(JSON.stringify(ci.jobs.lint), /validate --github/);
   assert.match(JSON.stringify(ci.jobs.test), /npm test/);
+  for (const job of [ci.jobs.lint, ci.jobs.test]) {
+    assert.match(job.steps.find(step => step.name === 'Install uv')?.run ?? '', /pip" install uv==0\.12\.5/);
+    assert.ok(!job.steps.some(step => step.uses?.startsWith('lycheeverse/')), 'disallowed link-check action');
+  }
+  const links = ci.jobs.lint.steps.find(step => step.name === 'Check relative documentation links')?.run ?? '';
+  assert.match(links, /1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a/);
+  assert.match(links, /sha256sum -c -/);
+  assert.match(links, /--offline --no-progress 'docs\/\*\*\/\*\.md'/);
   const smoke = YAML.parse(await readFile(path('smoke'), 'utf8'));
   assert.ok(smoke.jobs.ubuntu && smoke.jobs.macos && smoke.jobs.windows);
   assert.equal(smoke.jobs.macos['runs-on'], 'macos-latest');

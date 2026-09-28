@@ -542,8 +542,8 @@
       "upstream": "speckit",
       "upstream_path": ".specify/extensions/baton/commands/handoff.md",
       "stored_at": ".specify/extensions/baton/commands/handoff.md",
-      "sha256_upstream": "548265571f3fcdddfee8244aa65c5d35c08b421e3229b695d3f1056760eee2da",
-      "sha256": "548265571f3fcdddfee8244aa65c5d35c08b421e3229b695d3f1056760eee2da",
+      "sha256_upstream": "687dc583093b8e15986382a6640b5614e71f92aa6629ba8a45ba38194d34be30",
+      "sha256": "687dc583093b8e15986382a6640b5614e71f92aa6629ba8a45ba38194d34be30",
       "license": "MIT",
       "repair": null,
       "packs": [

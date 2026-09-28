@@ -71,6 +71,18 @@ test('each invalid baton fixture reports its named stable error, without unrelat
           }
           if (['E_GATE_PENDING', 'E_REVIEW_BLOCKING'].includes(code)) {
             await writeFile(join(workspace, featurePath), await readFile(fixture));
+            if (code === 'E_REVIEW_BLOCKING') {
+              const findingsPath = join(workspace, 'specs/001-sample/review.json');
+              const findings = JSON.parse(await readFile(findingsPath, 'utf8'));
+              findings.findings = [{
+                id: 'F01', severity: 'P1', title: 'Blocking finding', file: 'src/label.mjs',
+                line: 1, persona: 'correctness-reviewer', confidence: 0.9,
+                task: 'T001', disposition: 'open', reason: null,
+              }];
+              await writeFile(findingsPath, JSON.stringify(findings));
+              await writeFile(join(workspace, '.baton/config.yml'),
+                'schema: 1\nchecks:\n  - name: offline\n    run: node -e "process.exit(0)"\n');
+            }
             const result = await runHandoff(workspace, ['receive', '--feature', '001-sample', '--phase', code === 'E_GATE_PENDING' ? 'plan' : 'land']);
             errors = result.errors.map((item) => item.code);
           } else if (code === 'E_LANE_ESCALATE') {

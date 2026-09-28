@@ -524,17 +524,347 @@ test('F02 quick review automatically returns to work for open blocking findings'
       decisions: [...data.decisions, { id: 'D2', decision: 'Quick scope held', rationale: 'No new behaviour', tag: 'quick-scope-held', by: 'baton-review' }],
     });
     const result = await runHandoff(root, ['write', '--phase', 'review', '--quick', 'label-fix', '--from-json', 'handoff-input.json']);
+    assert.deepEqual(result.errors, []);
     assert.equal(result.data?.next_phase, 'work');
-    if (!result.errors?.length) {
-      const { data: updated } = parseFrontmatter(await readFile(quick, 'utf8'));
-      assert.equal(updated.review.blocking_findings, 1);
-      assert.equal(updated.next_phase, 'work');
-    }
+    const { data: updated } = parseFrontmatter(await readFile(quick, 'utf8'));
+    assert.equal(updated.review.blocking_findings, 1);
+    assert.equal(updated.next_phase, 'work');
+    assert.deepEqual((await runHandoff(root, ['receive', '--phase', 'work', '--quick', 'label-fix'])).errors, []);
   } finally {
     await cleanup();
   }
 });
 
+test('F03 after_converge hook writes with --mode converge', async () => {
+  const hook = await readFile(join(sourceRoot, 'baton/speckit-extension/commands/handoff.md'), 'utf8');
+  const installed = await readFile(join(sourceRoot, '.specify/extensions/baton/commands/handoff.md'), 'utf8');
+  assert.equal(installed, hook);
+  assert.match(hook, /after_converge[\s\S]*?--mode converge/);
+  const { root, cleanup } = await quickRepo();
+  try {
+    await prepareReview(root, []);
+    const tasks = join(root, 'specs', feature, 'tasks.md');
+    await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('- [ ] T001', '- [x] T001') +
+      '\n## Evidence\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | red: old assertion failed; green: updated assertion passes |\n');
+    await runHandoff(root, ['refresh', '--feature', feature, '--reason', 'Record acceptance evidence']);
+    assert.equal((await runCli(root, ['handoff', 'receive', '--phase', 'implement', '--mode', 'converge', '--feature', feature])).code, 0);
+    await writeInput(root, { summary: 'Converged implementation.' });
+    assert.equal((await runCli(root, ['handoff', 'write', '--phase', 'implement', '--mode', 'converge',
+      '--feature', feature, '--from-json', 'handoff-input.json'])).code, 0);
+    assert.equal(parseFrontmatter(await readFile(join(root, handoff), 'utf8')).data.next_phase, 'review');
+  } finally {
+    await cleanup();
+  }
+});
+
+test('F04 before_specify works with finished features and ambiguous feature directories', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    assert.equal((await runCli(root, ['handoff', 'receive', '--phase', 'specify'])).code, 0);
+    await cp(join(root, 'specs', feature), join(root, 'specs/002-other'), { recursive: true });
+    assert.equal((await runCli(root, ['handoff', 'receive', '--phase', 'specify'])).code, 0);
+  } finally {
+    await cleanup();
+  }
+});
+
+test('F05 after_specify hook writes a new feature inferred from the branch', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    await cp(join(root, 'specs', feature), join(root, 'specs/002-next-thing'), { recursive: true });
+    await rm(join(root, 'specs/002-next-thing/handoff.md'));
+    await git('git', ['checkout', '-qb', '002-next-thing'], { cwd: root, windowsHide: true });
+    await writeInput(root, { summary: 'Specify second feature.' });
+    const result = await runCli(root, ['handoff', 'write', '--phase', 'specify', '--next', 'plan',
+      '--from-json', 'handoff-input.json', '--json']);
+    assert.equal(result.code, 0, result.stdout + result.stderr);
+    const written = parseFrontmatter(await readFile(join(root, 'specs/002-next-thing/handoff.md'), 'utf8')).data;
+    assert.equal(written.feature, '002-next-thing');
+    assert.equal(written.next_phase, 'plan');
+  } finally {
+    await cleanup();
+  }
+});
+
+test('F31 review rejects clean decoys and outside-phase findings replacement', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const canonical = await prepareReview(root, [{
+      id: 'F01', severity: 'P1', title: 'Blocking issue', file: 'src/commands/handoff.mjs',
+      line: 1, persona: 'correctness-reviewer', confidence: 0.95, task: 'T001',
+      disposition: 'open', reason: null,
+    }]);
+    const clean = JSON.parse(await readFile(join(root, canonical), 'utf8'));
+    clean.findings = [];
+    await writeFile(join(root, 'clean.json'), JSON.stringify(clean));
+    await writeInput(root, { summary: 'Try decoy.', review: { findings_path: 'clean.json', blocking_findings: 0 } });
+    const result = await runCli(root, ['handoff', 'write', '--phase', 'review', '--feature', feature,
+      '--from-json', 'handoff-input.json', '--json']);
+    assert.notEqual(result.code, 0);
+    assert.equal(parseFrontmatter(await readFile(join(root, handoff), 'utf8')).data.next_phase, 'review');
+    await editBaton(root, (data) => {
+      data.phase_completed = 'analyze';
+      data.next_phase = 'implement';
+      data.next_owner = 'speckit-implement';
+      data.model_role = 'implementation';
+      data.gate = { required: true, approved_by: 'maintainer', approved_at: '2026-09-24' };
+    });
+    const injection = await runCli(root, ['handoff', 'write', '--phase', 'implement', '--feature', feature,
+      '--from-json', 'handoff-input.json', '--json']);
+    assert.equal(injection.code, 2, injection.stdout + injection.stderr);
+  } finally {
+    await cleanup();
+  }
+});
+
+    test('F09 analyze records a durable implementation diff base', async () => {
+      const { root, cleanup } = await quickRepo();
+      try {
+        const base = (await git('git', ['rev-parse', 'HEAD'], { cwd: root, windowsHide: true })).stdout.trim();
+        await editBaton(root, (data) => {
+          data.phase_completed = 'tasks';
+          data.next_phase = 'analyze';
+          data.next_owner = 'speckit-analyze';
+          data.model_role = 'review';
+          data.gate = { required: false, approved_by: null, approved_at: null };
+        });
+
+        await writeInput(root, { summary: 'No critical analysis findings.' });
+        const result = await runCli(root, ['handoff', 'write', '--phase', 'analyze', '--feature', feature,
+          '--from-json', 'handoff-input.json', '--json']);
+        assert.equal(result.code, 0, result.stdout + result.stderr);
+        const { data } = parseFrontmatter(await readFile(join(root, handoff), 'utf8'));
+        assert.equal(data.decisions.findLast((decision) => decision.tag === 'diff-base')?.['x-base-commit'], base);
+      } finally {
+        await cleanup();
+      }
+    });
+
+test('F09 first review still sees implementation after origin advances', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const base = (await git('git', ['rev-parse', 'HEAD'], { cwd: root, windowsHide: true })).stdout.trim();
+    await editBaton(root, (data) => {
+      data.phase_completed = 'tasks';
+      data.next_phase = 'analyze';
+      data.next_owner = 'speckit-analyze';
+      data.model_role = 'review';
+      data.gate = { required: false, approved_by: null, approved_at: null };
+    });
+    await writeInput(root, { summary: 'Analyze approved.' });
+    assert.equal((await runCli(root, ['handoff', 'write', '--phase', 'analyze', '--feature', feature,
+      '--from-json', 'handoff-input.json'])).code, 0);
+    await mkdir(join(root, 'src'), { recursive: true });
+    await writeFile(join(root, 'src/feature.mjs'), 'export const feature = true;\n');
+    await git('git', ['add', 'src/feature.mjs'], { cwd: root, windowsHide: true });
+    await git('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+      'commit', '-qm', 'implement feature'], { cwd: root, windowsHide: true });
+    await git('git', ['update-ref', 'refs/remotes/origin/main', 'HEAD'], { cwd: root, windowsHide: true });
+    await editBaton(root, (data) => {
+      data.phase_completed = 'implement';
+      data.next_phase = 'review';
+      data.next_owner = 'baton-review';
+      data.model_role = 'review';
+      data.gate = { required: false, approved_by: null, approved_at: null };
+      data.exit_criteria = [
+        { id: 'tasks-all-checked-or-deferred', met: true },
+        { id: 'acceptance-evidence', met: true },
+        { id: 'local-checks-pass', met: true },
+      ];
+    });
+    const { data } = parseFrontmatter(await readFile(join(root, handoff), 'utf8'));
+    assert.equal(data.decisions.findLast((decision) => decision.tag === 'diff-base')?.['x-base-commit'], base);
+    const received = await runCli(root, ['handoff', 'receive', '--phase', 'review', '--feature', feature, '--json']);
+    assert.equal(received.code, 0, received.stdout + received.stderr);
+  } finally {
+    await cleanup();
+  }
+});
+
+    test('F32 implement write accepts legitimate task progress after receive', async () => {
+      const { root, cleanup } = await quickRepo();
+      try {
+        assert.equal((await runCli(root, ['handoff', 'receive', '--phase', 'implement', '--feature', feature])).code, 0);
+        const tasks = join(root, 'specs', feature, 'tasks.md');
+        await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('- [ ] T001', '- [x] T001') +
+          '\n## Evidence\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | red: original assertion failed; green: corrected assertion passed |\n');
+        await writeInput(root, { summary: 'Implementation completed.' });
+        const result = await runCli(root, ['handoff', 'write', '--phase', 'implement', '--feature', feature,
+          '--from-json', 'handoff-input.json', '--json']);
+        assert.equal(result.code, 0, result.stdout + result.stderr);
+      } finally {
+        await cleanup();
+      }
+    });
+
+test('approved spec and plan changes cannot be rehashed by implement write', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const batonPath = join(root, handoff);
+    assert.equal((await runCli(root, ['handoff', 'receive', '--phase', 'implement', '--feature', feature])).code, 0);
+    const original = await readFile(batonPath, 'utf8');
+    for (const name of ['spec', 'plan']) {
+      const path = join(root, 'specs', feature, `${name}.md`);
+      const before = await readFile(path, 'utf8');
+      await writeFile(path, `${before}\nNew unapproved ${name} decision.\n`);
+      await writeInput(root, { summary: 'Do not erase pre-code approval scope.' });
+      const result = await runCli(root, ['handoff', 'write', '--phase', 'implement', '--feature', feature,
+        '--from-json', 'handoff-input.json', '--json']);
+      assert.equal(result.code, 1, result.stdout + result.stderr);
+      assert.ok(JSON.parse(result.stdout).errors.some(({ code }) => code === 'E_STALE_ARTIFACT'), name);
+      assert.equal(await readFile(batonPath, 'utf8'), original);
+      await writeFile(path, before);
+    }
+  } finally { await cleanup(); }
+});
+
+    test('F35 refresh revokes an approved gate when derived tasks change', async () => {
+      const { root, cleanup } = await repo();
+      try {
+        const tasks = join(root, 'specs', feature, 'tasks.md');
+        await writeFile(tasks, (await readFile(tasks, 'utf8')) + '\nAdded acceptance detail.\n');
+        await runHandoff(root, ['refresh', '--feature', feature, '--reason', 'Derived task change']);
+        const { data } = parseFrontmatter(await readFile(join(root, handoff), 'utf8'));
+        assert.equal(data.gate.approved_by, null);
+      } finally {
+        await cleanup();
+      }
+    });
+
+test('F35 an agent cannot relabel an existing source artifact', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const { data } = parseFrontmatter(await readFile(join(root, handoff), 'utf8'));
+    await writeInput(root, {
+      summary: 'Change source role.',
+      artifacts: data.artifacts.map((item) => item.path.endsWith('/spec.md')
+        ? { ...item, role: 'evidence' } : item),
+    });
+    const result = await runCli(root, ['handoff', 'write', '--phase', 'implement', '--feature', feature,
+      '--from-json', 'handoff-input.json', '--json']);
+    assert.equal(result.code, 2, result.stdout + result.stderr);
+    assert.equal(parseFrontmatter(await readFile(join(root, handoff), 'utf8')).data.artifacts[0].role, 'source-of-truth');
+  } finally {
+    await cleanup();
+  }
+});
+
+    test('F36 implement cannot discard a pre-registered acceptance check', async () => {
+      const { root, cleanup } = await quickRepo();
+      try {
+        const tasks = join(root, 'specs', feature, 'tasks.md');
+        await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('- [ ] T001', '- [x] T001') +
+          '\n## Evidence\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | red: original assertion failed; green: corrected assertion passed |\n');
+        await writeInput(root, { summary: 'Completed implementation.', acceptance_checks: [] });
+        const result = await runCli(root, ['handoff', 'write', '--phase', 'implement', '--feature', feature,
+          '--from-json', 'handoff-input.json', '--json']);
+        assert.equal(result.code, 0, result.stdout + result.stderr);
+        assert.equal(parseFrontmatter(await readFile(join(root, handoff), 'utf8')).data.acceptance_checks.length, 1);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test('F41 next instructs resolving a pending gate rather than proceeding', async () => {
+      const { root, cleanup } = await repo();
+      try {
+        await editBaton(root, (data) => { data.gate.approved_by = null; data.gate.approved_at = null; });
+        const result = await runHandoff(root, ['next', '--feature', feature]);
+        assert.equal(result.data.blocked, true);
+        assert.match(result.data.instruction, /Show baton handoff approve.*to an authorized human and wait/);
+        await editBaton(root, (data) => {
+          data.status = 'needs-human';
+          data.open_questions = [{ id: 'Q1', question: 'Who approves?', blocking: true, options: ['Wait'] }];
+        });
+        const question = await runHandoff(root, ['next', '--feature', feature]);
+        assert.match(question.data.instruction, /Show baton handoff answer Q1.*to an authorized human and wait/);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test('F50 escalation retains needs-human while questions remain open', async () => {
+      const { root, cleanup } = await repo();
+      try {
+        await runHandoff(root, ['new', '--quick', 'scope', '--reason', 'Small edit']);
+        const location = join(root, '.baton/quick/scope.md');
+        const { data, body } = parseFrontmatter(await readFile(location, 'utf8'));
+        data.phase_completed = 'work';
+        data.next_phase = 'review';
+        data.next_owner = 'baton-review';
+        data.status = 'needs-human';
+        data.open_questions = [{ id: 'Q1', question: 'What scope?', blocking: true, options: ['Small', 'Large'] }];
+        await writeFile(location, serializeFrontmatter(data, body));
+        const result = await runHandoff(root, ['escalate', '--quick', 'scope', '--reason', 'Need a feature']);
+        assert.equal(result.data.from_quick, '.baton/quick/scope.md');
+        assert.equal(parseFrontmatter(await readFile(location, 'utf8')).data.status, 'needs-human');
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test('F53 missing or escaping JSON payload reports usage rather than internal error', async () => {
+      const { root, cleanup } = await repo();
+      try {
+        for (const path of ['missing.json', '../outside.json']) {
+          const result = await runCli(root, ['handoff', 'write', '--phase', 'implement', '--feature', feature,
+            '--from-json', path, '--json']);
+          assert.equal(result.code, 2, `${path}: ${result.stdout}${result.stderr}`);
+        }
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test('F37 a human answer can explicitly waive one partial acceptance check', async () => {
+      const { root, cleanup } = await quickRepo();
+      try {
+        const tasks = join(root, 'specs', feature, 'tasks.md');
+        await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('- [ ] T001', '- [x] T001') +
+          '\n## Evidence\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | partial — original red result was not retained; current test passes |\n');
+        await editBaton(root, (data) => {
+          data.status = 'needs-human';
+          data.open_questions = [{
+            id: 'Q1', blocking: true, question: 'Waive missing red evidence for AC-US1-1?',
+            'x-check': 'AC-US1-1', options: ['Waive missing red evidence', 'Keep unmet'],
+          }];
+        });
+
+        const answered = await runCli(root, ['handoff', 'answer', 'Q1', 'Waive missing red evidence',
+          '--feature', feature, '--by', 'maintainer', '--json']);
+        assert.equal(answered.code, 0, answered.stdout + answered.stderr);
+        const decisions = parseFrontmatter(await readFile(join(root, handoff), 'utf8')).data.decisions;
+        assert.ok(decisions.some((item) => item.by === 'human:maintainer' &&
+          item.tag === 'acceptance-waiver' && item['x-check'] === 'AC-US1-1'));
+        await writeInput(root, { summary: 'Waived red baseline with human approval.' });
+        const written = await runCli(root, ['handoff', 'write', '--phase', 'implement', '--feature', feature,
+          '--from-json', 'handoff-input.json', '--json']);
+        assert.equal(written.code, 0, written.stdout + written.stderr);
+      } finally {
+        await cleanup();
+      }
+    });
+test('changing partial evidence invalidates the earlier human waiver', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const tasks = join(root, 'specs', feature, 'tasks.md');
+    const evidence = '\n## Evidence\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | partial — original red result missing; green assertion passes |\n';
+    await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('- [ ] T001', '- [x] T001') + evidence);
+    await editBaton(root, (data) => {
+      data.status = 'needs-human';
+      data.open_questions = [{ id: 'Q1', blocking: true, question: 'Waive this recorded result?',
+        'x-check': 'AC-US1-1', options: ['Waive missing red evidence', 'Keep unmet'] }];
+    });
+    assert.equal((await runCli(root, ['handoff', 'answer', 'Q1', 'Waive missing red evidence',
+      '--feature', feature, '--by', 'repository owner', '--json'])).code, 0);
+    await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('green assertion passes', 'different green assertion passes'));
+    await writeInput(root, { summary: 'Changed partial result needs renewed approval.' });
+    const result = await runCli(root, ['handoff', 'write', '--phase', 'implement', '--feature', feature,
+      '--from-json', 'handoff-input.json', '--json']);
+    assert.equal(result.code, 1, result.stdout + result.stderr);
+    assert.match(result.stdout, /acceptance-evidence.*partial.*tagged human waiver/s);
+  } finally { await cleanup(); }
+});
 test('F03/F20 converge receive can be followed by a converged implement write', async () => {
   const { root, cleanup } = await quickRepo();
   try {
@@ -615,9 +945,18 @@ test('F06 multiple features resolve the active feature from the git branch', asy
   const { root, cleanup } = await quickRepo();
   try {
     await cp(join(root, 'specs', feature), join(root, 'specs/002-other'), { recursive: true });
+    const otherHandoff = join(root, 'specs/002-other/handoff.md');
+    const { data, body } = parseFrontmatter(await readFile(otherHandoff, 'utf8'));
+    data.feature = '002-other';
+    data.next_phase = 'review';
+    data.next_owner = 'baton-review';
+    data.model_role = 'review';
+    await writeFile(otherHandoff, serializeFrontmatter(data, body));
     await git('git', ['checkout', '-qb', feature], { cwd: root, windowsHide: true });
     const next = await runHandoff(root, ['next']);
     assert.equal(next.data.command, '/speckit-implement');
+    await git('git', ['checkout', '-qb', '002-other'], { cwd: root, windowsHide: true });
+    assert.equal((await runHandoff(root, ['next'])).data.command, '/baton-review');
   } finally {
     await cleanup();
   }
@@ -676,6 +1015,32 @@ test('F11 supplied human decisions cannot be forged or mutate a prior decision',
     await assert.rejects(runHandoff(root, ['write', '--phase', 'compound', '--feature', feature, '--from-json', 'handoff-input.json']),
       (error) => error.code === 'E_USAGE' && error.exitCode === 2);
     assert.equal(parseFrontmatter(await readFile(join(root, handoff), 'utf8')).data.decisions[0].decision, 'Original');
+    await writeInput(root, {
+      summary: 'Try new human decision.',
+      decisions: [{ id: 'D2', decision: 'Invented approval', rationale: 'Not from an answer', by: 'human:maintainer' }],
+    });
+    await assert.rejects(runHandoff(root, ['write', '--phase', 'compound', '--feature', feature, '--from-json', 'handoff-input.json']),
+      (error) => error.code === 'E_USAGE' && error.exitCode === 2);
+  } finally {
+    await cleanup();
+  }
+});
+
+test('F51 land rejects a malformed canonical findings file even with a saved zero', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const reviewPath = await prepareReview(root, []);
+    await editBaton(root, (data) => {
+      data.phase_completed = 'review';
+      data.next_phase = 'land';
+      data.next_owner = 'baton-land';
+      data.model_role = 'implementation';
+      data.review = { findings_path: reviewPath, blocking_findings: 0 };
+    });
+    await writeFile(join(root, reviewPath), '{broken');
+    const result = await runCli(root, ['handoff', 'receive', '--phase', 'land', '--feature', feature, '--json']);
+    assert.notEqual(result.code, 0);
+    assert.ok(JSON.parse(result.stdout).errors.some((issue) => ['E_REVIEW_BLOCKING', 'E_REVIEW_MISSING'].includes(issue.code)));
   } finally {
     await cleanup();
   }

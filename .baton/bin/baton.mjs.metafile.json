@@ -3666,7 +3666,7 @@
       "format": "esm"
     },
     "src/lib/handoff.mjs": {
-      "bytes": 11891,
+      "bytes": 12082,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3722,7 +3722,7 @@
       "format": "esm"
     },
     "src/lib/checks.mjs": {
-      "bytes": 15918,
+      "bytes": 20715,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3763,6 +3763,11 @@
           "path": "src/lib/schema.mjs",
           "kind": "import-statement",
           "original": "./schema.mjs"
+        },
+        {
+          "path": "src/lib/handoff.mjs",
+          "kind": "import-statement",
+          "original": "./handoff.mjs"
         }
       ],
       "format": "esm"
@@ -3855,7 +3860,7 @@
       "format": "esm"
     },
     "src/commands/handoff.mjs": {
-      "bytes": 35308,
+      "bytes": 39919,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4131,7 +4136,7 @@
       "format": "esm"
     },
     "src/commands/init.mjs": {
-      "bytes": 18874,
+      "bytes": 19477,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4202,7 +4207,7 @@
       "format": "esm"
     },
     "src/commands/update.mjs": {
-      "bytes": 11239,
+      "bytes": 11343,
       "imports": [
         {
           "path": "node:fs",
@@ -4795,7 +4800,7 @@
           "bytesInOutput": 1558
         },
         "src/lib/hash.mjs": {
-          "bytesInOutput": 384
+          "bytesInOutput": 383
         },
         "src/commands/build.mjs": {
           "bytesInOutput": 2855
@@ -5017,13 +5022,13 @@
           "bytesInOutput": 814
         },
         "src/lib/manifest.mjs": {
-          "bytesInOutput": 930
+          "bytesInOutput": 929
         },
         "src/lib/packs.mjs": {
           "bytesInOutput": 3536
         },
         "src/commands/manifest.mjs": {
-          "bytesInOutput": 1827
+          "bytesInOutput": 1826
         },
         "src/lib/upstream.mjs": {
           "bytesInOutput": 4160
@@ -5035,7 +5040,7 @@
           "bytesInOutput": 1657
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 12022
+          "bytesInOutput": 12048
         },
         "node_modules/ajv/dist/compile/codegen/code.js": {
           "bytesInOutput": 2551
@@ -5071,7 +5076,7 @@
           "bytesInOutput": 680
         },
         "node_modules/ajv/dist/vocabularies/code.js": {
-          "bytesInOutput": 3106
+          "bytesInOutput": 3132
         },
         "node_modules/ajv/dist/compile/validate/keyword.js": {
           "bytesInOutput": 2961
@@ -5299,7 +5304,7 @@
           "bytesInOutput": 344
         },
         "node_modules/ajv/dist/2020.js": {
-          "bytesInOutput": 1691
+          "bytesInOutput": 1716
         },
         "node_modules/ajv-formats/dist/formats.js": {
           "bytesInOutput": 7725
@@ -5335,10 +5340,10 @@
           "bytesInOutput": 949
         },
         "src/lib/handoff.mjs": {
-          "bytesInOutput": 6597
+          "bytesInOutput": 6748
         },
         "src/lib/checks.mjs": {
-          "bytesInOutput": 9040
+          "bytesInOutput": 11018
         },
         "src/lib/maintainer-workflows.mjs": {
           "bytesInOutput": 515
@@ -5347,16 +5352,16 @@
           "bytesInOutput": 7741
         },
         "src/commands/handoff.mjs": {
-          "bytesInOutput": 21169
+          "bytesInOutput": 23938
         },
         "src/commands/status.mjs": {
           "bytesInOutput": 937
         },
         "src/commands/adopt.mjs": {
-          "bytesInOutput": 7317
+          "bytesInOutput": 7315
         },
         "src/commands/doctor.mjs": {
-          "bytesInOutput": 3799
+          "bytesInOutput": 3798
         },
         "src/lib/overlay.mjs": {
           "bytesInOutput": 916
@@ -5368,13 +5373,13 @@
           "bytesInOutput": 740
         },
         "src/commands/init.mjs": {
-          "bytesInOutput": 10227
+          "bytesInOutput": 10359
         },
         "src/commands/update.mjs": {
-          "bytesInOutput": 5816
+          "bytesInOutput": 5890
         },
         "src/commands/models.mjs": {
-          "bytesInOutput": 1978
+          "bytesInOutput": 1977
         },
         "src/commands/uninstall.mjs": {
           "bytesInOutput": 1506
@@ -5383,7 +5388,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 387859
+      "bytes": 393033
     }
   }
 }

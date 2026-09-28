@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  pull_request:
   push:
     tags: ['v*.*.*']
   workflow_dispatch:
@@ -24,7 +25,11 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-      - uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v6.6.1
+      - name: Install uv
+        run: |
+          python3 -m venv "$RUNNER_TEMP/uv"
+          "$RUNNER_TEMP/uv/bin/pip" install uv==0.12.5
+          echo "$RUNNER_TEMP/uv/bin" >> "$GITHUB_PATH"
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run lint:md
       - run: npm run lint:yaml
@@ -36,10 +41,13 @@ jobs:
       - run: node .baton/bin/baton.mjs build --check
       - run: node .baton/bin/baton.mjs lock verify
       - run: node .baton/bin/baton.mjs validate --github
-      - uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0 # v2.7.0
-        with:
-          args: --offline --no-progress 'docs/**/*.md'
-          fail: true
+      - name: Check relative documentation links
+        run: |
+          curl -fSL --retry 3 -o "$RUNNER_TEMP/lychee.tar.gz" \
+            https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz
+          echo "1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a  $RUNNER_TEMP/lychee.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/lychee.tar.gz" -C "$RUNNER_TEMP" lychee-x86_64-unknown-linux-gnu/lychee
+          "$RUNNER_TEMP/lychee-x86_64-unknown-linux-gnu/lychee" --offline --no-progress 'docs/**/*.md'
   test:
     if: github.repository == 'dermonaco-labs/baton'
     runs-on: ubuntu-latest
@@ -52,5 +60,10 @@ jobs:
         with:
           node-version: '20'
           cache: npm
+      - name: Install uv
+        run: |
+          python3 -m venv "$RUNNER_TEMP/uv"
+          "$RUNNER_TEMP/uv/bin/pip" install uv==0.12.5
+          echo "$RUNNER_TEMP/uv/bin" >> "$GITHUB_PATH"
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm test

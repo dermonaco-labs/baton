@@ -18,7 +18,7 @@ export async function readManifest(root) {
 
 /** @param {string} root @param {{script?:string,'x-script'?:string}|undefined} manifest */
 export async function installedScript(root, manifest) {
-  let script = manifest?.['x-script'] ?? manifest?.script;
+  let script = manifest?.script ?? manifest?.['x-script'];
   if (script === undefined) {
     try {
       script = JSON.parse(await readFile(withinRoot(root, '.specify/init-options.json'), 'utf8')).script;

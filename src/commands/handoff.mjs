@@ -23,6 +23,15 @@ async function commitId(root) {
     throw error;
   }
 }
+/** @param {string} root */
+async function fullCommitId(root) {
+  try {
+    return (await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: root, windowsHide: true })).stdout.trim();
+  } catch (error) {
+    if ([128, 'ENOENT'].includes(/** @type {{code?:number|string}} */ (error).code ?? '')) return null;
+    throw error;
+  }
+}
 /** @param {string} root @param {Record<string,any>} data @param {string} actor @param {string} phase @param {string} [batonPath] */
 async function updateMetadata(root, data, actor, phase, batonPath) {
   data.updated_at = new Date().toISOString();
@@ -114,16 +123,23 @@ function appendOnly(data, field, incoming) {
   data[field] = [...existing, ...additions];
 }
 
-/** @param {string} root @param {string} path @param {Record<string,any>} data @param {import('../lib/phases.mjs').Phase} contract @param {string} phase */
-async function entryErrors(root, path, data, contract, phase) {
+/** @param {string} root @param {string} path @param {Record<string,any>} data @param {import('../lib/phases.mjs').Phase} contract @param {string} phase @param {boolean} [writing] */
+async function entryErrors(root, path, data, contract, phase, writing = false) {
   const errors = [];
   if (data.gate?.required && !data.gate.approved_by) errors.push({ code: 'E_GATE_PENDING', file: path, message: 'Human approval is required before receiving this phase' });
   if (data.status === 'needs-human') errors.push({ code: 'E_BLOCKING_OPEN', file: path, message: 'A human decision is required' });
-  if (phase === 'land' && data.review?.blocking_findings > 0) {
-    errors.push({ code: 'E_REVIEW_BLOCKING', file: path, message: 'Resolve blocking review findings before landing' });
+  if (phase === 'land' && data.review?.findings_path !== (data.lane === 'quick'
+    ? `.baton/quick/${data.feature}.review.json` : `${dirname(path).replaceAll('\\', '/')}/review.json`)) {
+    errors.push({ code: 'E_REVIEW_BLOCKING', file: path, message: 'Land requires the canonical review findings file' });
   }
   if (!errors.length) {
-    const checks = await evaluateChecks(phaseForLane(contract, data.lane).entry,
+    const entry = phaseForLane(contract, data.lane).entry.flatMap((check) => {
+      if (!writing || check.id !== 'fresh') return [check];
+      if (phase !== 'implement' || !check.names) return [];
+      const names = check.names.filter((name) => name !== 'tasks');
+      return names.length ? [{ ...check, names }] : [];
+    });
+    const checks = await evaluateChecks(entry,
       (check) => evaluateBuiltIn(root, path, data, check));
     for (const check of checks.filter((item) => !item.met)) {
       const code = check.id === 'gate-approved' ? 'E_GATE_PENDING'
@@ -152,11 +168,22 @@ export async function run(root, args) {
   }
   const options = parseOptions(rest);
   if (action === 'receive' && options.phase === 'specify' && !options.feature && !options.quick) {
-    const entries = await readdir(withinRoot(root, 'specs')).catch((error) => {
-      if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return [];
-      throw error;
-    });
-    if (!entries.some((name) => /^\d{3}-[a-z0-9-]+$/.test(name))) {
+    let selected;
+    try {
+      selected = await locate(root, options);
+    } catch (error) {
+      if (!(error instanceof BatonError) || error.code !== 'E_USAGE') throw error;
+    }
+    if (!selected) {
+      return { errors: [], data: { read_first: [], do_not_read: [] }, exitCode: 0 };
+    }
+    try {
+      const { data } = await readHandoff(root, selected);
+      if (data.next_phase !== 'specify') {
+        return { errors: [], data: { read_first: [], do_not_read: [] }, exitCode: 0 };
+      }
+    } catch (error) {
+      if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
       return { errors: [], data: { read_first: [], do_not_read: [] }, exitCode: 0 };
     }
   }
@@ -292,7 +319,7 @@ export async function run(root, args) {
     data.next_phase = 'specify';
     data.next_owner = 'speckit-specify';
     data.model_role = 'planning';
-    data.status = 'ready';
+    data.status = /** @type {Array<{blocking:boolean}>} */ (data.open_questions ?? []).some((item) => item.blocking) ? 'needs-human' : 'ready';
     data.decisions ??= [];
     data.decisions.push({ id: nextId(data.decisions, 'D'), decision: 'Escalate to feature lane', rationale: options.reason, tag: 'escalated', by: 'baton' });
     await updateMetadata(root, data, 'baton', 'specify');
@@ -308,9 +335,21 @@ export async function run(root, args) {
     if (index < 0) throw new BatonError('E_USAGE', `Unknown question ${answer.id}`, 2);
     const question = data.open_questions[index];
     if (question.options?.length && !question.options.includes(answer.choice)) throw new BatonError('E_USAGE', 'Choice must be one of the recorded options', 2);
+    const check = question['x-check'];
+    if (check !== undefined && (!/** @type {Array<{id:string}>|undefined} */ (data.acceptance_checks)?.some((item) => item.id === check) ||
+      typeof check !== 'string' || !/^AC-US[1-9]\d*-[1-9]\d*$/.test(check))) {
+      throw new BatonError('E_USAGE', 'Waiver question must identify a registered acceptance check', 2);
+    }
     data.open_questions.splice(index, 1);
     data.decisions ??= [];
-    data.decisions.push({ id: nextId(data.decisions, 'D'), decision: answer.choice, rationale: question.question, by: `human:${options.by.replaceAll(' ', '-')}` });
+    data.decisions.push({
+      id: nextId(data.decisions, 'D'), decision: answer.choice, rationale: question.question,
+      by: `human:${options.by.replaceAll(' ', '-')}`,
+      ...(check && /^Waive\b/i.test(answer.choice) ? {
+        tag: 'acceptance-waiver', 'x-check': check,
+        'x-evidence-sha256': await hashFile(withinRoot(root, `${dirname(path)}/tasks.md`)),
+      } : {}),
+    });
     data.status = /** @type {Array<{blocking:boolean}>} */ (data.open_questions).some((item) => item.blocking) ? 'needs-human' : 'ready';
     await updateMetadata(root, data, `human:${options.by.replaceAll(' ', '-')}`, data.next_phase);
     await writeHandoff(root, path, data, body);
@@ -321,8 +360,8 @@ export async function run(root, args) {
     const brainstorm = options['from-brainstorm'];
     const quick = options['from-quick'];
     if (brainstorm && quick) throw new BatonError('E_USAGE', 'Choose one source for the first feature handoff', 2);
-    if ((brainstorm || quick) && (options.phase !== 'specify' || typeof options.feature !== 'string')) {
-      throw new BatonError('E_USAGE', 'Cross-source evidence requires specify --feature', 2);
+    if ((brainstorm || quick) && options.phase !== 'specify') {
+      throw new BatonError('E_USAGE', 'Cross-source evidence requires specify', 2);
     }
     let data;
     let body;
@@ -355,7 +394,7 @@ export async function run(root, args) {
       const now = new Date().toISOString();
       const origin = sourceQuick?.data.phase_completed ?? 'brainstorm';
       data = {
-        baton: 1, lane: 'feature', feature: options.feature, phase_completed: origin,
+        baton: 1, lane: 'feature', feature: basename(dirname(path)), phase_completed: origin,
         next_phase: 'specify', next_owner: 'speckit-specify', status: 'ready',
         model_role: 'planning', suggested_model: null, summary: 'First feature handoff',
         read_first: [{ path: source, why: 'Source of the feature handoff' }],
@@ -372,7 +411,7 @@ export async function run(root, args) {
       try {
         ({ data, body } = await readHandoff(root, path));
       } catch (error) {
-        if (options.phase !== 'specify' || typeof options.feature !== 'string' ||
+        if (options.phase !== 'specify' ||
             /** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
         const spec = `${dirname(path).replaceAll('\\', '/')}/spec.md`;
         let digest;
@@ -383,7 +422,7 @@ export async function run(root, args) {
           return { errors: [{ code: 'E_MISSING_ARTIFACT', file: spec, message: 'Specification must exist before the first handoff' }], exitCode: 1 };
         }
         data = {
-          baton: 1, lane: 'feature', feature: options.feature, phase_completed: 'none',
+          baton: 1, lane: 'feature', feature: basename(dirname(path)), phase_completed: 'none',
           next_phase: 'specify', next_owner: 'speckit-specify', status: 'ready',
           model_role: 'planning', suggested_model: null, summary: 'First feature handoff',
           read_first: [{ path: spec, why: 'Specification and scope', sha256: digest }],
@@ -403,7 +442,7 @@ export async function run(root, args) {
         !(options.phase === 'implement' && options.mode === 'converge' && data.phase_completed === 'implement')) {
       throw new BatonError('E_TRANSITION', `Expected ${data.next_phase}, not ${options.phase}`, 1);
     }
-    const preflight = await entryErrors(root, path, data, contract, options.phase);
+    const preflight = await entryErrors(root, path, data, contract, options.phase, true);
     if (preflight.length) {
       return { errors: preflight, exitCode: preflight.some((issue) => ['E_GATE_PENDING', 'E_BLOCKING_OPEN'].includes(issue.code)) ? 3 : 1 };
     }
@@ -411,11 +450,25 @@ export async function run(root, args) {
     try {
       supplied = JSON.parse(await readFile(withinRoot(root, options['from-json']), 'utf8'));
     } catch (error) {
-      if (!(error instanceof SyntaxError)) throw error;
-      throw new BatonError('E_USAGE', `Invalid JSON in ${options['from-json']}: ${error.message}`, 2);
+      if (error instanceof SyntaxError) throw new BatonError('E_USAGE', `Invalid JSON in ${options['from-json']}: ${error.message}`, 2);
+      if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT' || /Path escapes repository:/.test(String(error))) {
+        throw new BatonError('E_USAGE', `Cannot read --from-json ${options['from-json']}: ${error instanceof Error ? error.message : String(error)}`, 2);
+      }
+      throw error;
     }
     const allowed = new Set(['summary', 'read_first', 'do_not_read', 'artifacts', 'decisions', 'open_questions', 'assumptions', 'risks', 'acceptance_checks', 'review', 'analysis', 'pr']);
     if (!supplied || typeof supplied !== 'object' || Array.isArray(supplied) || Object.keys(supplied).some((key) => !allowed.has(key))) throw new BatonError('E_USAGE', 'Agent data contains unexpected or deterministic fields', 2);
+    if (options.phase !== 'review' && Object.hasOwn(supplied, 'review')) throw new BatonError('E_USAGE', 'Review findings can only be supplied during review', 2);
+    if (Array.isArray(supplied.artifacts)) {
+      for (const item of supplied.artifacts) {
+        const existing = data.artifacts?.find((/** @type {{path:string,role:string}} */ artifact) => artifact.path === item.path);
+        if (existing && existing.role !== item.role) throw new BatonError('E_USAGE', `Artifact role cannot change: ${item.path}`, 2);
+      }
+    }
+    if (Object.hasOwn(supplied, 'acceptance_checks') && !['specify', 'clarify', 'plan', 'tasks'].includes(options.phase)) {
+      appendOnly(data, 'acceptance_checks', supplied.acceptance_checks);
+      delete supplied.acceptance_checks;
+    }
     for (const field of ['decisions', 'open_questions']) {
       if (Object.hasOwn(supplied, field)) {
         appendOnly(data, field, supplied[field]);
@@ -444,6 +497,11 @@ export async function run(root, args) {
       if (typeof findingsPath !== 'string') {
         return { errors: [{ code: 'E_REVIEW_MISSING', file: path, message: 'Review findings path is required' }], exitCode: 1 };
       }
+      const canonical = data.lane === 'quick'
+        ? `.baton/quick/${data.feature}.review.json` : `${dirname(path).replaceAll('\\', '/')}/review.json`;
+      if (findingsPath !== canonical) {
+        throw new BatonError('E_USAGE', `Review findings_path must be ${canonical}`, 2);
+      }
       let findings;
       try {
         findings = JSON.parse(await readFile(withinRoot(root, findingsPath), 'utf8'));
@@ -453,6 +511,8 @@ export async function run(root, args) {
       if (!Array.isArray(findings.findings)) {
         return { errors: [{ code: 'E_REVIEW_MISSING', file: findingsPath, message: 'Review findings must be an array' }], exitCode: 1 };
       }
+      const valid = await evaluateBuiltIn(root, path, data, { id: 'findings-json-valid' });
+      if (!valid.met) return { errors: [{ code: 'E_REVIEW_MISSING', file: findingsPath, message: valid.evidence }], exitCode: 1 };
       data.review.blocking_findings = findings.findings.filter((/** @type {{severity:string,disposition:string}} */ item) =>
         ['P0', 'P1'].includes(item.severity) && item.disposition === 'open').length;
     }
@@ -469,10 +529,23 @@ export async function run(root, args) {
     data.model_role = next === 'done' ? contract.model_role : phases.phases[next].model_role;
     data.gate = { required: contract.human_gate || (options.phase === 'specify' && next === 'plan'), approved_by: null, approved_at: null };
     data.status = next === 'done' ? 'done' : /** @type {Array<{blocking:boolean}>} */ (data.open_questions ?? []).some((item) => item.blocking) ? 'needs-human' : 'ready';
+    if (options.phase === 'analyze' && next === 'implement' || options.phase === 'review') {
+      const base = await fullCommitId(root);
+      if (!base) throw new BatonError('E_CHECK_FAILED', 'Cannot record diff base without a Git HEAD', 1);
+      data.decisions ??= [];
+      data.decisions.push({
+        id: nextId(data.decisions, 'D'), decision: 'Record reviewed implementation base',
+        rationale: options.phase === 'analyze' ? 'Implementation starts at this commit' : 'Review completed at this commit',
+        tag: 'diff-base', 'x-base-commit': base, by: 'baton',
+      });
+    }
     await updateMetadata(root, data, contract.owner, next, path);
     const policy = modelPolicyIssue(await loadModelSettings(root), data.suggested_model, path);
     if (policy?.code === 'E_MODEL_NOT_ALLOWED') return { errors: [policy], exitCode: 1 };
-    const results = await evaluateChecks(phaseForLane(contract, data.lane).exit, (check) => evaluateBuiltIn(root, path, data, check));
+    const exitChecks = phaseForLane(contract, data.lane).exit.filter((check) =>
+      options.phase !== 'review' || next === 'land' ||
+      !['findings-fixed-or-dismissed', 'findings-mapped-to-tasks-or-dismissed'].includes(check.id));
+    const results = await evaluateChecks(exitChecks, (check) => evaluateBuiltIn(root, path, data, check));
     data.exit_criteria = results;
     data.history = [...(data.history ?? []), { phase: options.phase, at: data.updated_at, by: contract.owner, commit: await commitId(root) }].slice(-20);
     const unmet = results.filter((item) => !item.met).map((item) => ({ code: item.id === 'quick-scope-held' ? 'E_LANE_ESCALATE' : 'E_EXIT_UNMET', file: path,
@@ -543,7 +616,7 @@ export async function run(root, args) {
         continue;
       }
       const current = await hashFile(withinRoot(root, item.path));
-      if (item.role === 'source-of-truth' && item.sha256 && item.sha256 !== current) sourceChanged = true;
+      if (!item.sha256 || item.sha256 !== current) sourceChanged = true;
       item.sha256 = current;
     }
     if (sourceChanged && data.gate?.required) {
@@ -563,11 +636,16 @@ export async function run(root, args) {
     if (action === 'show') return { data };
     const routing = resolveModel(await loadModelSettings(root), data.next_phase, data.model_role);
     const command = `/${data.next_owner}`;
+    const questions = /** @type {Array<{id:string,blocking:boolean}>} */ (data.open_questions ?? [])
+      .filter((question) => question.blocking).map((question) => question.id);
+    const gatePending = data.gate?.required && !data.gate.approved_by;
+    const blocked = Boolean(gatePending || questions.length || data.status === 'needs-human');
     return { data: { command, role: routing.role, model: routing.model,
       status: data.status, gate: { required: data.gate?.required ?? false, approved_by: data.gate?.approved_by ?? null },
-      blocking_questions: /** @type {Array<{id:string,blocking:boolean}>} */ (data.open_questions ?? [])
-        .filter((question) => question.blocking).map((question) => question.id),
-      instruction: routing.model ? `Switch model to ${routing.model}, then run ${command}` : `Run ${command} (inherit current model)` } };
+      blocking_questions: questions, blocked,
+      instruction: questions.length ? `Show baton handoff answer ${questions[0]} <choice> --by <role> to an authorized human and wait before ${command}`
+        : gatePending ? `Show baton handoff approve --by <role> to an authorized human and wait before ${command}`
+          : routing.model ? `Switch model to ${routing.model}, then run ${command}` : `Run ${command} (inherit current model)` } };
   }
   throw new BatonError('E_USAGE', `Unsupported handoff action: ${action}`, 2);
 }

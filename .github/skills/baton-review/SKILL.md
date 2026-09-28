@@ -13,6 +13,14 @@ structure/contracts and `tasks.md` (for a quick baton, its recorded
 intent), not the PR description alone. Load only `read_first`, honor
 `do_not_read`, and inspect the changed files.
 
+Run `baton handoff show --json` and select the latest `diff-base` decision
+whose `x-base-commit` exists as a commit in this clone (`git cat-file -e
+<sha>^{commit}`). Pass that exact commit as `base:<sha>` to
+`/ce-review mode:headless`, and verify its reported base and reviewed file
+set match the baton review scope. Stop if no usable recorded base exists
+or ce-review cannot honor it; never silently review against `origin/HEAD`
+or an unrelated merge-base.
+
 Enumerate installed `.github/agents/*.agent.md` persona files; pass
 **only that installed list** to `/ce-review mode:headless`, with an
 explicit instruction that its Stage 3 selection and Stage 4 dispatch
@@ -36,15 +44,17 @@ a result if the headless output is unavailable. Validate the JSON with
 `node .baton/bin/baton.mjs validate --path <review.json>`.
 
 In the feature lane, map each nondismissed finding to a task; dismiss
-only with a written reason. In the quick lane there are no tasks:
-every finding must be `fixed` or `dismissed` with a reason before
-landing. Record a decision tagged `quick-scope-held` with a reason
-only after checking the diff adds no user-facing behavior or public
-contract; otherwise escalate. P0/P1 `open` findings block landing. Record the JSON path and
-exact blocking count in the outgoing review baton through
-`handoff write --phase review --from-json <file>` (add
-`--quick <slug>` for the quick lane). Return to feature `implement`
-or quick `work` while blockers remain; never silently drop them.
+only with a written reason. In the quick lane there are no tasks, so
+`task` is optional: every finding must be `fixed` or `dismissed` with
+a reason before landing. Record a decision tagged `quick-scope-held`
+with a reason only after checking the diff adds no user-facing
+behavior or public contract; otherwise escalate. P0/P1 `open` findings
+block landing. Pass a `--from-json` payload with
+`review: { findings_path: "<review.json path>" }` to
+`handoff write --phase review` (add `--quick <slug>` for the quick lane).
+The CLI derives `blocking_findings` from that file and automatically routes
+to feature `implement` or quick `work` while blockers remain; never
+silently drop them.
 If quick-lane review reveals new user-facing behavior or a new public
 contract, report `E_LANE_ESCALATE`, call
 `handoff escalate --quick <slug> --reason "<reason>"` and hand off

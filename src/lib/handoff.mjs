@@ -126,7 +126,9 @@ export async function validateHandoff(root, path, source) {
     errors.push({ code: 'E_OWNER', file: path, message: 'Next owner does not match the phase contract' });
   }
   if (completed && data.status === 'ready') {
-    const criteria = phaseForLane(completed, data.lane).exit;
+    const criteria = phaseForLane(completed, data.lane).exit.filter((check) =>
+      data.phase_completed !== 'review' || data.next_phase === 'land' ||
+      !['findings-fixed-or-dismissed', 'findings-mapped-to-tasks-or-dismissed'].includes(check.id));
     for (const check of criteria) {
       if (!/** @type {Array<{id:string,met:boolean}>} */ (data.exit_criteria ?? []).some((item) => item.id === checkKey(check) && item.met)) {
         errors.push({ code: 'E_EXIT_UNMET', file: path, message: `${checkKey(check)} lacks successful exit evidence` });
