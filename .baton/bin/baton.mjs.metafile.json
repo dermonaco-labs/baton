@@ -3717,7 +3717,7 @@
       "format": "esm"
     },
     "src/lib/checks.mjs": {
-      "bytes": 12039,
+      "bytes": 12201,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -5323,7 +5323,7 @@
           "bytesInOutput": 6597
         },
         "src/lib/checks.mjs": {
-          "bytesInOutput": 7114
+          "bytesInOutput": 7232
         },
         "src/lib/maintainer-workflows.mjs": {
           "bytesInOutput": 491
@@ -5368,7 +5368,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 378907
+      "bytes": 379025
     }
   }
 }
