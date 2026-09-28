@@ -39,12 +39,20 @@ jobs:
           fi
       - name: Check external documentation links
         id: links
-        uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0 # v2.7.0
-        with:
-          args: --no-progress --include '^https?://' 'docs/**/*.md'
-          output: lychee/out.md
-          fail: false
-          jobSummary: false
+        shell: bash
+        run: |
+          curl -fSL --retry 3 -o "$RUNNER_TEMP/lychee.tar.gz" \
+            https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz
+          echo "1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a  $RUNNER_TEMP/lychee.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/lychee.tar.gz" -C "$RUNNER_TEMP" lychee-x86_64-unknown-linux-gnu/lychee
+          if "$RUNNER_TEMP/lychee-x86_64-unknown-linux-gnu/lychee" \
+            --no-progress --include '^https?://' --format markdown \
+            --output "$RUNNER_TEMP/lychee.out.md" 'docs/**/*.md'; then
+            result=0
+          else
+            result=$?
+          fi
+          echo "exit_code=$result" >> "$GITHUB_OUTPUT"
       - name: Update the single upstream tracking issue
         if: always() && steps.checkout.outcome == 'success'
         env:
@@ -125,7 +133,7 @@ jobs:
             problems.push(`- \`baton sync --check\` failed (pin drift, unreachable commit or wheel hash):\n\n\`\`\`text\n${log.slice(-4000).replaceAll('```', "'''") || 'Step did not complete.'}\n\`\`\``);
           }
           if (process.env.LINKS_OUTCOME !== 'success' || process.env.LINKS_RESULT !== '0') {
-            const report = await readFile('lychee/out.md', 'utf8').catch(() => '');
+            const report = await readFile(`${process.env.RUNNER_TEMP}/lychee.out.md`, 'utf8').catch(() => '');
             problems.push(`- External documentation links failed:\n\n${report.slice(0, 6000) || `See the [workflow run](${process.env.RUN_URL}) for the link-check error.`}`);
           }
 

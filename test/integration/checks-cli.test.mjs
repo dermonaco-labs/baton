@@ -77,7 +77,7 @@ async function featureRepo() {
   const base = await commit(root, 'fixture baseline');
   await git(root, 'update-ref', 'refs/remotes/origin/main', 'HEAD');
   await git(root, 'symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main');
-  return { root, base, cleanup: () => rm(root, { force: true, recursive: true }) };
+  return { root, base, cleanup: () => rm(root, { force: true, recursive: true, maxRetries: 10, retryDelay: 500 }) };
 }
 
 /** Check T001, record evidence for AC-US1-1 and re-approve the refreshed tasks. */
@@ -92,6 +92,21 @@ async function recordEvidence(root, evidenceTable) {
 
 const redGreen = '| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | red — label test failed before the fix; green — label test passes after the fix |\n';
 
+test('local-checks-pass allows a full check suite longer than two minutes', { timeout: 180000 }, async () => {
+  const { root, cleanup } = await featureRepo();
+  try {
+    await recordEvidence(root, redGreen);
+    const configPath = join(root, '.baton/config.yml');
+    const config = YAML.parse(await readFile(configPath, 'utf8'));
+    config.checks = [{ name: 'full-suite', run: 'node -e "setTimeout(() => process.exit(0), 121000)"' }];
+    await writeFile(configPath, YAML.stringify(config));
+    const result = await writeImplement(root);
+    assert.equal(result.code, 0, result.output);
+  } finally {
+    await cleanup();
+  }
+});
+
 /** @param {string} root @param {Record<string, unknown>} [input] */
 async function writeImplement(root, input = {}) {
   await writeFile(join(root, 'handoff-input.json'), JSON.stringify({ summary: 'Implementation complete.', ...input }));
@@ -103,6 +118,16 @@ function receiveReview(root) {
   return baton(root, ['handoff', 'receive', '--phase', 'review', '--feature', feature]);
 }
 
+async function authorizeReview(root) {
+  const question = await baton(root, ['handoff', 'question', '--feature', feature,
+    '--tag', 'self-review-override', '--reason', 'Exercise diff checks in a single scratch checkout']);
+  assert.equal(question.code, 0, question.output);
+  const id = JSON.parse(question.output).data.question;
+  const answer = await baton(root, ['handoff', 'answer', id, 'Allow self-review',
+    '--feature', feature, '--by', 'repository owner']);
+  assert.equal(answer.code, 0, answer.output);
+}
+
 test('F33/F40 review entry ignores feature planning artifacts and counts new adopter files anywhere', async () => {
   const { root, cleanup } = await featureRepo();
   try {
@@ -110,6 +135,7 @@ test('F33/F40 review entry ignores feature planning artifacts and counts new ado
     await writeFile(join(root, `specs/${feature}/analysis.md`), '# Analysis\n\n| Findings remaining open | CRITICAL 0, HIGH 0 |\n\nRe-run.\n');
     const written = await writeImplement(root);
     assert.equal(written.code, 0, written.output);
+    await authorizeReview(root);
 
     const bookkeepingOnly = await receiveReview(root);
     assert.equal(bookkeepingOnly.code, 1, bookkeepingOnly.output);
@@ -129,13 +155,15 @@ test('F34 an unreachable recorded diff base falls back to the merge-base instead
   try {
     await recordEvidence(root, redGreen);
     await writeFile(join(root, 'src/label.mjs'), "export const label = 'New';\n");
-    const written = await writeImplement(root, {
-      decisions: [{
+    await editBaton(root, (data) => {
+      data.decisions.push({
         id: 'D10', decision: 'Record implementation diff base', rationale: 'Base copied from another clone',
         tag: 'diff-base', 'x-base-commit': 'deadbeefcafe', by: 'speckit-implement',
-      }],
+      });
     });
+    const written = await writeImplement(root);
     assert.equal(written.code, 0, written.output);
+    await authorizeReview(root);
     const received = await receiveReview(root);
     assert.equal(received.code, 0, received.output);
   } finally {
@@ -149,15 +177,17 @@ test('F34 a later diff-base decision corrects an earlier wrong base', async () =
     await recordEvidence(root, redGreen);
     await writeFile(join(root, 'src/label.mjs'), "export const label = 'New';\n");
     const wrong = await commit(root, 'implementation');
-    const written = await writeImplement(root, {
-      decisions: [
+    await editBaton(root, (data) => {
+      data.decisions.push(
         { id: 'D10', decision: 'Record implementation diff base', rationale: 'Recorded after implementation by mistake',
           tag: 'diff-base', 'x-base-commit': wrong, by: 'speckit-implement' },
         { id: 'D11', decision: 'Correct implementation diff base', rationale: 'Implementation began at the baseline',
           tag: 'diff-base', 'x-base-commit': base, by: 'speckit-implement' },
-      ],
+      );
     });
+    const written = await writeImplement(root);
     assert.equal(written.code, 0, written.output);
+    await authorizeReview(root);
     const received = await receiveReview(root);
     assert.equal(received.code, 0, received.output);
   } finally {
@@ -171,6 +201,7 @@ test('F33 a re-review after a fix pass without new code is rejected until code c
     await recordEvidence(root, redGreen);
     await writeFile(join(root, 'src/label.mjs'), "export const label = 'New';\n");
     assert.equal((await writeImplement(root)).code, 0);
+    await authorizeReview(root);
     assert.equal((await receiveReview(root)).code, 0);
     await rm(join(root, 'handoff-input.json'));
     const head = await commit(root, 'implementation');
@@ -217,7 +248,7 @@ test('F37 n/a evidence for a fail-registered check stays unmet, even after a hum
       decisions: [{ id: 'D10', decision: 'Waive AC-US1-1 red baseline', rationale: 'Red run was not retained',
         tag: 'acceptance-waiver', 'x-check': 'AC-US1-1', by: 'speckit-implement' }],
     });
-    assert.equal(selfWaived.code, 1, selfWaived.output);
+    assert.equal(selfWaived.code, 2, selfWaived.output);
 
     await editBaton(root, (data) => {
       data.status = 'needs-human';

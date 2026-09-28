@@ -17,8 +17,9 @@ For a new user-facing behavior or public contract, start the feature lane
 at `/speckit-specify` (optionally `/ce-brainstorm` first). For a small
 change without new behavior or contract, run
 `handoff new --quick <slug> --reason "<why>"`; this records a tagged
-`quick-eligible` decision. Run
-`handoff receive --phase work --quick <slug>` and refuse `/ce-work`
+`quick-eligible` decision and pins the review diff base. Each checkout keeps its
+random writer token under gitignored `.baton/.local/`; never copy it to
+another checkout. Run `handoff receive --phase work --quick <slug>` and refuse `/ce-work`
 unless `decision:quick-eligible` and `no-feature-tasks` pass. After
 `/ce-work`, run `handoff write --phase work --quick <slug>` with
 judgement fields and local-check evidence. **Never invoke `/ce-work`
@@ -27,6 +28,11 @@ for a feature with `specs/<feature>/tasks.md`.** Use
 and landing use `/baton-review` and `/baton-land`, each with
 `--quick <slug>`; after a human approves the PR-review gate, the
 compound step receives/writes with `--phase compound --quick <slug>`.
+After implement/work write, end this session and start a fresh review
+session in another checkout. A same-checkout review/land returns
+`E_SELF_REVIEW` (exit 3); only an owner answer to a blocking question
+requested with `handoff question --tag self-review-override --reason R`
+can override it.
 
 If the next phase reports exit 3, stop for human approval or an answer.
 Show `handoff approve --by "<role>" [--via "<channel>"]` for a gate or

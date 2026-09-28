@@ -1,6 +1,7 @@
 node_modules/
 .baton/conflicts/
 .baton/.tmp/
+.baton/.local/
 .atv/observations*
 .context/
 /test/fixtures/handoffs/.relay-*/

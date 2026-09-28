@@ -100,7 +100,7 @@ async function commitExists(root, sha) {
  * @param {string} root @param {Record<string,any>} data
  * @returns {Promise<{base: string|null, notes: string[], invalid?: boolean}>}
  */
-async function reviewBase(root, data) {
+export async function reviewBase(root, data) {
   /** @type {Array<{label:string,sha:unknown}>} */
   const candidates = [];
   const recorded = /** @type {Array<{tag?:string,'x-base-commit'?:string}>} */ (data.decisions ?? [])
@@ -298,7 +298,7 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
       const results = [];
       for (const item of config.checks) {
         try {
-          await execAsync(item.run, { cwd: root, timeout: 120000, windowsHide: true });
+          await execAsync(item.run, { cwd: root, timeout: 300000, windowsHide: true });
           results.push(`${item.name}: 0`);
         } catch (error) {
           results.push(`${item.name}: ${/** @type {{code?:number}} */ (error).code ?? 'error'}`);

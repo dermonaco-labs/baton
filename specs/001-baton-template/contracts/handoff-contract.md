@@ -100,6 +100,8 @@ sequenceDiagram
 | `E_EXIT_UNMET` | error | `status: ready`, but some `exit_criteria.met` is false. |
 | `E_CHECK_FAILED` | error (exit 1) | A configured project check failed during phase entry. |
 | `E_GATE_PENDING` | error (on receive) | The previous phase requires a human gate and `gate.approved_by` is null. |
+| `E_SELF_REVIEW` | error (exit 3) | Review or land is attempted from the checkout that wrote implement/work. Start a fresh checkout, or obtain an answered owner question tagged `self-review-override`. |
+| `E_STALE_REVIEW` | error | Code differs from the reviewed tree recorded at review write. Return to review before landing. |
 | `E_APPROVER_FORMAT` | error | `gate.approved_by` isn't `<role>` or `<role> via <channel>` from `config.gates` (data-model §1.1: each is 1–4 words of `[a-z]+(-[a-z]+)*`, so `control-plane` is valid), or only one of `approved_by` / `approved_at` is set. |
 | `E_ACTOR_FORMAT` | error | A `by` / `updated_by` value isn't an agent id or `human:<role-slug>` (`human:[a-z]+(-[a-z]+)*`, a vocabulary role with spaces → `-`) from `config.gates.approver_roles`. |
 | `E_DENYLIST` | error | Personal data found by the denylist scan (below). |
@@ -179,3 +181,11 @@ An agent that finds ambiguity affecting scope, behaviour, security, data or publ
 `receive` refuses to start the next phase (exit 3) until a human answers. The human does this with
 `baton handoff answer <id> "<choice>" --by "<role>"`, which moves the answer to `decisions` and recomputes
 `status`.
+
+Each checkout gets a random token at its first relay CLI use in gitignored `.baton/.local/session.json`. History
+records the actual CLI writer in `by` and the token's SHA-256 as `writer` for writes, answers and approvals.
+Implement/work writes also retain that hash in `x-implementation-writer`, so pruning the bounded history cannot erase the self-review guard.
+Implement/work and review/land MUST have different writer hashes, unless an authorized owner answers a blocking
+question tagged `self-review-override`. A partial acceptance result can request a check-specific waiver through
+`handoff question --check <id> --reason <reason>` before implement exit is met; the answer binds the waiver to
+the checkbox-normalized tasks.md hash.

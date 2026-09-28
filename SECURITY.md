@@ -9,10 +9,10 @@ supported; earlier 0.x releases are not guaranteed fixes.
 ## Project-check trust boundary
 
 The local checks in `.baton/config.yml` are shell commands supplied by the
-checked-out branch. Receiving the land baton and writing the land handoff
-run these commands. Review changes to the check configuration before running
-either operation on an untrusted pull request; Baton does not pin these
-commands to the default branch.
+checked-out branch. Any phase whose `.baton/phases.yml` entry or exit includes
+`local-checks-pass` runs them during receive or write; land runs them by
+default. Review both files before receiving or writing a baton on an
+untrusted pull request. Baton does not pin commands to the default branch.
 
 ## Reporting a vulnerability
 

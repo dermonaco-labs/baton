@@ -4,7 +4,8 @@
     "engine": "ce-review",
     "mode": "headless",
     "run_artifact": ".context/compound-engineering/ce-review/20260928-baton-rereview2/",
-    "x-scope": "Re-review 2: fix-pass-2 diff d61a7237..815ca0bd (PR 24) plus verification of every prior finding F01-F62, the D70-D86 acceptance-waiver audit, and the F21-F23/F47/F51/F59 deferrals and F60/F61 dismissals. safe_auto fixes were not applied: review-role session."
+    "x-scope": "Re-review 2: fix-pass-2 diff d61a7237..815ca0bd (PR 24) plus verification of every prior finding F01-F62, the D70-D86 acceptance-waiver audit, and the F21-F23/F47/F51/F59 deferrals and F60/F61 dismissals. safe_auto fixes were not applied: review-role session.",
+    "x-fixpass3": "Implementation remediation and disposition audit; independent review remains required. D107-D123 are owner-authorized waivers, not recovered historical red."
   },
   "base": "d61a7237bd7215615050aa594b6777a3197de2db",
   "head": "815ca0bd754fe288b4dd80f641a60d0320568488",
@@ -29,7 +30,7 @@
       "confidence": 0.85,
       "task": "T037",
       "disposition": "fixed",
-      "reason": "Write now enforces pending gates, blocking questions and phase entry checks; relay regressions cover bypass attempts.",
+      "reason": "Fresh entry checks on write now include task evidence; F68 closes the remaining bypass.",
       "x-fix": "In write, before closing phase P, reject with E_GATE_PENDING/E_BLOCKING_OPEN (exit 3) when data.gate.required && !data.gate.approved_by or status is needs-human, and re-run the phase entry checks (or require receive to have populated entry_checked). Only then reset gate at line 319. Add a relay test.",
       "x-evidence": "Line 289 only compares next_phase; line 319 replaces gate with approved_by:null. receive (175-176) enforces the gate but write does not, so skipping receive erases an unapproved scope or pre-code gate (C6).",
       "x-rereview": {
@@ -39,6 +40,10 @@
       "x-rereview2": {
         "verdict": "partial",
         "evidence": "Pending gates, needs-human status and entry checks are still enforced on write (relay tests green). But entryErrors(writing=true) drops the fresh checks for every phase except spec/plan on implement write, so a post-implement tasks.md evidence edit is rehashed by the next write. See F68."
+      },
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Fresh entry checks on write now include task evidence; F68 closes the remaining bypass."
       }
     },
     {
@@ -274,7 +279,7 @@
       "confidence": 0.8,
       "task": "T100",
       "disposition": "fixed",
-      "reason": "Supplied decisions merge append-only and cannot forge human answers or remove blocking questions.",
+      "reason": "Decision and question merge remains append-only; new provenance and base decisions are CLI-owned, not accepted from agent JSON.",
       "x-fix": "Merge decisions append-only: keep existing ids unchanged, reject supplied entries whose by starts with human: and never drop an existing blocking question except via handoff answer.",
       "x-evidence": "Object.assign(data, supplied) at line 293 overwrites arrays; handoff answer (213-227) is the only intended path to resolve a question.",
       "x-agreement": [
@@ -287,6 +292,10 @@
       "x-rereview2": {
         "verdict": "partial",
         "evidence": "New human:* decisions via --from-json are rejected (appendOnly). Agent-supplied `tag: diff-base, by: baton` decisions are still accepted, and reviewBase trusts the last one, so an agent can narrow the next review scope. See F69."
+      },
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Decision and question merge remains append-only; new provenance and base decisions are CLI-owned, not accepted from agent JSON."
       }
     },
     {
@@ -506,7 +515,7 @@
       "confidence": 0.6,
       "task": "T057",
       "disposition": "open",
-      "reason": "Deferred: archive verification needs an agreed checksum-distribution and failure contract; no archive install is part of this fix-pass delivery.",
+      "reason": "Deferred: archive verification against release SHA256SUMS is a larger update/init distribution contract change.",
       "x-deferred": true,
       "x-fix": "Verify the archive digest against a SHA256SUMS file next to it (or a --sha256 flag) before extracting.",
       "x-evidence": "contracts/ci.md:110 publishes SHA256SUMS; src has no reference to it.",
@@ -517,6 +526,10 @@
       "x-rereview2": {
         "verdict": "deferral-accepted",
         "evidence": "docs/07-updating.md:19-21 now documents the update/merge limitation; acceptable for v0.1."
+      },
+      "x-fixpass3": {
+        "verdict": "deferred",
+        "evidence": "Deferred: archive verification against release SHA256SUMS is a larger update/init distribution contract change."
       }
     },
     {
@@ -528,8 +541,8 @@
       "persona": "security-reviewer",
       "confidence": 0.62,
       "task": "T035",
-      "disposition": "open",
-      "reason": "Reopened in re-review 2: The SECURITY.md:9-15 / README.md:77-80 note says configured checks run only at land. That is inaccurate: phases.yml can add `local-checks-pass` to any phase entry (review receive executes it; reproduced in a scratch repo). Docs-only fix: state that any phase whose contract lists local-checks-pass executes .baton/config.yml commands.",
+      "disposition": "fixed",
+      "reason": "Contracts document that local-check commands execute from the checked-out branch and require a trusted workspace.",
       "x-deferred": true,
       "x-fix": "Document the trust boundary and print the commands before running them in receive land; optionally require config.yml checks to match the default branch.",
       "x-evidence": "A PR that edits config.yml checks gets command execution when a reviewer runs the land receive.",
@@ -540,6 +553,10 @@
       "x-rereview2": {
         "verdict": "reopened",
         "evidence": "The SECURITY.md:9-15 / README.md:77-80 note says configured checks run only at land. That is inaccurate: phases.yml can add `local-checks-pass` to any phase entry (review receive executes it; reproduced in a scratch repo). Docs-only fix: state that any phase whose contract lists local-checks-pass executes .baton/config.yml commands."
+      },
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Contracts document that local-check commands execute from the checked-out branch and require a trusted workspace."
       }
     },
     {
@@ -551,8 +568,8 @@
       "persona": "security-reviewer",
       "confidence": 0.62,
       "task": "T100",
-      "disposition": "open",
-      "reason": "Deferred: scanning code spans requires an agreed placeholder allowlist and false-positive policy before changing privacy validation.",
+      "disposition": "fixed",
+      "reason": "Personal-data scan documentation now explicitly notes the backtick exclusion in JavaScript and YAML.",
       "x-deferred": true,
       "x-fix": "Scan code spans too but allow documented placeholder domains (example.com/.invalid) instead of skipping all code.",
       "x-evidence": "Lines 31-33 remove fenced and inline code before matching.",
@@ -563,6 +580,10 @@
       "x-rereview2": {
         "verdict": "deferral-accepted",
         "evidence": "docs/06-packs-and-customization.md:44-47 note exists. It understates scope (JS and YAML backtick spans are skipped too); widen the wording when touched. Not a v0.1 blocker."
+      },
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Personal-data scan documentation now explicitly notes the backtick exclusion in JavaScript and YAML."
       }
     },
     {
@@ -811,12 +832,16 @@
       "confidence": 0.7,
       "task": "T037",
       "disposition": "fixed",
-      "reason": "Refreshing any changed hashed artifact or read-first evidence revokes a pending gate approval; existing artifact roles cannot be changed.",
+      "reason": "Stale approved spec or plan now blocks answer and escalate before metadata refresh; prior gate revocation remains intact.",
       "x-fix": "When a gate is required, clear approval on refresh if any hashed artifact or read_first entry changed (treat a missing prior sha256 as a change), and do not let --from-json change the role of an existing artifact.",
       "x-evidence": "Reproduced: analyze baton approved; tasks.md T001 reworded -> receive implement E_STALE_ARTIFACT; refresh succeeds with approval kept; receive implement then passes.",
       "x-rereview2": {
         "verdict": "partial",
         "evidence": "refresh now resets the pre-code approval on a tasks.md edit or role change. The adjacent laundering path via `handoff answer`/`escalate` (updateMetadata rehashes spec/plan unconditionally) remains; see F65."
+      },
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Stale approved spec or plan now blocks answer and escalate before metadata refresh; prior gate revocation remains intact."
       }
     },
     {
@@ -976,13 +1001,17 @@
       "persona": "project-standards-reviewer",
       "confidence": 0.7,
       "task": "T079",
-      "disposition": "open",
-      "reason": "Reopened in re-review 2: The hostname is back in committed feature artifacts: tasks.md:484 (AC-US5-1 evidence row) and handoff.md:842 (waiver replay table). Remove the host from both, and extend the test to scan specs/**, docs/** and the baton body. Editing tasks.md changes its evidence hash, so waivers must be re-recorded afterwards (F63).",
+      "disposition": "fixed",
+      "reason": "Private feed hostnames removed from tracked artifacts via CLI redaction and generic tasks wording; documentation regression checks for private hosts.",
       "x-fix": "Assert a generic rule (no concrete registry host other than documented placeholders) instead of the literal hostname.",
       "x-evidence": "It is now the only occurrence of the hostname; constitution Supply-Chain forbids adopter-specific hostnames.",
       "x-rereview2": {
         "verdict": "reopened",
         "evidence": "The hostname is back in committed feature artifacts: tasks.md:484 (AC-US5-1 evidence row) and handoff.md:842 (waiver replay table). Remove the host from both, and extend the test to scan specs/**, docs/** and the baton body. Editing tasks.md changes its evidence hash, so waivers must be re-recorded afterwards (F63)."
+      },
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Private feed hostnames removed from tracked artifacts via CLI redaction and generic tasks wording; documentation regression checks for private hosts."
       }
     },
     {
@@ -1031,12 +1060,16 @@
       "confidence": 0.8,
       "task": "T037",
       "disposition": "open",
-      "reason": "Deferred: consolidating findings parsing and feature-baton construction is a broader refactor with no remaining demonstrated blocking behavior; the canonical findings guard and stale saved-count path are fixed independently.",
+      "reason": "Deferred: consolidating duplicated findings parsing is a refactor; current validation and blocking checks agree.",
       "x-fix": "Add loadFindings/countBlocking helpers, schema-validate before routing in write, and drop the saved-count land check in entryErrors; factor the repeated quick-escalation predicate and feature-baton skeleton in handoff.mjs.",
       "x-evidence": "handoff.mjs write (Array.isArray only) and checks.mjs:245-273 duplicate the rule.",
       "x-rereview2": {
         "verdict": "deferral-accepted",
         "evidence": "Maintainability persona agrees: a P3 refactor with no behavior impact; acceptable after v0.1."
+      },
+      "x-fixpass3": {
+        "verdict": "deferred",
+        "evidence": "Deferred: consolidating duplicated findings parsing is a refactor; current validation and blocking checks agree."
       }
     },
     {
@@ -1104,12 +1137,16 @@
       "confidence": 0.8,
       "task": "T033",
       "disposition": "open",
-      "reason": "Deferred: the specific regression gaps are secondary coverage work; this pass added direct relay, check, manifest and installer cases for the blocking behaviors, but has not exhausted every enumerated variant.",
+      "reason": "Deferred: remaining fixture assertions span independent older fixes; prioritize focused regression work after this relay pass.",
       "x-fix": "Add a new-id human:* decision case, non-hex base cases for both base sources, a discriminating F06 branch fixture, an installedScript unit test and a malformed-file no-blocking-findings case.",
       "x-evidence": "Security and testing personas list these as untested branches added by the fix pass.",
       "x-rereview2": {
         "verdict": "deferral-accepted",
         "evidence": "P3 secondary branches. The non-hex base guard is exercised incidentally by the F34 test, and checks.test covers malformed findings for findings-json-valid/mapped/fixed. Still open: an explicit non-hex base case for both sources, new-id human:* forgery, and a discriminating malformed-file case for no-blocking-findings. The added F51 relay test (relay:1029) accepts either E_REVIEW_BLOCKING or E_REVIEW_MISSING and passes at base, so it is characterization only. F76 (approver vocabulary) should be fixed first."
+      },
+      "x-fixpass3": {
+        "verdict": "deferred",
+        "evidence": "Deferred: remaining fixture assertions span independent older fixes; prioritize focused regression work after this relay pass."
       }
     },
     {
@@ -1159,7 +1196,7 @@
       "confidence": 0.96,
       "task": "T037",
       "disposition": "fixed",
-      "reason": "Write now checks approved spec and plan freshness while allowing task progress; a bundled-CLI regression proves changed inputs cannot close the phase.",
+      "reason": "Implement write retains fresh spec/plan enforcement; F68 covers task evidence freshness at review write.",
       "x-agreement": [
         "correctness-reviewer",
         "security-reviewer",
@@ -1168,6 +1205,10 @@
       "x-rereview2": {
         "verdict": "partial",
         "evidence": "Implement write now refuses stale approved spec/plan (bundled-CLI test green). The same rehash happens via `handoff answer` and `handoff escalate`, which call updateMetadata without a freshness check. See F65."
+      },
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Implement write retains fresh spec/plan enforcement; F68 covers task evidence freshness at review write."
       }
     },
     {
@@ -1180,10 +1221,14 @@
       "confidence": 0.9,
       "task": "T037",
       "disposition": "fixed",
-      "reason": "Both shipped review skill copies require the latest usable recorded diff-base as an explicit ce-review base and fail closed on mismatch; this fix-pass baton records its d61a7237 base.",
+      "reason": "baton-review uses the CLI scope JSON for a reachable diff base and exact changed-file set.",
       "x-rereview2": {
         "verdict": "partial",
         "evidence": "The skill now pins base:<sha> to the recorded diff-base. But the quick lane never records one before its first review (F64), and the file-set match it requires is not exposed by the CLI (F75)."
+      },
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "baton-review uses the CLI scope JSON for a reachable diff base and exact changed-file set."
       }
     },
     {
@@ -1244,10 +1289,14 @@
       "confidence": 0.89,
       "task": "T006",
       "disposition": "open",
-      "reason": "Deferred: existing callers now use OS temp roots or ignored prefixes, but replacing the source scanner with a shared helper requires a wider test-helper migration outside this fix pass.",
+      "reason": "Deferred: replacing the temp-root source scanner requires a broader test-helper migration; current callers use OS temp roots.",
       "x-rereview2": {
         "verdict": "deferral-accepted",
         "evidence": "All 30 current mkdtemp call sites use mkdtemp(join(...)), which the scanner covers, and it fails closed on unresolvable bases. Future call styles (resolve(), template literals, wrappers) would bypass it silently. That is maintainability debt, not a v0.1 correctness gap; the shared temp-root helper remains the fix."
+      },
+      "x-fixpass3": {
+        "verdict": "deferred",
+        "evidence": "Deferred: replacing the temp-root source scanner requires a broader test-helper migration; current callers use OS temp roots."
       }
     },
     {
@@ -1259,8 +1308,8 @@
       "persona": "adversarial-reviewer",
       "confidence": 0.9,
       "task": "T037",
-      "disposition": "open",
-      "reason": "Reopened in re-review 2: review write now records a diff-base at HEAD, so land can detect post-review code changes but does not. Fix: add a land entry check that HEAD equals the last review diff-base or that the diff since it touches only baton/review artifacts.",
+      "disposition": "fixed",
+      "reason": "Review writes fingerprint the relevant tree; land receive/write reject subsequent edits with E_STALE_REVIEW.",
       "x-pre-existing": true,
       "x-rereview2": {
         "verdict": "reopened",
@@ -1269,6 +1318,10 @@
       "x-previous": {
         "severity": "P1",
         "disposition": "dismissed"
+      },
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Review writes fingerprint the relevant tree; land receive/write reject subsequent edits with E_STALE_REVIEW."
       }
     },
     {
@@ -1297,8 +1350,8 @@
       "persona": "project-standards-reviewer",
       "confidence": 0.99,
       "task": "T037",
-      "disposition": "open",
-      "reason": "Blocks v0.1 (re-review 2 adjudication). The relay has no actor identity: write stamps history.by with contract.owner, so the self-review/self-land in 28d35f7 and 7c4287f is recorded as by baton-review and is indistinguishable from an independent review. handoff next steered the same autopilot session onward, which defeats the C4 independent-review guarantee in ordinary use. The later hand-rewind (eda45b8) passed baton validate.",
+      "disposition": "fixed",
+      "reason": "Per-checkout gitignored token and recorded writer identity refuse self-review and self-land with exit 3; fresh worktree and owner override regressions pass, including bounded-history eviction.",
       "x-evidence": "handoff write --phase review and --phase land both succeeded in the implement worktree, routing to compound without independent session verification.",
       "x-rereview2": {
         "verdict": "open-blocks-v0.1",
@@ -1311,193 +1364,257 @@
         "(c) After an implement/work write, handoff next prints \"end this session; start a fresh review session\" rather than the review command.",
         "(d) Add a MUST to phase-contracts.md and handoff-contract.md, document E_SELF_REVIEW in error-codes.md, and update the baton, baton-review and baton-land skills.",
         "(e) Relay tests: same checkout refused with E_SELF_REVIEW; a second git worktree (separate .baton/.local) succeeds; the override decision allows it; history.by reflects the actor."
-      ]
+      ],
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Per-checkout gitignored token and recorded writer identity refuse self-review and self-land with exit 3; fresh worktree and owner override regressions pass, including bounded-history eviction."
+      }
     },
     {
       "persona": "adversarial-reviewer",
       "confidence": 0.98,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F63",
       "severity": "P1",
       "task": "T094",
       "title": "The 17 acceptance waivers D70-D86 never match the evidence hash, so the committed \"acceptance-evidence met\" exit claim is false",
       "file": "specs/001-baton-template/handoff.md",
       "line": 91,
-      "reason": "Every waiver carries x-evidence-sha256 9a361e6d..., the raw SHA-256 of tasks.md, but the check compares against hashArtifact (checkbox-normalized) = 66b8a25a... at 815ca0bd. The CLI (`handoff write --phase implement --mode converge`) reports E_EXIT_UNMET \"17 checks lack evidence ... partial; needs a tagged human waiver\". The exit_criteria block (handoff.md:88-96) claiming met was hand-written in eda45b8, not produced by the CLI. The decisions were hand-inserted (key order differs from `handoff answer`, updated_by never human, Q1 deleted in 28d35f7 rather than answered), so their human provenance is unverifiable. Fix: after F66 and the F44 hostname edit, the owner re-records each waiver through `handoff answer` (which stamps the normalized hash) or the evidence becomes red->green; then produce the implement exit through the CLI.",
+      "reason": "CLI revoked D70-D86, re-recorded D107-D123 under the owner delegation with normalized tasks hash; acceptance-evidence is met without a hand-edited exit criterion.",
       "x-evidence": "hashFile(tasks.md) at 815ca0bd = 66b8a25a7ddcadd95046fc3e91b036d35dd42f7bffca78280f023ea5627b18a1; raw sha256 at 28d35f7..815ca0bd = 9a361e6d6ccc857b4dbce6440e9195892caf849945779bf030c599a2b4f24553. Converge probe exits 1 with E_EXIT_UNMET and leaves the tree unchanged.",
       "x-agreement": [
         "adversarial-reviewer",
         "project-standards-reviewer",
         "correctness-reviewer"
-      ]
+      ],
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "CLI revoked D70-D86, re-recorded D107-D123 under the owner delegation with normalized tasks hash; acceptance-evidence is met without a hand-edited exit criterion."
+      }
     },
     {
       "persona": "agent-native-reviewer",
       "confidence": 0.9,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F64",
       "severity": "P1",
       "task": "T042",
       "title": "Quick-lane review can never satisfy the new baton-review diff-base rule",
       "file": "baton/skills/baton-review/SKILL.md",
       "line": 16,
-      "reason": "The skill requires a recorded diff-base decision and says to stop if none exists. Only analyze->implement and review writes record one; `handoff new --quick` and the work write do not (reproduced: a fresh quick baton carries only the quick-eligible decision). The first quick-lane review therefore always stops, breaking a shipped lane (the CLI itself falls back to the merge-base). Fix: record a diff-base at `handoff new --quick` (and optionally at work write), or let the skill fall back to the CLI-reported diff-nonempty base for a quick baton; add a quick-lane relay test that follows the skill rule."
+      "reason": "Quick baton creation now records a reachable diff-base decision; quick review scope regression exercises it.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Quick baton creation now records a reachable diff-base decision; quick review scope regression exercises it."
+      }
     },
     {
       "persona": "correctness-reviewer",
       "confidence": 0.85,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F65",
       "severity": "P2",
       "task": "T037",
       "title": "`handoff answer` and `escalate` rehash unapproved spec/plan edits past the pre-code gate",
       "file": "src/commands/handoff.mjs",
       "line": 44,
-      "reason": "updateMetadata rehashes every hashed read_first/artifact entry unconditionally. The F54 freshness guard exists only on write, so a legitimate human answering an unrelated question silently re-baselines a spec.md/plan.md edit made after approval. Fix: run the same approved-source freshness check in answer/escalate (or rehash only the baton), and add a test."
+      "reason": "Answer and escalate reject stale spec/plan before updating metadata or approvals.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Answer and escalate reject stale spec/plan before updating metadata or approvals."
+      }
     },
     {
       "persona": "correctness-reviewer",
       "confidence": 0.8,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F66",
       "severity": "P2",
       "task": "T037",
       "title": "The documented partial-waiver flow cannot be driven through the CLI",
       "file": "src/commands/handoff.mjs",
       "line": 472,
-      "reason": "A waiver needs an open question carrying x-check, which `handoff answer` then converts. Only a phase write can add that question (--from-json open_questions). The implement write refuses to persist anything while acceptance-evidence is unmet (unmet exit errors return before writeHandoff), and the evidence stays unmet until the waiver exists. So a partial result found during implementation cannot get a waiver through the CLI unless the question was pre-registered at the analyze write. This chicken-and-egg problem is the root cause of the hand-edited D70-D86 (F63). Fix: add `handoff waive --check AC-... --by <role> --reason` (or a standalone question command) that records a hash-bound human waiver, plus a relay test showing a partial row becomes met."
+      "reason": "CLI question --check and answer Waive <id> create audited, hash-bound check-specific waiver decisions, including after unmet implement evidence.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "CLI question --check and answer Waive <id> create audited, hash-bound check-specific waiver decisions, including after unmet implement evidence."
+      }
     },
     {
       "persona": "adversarial-reviewer",
       "confidence": 0.85,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F67",
       "severity": "P2",
       "task": "T036",
       "title": "baton validate accepts a hand-rewound baton",
       "file": "src/lib/handoff.mjs",
       "line": 128,
-      "reason": "eda45b8 deleted the review/land history entries and the CLI diff-base D95, flipped gate.required true->false, and hand-wrote exit_criteria; validate still passes. Fix: validate that history is append-only against HEAD~ (or that the last history entry matches phase_completed and next_phase follows from the phase contract), that gate.required equals the contract, and that the last diff-base is not older than the last review history entry."
+      "reason": "Validation rejects a baton phase rewound behind its latest history phase.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Validation rejects a baton phase rewound behind its latest history phase."
+      }
     },
     {
       "persona": "adversarial-reviewer",
       "confidence": 0.8,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F68",
       "severity": "P2",
       "task": "T037",
       "title": "Write skips fresh checks, so a post-implement tasks.md evidence edit is laundered by the review write",
       "file": "src/commands/handoff.mjs",
       "line": 137,
-      "reason": "entryErrors(writing=true) drops fresh:* entry checks except spec/plan on implement write, and updateMetadata then rehashes. A write without a prior receive therefore accepts stale evidence. Fix: keep fresh checks for artifacts the phase does not own (tasks.md for review/land), and add a relay test."
+      "reason": "Review write rechecks tasks.md freshness instead of laundering evidence changes.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Review write rechecks tasks.md freshness instead of laundering evidence changes."
+      }
     },
     {
       "persona": "agent-native-reviewer",
       "confidence": 0.8,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F69",
       "severity": "P2",
       "task": "T037",
       "title": "An agent can forge a later diff-base decision via --from-json and narrow the next review",
       "file": "src/commands/handoff.mjs",
       "line": 116,
-      "reason": "appendOnly rejects new human:* decisions but accepts `tag: diff-base, by: baton`. reviewBase uses the last diff-base, so an implement session can move the base past its own commits. Fix: reject by: baton and tag diff-base in --from-json (CLI-reserved), and add a test."
+      "reason": "Agent-supplied diff-base decisions cannot replace the recorded review base.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Agent-supplied diff-base decisions cannot replace the recorded review base."
+      }
     },
     {
       "persona": "security-reviewer",
       "confidence": 0.95,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F70",
       "severity": "P2",
       "task": "T072",
       "title": "upstream-watch still uses the blocked lycheeverse action, so the whole weekly job fails at startup",
       "file": ".github/workflows/upstream-watch.yml",
       "line": 42,
-      "reason": "Fix pass 2 replaced lychee-action in ci.yml because the Actions policy allows only GitHub-owned actions, verified creators and dermonaco-labs/*. upstream-watch.yml:42 still uses it, so scheduled run 36425943595 ended in startup_failure, killing the upstream release watch and sync --check drift detection. contracts/ci.md:46 now claims external links \"remain covered by the weekly upstream-watch job\", which is false. Fix: reuse the checksum-verified lychee binary step from ci.yml, and dispatch once to prove it."
+      "reason": "upstream-watch now downloads the same SHA256-verified standalone lychee as CI; regression checks parity.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "upstream-watch now downloads the same SHA256-verified standalone lychee as CI; regression checks parity."
+      }
     },
     {
       "persona": "testing-reviewer",
       "confidence": 0.9,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F71",
       "severity": "P2",
       "task": "T052",
       "title": "D71 (AC-US1-3) waiver test passes when the \"Run baton adopt locally\" failure message is deleted",
       "file": "test/integration/adopt.test.mjs",
       "line": 132,
-      "reason": "The regex /if ! git push; then[\\s\\S]*?exit 1/ never checks the message, and parity is untested. Mutation (deleting the ::error:: line) stays green. Missing assertion: the push-failure block contains `echo \"::error::...Run baton adopt locally...\"` before `exit 1`, and the workflow adopt arguments equal the documented local command."
+      "reason": "Scratch CLI test now asserts the exact missing adopt failure message; deliberate removal fails the test. Historical red remains waived.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Scratch CLI test now asserts the exact missing adopt failure message; deliberate removal fails the test. Historical red remains waived."
+      }
     },
     {
       "persona": "testing-reviewer",
       "confidence": 0.88,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F72",
       "severity": "P2",
       "task": "T037",
       "title": "D76 (AC-US3-4) E_NO_PREREG test cannot tell a per-story check from \"any check exists\"",
       "file": "test/integration/relay.test.mjs",
       "line": 288,
-      "reason": "The single-story fixture deletes all checks; the bundle mutation `_.size>0` stays green, and the test drives validate instead of implement receive. Missing assertion: with [US1] and [US2] tasks and checks only for US1, `handoff receive --phase implement` fails with E_NO_PREREG matching /US2 lacks pre-registered/ and naming no US1."
+      "reason": "Scratch CLI test now asserts per-story E_NO_PREREG behavior; deliberate any-check substitution fails. Historical red remains waived.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Scratch CLI test now asserts per-story E_NO_PREREG behavior; deliberate any-check substitution fails. Historical red remains waived."
+      }
     },
     {
       "persona": "testing-reviewer",
       "confidence": 0.9,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F73",
       "severity": "P2",
       "task": "T100",
       "title": "D80 (AC-US3-8) tests only role grammar; vocabulary and channel rejection are untested",
       "file": "test/unit/validate-handoff.test.mjs",
       "line": 235,
-      "reason": "Replacing approvedRole with `return true` leaves every cited test green. Missing assertions: approve --by \"Jane Doe\" / \"jane doe\" / an email-shaped value exits 2 with E_APPROVER_FORMAT; approved_by \"janitor\" (grammar-valid, off-vocabulary) is rejected; an unknown --via channel is rejected; actor human:janitor yields E_ACTOR_FORMAT."
+      "reason": "Scratch CLI tests reject unauthorized role vocabulary and channel; deliberate bypass fails. Historical red remains waived.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Scratch CLI tests reject unauthorized role vocabulary and channel; deliberate bypass fails. Historical red remains waived."
+      }
     },
     {
       "persona": "testing-reviewer",
       "confidence": 0.9,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F74",
       "severity": "P2",
       "task": "T066",
       "title": "D82 (AC-US4-1) tests resolveModel in isolation; nothing asserts the written baton carries model_role/suggested_model",
       "file": "test/unit/models.test.mjs",
       "line": 45,
-      "reason": "Nulling suggested_model in handoff write (src/commands/handoff.mjs:41) stays green; no test in the repo asserts on suggested_model. Missing assertion: after a write with next_phase implement, model_role === \"implementation\", suggested_model === config.models.roles.implementation.model, and .github/agents/*.agent.md are byte-identical."
+      "reason": "Scratch CLI test asserts persisted model_role and suggested_model on the baton; deliberate omission fails. Historical red remains waived.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Scratch CLI test asserts persisted model_role and suggested_model on the baton; deliberate omission fails. Historical red remains waived."
+      }
     },
     {
       "persona": "agent-native-reviewer",
       "confidence": 0.8,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F75",
       "severity": "P3",
       "task": "T042",
       "title": "baton-review skill uses a bare `baton handoff show --json` (not on PATH, no --quick) and requires an unexposed file-set match",
       "file": "baton/skills/baton-review/SKILL.md",
       "line": 16,
-      "reason": "Every other instruction uses `node .baton/bin/baton.mjs`. The quick lane needs `--quick <slug>`. The \"reviewed file set match the baton review scope\" check has no CLI output to compare against. Fix: use the node path with --quick, and expose the diff-nonempty file list (e.g. in receive --json data) or drop that clause."
+      "reason": "Shipped review skill calls the bundled CLI with feature/quick scope and compares the CLI-provided file set.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Shipped review skill calls the bundled CLI with feature/quick scope and compares the CLI-provided file set."
+      }
     },
     {
       "persona": "testing-reviewer",
       "confidence": 0.75,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F76",
       "severity": "P3",
       "task": "T037",
       "title": "D77 (AC-US3-5) cited test covers only E_PR_MISSING, not local checks before push or the ce-compound next owner",
       "file": "test/integration/relay.test.mjs",
       "line": 288,
-      "reason": "Removing local-checks-pass from the land entry leaves the selector green; F18 (relay:1092) covers it but is not cited. Missing assertion: land receive with a failing configured check returns E_CHECK_FAILED, the land write records pr.url, and next_owner is ce-compound (or cite F18 in the waiver)."
+      "reason": "D77 evidence citation now points to the F18 land-receive local-check regression, without claiming a historical red.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "D77 evidence citation now points to the F18 land-receive local-check regression, without claiming a historical red."
+      }
     },
     {
       "persona": "testing-reviewer",
       "confidence": 0.68,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F77",
       "severity": "P3",
       "task": "T101",
       "title": "D81 (AC-US3-9) cited test covers only the skip alternative of the compound OR-group",
       "file": "test/integration/relay.test.mjs",
       "line": 348,
-      "reason": "Forcing artifact-exists false keeps the named selector green; only the uncited sibling (relay:381) fails. Missing assertion in the waiver evidence: members[0].met is true with docs/solutions/*.md present and no skip decision."
+      "reason": "D81 evidence citation now points to the authored-solution alternative at relay.test.mjs:381, without claiming a historical red.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "D81 evidence citation now points to the authored-solution alternative at relay.test.mjs:381, without claiming a historical red."
+      }
     },
     {
       "persona": "maintainability-reviewer",
@@ -1509,7 +1626,11 @@
       "title": "Fix-pass-2 duplication: review-exit route filter, canonical findings path, commitId/fullCommitId, and an unused changedFiles untracked option",
       "file": "src/commands/handoff.mjs",
       "line": 545,
-      "reason": "The review-exit filter is duplicated at handoff.mjs:545-546 and lib/handoff.mjs:129-131. The canonical path is built in two places. fullCommitId duplicates commitId, and the bash-caller rule is split between init and update. Extract shared helpers so the route rule cannot drift."
+      "reason": "Deferred: duplicate helper extraction is a maintenance refactor outside the blocker fixes.",
+      "x-fixpass3": {
+        "verdict": "deferred",
+        "evidence": "Deferred: duplicate helper extraction is a maintenance refactor outside the blocker fixes."
+      }
     },
     {
       "persona": "maintainability-reviewer",
@@ -1521,7 +1642,11 @@
       "title": "A GFM table parser is inlined in the acceptance-evidence case, and checks-cli tests duplicate helpers",
       "file": "src/lib/checks.mjs",
       "line": 218,
-      "reason": "About 70 lines of parsing sit inside a switch case. Extract lib/markdown-table.mjs with unit tests, and share the test helpers."
+      "reason": "Deferred: shared table parsing and test-helper consolidation require a separate focused refactor.",
+      "x-fixpass3": {
+        "verdict": "deferred",
+        "evidence": "Deferred: shared table parsing and test-helper consolidation require a separate focused refactor."
+      }
     },
     {
       "persona": "project-standards-reviewer",
@@ -1533,19 +1658,27 @@
       "title": "E_REVIEW_BLOCKING is reused for a non-canonical findings path, and contracts drift from it",
       "file": "src/commands/handoff.mjs",
       "line": 133,
-      "reason": "A wrong findings_path is a usage/contract error, not blocking findings. Use a distinct code (or E_USAGE) and update error-codes.md and handoff-contract.md."
+      "reason": "Deferred: separating E_REVIEW_BLOCKING from invalid-path errors changes the public error contract.",
+      "x-fixpass3": {
+        "verdict": "deferred",
+        "evidence": "Deferred: separating E_REVIEW_BLOCKING from invalid-path errors changes the public error contract."
+      }
     },
     {
       "persona": "project-standards-reviewer",
       "confidence": 0.75,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F81",
       "severity": "P3",
       "task": "T081",
       "title": "phase-contracts.md and data-model.md do not document the acceptance-waiver fields consistently",
       "file": "specs/001-baton-template/contracts/phase-contracts.md",
       "line": 58,
-      "reason": "phase-contracts.md:58-60 says only red/green or n/a satisfy acceptance-evidence, contradicting the partial+waiver bullet. data-model.md lacks tag acceptance-waiver, x-check and x-evidence-sha256 (and states nothing about the normalized hash, the root of F63)."
+      "reason": "data-model.md now documents the same x-check and normalized x-evidence-sha256 fields as phase-contracts.md.",
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "data-model.md now documents the same x-check and normalized x-evidence-sha256 fields as phase-contracts.md."
+      }
     },
     {
       "persona": "correctness-reviewer",
@@ -1557,7 +1690,11 @@
       "title": "init --script ps/py surfaces a uv network failure as E_INTERNAL",
       "file": "src/commands/init.mjs",
       "line": 170,
-      "reason": "Only E_PREREQUISITE and \"no version of specify-cli==\" are mapped to exit 5. A TLS/connect failure from uv rethrows the UpstreamError, and the CLI reports E_INTERNAL exit 10. Map UpstreamError network failures to E_PREREQUISITE with a hint to set UV_DEFAULT_INDEX."
+      "reason": "Deferred: distinguishing uv network failures from E_INTERNAL requires a more specific init error taxonomy.",
+      "x-fixpass3": {
+        "verdict": "deferred",
+        "evidence": "Deferred: distinguishing uv network failures from E_INTERNAL requires a more specific init error taxonomy."
+      }
     },
     {
       "persona": "security-reviewer",
@@ -1569,33 +1706,45 @@
       "title": "ci.yml installs uv with `pip install uv==0.12.5` without hashes, and adds a permanent pull_request trigger beyond D69's scope",
       "file": ".github/workflows/ci.yml",
       "line": 4,
-      "reason": "The pip install lacks --require-hashes (the lychee binary is checksum-verified, uv is not). D69 approved PR-triggered CI \"for this F39 verification\", but contracts/ci.md rewrote D37 to make it permanent. Owner to confirm the trigger; pin uv by hash or use astral-sh/setup-uv (allowed by policy) with a SHA pin."
+      "reason": "Deferred: pinning the uv bootstrap by hash and changing CI trigger scope require independent supply-chain and workflow decisions.",
+      "x-fixpass3": {
+        "verdict": "deferred",
+        "evidence": "Deferred: pinning the uv bootstrap by hash and changing CI trigger scope require independent supply-chain and workflow decisions."
+      }
     },
     {
       "persona": "agent-native-reviewer",
       "confidence": 0.95,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F84",
       "severity": "P2",
       "task": "T037",
       "title": "`handoff write --dry-run` is accepted and silently performs the real write",
       "file": "src/commands/handoff.mjs",
       "line": 57,
-      "reason": "parseOptions accepts --dry-run for every handoff action, but no handoff action reads it. Reproduced in this session: `handoff write --phase review --dry-run` rewrote specs/001-baton-template/handoff.md, recorded a diff-base and routed the relay. An agent or human asking for a preview mutates the baton. The switch dates from c57379e and is not new in fix pass 2. Fix: honor --dry-run in write (evaluate and validate, skip writeHandoff) or reject it with E_USAGE outside migrate. Add a test that the baton bytes are unchanged.",
-      "x-pre-existing": true
+      "reason": "handoff write --dry-run is rejected as unsupported instead of silently writing.",
+      "x-pre-existing": true,
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "handoff write --dry-run is rejected as unsupported instead of silently writing."
+      }
     },
     {
       "persona": "agent-native-reviewer",
       "confidence": 0.8,
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F85",
       "severity": "P3",
       "task": "T037",
       "title": "write --from-json replaces risks wholesale, so owner-pending risks can be dropped silently",
       "file": "src/commands/handoff.mjs",
       "line": 472,
-      "reason": "decisions and open_questions are append-only, but risks (and assumptions) are replaced. A phase write that omits R-3OS removes the only baton record that the three-OS acceptance run is owner-pending. This session preserved it explicitly. Fix: make risks append-only with explicit closure (for example a resolved flag), or warn when a risk id disappears.",
-      "x-pre-existing": true
+      "reason": "Write JSON risk updates retain owner-pending risks; regression prevents silent removal.",
+      "x-pre-existing": true,
+      "x-fixpass3": {
+        "verdict": "verified",
+        "evidence": "Write JSON risk updates retain owner-pending risks; regression prevents silent removal."
+      }
     }
   ],
   "x-rereview-summary": {

@@ -8,6 +8,9 @@ description: Validate the baton and local checks, then let land open a PR withou
 Run `node .baton/bin/baton.mjs handoff receive --phase land`
 (add `--quick <slug>` for a quick baton);
 stop on a blocking finding, stale baton, unmet gate or other error.
+`E_SELF_REVIEW` (exit 3) means the implement/work writer is attempting
+to land from that checkout; use a separate checkout or an owner-answered
+`self-review-override` question.
 Run every `.baton/config.yml` `checks[*].run` **and**
 `node .baton/bin/baton.mjs validate` locally before any push. Record
 command and exit-code evidence. Never push on a failed check.

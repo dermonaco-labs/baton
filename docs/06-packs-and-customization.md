@@ -41,8 +41,9 @@ vocabulary and `checks` commands. `/baton-land` runs the configured checks
 before push; in this repository `npm run check` is the local gate. Keep
 personal terms in an **untracked** denylist file configured through
 `denylist.terms_file` or `BATON_DENYLIST_FILE`. Never commit that file.
-The default email, mention and home-path rules skip Markdown code spans
-and fenced examples; identities there can escape those checks. Review
+The default email, mention and home-path rules skip backtick-delimited
+spans in Markdown, JavaScript and YAML, as well as Markdown fenced
+examples; identities there can escape those checks. Review
 published code examples manually rather than treating the denylist as a
 complete privacy filter.
 

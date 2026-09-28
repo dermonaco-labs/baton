@@ -109,6 +109,9 @@ export async function validateHandoff(root, path, source) {
   if (data.status === 'ready' && /** @type {Array<{met:boolean}>} */ (data.exit_criteria ?? []).some((check) => !check.met)) {
     errors.push({ code: 'E_EXIT_UNMET', file: path, message: 'Ready handoff has unmet exit criteria' });
   }
+  if (data.history?.length && data.history.at(-1).phase !== data.phase_completed) {
+    errors.push({ code: 'E_TRANSITION', file: path, message: 'Latest history phase does not match the completed phase' });
+  }
   const modelIssue = modelPolicyIssue(await loadModelSettings(root), data.suggested_model, path);
   if (modelIssue?.code === 'E_MODEL_NOT_ALLOWED') errors.push(modelIssue);
   const completed = phases.phases[data.phase_completed];
