@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { maintainerWorkflows } from '../../src/lib/maintainer-workflows.mjs';
+import YAML from 'yaml';
 
 test('shipped troubleshooting uses registry-neutral mirror guidance', async () => {
   const text = await readFile(new URL('../../docs/08-troubleshooting.md', import.meta.url), 'utf8');
@@ -25,4 +26,9 @@ test('review instructions explain the normalized handoff payload', async () => {
 
 test('Windows smoke workflow is classified as maintainer-only', () => {
   assert.ok(maintainerWorkflows.includes('mvp-windows-smoke.yml'));
+});
+
+test('template cleanup also records Windows smoke as dormant', async () => {
+  const config = YAML.parse(await readFile(new URL('../../.baton/template-cleanup.yml', import.meta.url), 'utf8'));
+  assert.ok(config.keep_dormant.includes('.github/workflows/mvp-windows-smoke.yml'));
 });
