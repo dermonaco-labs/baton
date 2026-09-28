@@ -587,7 +587,7 @@ Close-out S1–S6 evidence (2026-09-28, local; all earlier red tests are preregi
 | AC-US6-1 | green: S6 missing-reference `E_UNDOCUMENTED` test in validate.test.mjs (4/4). |
 | AC-US6-2 | n/a: owner pending live README visual check. |
 | AC-US7-1 | n/a: awaiting this PR's hosted checks and optional three-OS dispatch. |
-| AC-US7-2 | n/a: awaiting hosted broken-frontmatter annotation. |
+| AC-US7-2 | green: throwaway agent failed hosted `baton` run 36451117145 with `E_FRONTMATTER_MALFORMED`; removed before final checks. |
 | AC-US7-3 | green: release dry run 36343485321; assets, checksums and attestations verified above. |
 
 Post-analyze amendment A1–A3 (owner decisions D12–D14) closed the three gaps the implement session stopped on:

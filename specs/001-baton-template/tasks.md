@@ -388,6 +388,8 @@ files and have no unfinished dependencies. Paths are repo-relative.
   workflow job lacks the guard, plus a test.
 - [ ] T088 [US7] Push the branch, confirm green checks within budget (AC-US7-1), and confirm the broken-frontmatter
   annotation with a throwaway commit (AC-US7-2).
+  - [x] Agent: hosted `E_FRONTMATTER_MALFORMED` annotation confirmed on the throwaway commit (run 36451117145).
+  - [ ] Pending: green final PR checks and the single three-OS smoke dispatch.
 
 ## Phase 10: Polish & Community
 
@@ -480,7 +482,7 @@ The original checks and expected initial results above are unchanged. "Owner pen
 | AC-US6-1 | green — S6 missing-reference `E_UNDOCUMENTED` test passed (4/4 validate tests). |
 | AC-US6-2 | n/a — owner pending: live GitHub README visual review. |
 | AC-US7-1 | n/a — pending this PR's checks and three-OS dispatch. |
-| AC-US7-2 | n/a — pending hosted malformed-frontmatter annotation. |
+| AC-US7-2 | green — throwaway agent frontmatter failed hosted `baton` run 36451117145 with `E_FRONTMATTER_MALFORMED`; the agent is removed in the next commit. |
 | AC-US7-3 | green — owner dry run 36343485321 produced checksum-verified assets and attestations; no release. |
 
 ## Dependencies & Execution Order
