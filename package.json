@@ -28,5 +28,8 @@
     "esbuild": "^0.25.0",
     "markdownlint-cli2": "^0.18.1",
     "typescript": "^5.9.2"
+  },
+  "overrides": {
+    "ignore": "7.0.9"
   }
 }
