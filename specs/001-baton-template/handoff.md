@@ -2,14 +2,17 @@
 baton: 1
 lane: feature
 feature: 001-baton-template
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: Local internal-feed npm ci and npm run check passed with ignore 7.0.9 pinned as a transitive override; implement exit is verified locally. Owner-pending DEFERRED tasks remain unchanged; proceed to review without tag or release.
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Headless review of v0.1 (8aeed8a..0673c66) found 7 P1, 13 P2 and 10 P3 open findings in review.json, all mapped to tasks. P1s: write bypasses pending gates; review trusts asserted blocking_findings and does not auto-route; converge write fails; first-phase specify receive/write paths crash or are impossible; feature not inferred from branch; update drops merged adopter hooks. Fix pass next."
 read_first:
+  - path: specs/001-baton-template/review.json
+    why: findings to fix, by severity, with file:line and fix
+    sha256: 3ccaa74084a426e086d630abd5e7858d354fbc7d4e791543366ae859c302990a
   - path: specs/001-baton-template/tasks.md
     why: deferred tasks and acceptance evidence
     sha256: 9473ac2489c3bc7552a2e3a376ecf3a5f14e7630b8441bd26445399018d6b9d2
@@ -19,15 +22,15 @@ read_first:
   - path: specs/001-baton-template/plan.md
     why: review architecture and constraints
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
-  - path: package.json
-    why: changed dependency override
-    sha256: db4029aa4abb58fbf7cb394bffc50168d97cf35039279d6214da5ff943e25993
-  - path: package-lock.json
-    why: changed resolution and integrity for ignore
-    sha256: bbe2b45b95aea275bdd8a519bbe853d2c3588926d83c267d97fd99f99c1c86d7
   - path: specs/001-baton-template/quickstart.md
     why: changed maintainer registry guidance
     sha256: 286706951ad3f80db0ebf81084d49690b6f01b92a906b0517c811d68656aff04
+  - path: specs/001-baton-template/contracts/phase-contracts.md
+    why: routing and gate rules behind F01-F06
+    sha256: a98a00370cfbe328751d8f1754b243cc2b671005bfecdfa496cd742ab8841d21
+  - path: specs/001-baton-template/contracts/cli.md
+    why: handoff CLI contract behind F04-F06
+    sha256: 59607349bf8f5b5f8637b5efa1454cd4a6b4f4b357df1c10d3f289217984279e
 do_not_read:
   - path: specs/001-baton-template/research.md
     why: folded into plan.md; open it only to verify a pin, SHA or upstream fact
@@ -79,6 +82,9 @@ artifacts:
   - path: specs/001-baton-template/checklists/requirements.md
     role: evidence
     sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017
+  - path: specs/001-baton-template/review.json
+    role: evidence
+    sha256: 3ccaa74084a426e086d630abd5e7858d354fbc7d4e791543366ae859c302990a
 entry_checked:
   - id: tasks-exists
     ok: true
@@ -86,15 +92,12 @@ entry_checked:
     ok: true
     evidence: analyzed at 23b1a1d; the artifacts were then amended by the analyze fixes and amendments A1-A6 and re-hashed here
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
+    evidence: specs/001-baton-template/review.json
+  - id: findings-mapped-to-tasks-or-dismissed
     met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: "baton: 0"
+    evidence: 0 findings unresolved
 analysis:
   report_path: specs/001-baton-template/analysis.md
   critical: 0
@@ -477,6 +480,14 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Align review context and restricted-mirror guidance with completed local gate
     by: implementation-session
+  - id: D54
+    decision: Review scope uses the explicit base 8aeed8a (initial commit) to head 0673c66 instead of the diff-nonempty merge-base
+    rationale: Every implement increment (PRs 1-7, 16-20) was merged to main before review, so merge-base HEAD origin/HEAD yields 0 changed files and receive --phase review fails diff-nonempty. The whole v0.1 implementation is the review subject; the limitation is recorded as finding F09.
+    by: baton-review
+  - id: D55
+    decision: Review-role session records findings only; no safe_auto fixes applied and next is set to implement explicitly
+    rationale: The requester scoped this session to review artifacts. Seven P1 findings are open, and auto-routing review to implement is not implemented (F02), so --next implement is passed explicitly. Personas were limited to the installed reviewer agents.
+    by: baton-review
 open_questions: []
 assumptions:
   - id: AS1
@@ -529,8 +540,15 @@ history:
     at: 2026-09-28T17:07:20.569Z
     by: speckit-implement
     commit: a7e482b
-updated_at: 2026-09-28T17:12:33.537Z
-updated_by: implementation-session
+  - phase: review
+    at: 2026-09-28T17:38:19.375Z
+    by: baton-review
+    commit: 0673c66
+updated_at: 2026-09-28T17:38:19.375Z
+updated_by: baton-review
+review:
+  findings_path: specs/001-baton-template/review.json
+  blocking_findings: 7
 ---
 ## Goal
 
@@ -540,113 +558,60 @@ optional packs, cheap CI and a public manual.
 
 ## What changed
 
-`/speckit-analyze` ran in the review role against commit `23b1a1d`. It found 1 CRITICAL, 7 HIGH, 6 MEDIUM and 10 LOW
-findings. All of them are fixed in the planning docs, and the persisted report is `analysis.md`. The constitution is
-now 1.0.1 (PATCH: gate wording and download verification). New requirements are FR-033 (adopter `baton.yml`) and
-FR-053 (optional pack storage). New tasks T095–T099 sit in the phases where they belong; T001–T094 keep their IDs.
-The remaining work from US2, US4, US5 and the first eight US6 manual tasks has landed on main. This implement
-pass added the public reference, documentation coverage check, tag/manual workflow files, release dry-run
-path and community templates. D37 resolved Q2: PRs keep the Linux baton and Windows MVP smoke checks; full
-three-OS smoke is tag/manual only. The earlier local gate passed, but local `sync --check` cannot run against the
-required internal PyPI mirror because it lacks `specify-cli==1.0.11`. The owner-dispatched
-[release dry run 36343485321](https://github.com/dermonaco-labs/baton/actions/runs/36343485321)
-on `main` at `6593a8fe0fd7c3b51a907a6ae227379d3bd35076` succeeded: hosted `npm run check` and
-`sync --check` passed. In this worktree `npm run check` stops at `markdownlint-cli2` because dependencies
-are absent; a permitted `npm ci` against the internal feed returned 404 for npm `ignore` version 7.0.10. The lockfile
-was not changed. Its [downloadable artifact](https://github.com/dermonaco-labs/baton/actions/runs/36343485321/artifacts/10939627078)
-(`baton-release-dry-run`, 799498 bytes) contains `baton.mjs`, `baton-template-v0.1.0.tar.gz`,
-`baton.lock.json`, `SHA256SUMS` and `release-notes.md`. All three SHA256SUMS entries matched the downloaded bytes;
-`gh attestation verify` succeeded for both build subjects (`baton.mjs` SHA-256
-`cc46b24a9d657a9ee961e22270e49644f5622ab0d284d9255ccf0bc5a906264d` and archive SHA-256
-`d42791694222f2a4bc994c0fd6fe6a4333b96362a49747fd25e8d60cc1ebf820`), with signed provenance
-identifying release.yml on `main`, the same source SHA, and run 36343485321/attempts/1. Publish was skipped;
-there is no `v0.1.0` tag or release.
+`/baton-review` ran `/ce-review mode:headless` over the whole v0.1 implementation, `8aeed8a..0673c66`
+(explicit base, D54), grounded in spec, plan, contracts and tasks. There were eight personas: correctness,
+testing, maintainability, project-standards, agent-native, learnings, security and adversarial. The review
+found **7 P1, 13 P2 and 10 P3** open findings, 30 in total, in `review.json`. All of them map to a task, and
+none were fixed in this review-role session (D55). P1 behaviour was reproduced in scratch repos outside the tree.
+The owner-pending deferrals (T082, T088, T090, T093) aren't findings. The previous implement evidence (acceptance
+table, release dry run 36343485321, PR checks) stays in `tasks.md` and in this baton's body at `0673c66`.
 
-[PR #16](https://github.com/dermonaco-labs/baton/pull/16) had green Linux `baton`
-([run 36343300299](https://github.com/dermonaco-labs/baton/actions/runs/36343300299), 9 s job)
-and Windows MVP `smoke` ([run 36343300308](https://github.com/dermonaco-labs/baton/actions/runs/36343300308),
-70 s job), within the PR budget. GitHub's HTML README API rendered an article, headings, tables, links and a
-Mermaid enrichment container for commit `6593a8fe`; this is not a browser visual check or proof of a rendered
-client-side diagram. No full three-OS smoke dispatch or malformed-frontmatter annotation is evidenced here.
+| ID | Sev | Where | Finding → fix |
+|---|---|---|---|
+| F01 | P1 | handoff.mjs:289 | `write` skips a pending gate, `needs-human` and entry checks, then resets `gate`. Refuse to write with exit 3. |
+| F02 | P1 | handoff.mjs:310 | Review trusts the asserted `blocking_findings` and defaults to land. Derive the count from review.json and auto-route to implement or work. |
+| F03 | P1 | handoff.mjs:289 | A converge write always fails with E_TRANSITION. Accept `--mode converge` in write. |
+| F04 | P1 | handoff.mjs:69 | First-phase `receive --phase specify` crashes (E_INTERNAL) and rejects an escalated quick baton. |
+| F05 | P1 | handoff.mjs:111 | The specify write has no plain-feature path, and `new` hardcodes clarify, so specify → plan is impossible. |
+| F06 | P1 | handoff.mjs:70 | The feature is never inferred from the branch; two spec dirs break every hook call. |
+| F07 | P1 | update.mjs:127 | `update` replaces merged extensions.yml and hooks with the pristine payload, dropping adopter hooks. |
+| F08 | P2 | docs/08-troubleshooting.md:27 | Internal feed hostnames violate constitution §Supply-Chain. Make them generic. |
+| F09 | P2 | checks.mjs:178 | `diff-nonempty` is empty after merge-to-main and trivially true from bookkeeping. |
+| F10 | P2 | checks.mjs:159 | The `acceptance-evidence` regex is satisfiable by header text, and the id is unescaped. |
+| F11 | P2 | handoff.mjs:293 | `--from-json` replaces decisions and questions, which allows forged `human:*` entries. Make the merge append-only. |
+| F12 | P2 | handoff.mjs:388 | `refresh` self-hashes, keeps the gate approval and crashes without decisions. |
+| F13 | P2 | phases.mjs:122 | Weakened-contract detection ignores entry checks and `human_gate`. |
+| F14 | P2 | update.mjs:112 | A customised constitution conflicts on every update. |
+| F15 | P2 | update.mjs:81 | `update` drops the `--script ps`/`py` flavour. |
+| F16 | P2 | validate.mjs:94 | W_NO_BATON and W_ASSUMPTION_DUE are never emitted. |
+| F17 | P2 | checks.mjs:198 | A malformed review.json causes E_INTERNAL instead of an unmet check. |
+| F18 | P2 | handoff.mjs:189 | A failing local check is reported as E_MISSING_ARTIFACT. |
+| F19 | P2 | lock.mjs:10 | `lock verify` is untested, and malformed JSON causes E_INTERNAL. |
+| F20 | P2 | relay.test.mjs:241 | No tests cover converge write, write with a pending gate, or the answer/approve guards. |
 
-Close-out S1–S6 evidence (2026-09-28, local; all earlier red tests are preregistered in tasks.md):
-
-| Acceptance check | Result and evidence |
-|---|---|
-| AC-US1-1 | green: adopt integration tests in `npm test` (143/143 overall). |
-| AC-US1-2 | green: S1 archived template, adopted with `--no-workflows`, then `doctor --strict` and `validate` exited 0. |
-| AC-US1-3 | green: "cannot push" adopt test. |
-| AC-US1-4 | n/a: owner pending timed README-only newcomer walkthrough. |
-| AC-US1-5 | green: workflow untouched, `baton.yml` present, constitution replaced (S1 + adopt tests). |
-| AC-US2-1 | green: S2 `init.test.mjs` 13/13 (fixture setup explained in quickstart). |
-| AC-US2-2 | green: byte-for-byte idempotency case. |
-| AC-US2-3 | green: core + learning pack case. |
-| AC-US2-4 | green: per-pack closure cases. |
-| AC-US2-5 | green: optional reference and scanner precision cases. |
-| AC-US3-1 | green: S3 `validate-handoff.test.mjs` 35/35, with temp fixture repo. |
-| AC-US3-2 | green: pending-gate relay case. |
-| AC-US3-3 | green: stale artifact and refresh relay case. |
-| AC-US3-4 | green: missing preregistration relay case. |
-| AC-US3-5 | green: missing PR relay case. |
-| AC-US3-6 | green: `baton validate --path specs/001-baton-template/handoff.md` before close-out edits. |
-| AC-US3-7 | green: checkbox-insensitive progress case. |
-| AC-US3-8 | green: role-only approver and actor cases. |
-| AC-US3-9 | green: group expression and compound cases. |
-| AC-US3-10 | green: quick-lane relay cases. |
-| AC-US4-1 | green: S4 models tests 9/9. |
-| AC-US4-2 | green: allowlist error case. |
-| AC-US4-3 | green: apply opt-in and idempotency cases; default disabled in this repo. |
-| AC-US5-1 | n/a locally: internal PyPI lacks `specify-cli==1.0.11`; hosted dry run 36343485321 passed `sync --check` at its recorded SHA. |
-| AC-US5-2 | green: S5 update tests 5/5. |
-| AC-US5-3 | n/a: owner pending upstream-watch manual issue check. |
-| AC-US6-1 | green: S6 missing-reference `E_UNDOCUMENTED` test in validate.test.mjs (4/4). |
-| AC-US6-2 | n/a: owner pending live README visual check. |
-| AC-US7-1 | partial: Linux `baton` run 36451849802 passed in 12 s; Windows `smoke` run 36451849770 passed in 1 m 28 s; owner pending three-OS run. |
-| AC-US7-2 | green: throwaway agent failed hosted `baton` run 36451117145 with `E_FRONTMATTER_MALFORMED`; removed before final checks. |
-| AC-US7-3 | green: release dry run 36343485321; assets, checksums and attestations verified above. |
-
-Post-analyze amendment A1–A3 (owner decisions D12–D14) closed the three gaps the implement session stopped on:
-role-only approvals and the `E_DENYLIST` scan (data-model §1.1, handoff-contract), `all_of`/`any_of` check groups
-(data-model §2.1), and the quick lane (data-model §2.2, phase-contracts § Quick lane). New tasks are T100–T102, and
-the new acceptance checks are AC-US3-8..10. Amendment A4 (D15) adds `adversarial-document-reviewer` to
-the `docs-review` pack and makes the closure check per pack (T026, AC-US2-4). Amendment A5 (D16) allows internal hyphens in approver
-words, so `repository owner via control-plane delegation` is valid (data-model §1.1, T100). Amendment A6 (D18,
-resolves implement Q1) requires a `reason` on every `optional_refs` entry and classifies each dangling reference at
-the pin (packs.md § Reference classification at the pin; T020, T026, T053, T074, AC-US2-5). Amendment A7 (D28)
-adds `roadmap.md`, a post-v0.1 backlog. It changes no v0.1 task or check; don't read it during implement.
-
-Close-out check: the temporary malformed-frontmatter agent was removed after run 36451117145. Both PR checks passed
-on the repaired head (`baton` 36451849802; Windows `smoke` 36451849770, including `npm run check`). The
-internal npm feed supplies `ignore@7.0.9`, pinned as a transitive override for `globby@14.1.0` via
-`markdownlint-cli2@0.18.1`. The 7.0.10 release only fixes an edge case in wildcard matching. With internal npm
-and PyPI configured for this process, `npm ci` and `npm run check` passed locally (144 tests). RM20 remains a
-future hosted-CI evidence route and does not waive the v0.1 phase contract. T082/T088/T090/T093 retain only
-explicitly deferred owner work. No three-OS dispatch occurred.
+The P3 items (F21–F30) are in review.json: `--from` archive checksum, local-check trust boundary, denylist
+code spans, the mvp-windows-smoke guard list, the split cli.md table, `handoff next` gate info, the review
+skill payload shape, in-tree temp dirs, phaseDefaults drift, and a malformed `--from-json` exit code.
 
 ## Next steps
 
-1. `/baton-review` (model role: review → claude-opus-5.5). Review the changed files against spec FR/SC, plan and tasks;
-   normalize headless findings to `specs/001-baton-template/review.json`.
-2. T082/T088/T090/T093 retain only owner-pending deferred work: README visual check, three-OS run, private
-   vulnerability reporting and timed newcomer walkthrough. Do not perform those owner actions during review.
-3. The implement→review handoff and its configured local check passed with internal feeds. Hosted `sync --check`
-   pin verification is separately evidenced by run 36343485321; the internal PyPI still lacks
-   `specify-cli==1.0.11`.
+1. `node .baton/bin/baton.mjs handoff next` → `/speckit-implement` (fix pass). Read `review.json` first.
+   Fix P1s F01–F07, then the P2s, each with a regression test. Add fix tasks through `/speckit-converge`
+   (for example T103+ citing the F-ids), or reopen the mapped task. Mark findings `fixed` or `dismissed` with a reason.
+2. Then hand off implement → review again. The re-review must reach zero open P0/P1 before land, and
+   `findings-fixed-or-dismissed` gates the land exit.
+3. Owner-pending deferrals stay with the owner: the README visual check, private vulnerability reporting,
+   the timed newcomer run, the three-OS run and the upstream-watch check.
 
 ## Watch out for
 
-- Never hand-edit upstream files. They come only from `baton sync` (T025/T028). Repairs are declared in `packs/repairs.yml`.
-- `sync` must not use bare `uvx` or codeload tarballs: hash-locked requirements (T096) and a verified git fetch (T023).
-- Template cleanup must never modify `.github/workflows/` (`GITHUB_TOKEN` can't push those changes).
-- Keep the repository's public registry pin. For this workstation use the internal npm and PyPI mirrors via
-  per-command registry and process-level index overrides; never leak those overrides into the lockfile.
-  The internal npm mirror lacks `ignore` version 7.0.10, so the transitive override resolves to 7.0.9.
-  The hosted check passed at the dry-run source commit; this branch also passed the local gate.
-- ATV is pinned to main, not npm 2.6.3. Don't "downgrade" to the published package.
-- `ce-review` persona degradation, its headless output shape and the `extensions.yml` format are re-checked at the
-  pins by T029. Stop and ask if they fail.
-- Opening the ATV upstream issue (T074) is an owner action. Agents only draft it.
-- Nothing from any private reference project may enter this repo. Only the generalized lessons in research R8.
-- A workstation that can't reach the npm or PyPI registry over TLS runs registry-dependent validation in an ephemeral
-  Linux container, plus hosted CI (quickstart § Local gate). Never disable TLS.
-- Until T047, this baton is not machine-validated. If you edit any listed artifact, update its sha256 here.
+- Don't trust `review.blocking_findings` until F02 lands. Count the open P0/P1 in review.json yourself.
+  Until then, pass `--next implement` explicitly from review.
+- Until F01 lands, always `receive` before `write`; write does not re-check gates.
+- Review entry `diff-nonempty` fails on main after merged increments (F09). Record an explicit base as a decision.
+- Never hand-edit upstream files. They come only from `baton sync`, and repairs live in `packs/repairs.yml`.
+- `sync` must not use bare `uvx` or codeload tarballs: hash-locked requirements and a verified git fetch.
+- Template cleanup must never modify `.github/workflows/`.
+- Keep the public registry pin. A workstation behind a mirror uses per-command overrides and never commits them.
+  The internal PyPI mirror lacks `specify-cli==1.0.11`, so `sync --check` evidence comes from hosted run 36343485321.
+- Nothing from any private reference project may enter this repo.
