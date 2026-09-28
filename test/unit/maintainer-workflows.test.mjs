@@ -76,6 +76,10 @@ test('CI, smoke and release expose the required checks and dry-run boundary', as
     assert.match(job.steps.find(step => step.name === 'Install uv')?.run ?? '', /pip" install uv==0\.12\.5/);
     assert.ok(!job.steps.some(step => step.uses?.startsWith('lycheeverse/')), 'disallowed link-check action');
   }
+  const links = ci.jobs.lint.steps.find(step => step.name === 'Check relative documentation links')?.run ?? '';
+  assert.match(links, /1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a/);
+  assert.match(links, /sha256sum -c -/);
+  assert.match(links, /--offline --no-progress 'docs\/\*\*\/\*\.md'/);
   const smoke = YAML.parse(await readFile(path('smoke'), 'utf8'));
   assert.ok(smoke.jobs.ubuntu && smoke.jobs.macos && smoke.jobs.windows);
   assert.equal(smoke.jobs.macos['runs-on'], 'macos-latest');

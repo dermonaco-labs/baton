@@ -180,13 +180,20 @@ for (const script of ['ps', 'py']) {
       assert.equal(JSON.parse(await readFile(join(root, optionsPath), 'utf8')).script, script);
       assert.equal(JSON.parse(await readFile(join(root, integrationPath), 'utf8')).integration_settings.copilot.script, script);
       assert.ok(await exists(root, selected), `${script} script must remain installed`);
-      assert.equal(await exists(root, bash[0].path), false, 'update must not switch back to bash scripts');
       assert.equal(await exists(root, `.baton/conflicts/${selected}.new`), false);
       const updated = JSON.parse(await readFile(join(root, manifestPath), 'utf8'));
       assert.equal(updated.script, script);
       assert.equal(updated.files.find(file => file.path === selected)?.sha256,
         digest(await readFile(join(root, selected))), 'manifest must track the selected script');
       await assertScriptReferencesExist(root, updated);
+      const skillReferences = [];
+      for (const { path } of updated.files.filter(file => file.path.startsWith('.github/skills/speckit-'))) {
+        skillReferences.push(...(await readFile(join(root, path), 'utf8')).matchAll(scriptReference)
+          .map(([reference]) => reference));
+      }
+      assert.ok(skillReferences.length > 0, 'updated Spec Kit skills must call scripts');
+      assert.ok(skillReferences.every(reference => reference.startsWith(`.specify/scripts/${directory}/`)),
+        'update must keep every Spec Kit skill on the selected script flavour');
 
       const fallback = await runCli(root, ['update', '--json'], { UV_OFFLINE: '1', UV_NO_CACHE: '1' });
       assert.equal(fallback.code, 0, fallback.stdout + fallback.stderr);

@@ -174,7 +174,7 @@
       "title": "Shipped troubleshooting docs name a single organisation's internal package-feed hostnames",
       "file": "docs/08-troubleshooting.md",
       "line": 27,
-      "persona": "project-standards-reviewer",
+      "persona": "repository-owner",
       "confidence": 0.9,
       "task": "T079",
       "disposition": "fixed",
@@ -739,8 +739,8 @@
       "persona": "correctness-reviewer",
       "confidence": 0.7,
       "task": "T058",
-      "disposition": "open",
-      "reason": "Implementation retains referenced bash scripts for non-bash installs and adds an end-to-end ps-flavour CLI regression; the live test is unverified locally because the approved PyPI mirror lacks the pinned specify-cli wheel.",
+      "disposition": "fixed",
+      "reason": "Hosted Linux CI job 109131737677 (run 36482633555) executed and passed the live init --script ps test without a skip (ok 38, 4.78s). The local internal mirror lacks the pinned wheel, so its conditional skip remains local only.",
       "x-fix": "Take the flavour-specific speckit skills/commands from the generated project together with its scripts, or keep the bash scripts until they are regenerated; add a test that every script path referenced by an installed speckit skill exists after init --script ps.",
       "x-evidence": "init.mjs:171 skips lock entries under .specify/scripts/bash/ when a generated project exists; .github/skills/speckit-*/SKILL.md from the lock reference .specify/scripts/bash/check-prerequisites.sh.",
       "x-requires-verification": true
@@ -1026,7 +1026,7 @@
       "confidence": 0.9,
       "task": "T037",
       "disposition": "dismissed",
-      "reason": "Pre-existing outside fix-pass scope: this PR will not change code between final review and land; enforcing a reviewed-tree fingerprint changes the land contract and needs its own human-gated design decision.",
+      "reason": "Pre-existing reviewed-tree fingerprint gap needs a separate contract decision; this fix pass is restored to implement for independent re-review after later code changes, not self-landed.",
       "x-pre-existing": true
     },
     {
@@ -1041,6 +1041,19 @@
       "disposition": "dismissed",
       "reason": "Pre-existing outside fix-pass scope: no new finding in this PR references a nonexistent task; resolving task IDs against the registry remains a separate review-contract change.",
       "x-pre-existing": true
+    },
+    {
+      "id": "F62",
+      "severity": "P1",
+      "title": "An implementation-role session can write review and land handoffs without independent ownership",
+      "file": "src/commands/handoff.mjs",
+      "line": 441,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.99,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "The implementation session wrote review→land and land→compound through the CLI in PR #24. The owner requires the baton restored to implement→review for an independent review session. Enforcing role separation in the CLI is a public relay contract change and is deferred to that review.",
+      "x-evidence": "handoff write --phase review and --phase land both succeeded in the implement worktree, routing to compound without independent session verification."
     }
   ],
   "x-rereview-summary": {

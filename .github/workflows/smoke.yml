@@ -43,7 +43,7 @@ jobs:
           test ! -e package.json && test -d docs/baton
           test -f .github/workflows/baton.yml
           test -z "$(git status --porcelain -- .github/workflows)"
-          ! grep -q '# Baton Constitution' .specify/memory/constitution.md
+          if grep -q '# Baton Constitution' .specify/memory/constitution.md; then exit 1; fi
           node .baton/bin/baton.mjs doctor --strict
           node .baton/bin/baton.mjs validate
       - name: Overlay, handoff and update scenarios
@@ -76,7 +76,7 @@ jobs:
           test ! -e package.json && test -d docs/baton
           test -f .github/workflows/baton.yml
           test -z "$(git status --porcelain -- .github/workflows)"
-          ! grep -q '# Baton Constitution' .specify/memory/constitution.md
+          if grep -q '# Baton Constitution' .specify/memory/constitution.md; then exit 1; fi
           node .baton/bin/baton.mjs doctor --strict
           node .baton/bin/baton.mjs validate
       - name: Overlay, handoff and update scenarios
@@ -116,7 +116,7 @@ jobs:
           test ! -e package.json && test -d docs/baton
           test -f .github/workflows/baton.yml
           test -z "$(git status --porcelain -- .github/workflows)"
-          ! grep -q '# Baton Constitution' .specify/memory/constitution.md
+          if grep -q '# Baton Constitution' .specify/memory/constitution.md; then exit 1; fi
           node .baton/bin/baton.mjs doctor --strict
           node .baton/bin/baton.mjs validate
       - name: Overlay, handoff and update scenarios
