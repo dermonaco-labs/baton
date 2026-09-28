@@ -39,8 +39,12 @@ smoke. The full Linux/macOS/Windows smoke remains a release-candidate gate.
   9. `node .baton/bin/baton.mjs lock verify`
   10. `node .baton/bin/baton.mjs validate --github` (schemas compile, batons, skill/agent frontmatter, docs coverage,
       model enforcement)
-  11. lychee link check, offline mode for relative links only (external links are covered by a weekly job inside
-      `upstream-watch`)
+  The former lychee-action step cannot run under this repository's selected-actions policy (the action is not
+  allowlisted). It was removed after the first PR CI run failed at workflow startup before any job ran.
+  uv is installed from pinned public PyPI into a job-local virtual environment rather than relying on an
+  unverified external action;
+  offline relative-link checking needs a separately approved replacement. External links remain covered by
+  the weekly `upstream-watch` job.
 - **`test`**: set up uv, then `npm test` (`node --test`, unit + integration, fixture repos). Hosted runs must execute the pinned Spec Kit F39 integration test rather than skip it.
 - `npm run check` runs the same steps locally (Principle VIII). CONTRIBUTING requires it before every push.
 

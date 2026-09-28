@@ -2,23 +2,21 @@
 baton: 1
 lane: feature
 feature: 001-baton-template
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: Fix-pass review verified relay regressions, evidence-bound waivers, and canonical findings. No P0/P1 finding remains open; F39 awaits hosted public-PyPI verification and AC-US7-1's three-OS portion remains owner-pending.
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Opened the single fix-pass pull request after reviewed relay repairs and local checks. Four red-first checks were recovered and 17 have check-specific owner waivers; hosted F39 verification is pending, and AC-US7-1's full three-OS check remains owner-pending.
 read_first:
   - path: specs/001-baton-template/review.json
-    why: Canonical reviewed findings and residual dispositions
-  - path: specs/001-baton-template/tasks.md
-    why: Four recovered red results and 17 check-specific waivers
-  - path: specs/001-baton-template/contracts/ci.md
-    why: Hosted F39 verification and CI budget
+    why: Fix-pass finding dispositions and pending hosted F39 verification
+  - path: specs/001-baton-template/handoff.md
+    why: Owner decisions, acceptance waivers, and review-to-land evidence
 do_not_read:
   - path: specs/001-baton-template/roadmap.md
-    why: Later release scope
+    why: Future release scope
 artifacts:
   - path: .specify/memory/constitution.md
     role: source-of-truth
@@ -52,7 +50,7 @@ artifacts:
     sha256: 7b1ca7afc1f05024b283f6387c63af3fb9addd01ea4f8130019b5a2a0235db23
   - path: specs/001-baton-template/contracts/ci.md
     role: source-of-truth
-    sha256: d53d49253b384bf7cd5e0de044f38faba7b57ca4bd72948e5c22fc190d91fb03
+    sha256: 276397f30d104f0dfc320edd3f51fc904062a3d270925747ea5ee5733194bb56
   - path: specs/001-baton-template/quickstart.md
     role: derived
     sha256: 286706951ad3f80db0ebf81084d49690b6f01b92a906b0517c811d68656aff04
@@ -75,12 +73,9 @@ entry_checked:
     ok: true
     evidence: analyzed at 23b1a1d; the artifacts were then amended by the analyze fixes and amendments A1-A6 and re-hashed here
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: specs/001-baton-template/review.json
-  - id: findings-mapped-to-tasks-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
+    evidence: https://github.com/dermonaco-labs/baton/pull/24
 analysis:
   report_path: specs/001-baton-template/analysis.md
   critical: 0
@@ -689,6 +684,10 @@ decisions:
     tag: diff-base
     x-base-commit: 17016a08a9beb16fd7456b4b1f4d28825f63f6e5
     by: baton
+  - id: D96
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: CI startup rejected an unallowlisted link-check action; replace it with a documented deferred offline check and pinned uv installation
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -705,16 +704,16 @@ assumptions:
     revisit_at: implement
 risks:
   - id: R-F39
-    text: F39 requires a hosted public-PyPI CI run that passes without skipping.
+    text: The first CI run failed at workflow startup due to an unallowlisted action. Confirm the live PowerShell-flavour test runs and passes after the policy repair.
     severity: medium
   - id: R-3OS
-    text: AC-US7-1 full three-OS acceptance remains owner-pending; no smoke dispatch in this fix pass.
+    text: AC-US7-1 full three-OS smoke remains owner-pending and is not dispatched by this fix pass.
     severity: medium
-  - id: R-DEFER
-    text: F47, F51 and F59 are deferred coverage or refactors; F60 and F61 are pre-existing out-of-scope contract gaps.
+  - id: R-LINK
+    text: Offline relative-link checking requires an approved replacement for the disallowed lychee action.
     severity: low
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -766,11 +765,18 @@ history:
     at: 2026-09-28T20:35:51.905Z
     by: baton-review
     commit: 17016a0
-updated_at: 2026-09-28T20:35:51.905Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-09-28T20:55:18.466Z
+    by: baton-land
+    commit: 28d35f7
+updated_at: 2026-09-28T20:55:18.466Z
+updated_by: baton-land
 review:
   findings_path: specs/001-baton-template/review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/24
+  number: 24
 ---
 ## Goal
 

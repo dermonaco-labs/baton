@@ -25,7 +25,11 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-      - uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v6.6.1
+      - name: Install uv
+        run: |
+          python3 -m venv "$RUNNER_TEMP/uv"
+          "$RUNNER_TEMP/uv/bin/pip" install uv==0.12.5
+          echo "$RUNNER_TEMP/uv/bin" >> "$GITHUB_PATH"
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run lint:md
       - run: npm run lint:yaml
@@ -37,10 +41,6 @@ jobs:
       - run: node .baton/bin/baton.mjs build --check
       - run: node .baton/bin/baton.mjs lock verify
       - run: node .baton/bin/baton.mjs validate --github
-      - uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0 # v2.7.0
-        with:
-          args: --offline --no-progress 'docs/**/*.md'
-          fail: true
   test:
     if: github.repository == 'dermonaco-labs/baton'
     runs-on: ubuntu-latest
@@ -53,6 +53,10 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-      - uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v6.6.1
+      - name: Install uv
+        run: |
+          python3 -m venv "$RUNNER_TEMP/uv"
+          "$RUNNER_TEMP/uv/bin/pip" install uv==0.12.5
+          echo "$RUNNER_TEMP/uv/bin" >> "$GITHUB_PATH"
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm test

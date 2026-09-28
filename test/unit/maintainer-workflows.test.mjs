@@ -72,7 +72,10 @@ test('CI, smoke and release expose the required checks and dry-run boundary', as
   assert.ok(ci.jobs.lint && ci.jobs.test);
   assert.match(JSON.stringify(ci.jobs.lint), /validate --github/);
   assert.match(JSON.stringify(ci.jobs.test), /npm test/);
-  assert.match(JSON.stringify(ci.jobs.test), /setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6/);
+  for (const job of [ci.jobs.lint, ci.jobs.test]) {
+    assert.match(job.steps.find(step => step.name === 'Install uv')?.run ?? '', /pip" install uv==0\.12\.5/);
+    assert.ok(!job.steps.some(step => step.uses?.startsWith('lycheeverse/')), 'disallowed link-check action');
+  }
   const smoke = YAML.parse(await readFile(path('smoke'), 'utf8'));
   assert.ok(smoke.jobs.ubuntu && smoke.jobs.macos && smoke.jobs.windows);
   assert.equal(smoke.jobs.macos['runs-on'], 'macos-latest');
