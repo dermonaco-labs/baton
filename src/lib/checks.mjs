@@ -55,16 +55,36 @@ async function matches(root, pattern) {
   return visit(base);
 }
 
-/** @param {string} root */
-export async function changedFiles(root) {
+/** @param {string} root @param {string} [baseCommit] @param {boolean|'subject'} [includeUntracked] */
+export async function changedFiles(root, baseCommit, includeUntracked = true) {
   try {
-    const { stdout: base } = await execFileAsync('git', ['merge-base', 'HEAD', 'origin/HEAD'], { cwd: root, windowsHide: true });
-    const { stdout: tracked } = await execFileAsync('git', ['diff', '--name-only', base.trim()], { cwd: root, windowsHide: true });
-    const { stdout: untracked } = await execFileAsync('git', ['ls-files', '--others', '--exclude-standard'], { cwd: root, windowsHide: true });
-    return [...new Set(`${tracked}\n${untracked}`.split(/\r?\n/).filter(Boolean))];
+    const base = baseCommit || (await execFileAsync('git', ['merge-base', 'HEAD', 'origin/HEAD'], { cwd: root, windowsHide: true })).stdout.trim();
+    const { stdout: tracked } = await execFileAsync('git', ['diff', '--name-only', base], { cwd: root, windowsHide: true });
+    const { stdout: untracked } = includeUntracked
+      ? await execFileAsync('git', ['ls-files', '--others', '--exclude-standard'], { cwd: root, windowsHide: true })
+      : { stdout: '' };
+    const newFiles = untracked.split(/\r?\n/).filter(Boolean)
+      .filter((file) => includeUntracked !== 'subject' ||
+        (/^(?:src|test|docs|specs|packs|baton|\.github)\//.test(file) &&
+         !/(?:^|\/)(?:scratch|tmp|temp)(?:[./-]|$)/i.test(file)));
+    return [...new Set([...tracked.split(/\r?\n/).filter(Boolean), ...newFiles])];
   } catch (error) {
     if ([1, 128, 'ENOENT'].includes(/** @type {{code?:string|number}} */ (error).code ?? '')) return null;
     throw error;
+  }
+}
+
+/** @param {string} root @param {Record<string,any>} data */
+async function reviewBase(root, data) {
+  const recorded = /** @type {Array<{tag?:string,'x-base-commit'?:string}>} */ (data.decisions ?? [])
+    .find((item) => item.tag === 'diff-base')?.['x-base-commit'];
+  if (recorded) return recorded;
+  const report = data.review?.findings_path && await optionalText(root, data.review.findings_path);
+  if (!report) return null;
+  try {
+    return JSON.parse(report).base ?? null;
+  } catch {
+    return null;
   }
 }
 
@@ -156,8 +176,33 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
     }
     case 'acceptance-evidence': {
       const tasks = await text('tasks.md') ?? '';
-      const missing = accepted.filter((item) => !new RegExp(`${item.id}[^\\n]*\\b(?:red|green|n/a)\\b`, 'i').test(tasks));
-      return answer(!missing.length && accepted.length > 0, `${missing.length} checks lack evidence`);
+      const lines = tasks.split(/\r?\n/);
+      /** @param {string} line */
+      const cells = (line) => line.split('|').slice(1, -1).map((cell) => cell.trim());
+      /** @param {(values:string[])=>boolean} isHeader */
+      const table = (isHeader) => {
+        const start = lines.findIndex((line) => /^\s*\|/.test(line) && isHeader(cells(line)));
+        if (start < 0 || !/^\s*\|[\s:|-]+\|\s*$/.test(lines[start + 1] ?? '')) return [];
+        const rows = [];
+        for (let i = start + 2; i < lines.length && /^\s*\|/.test(lines[i]); i++) rows.push(cells(lines[i]));
+        return rows;
+      };
+      const registry = table((values) => /^ID$/i.test(values[0]) && /^Story$/i.test(values[1]));
+      const evidence = table((values) => /^Check$/i.test(values[0]) && /^Result and evidence$/i.test(values[1]));
+      /** @param {string} value */
+      const substantive = (value) => value.length >= 8 &&
+        !/\b(?:TBD|TODO|placeholder|add proof)\b/i.test(value) &&
+        !/^\s*(?:owner\s+)?pending[.!]?\s*$/i.test(value);
+      const missing = accepted.filter((item) => {
+        if (!registry.some((values) => values[0] === item.id && values[1] === item.story)) return true;
+        const result = evidence.find((values) => values[0] === item.id)?.[1] ?? '';
+        const redGreen = /^red\b[\s—–:-]+(.+?)\bgreen\b[\s—–:-]+(.+)$/i.exec(result);
+        const notApplicable = /^n\/a\b[\s—–:-]+(.+)$/i.exec(result);
+        return !(redGreen && substantive(redGreen[1]) && substantive(redGreen[2]) ||
+          notApplicable && substantive(notApplicable[1]));
+      });
+      return answer(!missing.length && accepted.length > 0,
+        `${missing.length} checks lack evidence${missing.length ? `: ${missing.map((item) => item.id).join(', ')}` : ''}`);
     }
     case 'local-checks-pass': {
       const configText = await optionalText(root, '.baton/config.yml');
@@ -176,8 +221,12 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
       return answer(results.every((item) => item.endsWith(': 0')), results.join(', '));
     }
     case 'diff-nonempty': {
-      const files = await changedFiles(root);
-      return answer(files?.length, files ? `${files.length} changed files` : 'No merge-base available');
+      const base = await reviewBase(root, data);
+      if (base && !/^[a-f0-9]{7,64}$/i.test(base)) return answer(false, 'Invalid recorded review base');
+      const files = await changedFiles(root, base, 'subject');
+      const relevant = files?.filter((file) => !file.startsWith('.baton/') &&
+        !/^specs\/[^/]+\/handoff\.md$/.test(file));
+      return answer(relevant?.length, relevant ? `${relevant.length} changed files` : 'No merge-base available');
     }
     case 'no-feature-tasks': {
       const files = await changedFiles(root);
@@ -195,7 +244,12 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
     case 'findings-fixed-or-dismissed': {
       const findingsText = data.review?.findings_path && await optionalText(root, data.review.findings_path);
       if (!findingsText) return answer(false, 'Review findings file absent');
-      const findings = JSON.parse(findingsText);
+      let findings;
+      try {
+        findings = JSON.parse(findingsText);
+      } catch (error) {
+        return answer(false, `Review findings are not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+      }
       const issues = validateSchema(await loadSchemas(root), 'findings', findings);
       if (issues.length) return answer(false, issues.map((issue) => `${issue.pointer}: ${issue.message}`).join('; '));
       if (check.id === 'findings-json-valid') return answer(true, data.review.findings_path);
@@ -204,7 +258,21 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
         : item.disposition !== 'dismissed' && !item.task);
       return answer(!unresolved.length, `${unresolved.length} findings unresolved`);
     }
-    case 'no-blocking-findings': return answer(data.review?.blocking_findings === 0, `blocking: ${data.review?.blocking_findings ?? 'unknown'}`);
+    case 'no-blocking-findings': {
+      const findingsText = data.review?.findings_path && await optionalText(root, data.review.findings_path);
+      if (!findingsText) return answer(false, 'Review findings file absent');
+      let findings;
+      try {
+        findings = JSON.parse(findingsText);
+      } catch {
+        return answer(false, 'Review findings are not valid JSON');
+      }
+      const issues = validateSchema(await loadSchemas(root), 'findings', findings);
+      if (issues.length) return answer(false, `Review findings invalid: ${issues.map((issue) => issue.message).join('; ')}`);
+      const blocking = findings.findings.filter((/** @type {{severity:string,disposition:string}} */ item) =>
+        ['P0', 'P1'].includes(item.severity) && item.disposition === 'open').length;
+      return answer(blocking === 0, `blocking: ${blocking}`);
+    }
     case 'pr-opened': return answer(Boolean(data.pr?.url), data.pr?.url ?? 'PR URL missing');
     case 'quick-scope-held': {
       const verified = decisions.find((item) => item.tag === 'quick-scope-held' && item.rationale?.trim());

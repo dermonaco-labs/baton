@@ -8,6 +8,7 @@
     "baton_version": { "type": "string", "minLength": 1 },
     "installed_at": { "type": "string", "format": "date-time" },
     "source": { "enum": ["template", "init"] },
+    "script": { "enum": ["sh", "ps", "py"] },
     "upstreams": {
       "type": "object", "required": ["speckit", "atv"],
       "properties": {

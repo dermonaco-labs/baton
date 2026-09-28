@@ -4,17 +4,18 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { BatonError } from '../lib/report.mjs';
-import { readManifest, writeManifest } from '../lib/manifest.mjs';
+import { readManifest, writeManifest, installedScript } from '../lib/manifest.mjs';
 import { optionalBytes, putBytes, safePath, digest } from '../lib/overlay.mjs';
 import { mergeMarker } from '../lib/markers.mjs';
 import { resolvePayload } from '../lib/payload.mjs';
-import { run as init } from './init.mjs';
+import { UpstreamError } from '../lib/upstream.mjs';
+import { run as init, mergeHooks, mergeExtensions, protectedPath } from './init.mjs';
 
 const instructions = '.github/copilot-instructions.md';
 const batonSection = /<!-- BATON:START -->\r?\n([\s\S]*?)<!-- BATON:END -->/;
 /** @typedef {{path:string,sha256:string,pack:string,owner:string,managed:boolean}} ManagedFile */
 /** @typedef {{path:string,marker:string,sha256:string}} MarkerSection */
-/** @typedef {{schema:number,baton_version:string,installed_at:string,source:string,upstreams:object,packs:string[],files:ManagedFile[],marker_sections:MarkerSection[],recommended_packs?:object[]}} Manifest */
+/** @typedef {{schema:number,baton_version:string,installed_at:string,source:string,upstreams:object,packs:string[],files:ManagedFile[],marker_sections:MarkerSection[],recommended_packs?:object[],script?:string,'x-script'?:string}} Manifest */
 
 /** @param {string[]} args */
 function options(args) {
@@ -76,9 +77,20 @@ export async function run(root, args) {
     await payload.cleanup();
     throw new BatonError('E_MANIFEST', 'Invalid Baton manifest; refusing to update');
   }
+  const script = await installedScript(root, previous);
   const stage = await mkdtemp(join(tmpdir(), 'baton-update-'));
   try {
-    const installed = await init(stage, ['--packs', previous.packs.join(','), ...(opts.archive ? ['--from', opts.archive] : [])]);
+    const stageArgs = ['--packs', previous.packs.join(','), ...(opts.archive ? ['--from', opts.archive] : [])];
+    let scriptFallback = false;
+    let installed;
+    try {
+      installed = await init(stage, [...stageArgs, '--script', script]);
+    } catch (error) {
+      if (script === 'sh' || !(error instanceof UpstreamError && /^E_UPSTREAM_VERIFY uv /.test(error.message) ||
+          error instanceof BatonError && error.code === 'E_PREREQUISITE' && /uv|wheel/i.test(error.message))) throw error;
+      scriptFallback = true;
+      installed = await init(stage, [...stageArgs, '--script', 'sh']);
+    }
     if (installed.exitCode || installed.errors?.length) {
       throw new BatonError('E_PREREQUISITE', `Cannot stage the new Baton payload: ${JSON.stringify(installed.errors)}`, 5);
     }
@@ -91,6 +103,8 @@ export async function run(root, args) {
     const conflicts = [];
     /** @type {Array<{code:string,file:string,message:string}>} */
     const warnings = [];
+    if (scriptFallback) warnings.push({ code: 'W_SCRIPT_UNREFRESHED', file: '.specify/scripts',
+      message: `${script} script payload could not be generated; existing scripts and flavour metadata were preserved` });
     /** @param {string} path */
     const clearConflict = async path => {
       const pending = `.baton/conflicts/${path}.new`;
@@ -102,13 +116,18 @@ export async function run(root, args) {
       if (!opts.dryRun) await putBytes(root, `.baton/conflicts/${path}.new`, bytes);
     };
     const desiredPaths = new Set(next.files.map(entry => entry.path));
-    for (const old of files.filter(file => !desiredPaths.has(file.path))) {
+    for (const old of files.filter(file => !desiredPaths.has(file.path) && !protectedPath.test(file.path) &&
+        !(scriptFallback && file.path.startsWith('.specify/scripts/')))) {
       warnings.push({ code: 'W_REMOVED_UPSTREAM', file: old.path, message: 'Formerly managed file kept; the new payload does not contain it' });
     }
     for (const entry of next.files) {
+      if (protectedPath.test(entry.path)) continue;
+      if (scriptFallback && (entry.path.startsWith('.specify/scripts/bash/') ||
+          entry.path === '.specify/init-options.json' || entry.path === '.specify/integration.json')) continue;
       const old = files.find(file => file.path === entry.path);
       const current = await optionalBytes(root, entry.path);
-      const desired = await readFile(join(stage, entry.path));
+      /** @type {Buffer} */
+      let desired = await readFile(join(stage, entry.path));
       if (old && (!old.managed || !current || digest(current) !== old.sha256)) {
         await conflict(entry.path, 'user-modified or missing managed file', desired);
         continue;
@@ -117,16 +136,27 @@ export async function run(root, args) {
         await conflict(entry.path, 'unmanaged file', desired);
         continue;
       }
+      if (current && (entry.path === '.specify/extensions.yml' || entry.path === '.github/hooks/copilot-hooks.json')) {
+        try {
+          desired = entry.path === '.specify/extensions.yml' ?
+            mergeExtensions(current, desired) : mergeHooks(current, desired);
+        } catch (error) {
+          if (!(error instanceof BatonError)) throw error;
+          await conflict(entry.path, error.message, desired);
+          continue;
+        }
+      }
+      const mergedEntry = { ...entry, sha256: digest(desired) };
       if (current?.equals(desired)) {
-        if (old) Object.assign(old, entry);
-        else files.push(entry);
+        if (old) Object.assign(old, mergedEntry);
+        else files.push(mergedEntry);
         await clearConflict(entry.path);
         continue;
       }
       actions.push(`${current ? 'update' : 'install'} ${entry.path}`);
       if (!opts.dryRun) await putBytes(root, entry.path, desired);
-      if (old) Object.assign(old, entry);
-      else files.push(entry);
+      if (old) Object.assign(old, mergedEntry);
+      else files.push(mergedEntry);
       await clearConflict(entry.path);
     }
     const incoming = (await readFile(join(stage, instructions), 'utf8')).match(batonSection)?.[1];
@@ -153,7 +183,7 @@ export async function run(root, args) {
       else sections.push({ path: instructions, marker: 'BATON', sha256: hash });
     }
     if (!opts.dryRun) {
-      await writeManifest(root, { ...previous, baton_version: next.baton_version,
+      await writeManifest(root, { ...previous, baton_version: next.baton_version, script,
         upstreams: next.upstreams, packs: next.packs, recommended_packs: next.recommended_packs,
         files, marker_sections: sections });
       if (conflicts.length) {

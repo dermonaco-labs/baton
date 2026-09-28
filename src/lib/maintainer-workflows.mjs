@@ -1,6 +1,6 @@
 import YAML from 'yaml';
 
-export const maintainerWorkflows = ['ci.yml', 'smoke.yml', 'upstream-watch.yml', 'release.yml'];
+export const maintainerWorkflows = ['ci.yml', 'smoke.yml', 'mvp-windows-smoke.yml', 'upstream-watch.yml', 'release.yml'];
 
 /** @param {string} file @param {string} text */
 export function maintainerWorkflowIssues(file, text) {

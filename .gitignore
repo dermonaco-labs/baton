@@ -3,3 +3,4 @@ node_modules/
 .baton/.tmp/
 .atv/observations*
 .context/
+/test/fixtures/handoffs/.relay-*/

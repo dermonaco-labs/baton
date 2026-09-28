@@ -28,9 +28,9 @@ export const phaseDefaults = {
     review: { lane: ['feature', 'quick'], owner: 'baton-review', model_role: 'review', human_gate: false, entry: [check('diff-nonempty'), check('fresh', { names: ['tasks'] })], exit: [check('findings-json-valid'), check('findings-mapped-to-tasks-or-dismissed')], next: ['land', 'implement'],
       by_lane: { quick: { entry: [check('diff-nonempty')], exit: [check('findings-json-valid'), check('findings-fixed-or-dismissed'), check('quick-scope-held')], next: ['land', 'work', 'specify'] } } },
     land: { lane: ['feature', 'quick'], owner: 'baton-land', model_role: 'implementation', human_gate: true, entry: [check('no-blocking-findings'), check('local-checks-pass')], exit: [check('pr-opened')], next: ['compound', 'done'],
-      by_lane: { quick: { entry: [check('no-blocking-findings'), check('local-checks-pass')], exit: [check('pr-opened')], next: ['compound', 'done'] } } },
+      by_lane: { quick: { entry: [check('no-blocking-findings'), check('local-checks-pass')], exit: [check('pr-opened')], next: ['compound', 'done'], human_gate: true } } },
     compound: { lane: ['feature', 'quick'], owner: 'ce-compound', model_role: 'planning', human_gate: false, entry: [check('pr-opened')], exit: compound, next: ['done'],
-      by_lane: { quick: { entry: [check('pr-opened')], exit: compound, next: ['done'] } } },
+      by_lane: { quick: { entry: [check('pr-opened')], exit: compound, next: ['done'], human_gate: false } } },
     work: { lane: ['quick'], owner: 'ce-work', model_role: 'implementation', human_gate: false, entry: [check('from-phase', { phases: ['none', 'review'] }), check('decision', { tag: 'quick-eligible' }), check('no-blocking-questions'), check('no-feature-tasks')], exit: [check('diff-nonempty'), check('local-checks-pass')], next: ['review', 'specify'] },
   },
 };
@@ -119,11 +119,16 @@ export function checkWeakenedContracts(config) {
   const warnings = [];
   for (const [phase, defaults] of Object.entries(phaseDefaults.phases)) {
     for (const lane of defaults.lane) {
-      const baseline = phaseForLane(defaults, lane).exit;
-      const configured = config.phases[phase] ? phaseForLane(config.phases[phase], lane).exit : [];
-      for (const required of baseline) {
-        const matching = configured.find((item) => checkKey(item) === checkKey(required));
-        if (!matching || !equivalent(required, matching)) warnings.push({ code: 'W_WEAKENED_CONTRACT', message: `${phase}/${lane} removed or weakened ${checkKey(required)}` });
+      const baseline = phaseForLane(defaults, lane);
+      const configured = config.phases[phase] ? phaseForLane(config.phases[phase], lane) : null;
+      if (baseline.human_gate && !configured?.human_gate) {
+        warnings.push({ code: 'W_WEAKENED_CONTRACT', message: `${phase}/${lane} disabled human_gate` });
+      }
+      for (const side of /** @type {Array<'entry'|'exit'>} */ (['entry', 'exit'])) {
+        for (const required of baseline[side]) {
+          const matching = configured?.[side]?.find((item) => checkKey(item) === checkKey(required));
+          if (!matching || !equivalent(required, matching)) warnings.push({ code: 'W_WEAKENED_CONTRACT', message: `${phase}/${lane} removed or weakened ${side} ${checkKey(required)}` });
+        }
       }
     }
   }

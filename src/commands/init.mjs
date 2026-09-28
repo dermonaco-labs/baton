@@ -4,7 +4,7 @@ import YAML from 'yaml';
 import { BatonError } from '../lib/report.mjs';
 import { resolvePayload, payloadBytes } from '../lib/payload.mjs';
 import { optionalBytes, putBytes, safePath, matches, digest, parsedObject } from '../lib/overlay.mjs';
-import { readManifest, writeManifest } from '../lib/manifest.mjs';
+import { readManifest, writeManifest, installedScript } from '../lib/manifest.mjs';
 import { loadPacks, resolvePacks, recommendedPacks } from '../lib/packs.mjs';
 import { mergeMarker } from '../lib/markers.mjs';
 import { repairAtv } from '../lib/repairs.mjs';
@@ -12,7 +12,7 @@ import { prepareSpeckit, UpstreamError } from '../lib/upstream.mjs';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
-const protectedPath = /^(?:specs\/|docs\/(?:brainstorms|solutions)\/|\.specify\/(?:feature\.json$|memory\/constitution\.md$))/;
+export const protectedPath = /^(?:specs\/|docs\/(?:brainstorms|solutions)\/|\.specify\/(?:feature\.json$|memory\/constitution\.md$))/;
 const instructions = '.github/copilot-instructions.md';
 const hooks = '.github/hooks/copilot-hooks.json';
 const extensions = '.specify/extensions.yml';
@@ -47,7 +47,7 @@ function options(args) {
 }
 
 /** @param {Buffer} existing @param {Buffer} incoming */
-function mergeHooks(existing, incoming) {
+export function mergeHooks(existing, incoming) {
   let current;
   try { current = JSON.parse(existing.toString()); }
   catch (error) {
@@ -77,7 +77,7 @@ function mergeHooks(existing, incoming) {
 }
 
 /** @param {Buffer} existing @param {Buffer} incoming */
-function mergeExtensions(existing, incoming) {
+export function mergeExtensions(existing, incoming) {
   let current;
   try { current = YAML.parse(existing.toString(), { uniqueKeys: true }); }
   catch (error) {
@@ -150,15 +150,16 @@ export async function run(root, args) {
       if (!(error instanceof Error) || !/^(?:Unknown pack|Pack dependency cycle|Pack conflict):?/.test(error.message)) throw error;
       throw new BatonError('E_PACK', error.message);
     }
-    if (opts.script && opts.script !== 'sh') {
+    const script = opts.script ?? await installedScript(root, previous);
+    if (script !== 'sh') {
       const directory = await mkdtemp(join(tmpdir(), 'baton-speckit-'));
       generated = { root: directory, cleanup: () => rm(directory, { recursive: true, force: true }) };
       try {
-        prepareSpeckit({ root: payload.root, work: directory, script: opts.script });
+        prepareSpeckit({ root: payload.root, work: directory, script });
       } catch (error) {
         if (error instanceof UpstreamError &&
             (error.code === 'E_PREREQUISITE' || /no version of specify-cli==/i.test(error.message))) {
-          throw new BatonError('E_PREREQUISITE', `${error.message}; uv and the pinned specify-cli wheel are required for --script ${opts.script}`, 5);
+          throw new BatonError('E_PREREQUISITE', `${error.message}; uv and the pinned specify-cli wheel are required for --script ${script}`, 5);
         }
         throw error;
       }
@@ -167,7 +168,7 @@ export async function run(root, args) {
     const planned = new Map();
     for (const entry of lock.files) {
       const pack = packs.find(id => entry.packs.includes(id));
-      if (!pack || protectedPath.test(entry.path)) continue;
+      if (!pack || protectedPath.test(entry.path) || (generated && entry.path.startsWith('.specify/scripts/bash/'))) continue;
       const bytes = await payloadBytes(payload.root, entry.stored_at);
       if (digest(bytes) !== entry.sha256) throw new BatonError('E_LOCK_MISMATCH', `Payload changed: ${entry.stored_at}`);
       planned.set(entry.path, { bytes, pack, owner: entry.upstream === 'atv' ? 'atv' : entry.upstream === 'speckit' ? 'speckit' : 'baton' });
@@ -319,6 +320,7 @@ export async function run(root, args) {
     const manifest = {
       schema: 1, baton_version: '0.1.0', installed_at: previous?.installed_at ?? new Date().toISOString(),
       source: previous?.source ?? 'init',
+      script,
       upstreams: { speckit: `${lock.upstreams.speckit.version}@${lock.upstreams.speckit.commit.slice(0, 7)}`,
         atv: `${lock.upstreams.atv.ref}@${lock.upstreams.atv.commit.slice(0, 7)}` },
       packs, recommended_packs: recommendedPacks(definitions, packs),

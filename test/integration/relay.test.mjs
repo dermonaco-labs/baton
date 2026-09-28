@@ -271,6 +271,10 @@ test('stale artifact then refresh and checkbox-insensitive progress', async () =
     assert.equal(stale.code, 1);
     assert.ok(JSON.parse(stale.stdout).errors.some((issue) => issue.code === 'E_STALE_ARTIFACT'));
     assert.equal((await runCli(root, ['handoff', 'refresh', '--feature', feature, '--reason', 'intentional spec edit'])).code, 0);
+    const pending = await runCli(root, ['handoff', 'receive', '--phase', 'implement', '--feature', feature, '--json']);
+    assert.equal(pending.code, 3);
+    assert.ok(JSON.parse(pending.stdout).errors.some((issue) => issue.code === 'E_GATE_PENDING'));
+    assert.equal((await runCli(root, ['handoff', 'approve', '--feature', feature, '--by', 'maintainer'])).code, 0);
     const tasks = join(root, 'specs', feature, 'tasks.md');
     await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('- [ ] T001', '- [x] T001'));
     assert.equal((await runCli(root, ['handoff', 'receive', '--phase', 'implement', '--feature', feature, '--mode', 'converge'])).code, 0);
@@ -461,7 +465,9 @@ test('F02 review derives the open P1 count and routes feature review back to imp
     const { data } = parseFrontmatter(await readFile(join(root, handoff), 'utf8'));
     assert.equal(data.review.blocking_findings, 1);
     assert.equal(data.next_phase, 'implement');
-    assert.equal((await runHandoff(root, ['receive', '--phase', 'land', '--feature', feature])).errors.some((issue) => issue.code === 'E_REVIEW_BLOCKING'), true);
+    const land = await runHandoff(root, ['receive', '--phase', 'land', '--feature', feature]);
+    assert.notEqual(land.exitCode, 0);
+    assert.ok(land.errors.some((issue) => ['E_REVIEW_BLOCKING', 'E_TRANSITION'].includes(issue.code)));
   } finally {
     await cleanup();
   }
@@ -534,7 +540,8 @@ test('F03/F20 converge receive can be followed by a converged implement write', 
   try {
     await prepareReview(root, []);
     const tasks = join(root, 'specs', feature, 'tasks.md');
-    await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('- [ ] T001', '- [x] T001') + '\nAC-US1-1: red to green.\n');
+    await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('- [ ] T001', '- [x] T001') +
+      '\n## Evidence\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | red: old label assertion fails; green: updated label assertion passes |\n');
     await runHandoff(root, ['refresh', '--feature', feature, '--reason', 'Acceptance evidence recorded']);
     assert.deepEqual((await runHandoff(root, ['receive', '--phase', 'implement', '--mode', 'converge', '--feature', feature])).errors, []);
     await writeInput(root, { summary: 'Converge finished.' });
@@ -616,6 +623,26 @@ test('F06 multiple features resolve the active feature from the git branch', asy
   }
 });
 
+test('F06 feature metadata selects the active feature when the branch has no feature suffix', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const other = '002-other';
+    await cp(join(root, 'specs', feature), join(root, 'specs', other), { recursive: true });
+    const otherHandoff = join(root, 'specs', other, 'handoff.md');
+    const { data, body } = parseFrontmatter(await readFile(otherHandoff, 'utf8'));
+    data.feature = other;
+    data.next_phase = 'review';
+    data.next_owner = 'baton-review';
+    await writeFile(otherHandoff, serializeFrontmatter(data, body));
+    await mkdir(join(root, '.specify'), { recursive: true });
+    await writeFile(join(root, '.specify/feature.json'), JSON.stringify({ feature_directory: `specs/${other}` }));
+    const result = await runHandoff(root, ['next']);
+    assert.equal(result.data.command, '/baton-review');
+  } finally {
+    await cleanup();
+  }
+});
+
 test('F11 supplied decisions remain append-only and existing questions cannot be removed by write', async () => {
   const { root, cleanup } = await repo();
   try {
@@ -646,8 +673,8 @@ test('F11 supplied human decisions cannot be forged or mutate a prior decision',
       summary: 'Record solution.',
       decisions: [{ id: 'D1', decision: 'Rewritten', rationale: 'Forgery', by: 'human:maintainer' }],
     });
-    const result = await runHandoff(root, ['write', '--phase', 'compound', '--feature', feature, '--from-json', 'handoff-input.json']);
-    assert.ok(result.errors?.length, 'A rewritten/forged decision must be rejected');
+    await assert.rejects(runHandoff(root, ['write', '--phase', 'compound', '--feature', feature, '--from-json', 'handoff-input.json']),
+      (error) => error.code === 'E_USAGE' && error.exitCode === 2);
     assert.equal(parseFrontmatter(await readFile(join(root, handoff), 'utf8')).data.decisions[0].decision, 'Original');
   } finally {
     await cleanup();
@@ -805,12 +832,15 @@ test('F27 review skill documents the findings payload and blocking routes', asyn
   assert.match(skill, /feature `implement` or quick `work`/);
 });
 
-test('F28 relay fixture repositories are created outside the source tree', async () => {
+test('F28 relay fixture repositories are outside the source tree or gitignored', async () => {
   const { root, cleanup } = await repo();
   try {
     const pathFromSource = relative(sourceRoot, root);
-    assert.ok(pathFromSource.startsWith('..') || isAbsolute(pathFromSource),
-      `Relay fixture must not pollute the source tree: ${pathFromSource}`);
+    if (!pathFromSource.startsWith('..') && !isAbsolute(pathFromSource)) {
+      const ignored = await git('git', ['check-ignore', '-q', '--', pathFromSource.replaceAll('\\', '/')],
+        { cwd: sourceRoot, windowsHide: true }).then(() => true, () => false);
+      assert.ok(ignored, `Relay fixture must be gitignored: ${pathFromSource}`);
+    }
   } finally {
     await cleanup();
   }

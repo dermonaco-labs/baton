@@ -122,6 +122,11 @@ export async function run(root, args) {
   }
   for (const absolute of new Set(files)) {
     const path = relative(root, absolute).replaceAll('\\', '/');
+    if (/^specs\/[^/]+\/spec\.md$/.test(path) &&
+        !await exists(root, `${path.slice(0, -'spec.md'.length)}handoff.md`)) {
+      warnings.push({ code: 'W_NO_BATON', file: path,
+        message: 'Feature spec has no baton; run baton handoff init --infer' });
+    }
     const name = jsonFiles.get(path) ?? yamlFiles.get(path) ??
       (/(?:^|\/)(?:review|[^/]+\.review)\.json$/.test(path) ? 'findings' : null) ??
       (path.startsWith('packs/') && path.endsWith('.yml') && path !== 'packs/repairs.yml' ? 'pack' : null);
@@ -142,6 +147,12 @@ export async function run(root, args) {
         const { data } = parseFrontmatter(await readFile(absolute, 'utf8'));
         const modelIssue = modelPolicyIssue(models, data.suggested_model, path);
         if (modelIssue?.code === 'W_MODEL_NOT_ALLOWED') warnings.push(modelIssue);
+        for (const assumption of Array.isArray(data.assumptions) ? data.assumptions : []) {
+          if (assumption?.revisit_at === data.next_phase) {
+            warnings.push({ code: 'W_ASSUMPTION_DUE', file: path,
+              message: `Assumption ${assumption.id} is due for review in ${data.next_phase}` });
+          }
+        }
         if (data.lane === 'quick') {
           let config;
           try {

@@ -90,6 +90,28 @@ test('review sees implementation committed before origin/HEAD advanced when the 
   }
 });
 
+test('review can use the persisted findings base after implementation has merged', async () => {
+  const root = await fixtureRoot('diff-review-base-');
+  try {
+    git(root, 'init', '-q', '-b', 'main');
+    await mkdir(join(root, 'src'));
+    await mkdir(join(root, 'specs/001-example'), { recursive: true });
+    await writeFile(join(root, 'src/app.mjs'), 'export const value = 1;\n');
+    git(root, 'add', 'src/app.mjs');
+    git(root, '-c', 'user.name=Test', '-c', 'user.email=test@invalid.example', 'commit', '-q', '-m', 'base');
+    const base = git(root, 'rev-parse', 'HEAD');
+    await writeFile(join(root, 'src/app.mjs'), 'export const value = 2;\n');
+    git(root, 'add', 'src/app.mjs');
+    git(root, '-c', 'user.name=Test', '-c', 'user.email=test@invalid.example', 'commit', '-q', '-m', 'implementation');
+    git(root, 'symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/heads/main');
+    await writeFile(join(root, 'specs/001-example/review.json'), JSON.stringify({ base }));
+    const data = { review: { findings_path: 'specs/001-example/review.json' } };
+    assert.equal((await evaluateBuiltIn(root, 'specs/001-example/handoff.md', data, { id: 'diff-nonempty' })).met, true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('diff-nonempty rejects bookkeeping and untracked scratch without implementation', async () => {
   const root = await fixtureRoot('diff-bookkeeping-');
   try {
@@ -129,7 +151,9 @@ test('acceptance evidence requires a real evidence row, not the registry header 
     });
     await t.test('placeholder result', async () => {
       await writeFile(tasks, '## Acceptance Registry\n| ID | Story | Evidence |\n|---|---|---|\n| AC-US1-1 | US1 | fail |\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | green — TODO: add proof |\n');
-      assert.equal((await evaluate()).met, false);
+      const result = await evaluate();
+      assert.equal(result.met, false);
+      assert.match(result.evidence, /AC-US1-1/);
     });
     await t.test('unjustified n/a', async () => {
       await writeFile(tasks, '## Acceptance Registry\n| ID | Story | Expect initial |\n|---|---|---|\n| AC-US1-1 | US1 | n/a |\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | n/a — TBD |\n');
@@ -141,6 +165,14 @@ test('acceptance evidence requires a real evidence row, not the registry header 
     });
     await t.test('justified n/a evidence', async () => {
       await writeFile(tasks, '## Acceptance Registry\n| ID | Story | Expect initial |\n|---|---|---|\n| AC-US1-1 | US1 | n/a |\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | n/a — manual review deferred until owner can access the hosted UI |\n');
+      assert.equal((await evaluate()).met, true);
+    });
+    await t.test('specific pending-gate test outcome is not a placeholder', async () => {
+      await writeFile(tasks, '## Acceptance Registry\n| ID | Story | Expect initial |\n|---|---|---|\n| AC-US1-1 | US1 | fail |\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | red — pending-gate write test failed; green — relay gate-pending check passed |\n');
+      assert.equal((await evaluate()).met, true);
+    });
+    await t.test('justified owner-pending n/a is evidence without claiming a pass', async () => {
+      await writeFile(tasks, '## Acceptance Registry\n| ID | Story | Expect initial |\n|---|---|---|\n| AC-US1-1 | US1 | n/a |\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | n/a — timed owner walkthrough remains owner pending; no pass claimed |\n');
       assert.equal((await evaluate()).met, true);
     });
   } finally {
@@ -156,6 +188,20 @@ test('acceptance check identifiers are matched literally, not interpolated as re
       '## Acceptance Registry\n| ID | Story | Expect initial |\n|---|---|---|\n| AC-US1-1 | US1 | fail |\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | red — test failed; green — passed |\n');
     const data = { acceptance_checks: [{ id: 'AC.US1-1', story: 'US1' }] };
     assert.equal((await evaluateBuiltIn(root, 'specs/001-example/handoff.md', data, { id: 'acceptance-evidence' })).met, false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('acceptance evidence failure names every check missing proof', async () => {
+  const root = await fixtureRoot('acceptance-missing-');
+  try {
+    await mkdir(join(root, 'specs/001-example'), { recursive: true });
+    await writeFile(join(root, 'specs/001-example/tasks.md'),
+      '## Acceptance Registry\n| ID | Story | Expect initial |\n|---|---|---|\n| AC-US1-1 | US1 | fail |\n| AC-US2-1 | US2 | fail |\n\n| Check | Result and evidence |\n|---|---|\n| AC-US1-1 | green — TODO |\n| AC-US2-1 | red / green pending |\n');
+    const data = { acceptance_checks: [{ id: 'AC-US1-1', story: 'US1' }, { id: 'AC-US2-1', story: 'US2' }] };
+    const result = await evaluateBuiltIn(root, 'specs/001-example/handoff.md', data, { id: 'acceptance-evidence' });
+    assert.deepEqual(result, { met: false, evidence: '2 checks lack evidence: AC-US1-1, AC-US2-1' });
   } finally {
     await rm(root, { recursive: true, force: true });
   }
