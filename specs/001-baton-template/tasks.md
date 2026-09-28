@@ -412,9 +412,9 @@ files and have no unfinished dependencies. Paths are repo-relative.
   - [ ] Owner pending: timed newcomer walkthrough (AC-US1-4) and visual README check (AC-US6-2).
 - [ ] T094 Write the baton `phase_completed: implement → next_phase: review` (`baton handoff write --phase implement`). <!-- baton:handoff-write:implement -->
   Do not tag. Tagging `v0.1.0` is a human action after review and land.
-  - [ ] Blocked here: the configured `local-checks-pass` executes `npm run check`, but this workstation's required
-    internal npm feed lacks the pinned `ignore` package. Run the handoff on a registry-enabled machine or devcontainer;
-    hosted CI evidence must not be substituted into this local exit check.
+  - [x] Local gate: the internal npm feed supplies `ignore@7.0.9` through the package override; `npm ci` and
+    `npm run check` passed locally with the internal npm and PyPI feeds. Hosted CI evidence is not substituted for
+    the local exit check.
 
 ## Acceptance Registry
 

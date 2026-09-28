@@ -24,8 +24,10 @@ docker run --rm -it -v "$PWD":/w -w /w node:20-bookworm bash -lc 'npm ci && npm 
 
 Hosted CI (`ci.yml` and `smoke.yml`) is the authoritative gate. Steps that need no registry (`node .baton/bin/baton.mjs validate`
 with the committed build, and the markdown and hash checks) can still run on the workstation.
-Restricted mirrors may lack locked pins such as npm `ignore` version 7.0.10 and PyPI `specify-cli==1.0.11`. Record the
-local limitation, run the available checks, and use hosted CI for the full check and `sync --check` evidence.
+The internal npm feed currently lacks `ignore@7.0.10`, so the lockfile overrides this transitive dependency to
+available `7.0.9`; local `npm ci` and `npm run check` can run with the internal npm and PyPI feeds configured for
+the process. The internal PyPI mirror still lacks `specify-cli==1.0.11`, so use hosted CI for `sync --check` evidence
+without changing the Spec Kit pin. Record any remaining local limitations rather than claiming a pass.
 The planned devcontainer (roadmap RM9) will provide a repeatable local fallback when it is available.
 
 ## S1: Template instantiation (US1)
