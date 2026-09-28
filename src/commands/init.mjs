@@ -46,6 +46,16 @@ function options(args) {
   return result;
 }
 
+/**
+ * Locked Spec Kit files are generated with bash scripts; a ps/py install takes any file that
+ * calls them from the flavour-specific generated project instead.
+ * @param {string} project @param {string} path @param {Buffer} bytes @returns {Promise<Buffer>}
+ */
+export async function flavouredBytes(project, path, bytes) {
+  if (!bytes.includes('.specify/scripts/bash/')) return bytes;
+  return await optionalBytes(project, path) ?? bytes;
+}
+
 /** @param {Buffer} existing @param {Buffer} incoming */
 export function mergeHooks(existing, incoming) {
   let current;
@@ -131,7 +141,7 @@ export async function run(root, args) {
     }
     throw error;
   }
-  /** @type {{cleanup:() => Promise<void>,root:string}|null} */
+  /** @type {{cleanup:() => Promise<void>,project:string}|null} */
   let generated = null;
   try {
     const lock = JSON.parse(await readFile(join(payload.root, 'baton.lock.json'), 'utf8'));
@@ -153,7 +163,7 @@ export async function run(root, args) {
     const script = opts.script ?? await installedScript(root, previous);
     if (script !== 'sh') {
       const directory = await mkdtemp(join(tmpdir(), 'baton-speckit-'));
-      generated = { root: directory, cleanup: () => rm(directory, { recursive: true, force: true }) };
+      generated = { project: join(directory, 'project'), cleanup: () => rm(directory, { recursive: true, force: true }) };
       try {
         prepareSpeckit({ root: payload.root, work: directory, script });
       } catch (error) {
@@ -169,8 +179,10 @@ export async function run(root, args) {
     for (const entry of lock.files) {
       const pack = packs.find(id => entry.packs.includes(id));
       if (!pack || protectedPath.test(entry.path) || (generated && entry.path.startsWith('.specify/scripts/bash/'))) continue;
-      const bytes = await payloadBytes(payload.root, entry.stored_at);
+      /** @type {Buffer} */
+      let bytes = await payloadBytes(payload.root, entry.stored_at);
       if (digest(bytes) !== entry.sha256) throw new BatonError('E_LOCK_MISMATCH', `Payload changed: ${entry.stored_at}`);
+      if (generated && entry.upstream === 'speckit') bytes = await flavouredBytes(generated.project, entry.path, bytes);
       planned.set(entry.path, { bytes, pack, owner: entry.upstream === 'atv' ? 'atv' : entry.upstream === 'speckit' ? 'speckit' : 'baton' });
     }
     for (const pack of packs) {
@@ -198,7 +210,7 @@ export async function run(root, args) {
       planned.set(path, { bytes: await readFile(join(payload.root, 'baton/schemas', name)), pack: 'core', owner: 'baton' });
     }
     if (generated) {
-      const project = join(generated.root, 'project');
+      const project = generated.project;
       /** @param {string} folder */
       const addScripts = async (folder) => {
         for (const item of await readdir(join(project, folder), { withFileTypes: true })) {

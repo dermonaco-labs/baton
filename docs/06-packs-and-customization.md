@@ -41,6 +41,10 @@ vocabulary and `checks` commands. `/baton-land` runs the configured checks
 before push; in this repository `npm run check` is the local gate. Keep
 personal terms in an **untracked** denylist file configured through
 `denylist.terms_file` or `BATON_DENYLIST_FILE`. Never commit that file.
+The default email, mention and home-path rules skip Markdown code spans
+and fenced examples; identities there can escape those checks. Review
+published code examples manually rather than treating the denylist as a
+complete privacy filter.
 
 `.baton/phases.yml` can override entry, exit, next and gate rules. Overrides
 are schema-checked; removing a built-in exit check (including by moving it

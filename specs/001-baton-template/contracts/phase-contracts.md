@@ -42,8 +42,8 @@ flowchart LR
 | plan | `speckit-plan` | planning | – | `spec-exists`, `from-phase:{specify,clarify}`, `gate-approved`, `no-blocking-questions` | `artifact-exists:plan.md`, `artifact-exists:research.md`, `no-needs-clarification:plan.md`, `constitution-check-present` | tasks |
 | tasks | `speckit-tasks` | planning | – | `plan-exists`, `no-blocking-questions` | `artifact-exists:tasks.md`, `tasks-reference-stories`, `acceptance-registered` | analyze |
 | analyze | `speckit-analyze` | review | **yes (pre-code)** | `tasks-exists`, `fresh:spec,plan,tasks` | `analysis-recorded` (`specs/<f>/analysis.md`, persisted by `speckit.baton.handoff` because upstream analyze is read-only), `no-critical-findings` | implement (or back to specify, plan or tasks) |
-| implement | `speckit-implement` (+ `speckit-converge` re-entry) | implementation | – | `gate-approved`, `acceptance-registered`, `fresh:spec,plan,tasks` | `tasks-all-checked-or-deferred`, `acceptance-evidence` (each check has a red→green or n/a note), `local-checks-pass` | review |
-| review | `baton-review` → `ce-review` | review | – | `diff-nonempty`, `fresh:tasks` | `findings-json-valid`, `findings-mapped-to-tasks-or-dismissed` | land, implement |
+| implement | `speckit-implement` (+ `speckit-converge` re-entry) | implementation | – | `gate-approved`, `acceptance-registered`, `fresh:spec,plan,tasks` | `tasks-all-checked-or-deferred`, `acceptance-evidence` (red→green, eligible n/a, or human-waived partial per check), `local-checks-pass` | review |
+| review | `baton-review` → `ce-review` | review | – | `diff-nonempty`, `fresh:tasks` | `findings-json-valid`, `findings-mapped-to-tasks-or-dismissed` (land only) | land, implement |
 | land | `baton-land` → `land` | implementation | **yes (PR review)** | `no-blocking-findings`, `local-checks-pass` | `pr-opened` | compound, done |
 | compound | `ce-compound` | planning | – | `pr-opened` | group `compound-recorded` = `any_of` [`artifact-exists:docs/solutions/*.md`, `decision:skip-compound`] (data-model §2.1) | done |
 
@@ -58,6 +58,12 @@ An unchecked task without both the marker and the command still blocks the hando
 substantive red and green outcomes (in that order), or an explained `n/a`; headers and
 placeholders do not count.
 
+The review exit is conditional on the route. When review routes back to implement (feature lane) or work (quick
+lane) because findings remain open at P0 or P1, only `findings-json-valid` applies, plus `quick-scope-held` in the
+quick lane: the open blockers are the work still to do, so they need not be mapped, fixed or dismissed yet.
+`findings-mapped-to-tasks-or-dismissed` (feature lane) and `findings-fixed-or-dismissed` (quick lane) are required
+only when review routes to land.
+
 Entry and exit cells use the check keys of data-model §2.1. The phase table is the feature lane; `review`, `land`
 and `compound` are shared with the quick lane, which overrides them through `by_lane.quick` (below).
 
@@ -71,7 +77,7 @@ findings file is `.baton/quick/<slug>.review.json`. `{quick_dir}` in check paths
 |---|---|---|---|---|---|---|
 | (start) | `baton` skill: `baton handoff new --quick <slug> --reason "<why>"` | – | – | the slug is unused; no `specs/*/` dir claims the change | writes the baton with `phase_completed: none`, `next_phase: work`, and a decision tagged `quick-eligible` holding the reason | work |
 | work | `ce-work` | implementation | – | `from-phase:{none,review}`, `decision:quick-eligible`, `no-blocking-questions`, `no-feature-tasks` | `diff-nonempty`, `local-checks-pass` | review, specify (escalate) |
-| review | `baton-review` → `ce-review` | review | – | `diff-nonempty` | `findings-json-valid`, `findings-fixed-or-dismissed`, `quick-scope-held` | land, work, specify (escalate) |
+| review | `baton-review` → `ce-review` | review | – | `diff-nonempty` | `findings-json-valid`, `findings-fixed-or-dismissed` (land only), `quick-scope-held` | land, work, specify (escalate) |
 | land | `baton-land` → `land` | implementation | **yes (PR review)** | `no-blocking-findings`, `local-checks-pass` | `pr-opened` | compound, done |
 | compound | `ce-compound` | planning | – | `pr-opened` | `compound-recorded` (same group as the feature lane) | done |
 
@@ -84,7 +90,9 @@ findings file is `.baton/quick/<slug>.review.json`. `{quick_dir}` in check paths
 - **Hooks**: `ce-work` is an ATV skill without Spec Kit hooks, so the `baton` skill runs
   `handoff receive --phase work --quick <slug>` before it and `handoff write --phase work --quick <slug>` after it.
   `baton-review`, `baton-land` and the compound step call receive/write themselves, with `--quick <slug>`.
-- **Loop**: review → work is chosen automatically when `review.blocking_findings > 0`.
+- **Loop**: review → work is chosen automatically when `review.blocking_findings > 0`. On that route the review exit
+  checks only `findings-json-valid` and `quick-scope-held`; `findings-fixed-or-dismissed` applies only on the route
+  to land (see the conditional review exit above the Quick lane section).
 - **Size hint**: `W_QUICK_LARGE` when the diff touches more than `config.lanes.quick.max_files_changed` files. It's a
   warning, not an escalation.
 
@@ -118,15 +126,32 @@ findings file is `.baton/quick/<slug>.review.json`. `{quick_dir}` in check paths
 
 - `artifact-exists:<glob>`: the path is relative to the feature dir unless it starts with `docs/` or `.`.
 - `fresh:<names>`: sha256 comparison against the `artifacts` recorded in the current baton.
-- `diff-nonempty`: use the `x-base-commit` SHA on the baton decision tagged `diff-base`, if recorded; otherwise
-  use `review.json`'s `base` when available, then fall back to the merge-base with `origin/HEAD`. A durable base
-  keeps review meaningful when implementation commits have already merged to main. Count tracked changes and
-  untracked source, test, documentation, pack or workflow files, but not root scratch files, scratch/temp files,
-  `.baton/` bookkeeping or `specs/<feature>/handoff.md`.
+- `diff-nonempty`: use the `x-base-commit` SHA on the **last** baton decision tagged `diff-base`; otherwise, once
+  a review is recorded, the findings file's `head` (the reviewed head is the next base), then its `base`; then
+  fall back to the merge-base with `origin/HEAD`. A durable base keeps review meaningful when implementation
+  commits have already merged to main, and a later `diff-base` decision corrects an earlier wrong one. A base
+  that is not a commit in this clone (`git cat-file -e <sha>^{commit}`) is skipped and reported as
+  `Recorded diff base <sha> is not in this clone`; a malformed SHA on the last decision is unmet. Count tracked
+  changes and untracked files in any directory, but not untracked root-level files (such as a `--from-json`
+  input; stage them to count), scratch/tmp/temp paths, `.baton/` bookkeeping, `specs/*/handoff.md`, or any
+  file under the current feature directory `specs/<feature>/` (Spec Kit and Baton artifacts such as tasks.md,
+  analysis.md and review.json).
 - `markers-bounded`: counts `[NEEDS CLARIFICATION` occurrences (Spec Kit's convention) and allows at most 3.
 - `tasks-reference-stories`: each `- [ ] T\d{3}` line in a story phase carries `[US\d+]`.
 - `acceptance-registered`: tasks.md has a `## Acceptance Registry` table (added by the `baton-templates` preset).
   Every in-scope story has ≥ 1 row, and the rows are mirrored into `acceptance_checks`.
+- `acceptance-evidence`: the baton `acceptance_checks` and the tasks.md Acceptance Registry must list the same
+  IDs with the same story, compared in both directions (a registry row missing from the baton, a baton check
+  missing from the registry, or a story mismatch is unmet). Every registered check has a row in a
+  `| Check | Result and evidence |` table (GFM rows
+  with or without outer pipes; `\|` is a literal pipe). `red <sep> <evidence> <break> green <sep> <evidence>` is
+  accepted, where separators include dashes, colons and `→`/`->` arrows and `green` must follow `;`, `,`, `.`,
+  an arrow or a spaced dash. `n/a — <reason>` is accepted only when the baton check is `expect_initial: n/a` and
+  the registry's Expect initial column, if present, does not say `fail`; no waiver turns `n/a` into evidence for a
+  `fail` check. `partial — <evidence>` stays unmet unless a configured `human:<role>` recorded a decision tagged
+  `acceptance-waiver` with `x-check: <id>`. To record this through the CLI, a blocking question must carry
+  `x-check: <registered id>` and offer a `Waive …` choice; `handoff answer Qn "Waive …" --by <role>` records
+  the tagged decision. A different choice remains untagged. Never answer for a human without their approval.
 - `local-checks-pass`: runs each `config.checks[*].run` and records the exit codes as evidence.
 - `findings-json-valid`: validates `review.json` against Baton's own `.baton/schemas/findings.schema.json`. `baton-review`
   runs `ce-review mode:headless` and normalizes its structured findings into that file (data-model §8), so no
@@ -157,7 +182,8 @@ findings file is `.baton/quick/<slug>.review.json`. `{quick_dir}` in check paths
 - **Branching.** For phases with several `Next` values, `baton handoff write` picks the first one unless
   `--next <phase>` is given. `specify --next plan` requires 0 `[NEEDS CLARIFICATION]` markers and sets
   `gate.required: true` (the scope gate moves to after specify). Review → implement is chosen automatically when
-  `review.blocking_findings > 0`.
+  `review.blocking_findings > 0`; on that route the review exit requires only `findings-json-valid`, and the
+  finding-mapping check applies only when review routes to land.
 - **Brainstorm.** Brainstorm has no feature dir, so it writes no baton. The first baton is written after specify with
   `--from-brainstorm docs/brainstorms/<file>.md`, which records the doc as an `evidence` artifact and adds a
   `brainstorm` history entry. `from-phase:brainstorm` is satisfied by that history entry.

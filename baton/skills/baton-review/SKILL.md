@@ -36,12 +36,13 @@ a result if the headless output is unavailable. Validate the JSON with
 `node .baton/bin/baton.mjs validate --path <review.json>`.
 
 In the feature lane, map each nondismissed finding to a task; dismiss
-only with a written reason. In the quick lane there are no tasks:
-every finding must be `fixed` or `dismissed` with a reason before
-landing. Record a decision tagged `quick-scope-held` with a reason
-only after checking the diff adds no user-facing behavior or public
-contract; otherwise escalate. P0/P1 `open` findings block landing. Pass a `--from-json` payload
-with `review: { findings_path: "<review.json path>" }` to
+only with a written reason. In the quick lane there are no tasks, so
+`task` is optional: every finding must be `fixed` or `dismissed` with
+a reason before landing. Record a decision tagged `quick-scope-held`
+with a reason only after checking the diff adds no user-facing
+behavior or public contract; otherwise escalate. P0/P1 `open` findings
+block landing. Pass a `--from-json` payload with
+`review: { findings_path: "<review.json path>" }` to
 `handoff write --phase review` (add `--quick <slug>` for the quick lane).
 The CLI derives `blocking_findings` from that file and automatically routes
 to feature `implement` or quick `work` while blockers remain; never

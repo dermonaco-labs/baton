@@ -6,6 +6,7 @@ import YAML from 'yaml';
 import { withinRoot } from './manifest.mjs';
 import { hashFile } from './hash.mjs';
 import { loadSchemas, validateSchema } from './schema.mjs';
+import { actorRole, gateVocabulary } from './handoff.mjs';
 
 const execAsync = promisify(exec);
 const execFileAsync = promisify(execFile);
@@ -55,37 +56,77 @@ async function matches(root, pattern) {
   return visit(base);
 }
 
-/** @param {string} root @param {string} [baseCommit] @param {boolean|'subject'} [includeUntracked] */
-export async function changedFiles(root, baseCommit, includeUntracked = true) {
+/** @param {string} file */
+const bookkeeping = (file) => file.startsWith('.baton/') || /^specs\/[^/]+\/handoff\.md$/.test(file);
+/** @param {string} file */
+const scratch = (file) => !file.includes('/') || /(?:^|\/)(?:scratch|tmp|temp)(?:[./-]|$)/i.test(file);
+
+/**
+ * Lists files changed since `base` (default: the merge-base with origin/HEAD), or null without a usable base.
+ * `subject` drops Baton bookkeeping, and untracked root-level or scratch/tmp files that are not staged.
+ * @param {string} root
+ * @param {{base?: string|null, untracked?: boolean, subject?: boolean}} [options]
+ */
+export async function changedFiles(root, { base: baseCommit = null, untracked = true, subject = false } = {}) {
   try {
     const base = baseCommit || (await execFileAsync('git', ['merge-base', 'HEAD', 'origin/HEAD'], { cwd: root, windowsHide: true })).stdout.trim();
     const { stdout: tracked } = await execFileAsync('git', ['diff', '--name-only', base], { cwd: root, windowsHide: true });
-    const { stdout: untracked } = includeUntracked
+    const { stdout: others } = untracked
       ? await execFileAsync('git', ['ls-files', '--others', '--exclude-standard'], { cwd: root, windowsHide: true })
       : { stdout: '' };
-    const newFiles = untracked.split(/\r?\n/).filter(Boolean)
-      .filter((file) => includeUntracked !== 'subject' ||
-        (/^(?:src|test|docs|specs|packs|baton|\.github)\//.test(file) &&
-         !/(?:^|\/)(?:scratch|tmp|temp)(?:[./-]|$)/i.test(file)));
-    return [...new Set([...tracked.split(/\r?\n/).filter(Boolean), ...newFiles])];
+    const newFiles = others.split(/\r?\n/).filter(Boolean).filter((file) => !subject || !scratch(file));
+    return [...new Set([...tracked.split(/\r?\n/).filter(Boolean), ...newFiles])]
+      .filter((file) => !subject || !bookkeeping(file));
   } catch (error) {
     if ([1, 128, 'ENOENT'].includes(/** @type {{code?:string|number}} */ (error).code ?? '')) return null;
     throw error;
   }
 }
 
-/** @param {string} root @param {Record<string,any>} data */
-async function reviewBase(root, data) {
-  const recorded = /** @type {Array<{tag?:string,'x-base-commit'?:string}>} */ (data.decisions ?? [])
-    .find((item) => item.tag === 'diff-base')?.['x-base-commit'];
-  if (recorded) return recorded;
-  const report = data.review?.findings_path && await optionalText(root, data.review.findings_path);
-  if (!report) return null;
+/** @param {string} root @param {string} sha */
+async function commitExists(root, sha) {
   try {
-    return JSON.parse(report).base ?? null;
-  } catch {
-    return null;
+    await execFileAsync('git', ['cat-file', '-e', `${sha}^{commit}`], { cwd: root, windowsHide: true });
+    return true;
+  } catch (error) {
+    if ([1, 128, 'ENOENT'].includes(/** @type {{code?:string|number}} */ (error).code ?? '')) return false;
+    throw error;
   }
+}
+
+/**
+ * Resolves the diff base: the last `diff-base` decision, then the recorded review's head, then its base.
+ * Unreachable candidates are reported and skipped, so the merge-base remains the final fallback.
+ * @param {string} root @param {Record<string,any>} data
+ * @returns {Promise<{base: string|null, notes: string[], invalid?: boolean}>}
+ */
+async function reviewBase(root, data) {
+  /** @type {Array<{label:string,sha:unknown}>} */
+  const candidates = [];
+  const recorded = /** @type {Array<{tag?:string,'x-base-commit'?:string}>} */ (data.decisions ?? [])
+    .filter((item) => item.tag === 'diff-base').at(-1)?.['x-base-commit'];
+  if (recorded) candidates.push({ label: 'Recorded diff base', sha: recorded });
+  const report = data.review?.findings_path && await optionalText(root, data.review.findings_path);
+  if (report) {
+    try {
+      const parsed = JSON.parse(report);
+      for (const field of ['head', 'base']) {
+        if (typeof parsed?.[field] === 'string') candidates.push({ label: `Review ${field}`, sha: parsed[field] });
+      }
+    } catch {
+      // An unreadable findings file is reported by the findings checks.
+    }
+  }
+  const notes = [];
+  for (const { label, sha } of candidates) {
+    if (typeof sha !== 'string' || !/^[a-f0-9]{7,64}$/i.test(sha)) {
+      if (label === 'Recorded diff base') return { base: null, notes, invalid: true };
+      continue;
+    }
+    if (await commitExists(root, sha)) return { base: sha, notes };
+    notes.push(`${label} ${sha} is not in this clone`);
+  }
+  return { base: null, notes };
 }
 
 /** @typedef {import('./phases.mjs').Check} Check */
@@ -178,31 +219,74 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
       const tasks = await text('tasks.md') ?? '';
       const lines = tasks.split(/\r?\n/);
       /** @param {string} line */
-      const cells = (line) => line.split('|').slice(1, -1).map((cell) => cell.trim());
+      const isRow = (line) => line.trim() !== '' && /(?<!\\)\|/.test(line);
+      /** @param {string} line */
+      const isDelimiter = (line) => line.includes('|') && /^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$/.test(line);
+      /** @param {string} line */
+      const cells = (line) => {
+        let row = line.trim();
+        if (row.startsWith('|')) row = row.slice(1);
+        if (row.endsWith('|') && !row.endsWith('\\|')) row = row.slice(0, -1);
+        return row.split(/(?<!\\)\|/).map((cell) => cell.replaceAll('\\|', '|').trim());
+      };
       /** @param {(values:string[])=>boolean} isHeader */
       const table = (isHeader) => {
-        const start = lines.findIndex((line) => /^\s*\|/.test(line) && isHeader(cells(line)));
-        if (start < 0 || !/^\s*\|[\s:|-]+\|\s*$/.test(lines[start + 1] ?? '')) return [];
+        const start = lines.findIndex((line, index) => isRow(line) && isHeader(cells(line)) && isDelimiter(lines[index + 1] ?? ''));
+        if (start < 0) return { header: /** @type {string[]} */ ([]), rows: /** @type {string[][]} */ ([]) };
         const rows = [];
-        for (let i = start + 2; i < lines.length && /^\s*\|/.test(lines[i]); i++) rows.push(cells(lines[i]));
-        return rows;
+        for (let i = start + 2; i < lines.length && isRow(lines[i]); i++) rows.push(cells(lines[i]));
+        return { header: cells(lines[start]), rows };
       };
       const registry = table((values) => /^ID$/i.test(values[0]) && /^Story$/i.test(values[1]));
-      const evidence = table((values) => /^Check$/i.test(values[0]) && /^Result and evidence$/i.test(values[1]));
+      const evidence = table((values) => /^Check$/i.test(values[0]) && /^Result and evidence$/i.test(values[1])).rows;
+      const expectColumn = registry.header.findIndex((value) => /^Expect initial\b/i.test(value));
+      /** @param {string|undefined} value */
+      const expectation = (value) => /^`?(fail|n\/a)`?$/i.exec(value?.trim() ?? '')?.[1].toLowerCase();
       /** @param {string} value */
       const substantive = (value) => value.length >= 8 &&
         !/\b(?:TBD|TODO|placeholder|add proof)\b/i.test(value) &&
         !/^\s*(?:owner\s+)?pending[.!]?\s*$/i.test(value);
-      const missing = accepted.filter((item) => {
-        if (!registry.some((values) => values[0] === item.id && values[1] === item.story)) return true;
+      const separator = '[\\s—–:→⇒⟶>-]+';
+      const redGreenPattern = new RegExp(`^red\\b${separator}(.+?)\\s*(?:[;,.]|→|⇒|⟶|->|\\s[—–-])\\s*green\\b${separator}(.+)$`, 'i');
+      const notApplicablePattern = new RegExp(`^n\\/a\\b${separator}(.+)$`, 'i');
+      const partialPattern = new RegExp(`^partial\\b${separator}(.+)$`, 'i');
+      const vocabulary = await gateVocabulary(root);
+      const humanDecisions = /** @type {Array<{decision?:string,rationale?:string,by?:string,tag?:string,'x-check'?:string}>} */ (data.decisions ?? [])
+        .filter((item) => typeof item.by === 'string' && item.by.startsWith('human:') && actorRole(item.by, vocabulary));
+      /** @param {string} id */
+      const waived = (id) => humanDecisions.some((item) => item.tag === 'acceptance-waiver' && item['x-check'] === id);
+      /** @type {string[]} */
+      const missing = [];
+      for (const item of /** @type {Array<{story:string,id:string,expect_initial?:string}>} */ (accepted)) {
+        const row = registry.rows.find((values) => values[0] === item.id);
+        if (!row) {
+          missing.push(`${item.id} (missing from the tasks.md registry)`);
+          continue;
+        }
+        if (row[1] !== item.story) {
+          missing.push(`${item.id} (story ${item.story} in the baton, ${row[1]} in tasks.md)`);
+          continue;
+        }
+        const expected = [expectation(item.expect_initial), expectation(expectColumn >= 0 ? row[expectColumn] : undefined)];
         const result = evidence.find((values) => values[0] === item.id)?.[1] ?? '';
-        const redGreen = /^red\b[\s—–:-]+(.+?)\bgreen\b[\s—–:-]+(.+)$/i.exec(result);
-        const notApplicable = /^n\/a\b[\s—–:-]+(.+)$/i.exec(result);
-        return !(redGreen && substantive(redGreen[1]) && substantive(redGreen[2]) ||
-          notApplicable && substantive(notApplicable[1]));
-      });
+        const redGreen = redGreenPattern.exec(result);
+        const notApplicable = notApplicablePattern.exec(result);
+        const partial = partialPattern.exec(result);
+        if (redGreen && substantive(redGreen[1]) && substantive(redGreen[2])) continue;
+        if (notApplicable && substantive(notApplicable[1])) {
+          if (expected[0] === 'n/a' && expected[1] !== 'fail') continue;
+          missing.push(`${item.id} (n/a but expect_initial is ${expected.find((value) => value !== 'n/a') ?? 'unset'})`);
+        } else if (partial && substantive(partial[1])) {
+          if (!waived(item.id)) missing.push(`${item.id} (partial; needs a tagged human waiver)`);
+        } else missing.push(item.id);
+      }
+      for (const values of registry.rows) {
+        if (values[0] && !accepted.some((item) => item.id === values[0])) {
+          missing.push(`${values[0]} (registered in tasks.md but missing from the baton)`);
+        }
+      }
       return answer(!missing.length && accepted.length > 0,
-        `${missing.length} checks lack evidence${missing.length ? `: ${missing.map((item) => item.id).join(', ')}` : ''}`);
+        `${missing.length} checks lack evidence${missing.length ? `: ${missing.join(', ')}` : ''}`);
     }
     case 'local-checks-pass': {
       const configText = await optionalText(root, '.baton/config.yml');
@@ -221,12 +305,11 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
       return answer(results.every((item) => item.endsWith(': 0')), results.join(', '));
     }
     case 'diff-nonempty': {
-      const base = await reviewBase(root, data);
-      if (base && !/^[a-f0-9]{7,64}$/i.test(base)) return answer(false, 'Invalid recorded review base');
-      const files = await changedFiles(root, base, 'subject');
-      const relevant = files?.filter((file) => !file.startsWith('.baton/') &&
-        !/^specs\/[^/]+\/handoff\.md$/.test(file));
-      return answer(relevant?.length, relevant ? `${relevant.length} changed files` : 'No merge-base available');
+      const { base, notes, invalid } = await reviewBase(root, data);
+      if (invalid) return answer(false, 'Invalid recorded review base');
+      const files = await changedFiles(root, { base, subject: true });
+      const relevant = files?.filter((file) => !(dir.startsWith('specs/') && file.startsWith(`${dir}/`)));
+      return answer(relevant?.length, [...notes, relevant ? `${relevant.length} changed files` : 'No merge-base available'].join('; '));
     }
     case 'no-feature-tasks': {
       const files = await changedFiles(root);

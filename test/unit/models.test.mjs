@@ -200,7 +200,8 @@ test('handoff next renders the command, overridden role and model', async () => 
     const result = await handoff(root, ['next', '--feature', '001-sample']);
     assert.deepEqual([result.data.command, result.data.role, result.data.model],
       ['/speckit-implement', 'fast', 'fast-model']);
-    assert.match(formatResult({ command: 'handoff', ...result }), /Switch model to fast-model, then run \/speckit-implement \(model role: fast -> fast-model\)/);
+    assert.equal(result.data.blocked, true);
+    assert.match(formatResult({ command: 'handoff', ...result }), /handoff approve --by <role> before \/speckit-implement/);
   } finally {
     await cleanup();
   }

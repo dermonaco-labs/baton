@@ -5,38 +5,38 @@ feature: 001-baton-template
 phase_completed: review
 next_phase: implement
 next_owner: speckit-implement
-status: ready
+status: needs-human
 model_role: implementation
 suggested_model: gpt-6-sol
 summary: "Re-review of the fix pass (763d81f..658ba43): 21 prior findings verified, 6 reopened (F02 F03 F04 F05 F09 F27), F21-F23 deferrals accepted for v0.1; 23 new findings (1 P1, 8 P2, 14 P3). 5 open P0/P1 block land, so the relay returns to implement."
 read_first:
   - path: specs/001-baton-template/review.json
     why: re-review verdicts, reopened and new findings with x-fix and x-evidence
-    sha256: a0fef9f0a5bba0b150e4ed5d70ed3854a8aab6b7a0f63030e19be933e4fbdc7f
+    sha256: c65c18c953c76cde798630717cc4fcdf1aafec44f2b18dcc7fb3b5f4df00b7f0
   - path: src/commands/handoff.mjs
     why: "F02 F03 F04 F05 F31 F32 F35 F36: specify receive/write, review routing, findings_path, write preflight"
-    sha256: 96b61b20706d6f9adcf593bda8396a2322a6e4cbd992403cf585e7a22938959a
+    sha256: 1223181ea660498c8310e7c21f2fe9210a59574daf7fa19e494b82071378bbd1
   - path: src/lib/checks.mjs
     why: "F09 F33 F34 F37: diff base, diff-nonempty scope, acceptance-evidence policy"
-    sha256: 3aedcddebc6594d2140ef61a2ba6f94a67daf2dae25e7a67dfc946360ad0bf5c
+    sha256: b702059c8b8f5f5dfea360ced93b3dc20732eeaad8b37ac5d650924554b507ad
   - path: .specify/extensions/baton/commands/handoff.md
     why: "F03 F05: hook-shaped converge and first specify writes"
-    sha256: 548265571f3fcdddfee8244aa65c5d35c08b421e3229b695d3f1056760eee2da
+    sha256: 687dc583093b8e15986382a6640b5614e71f92aa6629ba8a45ba38194d34be30
   - path: .github/skills/baton-review/SKILL.md
     why: "F27: shipped skill copy is stale against baton/skills"
-    sha256: f9d25205df5882ef3e4a4c129f79dafa0150baddc4e596907d1037260df14ef3
+    sha256: fe6767040b1e2196aeb3587f4235acb2ba39cbf1420a21fa680a5329f8217d8b
   - path: src/commands/init.mjs
     why: "F39: ps/py flavour drops bash scripts used by locked skills"
-    sha256: eb53110a8b9d4976fffaf11ce52d5c838a48c455dbb99afb03d2e0deefd8e8a1
+    sha256: 71d853e942e7f28a396dc26933ecd947a06128c223bfab81e7082a4a690851d0
   - path: test/integration/relay.test.mjs
     why: F02 masked quick test; add hook-shaped regression tests
-    sha256: 913dc6c9c6234dd6b7b97807853e97ddd110a0fb21dee1288966a1a7fcd2c1f4
+    sha256: be8192a2aa9229dfb4c22016259c9da9e980e1572b6f8a24b3da09da48146900
   - path: specs/001-baton-template/contracts/phase-contracts.md
     why: review routing, diff-nonempty and acceptance-evidence contract text
-    sha256: 11c328fc761c932a668797c2a1b92c079993b216c8ab7596a107bc39fcdb9450
+    sha256: b682cc069db155eb0ecbfcc41b46cfda255e25a686e822aa5287bdee1cbdf275
   - path: specs/001-baton-template/tasks.md
     why: finding-to-task mapping and evidence claims (F37 F45)
-    sha256: f45db714dadfdca169718d95e6e8b17a96d3bd671fb1f7851adfa92c812c3a9b
+    sha256: b9ffef1a35dd7d1953fff6237b232ff21fba5edd056b065dfa4eabf36d8100de
 do_not_read:
   - path: specs/001-baton-template/research.md
     why: pinned upstream facts are already reflected in the plan
@@ -57,13 +57,13 @@ artifacts:
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
   - path: specs/001-baton-template/data-model.md
     role: source-of-truth
-    sha256: 533817b9fa44a312103a924eff7b26f1bc750335080db8c825fcec8f4bbb2a7b
+    sha256: 7912088a58339323de9932655ebcecec96425ff3fe88fa62da342fc69fd004f1
   - path: specs/001-baton-template/contracts/handoff-contract.md
     role: source-of-truth
-    sha256: 3b4b30985a64f882ab3ea02876a6a4442ebab50005be3f4575d5542e1955f9cc
+    sha256: 00ad8887f102c3724a90cba41728fdc4e36517932699b17bdb4a1c4bd328db7c
   - path: specs/001-baton-template/contracts/phase-contracts.md
     role: source-of-truth
-    sha256: 11c328fc761c932a668797c2a1b92c079993b216c8ab7596a107bc39fcdb9450
+    sha256: b682cc069db155eb0ecbfcc41b46cfda255e25a686e822aa5287bdee1cbdf275
   - path: specs/001-baton-template/contracts/conflict-rules.md
     role: source-of-truth
     sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a
@@ -72,7 +72,7 @@ artifacts:
     sha256: 75dcc68ac03b9caa0b731635e3ccfd5895ed0d00e05b19fca8cd6b438be4bbf4
   - path: specs/001-baton-template/contracts/cli.md
     role: source-of-truth
-    sha256: e81172c8a9294843165a3f39b21ba5681f4476fbf68bc4bbc456b818dde1ec1b
+    sha256: 7b1ca7afc1f05024b283f6387c63af3fb9addd01ea4f8130019b5a2a0235db23
   - path: specs/001-baton-template/contracts/ci.md
     role: source-of-truth
     sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
@@ -81,7 +81,7 @@ artifacts:
     sha256: 286706951ad3f80db0ebf81084d49690b6f01b92a906b0517c811d68656aff04
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: f45db714dadfdca169718d95e6e8b17a96d3bd671fb1f7851adfa92c812c3a9b
+    sha256: b9ffef1a35dd7d1953fff6237b232ff21fba5edd056b065dfa4eabf36d8100de
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
@@ -90,7 +90,7 @@ artifacts:
     sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017
   - path: specs/001-baton-template/review.json
     role: evidence
-    sha256: a0fef9f0a5bba0b150e4ed5d70ed3854a8aab6b7a0f63030e19be933e4fbdc7f
+    sha256: c65c18c953c76cde798630717cc4fcdf1aafec44f2b18dcc7fb3b5f4df00b7f0
 entry_checked:
   - id: tasks-exists
     ok: true
@@ -537,7 +537,21 @@ decisions:
     id: D65
     rationale: F21 --from uses an operator-chosen local archive with published SHA256SUMS; F22 checks never run in CI and equal running npm test on the branch; F23 is an accidental-leak false negative with frontmatter fully scanned. A human still decides at the land/PR gate
     by: baton-review
-open_questions: []
+  - id: D66
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Fix pass 2 implementation and review evidence changed after the incoming review handoff
+    by: implementation-session
+  - id: D67
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Clarify check-specific human waiver procedure in phase contract
+    by: implementation-session
+open_questions:
+  - id: Q1
+    question: "The original red runs were not retained for 21 fail-registered acceptance checks (AC-US1-1/2/3/5, AC-US2-1/2/3/4/5, AC-US3-1/4/5/6/7/8/9, AC-US4-1/2/3, AC-US5-1, AC-US7-1). Does the repository owner authorize check-specific waivers acknowledging partial evidence, or keep the implement exit unmet?"
+    blocking: true
+    options:
+      - Authorize check-specific waivers for the 21 partial checks
+      - Keep the 21 checks unmet until red-first evidence is recovered
 assumptions:
   - id: AS1
     text: The spec assumptions A1-A9 hold (re-checked at analyze, unchanged)
@@ -605,8 +619,8 @@ history:
     at: 2026-09-28T18:59:27.923Z
     by: baton-review
     commit: 658ba43
-updated_at: 2026-09-28T18:59:27.923Z
-updated_by: baton-review
+updated_at: 2026-09-28T19:44:24.467Z
+updated_by: implementation-session
 review:
   findings_path: specs/001-baton-template/review.json
   blocking_findings: 5

@@ -74,6 +74,11 @@ Baton fixes this with a small set of rules and one file per feature: the **baton
 | Configurable model routing | Phases map to roles (planning, implementation, review, fast); roles map to models in one config file. |
 | Cheap, strict, local-first | The same checks run locally and in CI, on free hosted runners, with SHA-pinned actions. |
 
+**Project-check trust boundary:** `.baton/config.yml` supplies executable
+local-check commands. Run `handoff receive --phase land` only after reviewing
+changes to that file on the branch: the land write also runs those checks.
+Treat an unreviewed branch's check configuration as untrusted code.
+
 ## What you get
 
 - **The Spec Kit workflow** (v1.0.11, Copilot integration, skills mode): constitution, specify, clarify, plan, tasks,

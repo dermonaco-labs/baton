@@ -17,6 +17,7 @@ warnings are informational unless a command explicitly documents otherwise.
 | `E_STALE_ARTIFACT` | Re-run the owning phase or `handoff refresh --reason R` after intentional edits. |
 | `E_BLOCKING_OPEN` | Set `needs-human` and resolve the blocking question. |
 | `E_EXIT_UNMET` | Meet the phase exit criteria before declaring ready. |
+| `E_CHECK_FAILED` | A configured local check failed; inspect the reported command and exit status (exit 1). |
 | `E_GATE_PENDING` | Obtain human role approval before receiving the next phase (exit 3). |
 | `E_APPROVER_FORMAT` | Use a configured role and channel, not a personal name/handle. |
 | `E_ACTOR_FORMAT` | Use an agent id or a configured `human:<role-slug>`. |

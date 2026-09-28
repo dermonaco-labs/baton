@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import { sourceRoot, tempRepo } from '../helpers/index.mjs';
 import { makeBroken } from '../fixtures/make-broken.mjs';
 import { removeMarker } from '../../src/lib/markers.mjs';
+import { flavouredBytes } from '../../src/commands/init.mjs';
 
 /** @param {string} root @param {string[]} args @param {Record<string,string>} [env] */
 async function cli(root, args, env = {}) {
@@ -299,5 +300,48 @@ test('disabled Baton hooks in an existing Spec Kit install are conflicts, not si
     const adopted = await cli(root, ['init', '--adopt-upstream', '.specify/extensions.yml']);
     assert.equal(adopted.code, 0, adopted.stdout);
     assert.match(await readFile(join(root, '.specify/extensions.yml'), 'utf8'), /optional: false/);
+  } finally { await cleanup(); }
+});
+
+const scriptReference = /\.specify\/scripts\/[\w-]+\/[\w.-]+\.(?:sh|ps1|py)\b/g;
+
+test('F39 flavour-dependent Spec Kit payload comes from the generated project', async () => {
+  const { root: project, cleanup } = await tempRepo();
+  try {
+    const path = '.github/skills/speckit-plan/SKILL.md';
+    const locked = Buffer.from('Run `.specify/scripts/bash/setup-plan.sh --json`.\n');
+    const generated = 'Run `.specify/scripts/powershell/setup-plan.ps1 -Json`.\n';
+    await put(project, path, generated);
+    assert.equal((await flavouredBytes(project, path, locked)).toString(), generated);
+    const neutral = Buffer.from('No script reference.\n');
+    assert.equal(await flavouredBytes(project, path, neutral), neutral);
+    assert.equal(await flavouredBytes(project, '.github/skills/absent/SKILL.md', locked), locked);
+  } finally { await cleanup(); }
+});
+
+/** @param {string} root */
+async function missingScriptReferences(root) {
+  const manifest = JSON.parse(await readFile(join(root, '.baton/manifest.json'), 'utf8'));
+  const missing = [];
+  for (const { path } of manifest.files) {
+    for (const [reference] of (await readFile(join(root, path), 'utf8')).matchAll(scriptReference)) {
+      if (!await exists(root, reference)) missing.push(`${path} -> ${reference}`);
+    }
+  }
+  return { manifest, missing };
+}
+
+test('F39 live init --script ps installs every script its Spec Kit skills reference', async (t) => {
+  const { root, cleanup } = await tempRepo('repos/empty');
+  try {
+    const result = await cli(root, ['init', '--script', 'ps']);
+    if (result.code !== 0 && /\buv\b|specify-cli|wheel/i.test(result.stdout + result.stderr)) {
+      t.skip('uv with the pinned specify-cli wheel is unavailable here');
+      return;
+    }
+    assert.equal(result.code, 0, result.stdout + result.stderr);
+    const { manifest, missing } = await missingScriptReferences(root);
+    assert.equal(manifest.script, 'ps');
+    assert.deepEqual(missing, []);
   } finally { await cleanup(); }
 });

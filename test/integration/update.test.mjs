@@ -140,7 +140,12 @@ for (const script of ['ps', 'py']) {
       const contents = `${script} script retained\n`;
       await put(root, selected, contents);
       manifest.files.push({ path: selected, sha256: digest(contents), pack: 'core', owner: 'speckit', managed: true });
-      manifest['x-script'] = script;
+      const skill = '.github/skills/speckit-plan/SKILL.md';
+      const flavoured = (await readFile(join(root, skill), 'utf8')).replaceAll('.specify/scripts/bash/', `.specify/scripts/${script === 'ps' ? 'powershell' : 'python'}/`);
+      assert.notEqual(flavoured, await readFile(join(root, skill), 'utf8'));
+      await writeFile(join(root, skill), flavoured);
+      manifest.files.find(file => file.path === skill).sha256 = digest(flavoured);
+      manifest.script = script;
       await writeFile(join(root, manifestPath), JSON.stringify(manifest, null, 2) + '\n');
 
       const result = await runCli(root, ['update', '--json']);
@@ -149,9 +154,10 @@ for (const script of ['ps', 'py']) {
       assert.equal(JSON.parse(await readFile(join(root, integrationPath), 'utf8')).integration_settings.copilot.script, script);
       assert.ok(await exists(root, selected), `${script} script must remain installed`);
       assert.equal(await exists(root, bash[0].path), false, 'update must not switch back to bash scripts');
+      assert.doesNotMatch(await readFile(join(root, skill), 'utf8'), /\.specify\/scripts\/bash\//, 'skills must keep calling the installed flavour');
       assert.equal(await exists(root, `.baton/conflicts/${selected}.new`), false);
       const updated = JSON.parse(await readFile(join(root, manifestPath), 'utf8'));
-      assert.equal(updated['x-script'], script);
+      assert.equal(updated.script, script);
       assert.equal(updated.files.find(file => file.path === selected)?.sha256,
         digest(await readFile(join(root, selected))), 'manifest must track the selected script');
     } finally { await cleanup(); }

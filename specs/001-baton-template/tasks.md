@@ -458,40 +458,46 @@ The original checks and expected initial results above are unchanged. "Owner pen
 
 | Check | Result and evidence |
 |---|---|
-| AC-US1-1 | n/a — original red run was not retained; green — `npm run check` passes 204/204 tests after this fix pass. |
-| AC-US1-2 | n/a — original red run was not retained; green — S1 archive/adopt/doctor/validate passed locally. |
-| AC-US1-3 | n/a — original red run was not retained; green — adopt "cannot push" test passed. |
+| AC-US1-1 | partial — original red run was not retained; prior green run passed 204/204 tests. |
+| AC-US1-2 | partial — original red run was not retained; prior S1 archive/adopt/doctor/validate passed locally. |
+| AC-US1-3 | partial — original red run was not retained; prior adopt "cannot push" test passed. |
 | AC-US1-4 | n/a — human-only timed README walkthrough remains owner pending; no pass claimed. |
-| AC-US1-5 | n/a — original red run was not retained; green — adopt workflow and constitution assertions passed. |
-| AC-US2-1 | n/a — original red run was not retained; green — S2 init integration tests passed (13/13). |
-| AC-US2-2 | n/a — original red run was not retained; green — init byte-for-byte idempotency test passed. |
-| AC-US2-3 | n/a — original red run was not retained; green — core + learning pack test passed. |
-| AC-US2-4 | n/a — original red run was not retained; green — per-pack closure test passed. |
-| AC-US2-5 | n/a — original red run was not retained; green — optional-reference classification and scanner tests passed. |
-| AC-US3-1 | n/a — original red run was not retained; green — S3 handoff fixture tests passed. |
+| AC-US1-5 | partial — original red run was not retained; prior adopt workflow and constitution assertions passed. |
+| AC-US2-1 | partial — original red run was not retained; prior S2 init integration tests passed (13/13). |
+| AC-US2-2 | partial — original red run was not retained; prior init idempotency test passed. |
+| AC-US2-3 | partial — original red run was not retained; prior core + learning pack test passed. |
+| AC-US2-4 | partial — original red run was not retained; prior per-pack closure test passed. |
+| AC-US2-5 | partial — original red run was not retained; prior optional-reference classification tests passed. |
+| AC-US3-1 | partial — original red run was not retained; prior S3 handoff fixture tests passed. |
 | AC-US3-2 | red — F01/F20 pending-gate write tests failed at aa42bc9; green — relay gate-pending checks pass. |
 | AC-US3-3 | red — F12 refresh tests failed at aa42bc9; green — relay stale/refresh checks pass. |
-| AC-US3-4 | n/a — original red run was not retained; green — relay missing-preregistration test passed. |
-| AC-US3-5 | n/a — original red run was not retained; green — relay missing-PR test passed. |
-| AC-US3-6 | n/a — original red run was not retained; green — `baton validate --path specs/001-baton-template/handoff.md` passes. |
-| AC-US3-7 | n/a — original red run was not retained; green — checkbox-insensitive relay test passed. |
-| AC-US3-8 | n/a — original red run was not retained; green — role-only approval tests passed. |
-| AC-US3-9 | n/a — original red run was not retained; green — grouped compound check tests passed. |
+| AC-US3-4 | partial — original red run was not retained; prior relay missing-preregistration test passed. |
+| AC-US3-5 | partial — original red run was not retained; prior relay missing-PR test passed. |
+| AC-US3-6 | partial — original red run was not retained; prior baton validation passed. |
+| AC-US3-7 | partial — original red run was not retained; prior checkbox-insensitive relay test passed. |
+| AC-US3-8 | partial — original red run was not retained; prior role-only approval tests passed. |
+| AC-US3-9 | partial — original red run was not retained; prior grouped compound check tests passed. |
 | AC-US3-10 | red — quick review routing tests failed at aa42bc9; green — quick relay and escalation tests pass. |
-| AC-US4-1 | n/a — original red run was not retained; green — S4 model tests passed. |
-| AC-US4-2 | n/a — original red run was not retained; green — model allowlist error test passed. |
-| AC-US4-3 | n/a — original red run was not retained; green — model apply idempotency test passed. |
-| AC-US5-1 | n/a — local `sync --check` cannot obtain the pinned specify-cli from the approved PyPI mirror; hosted run 36343485321 passed at its recorded source SHA. |
+| AC-US4-1 | partial — original red run was not retained; prior S4 model tests passed. |
+| AC-US4-2 | partial — original red run was not retained; prior model allowlist error test passed. |
+| AC-US4-3 | partial — original red run was not retained; prior model apply idempotency test passed. |
+| AC-US5-1 | partial — local `sync --check` cannot obtain the pinned specify-cli from the approved PyPI mirror; hosted run 36343485321 passed at its recorded source SHA. |
 | AC-US5-2 | red — F07/F14/F15 update tests failed at 657c03e; green — update integration suite passed 10/10. |
 | AC-US5-3 | n/a — upstream-watch manual dispatch and single-issue check require an owner action, not performed here. |
 | AC-US6-1 | red — F16 warnings tests failed at 657c03e; green — validate tests now emit both warnings and E_UNDOCUMENTED. |
 | AC-US6-2 | n/a — live GitHub README visual review requires an owner action, not performed here. |
-| AC-US7-1 | n/a — full three-OS dispatch remains owner pending; Linux 36451849802 and Windows 36451849770 passed within budget. |
+| AC-US7-1 | partial — full three-OS dispatch remains owner pending; Linux 36451849802 and Windows 36451849770 passed within budget. |
 | AC-US7-2 | red — throwaway frontmatter failed hosted run 36451117145 with E_FRONTMATTER_MALFORMED; green — probe removed before green checks. |
 | AC-US7-3 | n/a — release dry-run has no red phase; green — owner dry run 36343485321 produced checksum-verified assets and attestations. |
 
-The review fix-pass tests were committed red before the corresponding source changes. Local
-`npm ci` and `npm run check` passed on the approved restricted feeds (204/204 tests).
+Some review fix-pass regressions were committed red before the source changes
+(aa42bc9 and 657c03e). Commit 778f4a6 added the F06 feature-metadata and
+persisted-base tests after their fixes and relaxed the F02 land assertion to
+accept `E_TRANSITION` and the F28 test to accept ignored in-tree fixtures.
+Those cases are not claimed as red-first evidence: the metadata and base tests
+cover additional scenarios, while the relaxed assertions leave narrower
+behavior unproven. Local `npm ci` and `npm run check` passed on the approved
+restricted feeds (204/204 tests) for that prior pass, not this one.
 `review.json` records F01–F20 and the trivial P3 findings as fixed; F21–F23
 remain open with explicit deferral reasons for a later contract decision. The
 hosted `sync --check` evidence remains run 36343485321 because the approved

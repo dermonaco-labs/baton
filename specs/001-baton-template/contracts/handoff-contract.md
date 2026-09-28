@@ -98,6 +98,7 @@ sequenceDiagram
 | `E_STALE_ARTIFACT` | error | A listed sha256 ≠ the current file hash (`tasks.md` is hashed checkbox-insensitively, see data-model §1). Fix it by re-running the phase or with `baton handoff refresh --reason`. |
 | `E_BLOCKING_OPEN` | error | There is a blocking open question and `status` = `ready`. |
 | `E_EXIT_UNMET` | error | `status: ready`, but some `exit_criteria.met` is false. |
+| `E_CHECK_FAILED` | error (exit 1) | A configured project check failed during phase entry. |
 | `E_GATE_PENDING` | error (on receive) | The previous phase requires a human gate and `gate.approved_by` is null. |
 | `E_APPROVER_FORMAT` | error | `gate.approved_by` isn't `<role>` or `<role> via <channel>` from `config.gates` (data-model §1.1: each is 1–4 words of `[a-z]+(-[a-z]+)*`, so `control-plane` is valid), or only one of `approved_by` / `approved_at` is set. |
 | `E_ACTOR_FORMAT` | error | A `by` / `updated_by` value isn't an agent id or `human:<role-slug>` (`human:[a-z]+(-[a-z]+)*`, a vocabulary role with spaces → `-`) from `config.gates.approver_roles`. |
@@ -155,6 +156,9 @@ upstream files), and reports `E_DENYLIST` for:
 
 Scope rules: in baton frontmatter every string value is scanned. In Markdown bodies and docs, rules 1–3 skip code
 spans and fenced code (so docs can show patterns and counter-examples), while rule 5 applies everywhere.
+This is a documented limitation: identities in code spans and fences evade
+rules 1–3. Do not rely on the denylist as a complete privacy screen; review
+examples and code blocks before publishing.
 `test/fixtures/` is excluded from the repository-wide scan, but `validate --path <fixture>` scans it, so the
 `E_DENYLIST.md` fixture still fails.
 The role vocabulary and the Approver/Actor patterns contain no `@`, `.`, `/`, `\` or upper case, so no valid

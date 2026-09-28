@@ -104,7 +104,7 @@ export async function run(root, args) {
     /** @type {Array<{code:string,file:string,message:string}>} */
     const warnings = [];
     if (scriptFallback) warnings.push({ code: 'W_SCRIPT_UNREFRESHED', file: '.specify/scripts',
-      message: `${script} script payload could not be generated; existing scripts and flavour metadata were preserved` });
+      message: `${script} script payload could not be generated; existing scripts, script-calling files and flavour metadata were preserved` });
     /** @param {string} path */
     const clearConflict = async path => {
       const pending = `.baton/conflicts/${path}.new`;
@@ -128,6 +128,7 @@ export async function run(root, args) {
       const current = await optionalBytes(root, entry.path);
       /** @type {Buffer} */
       let desired = await readFile(join(stage, entry.path));
+      if (scriptFallback && desired.includes('.specify/scripts/bash/')) continue;
       if (old && (!old.managed || !current || digest(current) !== old.sha256)) {
         await conflict(entry.path, 'user-modified or missing managed file', desired);
         continue;

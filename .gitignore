@@ -4,3 +4,12 @@ node_modules/
 .atv/observations*
 .context/
 /test/fixtures/handoffs/.relay-*/
+# In-tree temp roots created by maintainer tests (see test/unit/temp-roots.test.mjs).
+/.baton-adopt-test-*/
+/test/fixtures/validate-no-baton-*/
+/test/fixtures/validate-assumption-*/
+/test/fixtures/docs-coverage-*/
+/test/fixtures/lock-check-*/
+/test/fixtures/lock-malformed-*/
+/test/fixtures/.models-*/
+/test/fixtures/handoffs/.unit-*/
