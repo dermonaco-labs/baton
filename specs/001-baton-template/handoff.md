@@ -12,7 +12,7 @@ summary: Implement added public references, coverage, guarded CI and smoke, rele
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
-    sha256: 92e7ddb6fe969a24a252f7e28a429ab2e77415e97a5d4889fa3efa4ffa3ff5c2
+    sha256: 5f6caa1f5d44678c55d71818d58d0c77ad20250e371dec4c27f53dc455890655
   - path: specs/001-baton-template/plan.md
     why: structure, template disposition, key decisions, constitution check
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
@@ -42,7 +42,7 @@ read_first:
     sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
   - path: specs/001-baton-template/quickstart.md
     why: the executable acceptance scenarios S1-S7
-    sha256: cd0573e95d97f0b8d0c8b99b7209e2987668a9dc346abaae284fa3d59b80f611
+    sha256: eeba03b9716abce5e6073d3745114b3425074d578fcc97915d0cbe64b293bcbd
   - path: .specify/memory/constitution.md
     why: principles I-VIII (v1.0.1); stop, don't choose
     sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
@@ -89,10 +89,10 @@ artifacts:
     sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
   - path: specs/001-baton-template/quickstart.md
     role: derived
-    sha256: cd0573e95d97f0b8d0c8b99b7209e2987668a9dc346abaae284fa3d59b80f611
+    sha256: eeba03b9716abce5e6073d3745114b3425074d578fcc97915d0cbe64b293bcbd
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: 92e7ddb6fe969a24a252f7e28a429ab2e77415e97a5d4889fa3efa4ffa3ff5c2
+    sha256: 5f6caa1f5d44678c55d71818d58d0c77ad20250e371dec4c27f53dc455890655
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
@@ -438,6 +438,50 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Record verified release dry-run assets and provenance in T085; retain open manual gates
     by: implementation-session
+  - id: D40
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Annotate owner-pending close-out subitems and roadmap backlog
+    by: implementation-session
+  - id: D41
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Correct S3 fixture setup instructions
+    by: implementation-session
+  - id: D42
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Document fixture bootstrapping for S2 and S3
+    by: implementation-session
+  - id: D43
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record S1-S6 acceptance evidence and pending owner checks
+    by: implementation-session
+  - id: D44
+    decision: Use hosted PR CI as the authoritative npm check and sync verification when this workstation's internal feeds lack locked packages
+    rationale: Repository owner resolved the feed blocker through control-plane delegation; local npm lacks ignore version 7.0.10 and internal PyPI lacks specify-cli version 1.0.11; never switch this workstation to public registries. Record CI run IDs before implement-to-review handoff
+    by: human:repository-owner
+  - id: D45
+    decision: Record RM19 as a docs-only v0.3 backlog item without changing v0.1 tasks or contracts
+    rationale: The owner's explicit roadmap request supersedes the previous do_not_read hint for roadmap.md
+    by: human:repository-owner
+  - id: D46
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Document owner-authorized hosted CI fallback and RM19
+    by: implementation-session
+  - id: D47
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record hosted annotation in acceptance registry
+    by: implementation-session
+  - id: D48
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Repair CI denylist wording and commit refreshed task hashes
+    by: implementation-session
+  - id: D49
+    decision: Defer only owner-pending v0.1 subitems and keep the implement handoff blocked on the actual local-checks-pass contract
+    rationale: Repository owner approved an explicit deferred-task record and requested a v0.2 hosted-CI evidence route rather than a v0.1 CLI contract change
+    by: human:repository-owner
+  - id: D50
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record green PR checks, defer owner-only subitems and log RM20
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -486,7 +530,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-27T19:17:27.406Z
+updated_at: 2026-09-28T16:36:51.983Z
 updated_by: implementation-session
 ---
 ## Goal
@@ -509,7 +553,7 @@ required internal PyPI mirror because it lacks `specify-cli==1.0.11`. The owner-
 [release dry run 36343485321](https://github.com/dermonaco-labs/baton/actions/runs/36343485321)
 on `main` at `6593a8fe0fd7c3b51a907a6ae227379d3bd35076` succeeded: hosted `npm run check` and
 `sync --check` passed. In this worktree `npm run check` stops at `markdownlint-cli2` because dependencies
-are absent; a permitted `npm ci` against the internal feed returned 404 for `ignore@7.0.10`. The lockfile
+are absent; a permitted `npm ci` against the internal feed returned 404 for npm `ignore` version 7.0.10. The lockfile
 was not changed. Its [downloadable artifact](https://github.com/dermonaco-labs/baton/actions/runs/36343485321/artifacts/10939627078)
 (`baton-release-dry-run`, 799498 bytes) contains `baton.mjs`, `baton-template-v0.1.0.tar.gz`,
 `baton.lock.json`, `SHA256SUMS` and `release-notes.md`. All three SHA256SUMS entries matched the downloaded bytes;
@@ -526,6 +570,42 @@ and Windows MVP `smoke` ([run 36343300308](https://github.com/dermonaco-labs/bat
 Mermaid enrichment container for commit `6593a8fe`; this is not a browser visual check or proof of a rendered
 client-side diagram. No full three-OS smoke dispatch or malformed-frontmatter annotation is evidenced here.
 
+Close-out S1–S6 evidence (2026-09-28, local; all earlier red tests are preregistered in tasks.md):
+
+| Acceptance check | Result and evidence |
+|---|---|
+| AC-US1-1 | green: adopt integration tests in `npm test` (143/143 overall). |
+| AC-US1-2 | green: S1 archived template, adopted with `--no-workflows`, then `doctor --strict` and `validate` exited 0. |
+| AC-US1-3 | green: "cannot push" adopt test. |
+| AC-US1-4 | n/a: owner pending timed README-only newcomer walkthrough. |
+| AC-US1-5 | green: workflow untouched, `baton.yml` present, constitution replaced (S1 + adopt tests). |
+| AC-US2-1 | green: S2 `init.test.mjs` 13/13 (fixture setup explained in quickstart). |
+| AC-US2-2 | green: byte-for-byte idempotency case. |
+| AC-US2-3 | green: core + learning pack case. |
+| AC-US2-4 | green: per-pack closure cases. |
+| AC-US2-5 | green: optional reference and scanner precision cases. |
+| AC-US3-1 | green: S3 `validate-handoff.test.mjs` 35/35, with temp fixture repo. |
+| AC-US3-2 | green: pending-gate relay case. |
+| AC-US3-3 | green: stale artifact and refresh relay case. |
+| AC-US3-4 | green: missing preregistration relay case. |
+| AC-US3-5 | green: missing PR relay case. |
+| AC-US3-6 | green: `baton validate --path specs/001-baton-template/handoff.md` before close-out edits. |
+| AC-US3-7 | green: checkbox-insensitive progress case. |
+| AC-US3-8 | green: role-only approver and actor cases. |
+| AC-US3-9 | green: group expression and compound cases. |
+| AC-US3-10 | green: quick-lane relay cases. |
+| AC-US4-1 | green: S4 models tests 9/9. |
+| AC-US4-2 | green: allowlist error case. |
+| AC-US4-3 | green: apply opt-in and idempotency cases; default disabled in this repo. |
+| AC-US5-1 | n/a locally: internal PyPI lacks `specify-cli==1.0.11`; hosted dry run 36343485321 passed `sync --check` at its recorded SHA. |
+| AC-US5-2 | green: S5 update tests 5/5. |
+| AC-US5-3 | n/a: owner pending upstream-watch manual issue check. |
+| AC-US6-1 | green: S6 missing-reference `E_UNDOCUMENTED` test in validate.test.mjs (4/4). |
+| AC-US6-2 | n/a: owner pending live README visual check. |
+| AC-US7-1 | partial: Linux `baton` run 36451849802 passed in 12 s; Windows `smoke` run 36451849770 passed in 1 m 28 s; owner pending three-OS run. |
+| AC-US7-2 | green: throwaway agent failed hosted `baton` run 36451117145 with `E_FRONTMATTER_MALFORMED`; removed before final checks. |
+| AC-US7-3 | green: release dry run 36343485321; assets, checksums and attestations verified above. |
+
 Post-analyze amendment A1–A3 (owner decisions D12–D14) closed the three gaps the implement session stopped on:
 role-only approvals and the `E_DENYLIST` scan (data-model §1.1, handoff-contract), `all_of`/`any_of` check groups
 (data-model §2.1), and the quick lane (data-model §2.2, phase-contracts § Quick lane). New tasks are T100–T102, and
@@ -536,18 +616,27 @@ resolves implement Q1) requires a `reason` on every `optional_refs` entry and cl
 the pin (packs.md § Reference classification at the pin; T020, T026, T053, T074, AC-US2-5). Amendment A7 (D28)
 adds `roadmap.md`, a post-v0.1 backlog. It changes no v0.1 task or check; don't read it during implement.
 
+Close-out check: the temporary malformed-frontmatter agent was removed after run 36451117145. Both PR checks passed
+on the repaired head (`baton` 36451849802; Windows `smoke` 36451849770, including `npm run check`). The
+`local-checks-pass` implement exit still runs the configured command locally, which cannot install the pinned npm
+dependency from this workstation's required internal mirror. RM20 records a future hosted-CI evidence route; it
+does not waive the v0.1 phase contract. T082/T088/T090/T093 retain only explicitly deferred owner work; T094 is
+unwritten. No three-OS dispatch occurred.
+
 ## Next steps
 
 1. `/speckit-implement` in a new session (model role: implementation → gpt-6-sol, reasoning high). The pre-code gate
    has already been approved by the repository owner via control-plane delegation.
 2. T082 needs a live GitHub README visual check (HTML-only render is partial). T085 is complete from the verified
-   dry run above. T088 has green PR Linux/Windows checks within budget but still needs the hosted
-   malformed-frontmatter annotation and the full three-OS tag/manual checks (no dispatch here).
+   dry run above. T088 has green PR Linux/Windows checks within budget and the hosted
+   malformed-frontmatter annotation, but still needs the full three-OS tag/manual checks (no dispatch here).
    T090 needs the owner to enable GitHub
    private vulnerability reporting, currently disabled.
 3. T093 needs complete S1–S7 evidence and a timed newcomer walkthrough through the first
    validated baton; the hosted `sync --check` pin verification is evidenced by run 36343485321.
-   T094 (implement→review) follows only after every other v0.1 task is checked.
+   T094 (implement→review) requires `node .baton/bin/baton.mjs handoff write --phase implement --from-json <evidence.json>`
+   on a machine that can run `npm run check` with the exact pinned dependencies; do not mark its local exit met
+   from hosted CI alone.
 
 ## Watch out for
 
@@ -556,7 +645,7 @@ adds `roadmap.md`, a post-v0.1 backlog. It changes no v0.1 task or check; don't 
 - Template cleanup must never modify `.github/workflows/` (`GITHUB_TOKEN` can't push those changes).
 - Keep the repository's public registry pin. For this workstation use the internal npm and PyPI mirrors via
   environment overrides, with `npm_config_package_lock=false`; never leak those overrides into the lockfile.
-  The internal npm mirror currently lacks `ignore@7.0.10`, blocking local `npm ci`/`npm run check`. The hosted
+  The internal npm mirror currently lacks `ignore` version 7.0.10, blocking local `npm ci`/`npm run check`. The hosted
   check passed at the dry-run source commit, not on this documentation-only evidence branch.
 - ATV is pinned to main, not npm 2.6.3. Don't "downgrade" to the published package.
 - `ce-review` persona degradation, its headless output shape and the `extensions.yml` format are re-checked at the
