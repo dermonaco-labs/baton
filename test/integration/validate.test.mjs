@@ -1,11 +1,49 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, cp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, cp, writeFile, rm, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { runCli, sourceRoot } from '../helpers/index.mjs';
 import { run as validate } from '../../src/commands/validate.mjs';
+import { parseFrontmatter, serializeFrontmatter } from '../../src/lib/frontmatter.mjs';
+
+test('validate warns when a feature spec has no baton', async () => {
+  const root = await mkdtemp(join(sourceRoot, 'test/fixtures/validate-no-baton-'));
+  try {
+    await cp(join(sourceRoot, 'baton/schemas'), join(root, 'baton/schemas'), { recursive: true });
+    await mkdir(join(root, 'specs/001-example'), { recursive: true });
+    await writeFile(join(root, 'specs/001-example/spec.md'), '# User stories\n');
+    const result = await validate(root, []);
+    assert.ok(result.warnings.some(({ code, file, message }) =>
+      code === 'W_NO_BATON' && file?.startsWith('specs/001-example') && message.includes('handoff init --infer')),
+    JSON.stringify(result.warnings));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('validate warns when a baton assumption is due at its next phase', async () => {
+  const root = await mkdtemp(join(sourceRoot, 'test/fixtures/validate-assumption-'));
+  try {
+    await cp(join(sourceRoot, 'baton/schemas'), join(root, 'baton/schemas'), { recursive: true });
+    await cp(join(sourceRoot, 'test/fixtures/features/sample'), join(root, 'specs/001-sample'), { recursive: true });
+    const fixture = await readFile(join(sourceRoot, 'test/fixtures/handoffs/valid/feature/specify.md'), 'utf8');
+    const parsed = parseFrontmatter(fixture);
+    parsed.data.assumptions = [
+      { id: 'A1', text: 'Revisit this before clarification', revisit_at: 'clarify' },
+      { id: 'A2', text: 'Not due until review', revisit_at: 'review' },
+    ];
+    await writeFile(join(root, 'specs/001-sample/handoff.md'), serializeFrontmatter(parsed.data, parsed.body));
+    const result = await validate(root, []);
+    assert.ok(result.warnings.some(({ code, file, message }) =>
+      code === 'W_ASSUMPTION_DUE' && file === 'specs/001-sample/handoff.md' && message.includes('A1')),
+    JSON.stringify(result.warnings));
+    assert.ok(!result.warnings.some(({ code, message }) => code === 'W_ASSUMPTION_DUE' && message.includes('A2')));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 test('validate --path scans personal data in selected files and fixtures', async () => {
   const root = await mkdtemp(join(tmpdir(), 'baton-validate-'));
