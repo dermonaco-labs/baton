@@ -12,7 +12,7 @@ summary: Implement added public references, coverage, guarded CI and smoke, rele
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
-    sha256: 92e7ddb6fe969a24a252f7e28a429ab2e77415e97a5d4889fa3efa4ffa3ff5c2
+    sha256: 7f42c68c28b8d2ed3c7c69a79e66ca13f557fa816cb4736c3d82e929c593ab87
   - path: specs/001-baton-template/plan.md
     why: structure, template disposition, key decisions, constitution check
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
@@ -42,7 +42,7 @@ read_first:
     sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
   - path: specs/001-baton-template/quickstart.md
     why: the executable acceptance scenarios S1-S7
-    sha256: cd0573e95d97f0b8d0c8b99b7209e2987668a9dc346abaae284fa3d59b80f611
+    sha256: e39107373be0812df5b7995954eb3f7b32a608a5b9d2344a6325e7c71d608f9e
   - path: .specify/memory/constitution.md
     why: principles I-VIII (v1.0.1); stop, don't choose
     sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
@@ -89,10 +89,10 @@ artifacts:
     sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
   - path: specs/001-baton-template/quickstart.md
     role: derived
-    sha256: cd0573e95d97f0b8d0c8b99b7209e2987668a9dc346abaae284fa3d59b80f611
+    sha256: e39107373be0812df5b7995954eb3f7b32a608a5b9d2344a6325e7c71d608f9e
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: 92e7ddb6fe969a24a252f7e28a429ab2e77415e97a5d4889fa3efa4ffa3ff5c2
+    sha256: 7f42c68c28b8d2ed3c7c69a79e66ca13f557fa816cb4736c3d82e929c593ab87
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
@@ -438,6 +438,34 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Record verified release dry-run assets and provenance in T085; retain open manual gates
     by: implementation-session
+  - id: D40
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Annotate owner-pending close-out subitems and roadmap backlog
+    by: implementation-session
+  - id: D41
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Correct S3 fixture setup instructions
+    by: implementation-session
+  - id: D42
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Document fixture bootstrapping for S2 and S3
+    by: implementation-session
+  - id: D43
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record S1-S6 acceptance evidence and pending owner checks
+    by: implementation-session
+  - id: D44
+    decision: Use hosted PR CI as the authoritative npm check and sync verification when this workstation's internal feeds lack locked packages
+    rationale: Repository owner resolved the feed blocker through control-plane delegation; local npm lacks ignore@7.0.10 and internal PyPI lacks specify-cli==1.0.11; never switch this workstation to public registries. Record CI run IDs before implement-to-review handoff
+    by: human:repository-owner
+  - id: D45
+    decision: Record RM19 as a docs-only v0.3 backlog item without changing v0.1 tasks or contracts
+    rationale: The owner's explicit roadmap request supersedes the previous do_not_read hint for roadmap.md
+    by: human:repository-owner
+  - id: D46
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Document owner-authorized hosted CI fallback and RM19
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -486,7 +514,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-27T19:17:27.406Z
+updated_at: 2026-09-28T16:26:15.048Z
 updated_by: implementation-session
 ---
 ## Goal
@@ -525,6 +553,42 @@ and Windows MVP `smoke` ([run 36343300308](https://github.com/dermonaco-labs/bat
 70 s job), within the PR budget. GitHub's HTML README API rendered an article, headings, tables, links and a
 Mermaid enrichment container for commit `6593a8fe`; this is not a browser visual check or proof of a rendered
 client-side diagram. No full three-OS smoke dispatch or malformed-frontmatter annotation is evidenced here.
+
+Close-out S1–S6 evidence (2026-09-28, local; all earlier red tests are preregistered in tasks.md):
+
+| Acceptance check | Result and evidence |
+|---|---|
+| AC-US1-1 | green: adopt integration tests in `npm test` (143/143 overall). |
+| AC-US1-2 | green: S1 archived template, adopted with `--no-workflows`, then `doctor --strict` and `validate` exited 0. |
+| AC-US1-3 | green: "cannot push" adopt test. |
+| AC-US1-4 | n/a: owner pending timed README-only newcomer walkthrough. |
+| AC-US1-5 | green: workflow untouched, `baton.yml` present, constitution replaced (S1 + adopt tests). |
+| AC-US2-1 | green: S2 `init.test.mjs` 13/13 (fixture setup explained in quickstart). |
+| AC-US2-2 | green: byte-for-byte idempotency case. |
+| AC-US2-3 | green: core + learning pack case. |
+| AC-US2-4 | green: per-pack closure cases. |
+| AC-US2-5 | green: optional reference and scanner precision cases. |
+| AC-US3-1 | green: S3 `validate-handoff.test.mjs` 35/35, with temp fixture repo. |
+| AC-US3-2 | green: pending-gate relay case. |
+| AC-US3-3 | green: stale artifact and refresh relay case. |
+| AC-US3-4 | green: missing preregistration relay case. |
+| AC-US3-5 | green: missing PR relay case. |
+| AC-US3-6 | green: `baton validate --path specs/001-baton-template/handoff.md` before close-out edits. |
+| AC-US3-7 | green: checkbox-insensitive progress case. |
+| AC-US3-8 | green: role-only approver and actor cases. |
+| AC-US3-9 | green: group expression and compound cases. |
+| AC-US3-10 | green: quick-lane relay cases. |
+| AC-US4-1 | green: S4 models tests 9/9. |
+| AC-US4-2 | green: allowlist error case. |
+| AC-US4-3 | green: apply opt-in and idempotency cases; default disabled in this repo. |
+| AC-US5-1 | n/a locally: internal PyPI lacks `specify-cli==1.0.11`; hosted dry run 36343485321 passed `sync --check` at its recorded SHA. |
+| AC-US5-2 | green: S5 update tests 5/5. |
+| AC-US5-3 | n/a: owner pending upstream-watch manual issue check. |
+| AC-US6-1 | green: S6 missing-reference `E_UNDOCUMENTED` test in validate.test.mjs (4/4). |
+| AC-US6-2 | n/a: owner pending live README visual check. |
+| AC-US7-1 | n/a: awaiting this PR's hosted checks and optional three-OS dispatch. |
+| AC-US7-2 | n/a: awaiting hosted broken-frontmatter annotation. |
+| AC-US7-3 | green: release dry run 36343485321; assets, checksums and attestations verified above. |
 
 Post-analyze amendment A1–A3 (owner decisions D12–D14) closed the three gaps the implement session stopped on:
 role-only approvals and the `E_DENYLIST` scan (data-model §1.1, handoff-contract), `all_of`/`any_of` check groups

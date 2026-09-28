@@ -599,7 +599,8 @@ The post-v0.1 backlog is in [`specs/001-baton-template/roadmap.md`](specs/001-ba
 - **v0.3:**
   - parallel implement across worktrees;
   - task-level model routing;
-  - relay evals that measure handoff quality.
+  - relay evals that measure handoff quality;
+  - multi-agent hosts (Claude Code, Codex, Cursor, Gemini).
 - **Optional packs:**
   - a current-docs MCP server;
   - agentic workflows;

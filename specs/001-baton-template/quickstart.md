@@ -24,6 +24,9 @@ docker run --rm -it -v "$PWD":/w -w /w node:20-bookworm bash -lc 'npm ci && npm 
 
 Hosted CI (`ci.yml` and `smoke.yml`) is the authoritative gate. Steps that need no registry (`node .baton/bin/baton.mjs validate`
 with the committed build, and the markdown and hash checks) can still run on the workstation.
+Restricted mirrors may lack locked pins such as npm `ignore@7.0.10` and PyPI `specify-cli==1.0.11`. Record the
+local limitation, run the available checks, and use hosted CI for the full check and `sync --check` evidence.
+The planned devcontainer (roadmap RM9) will provide a repeatable local fallback when it is available.
 
 ## S1: Template instantiation (US1)
 
@@ -48,31 +51,27 @@ Expected results:
 ## S2: Overlay onto existing repos (US2)
 
 ```sh
-for f in empty has-instructions atv-263-broken; do
-  d=$(mktemp -d); cp -R test/fixtures/repos/$f/. "$d"
-  node .baton/bin/baton.mjs init --cwd "$d" --json > "$d.init.json"; echo "exit=$?"
-  node .baton/bin/baton.mjs init --cwd "$d"; git -C "$d" status --porcelain   # expect empty (idempotent)
-done
+node --test test/integration/init.test.mjs
 ```
 
 Expected results:
 
 - `empty` exits 0.
-- `has-instructions` exits 0, and the user bytes outside the BATON markers are unchanged (checked by comparing with the
-  fixture's `expected/` copy).
+- `has-instructions` reports the deliberately inserted unmanaged-file conflict (exit 4), then `--keep` and
+  `--adopt-upstream` resolve it; user bytes outside the BATON markers remain unchanged.
 - `atv-263-broken` exits 4 and reports `repairable` for the corrupted agents. `init --repair` then exits 0.
+  The test creates the corrupted agent with `makeBroken()`; the checked-in fixture alone does not contain it.
+- Rerunning `init` on an unmodified installation preserves every installed byte.
 
 ## S3: Relay handoffs (US3)
 
 ```sh
-node .baton/bin/baton.mjs validate --path test/fixtures/handoffs/valid          # exit 0
-for f in test/fixtures/handoffs/invalid/*.md; do
-  node .baton/bin/baton.mjs validate --path "$f" --json | node -e "…expect code from filename…"
-done
+node --test test/unit/validate-handoff.test.mjs
 ```
 
 Each invalid fixture is named after the error it must produce. For example, `E_STALE_ARTIFACT.md` and
-`E_BLOCKING_OPEN.md` must each fail with exactly that code.
+`E_BLOCKING_OPEN.md` must each fail with exactly that code. The test mounts fixtures in a temporary sample
+repository with their referenced artifacts; `validate --path` on a fixture file alone does not supply those artifacts.
 
 Headless relay:
 

@@ -355,6 +355,8 @@ files and have no unfinished dependencies. Paths are repo-relative.
   use" and "hands off to", and every optional pack item.
 - [ ] T082 [US6] Docs coverage check in `validate` (`E_UNDOCUMENTED`) plus a test (AC-US6-1). README visual review
   (AC-US6-2).
+  - [x] Agent: coverage validation and missing-reference test are present; AC-US6-1 exercised locally.
+  - [ ] Owner pending: visually inspect the live GitHub README (AC-US6-2).
 
 ## Phase 9: User Story 7 — Cheap, meaningful CI (P3)
 
@@ -394,6 +396,8 @@ files and have no unfinished dependencies. Paths are repo-relative.
   CI; never disable TLS).
 - [ ] T090 [P] `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, attributed), `SECURITY.md` (GitHub private
   vulnerability reporting, supported versions) and `SUPPORT.md`.
+  - [x] Agent: community files are present; code of conduct attributes Contributor Covenant 2.1.
+  - [ ] Owner pending: enable GitHub private vulnerability reporting in repository settings.
 - [X] T091 [P] `.github/ISSUE_TEMPLATE/{bug,feature,config}.yml`, `.github/pull_request_template.md` (checklist:
   check passes, CHANGELOG, baton valid, no upstream hand-edits) and `.github/CODEOWNERS` (the maintainer handle,
   removed by template cleanup).
@@ -401,6 +405,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
   subsection.
 - [ ] T093 Run quickstart S1–S7 end to end, and record the evidence per acceptance check in the baton. Also run the timed
   newcomer walkthrough for SC-001 (template → first validated baton in ≤ 10 min, following only the README; AC-US1-4).
+  - [ ] Owner pending: timed newcomer walkthrough (AC-US1-4) and visual README check (AC-US6-2).
 - [ ] T094 Write the baton `phase_completed: implement → next_phase: review` (`baton handoff write --phase implement`).
   Do not tag. Tagging `v0.1.0` is a human action after review and land.
 
@@ -439,6 +444,44 @@ files and have no unfinished dependencies. Paths are repo-relative.
 | AC-US7-1 | US7 | PR Linux `baton` and Windows MVP smoke checks green within SC-007 budget; full three-OS smoke runs on tag/manual dispatch | manual | n/a |
 | AC-US7-2 | US7 | broken-frontmatter commit yields `E_FRONTMATTER_MALFORMED` annotation | manual | n/a |
 | AC-US7-3 | US7 | release `dry_run` produces assets + SHA256SUMS | manual | n/a |
+
+### Close-out acceptance evidence
+
+The original checks and expected initial results above are unchanged. "Owner pending" is not a pass.
+
+| Check | Result and evidence |
+|---|---|
+| AC-US1-1 | green — `npm test`, adopt integration tests pass (143/143 overall). |
+| AC-US1-2 | green — S1 archive/adopt/doctor/validate passed locally. |
+| AC-US1-3 | green — adopt "cannot push" test passed. |
+| AC-US1-4 | n/a — owner pending: timed README-only newcomer walkthrough. |
+| AC-US1-5 | green — adopt workflow and constitution assertions passed. |
+| AC-US2-1 | green — S2 init integration tests passed (13/13). |
+| AC-US2-2 | green — init byte-for-byte idempotency test passed. |
+| AC-US2-3 | green — core + learning pack test passed. |
+| AC-US2-4 | green — per-pack closure test passed. |
+| AC-US2-5 | green — optional-reference classification and scanner tests passed. |
+| AC-US3-1 | green — S3 handoff fixture tests passed (35/35). |
+| AC-US3-2 | green — relay gate-pending test passed. |
+| AC-US3-3 | green — relay stale/refresh test passed. |
+| AC-US3-4 | green — relay missing-preregistration test passed. |
+| AC-US3-5 | green — relay missing-PR test passed. |
+| AC-US3-6 | green — `baton validate --path specs/001-baton-template/handoff.md`. |
+| AC-US3-7 | green — checkbox-insensitive relay test passed. |
+| AC-US3-8 | green — role-only approval tests passed. |
+| AC-US3-9 | green — grouped compound check tests passed. |
+| AC-US3-10 | green — quick-lane relay tests passed. |
+| AC-US4-1 | green — S4 model tests passed (9/9). |
+| AC-US4-2 | green — model allowlist error test passed. |
+| AC-US4-3 | green — model apply is disabled by default; idempotency test passed. |
+| AC-US5-1 | n/a — local `sync --check` blocked by internal PyPI missing `specify-cli==1.0.11`; hosted release dry run 36343485321 passed `sync --check` at its recorded source SHA. |
+| AC-US5-2 | green — S5 update integration tests passed (5/5). |
+| AC-US5-3 | n/a — owner pending: upstream-watch manual dispatch and single-issue check. |
+| AC-US6-1 | green — S6 missing-reference `E_UNDOCUMENTED` test passed (4/4 validate tests). |
+| AC-US6-2 | n/a — owner pending: live GitHub README visual review. |
+| AC-US7-1 | n/a — pending this PR's checks and three-OS dispatch. |
+| AC-US7-2 | n/a — pending hosted malformed-frontmatter annotation. |
+| AC-US7-3 | green — owner dry run 36343485321 produced checksum-verified assets and attestations; no release. |
 
 ## Dependencies & Execution Order
 

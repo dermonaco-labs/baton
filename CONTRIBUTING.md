@@ -16,6 +16,10 @@ Some managed workstations cannot reach public npm or PyPI over TLS. Use an
 ephemeral Linux container with registry access and the checkout mounted, then
 the hosted CI gate. Never disable TLS verification or commit private registry
 settings. This repository's `.npmrc` intentionally uses the public registry.
+Restricted mirrors may also lack locked pins (`ignore@7.0.10` on npm and
+`specify-cli==1.0.11` on PyPI). Run the available local checks, record the
+missing-pin failures, and use hosted CI as the authoritative full gate; the
+planned devcontainer (roadmap RM9) will offer a repeatable local fallback.
 
 ## Changing upstream inputs and packs
 
