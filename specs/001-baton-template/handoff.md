@@ -12,7 +12,7 @@ summary: Implement added public references, coverage, guarded CI and smoke, rele
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
-    sha256: 7f42c68c28b8d2ed3c7c69a79e66ca13f557fa816cb4736c3d82e929c593ab87
+    sha256: 34e4c516105ba623eaafea3a27436d969b62d95dd00903660d798435eb7f7ff0
   - path: specs/001-baton-template/plan.md
     why: structure, template disposition, key decisions, constitution check
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
@@ -42,7 +42,7 @@ read_first:
     sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
   - path: specs/001-baton-template/quickstart.md
     why: the executable acceptance scenarios S1-S7
-    sha256: e39107373be0812df5b7995954eb3f7b32a608a5b9d2344a6325e7c71d608f9e
+    sha256: eeba03b9716abce5e6073d3745114b3425074d578fcc97915d0cbe64b293bcbd
   - path: .specify/memory/constitution.md
     why: principles I-VIII (v1.0.1); stop, don't choose
     sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
@@ -89,10 +89,10 @@ artifacts:
     sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
   - path: specs/001-baton-template/quickstart.md
     role: derived
-    sha256: e39107373be0812df5b7995954eb3f7b32a608a5b9d2344a6325e7c71d608f9e
+    sha256: eeba03b9716abce5e6073d3745114b3425074d578fcc97915d0cbe64b293bcbd
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: 7f42c68c28b8d2ed3c7c69a79e66ca13f557fa816cb4736c3d82e929c593ab87
+    sha256: 34e4c516105ba623eaafea3a27436d969b62d95dd00903660d798435eb7f7ff0
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
@@ -456,7 +456,7 @@ decisions:
     by: implementation-session
   - id: D44
     decision: Use hosted PR CI as the authoritative npm check and sync verification when this workstation's internal feeds lack locked packages
-    rationale: Repository owner resolved the feed blocker through control-plane delegation; local npm lacks ignore@7.0.10 and internal PyPI lacks specify-cli==1.0.11; never switch this workstation to public registries. Record CI run IDs before implement-to-review handoff
+    rationale: Repository owner resolved the feed blocker through control-plane delegation; local npm lacks ignore version 7.0.10 and internal PyPI lacks specify-cli version 1.0.11; never switch this workstation to public registries. Record CI run IDs before implement-to-review handoff
     by: human:repository-owner
   - id: D45
     decision: Record RM19 as a docs-only v0.3 backlog item without changing v0.1 tasks or contracts
@@ -465,6 +465,14 @@ decisions:
   - id: D46
     decision: Artifact hashes refreshed after intentional edit
     rationale: Document owner-authorized hosted CI fallback and RM19
+    by: implementation-session
+  - id: D47
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record hosted annotation in acceptance registry
+    by: implementation-session
+  - id: D48
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Repair CI denylist wording and commit refreshed task hashes
     by: implementation-session
 open_questions: []
 assumptions:
@@ -514,7 +522,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-28T16:26:15.048Z
+updated_at: 2026-09-28T16:32:18.432Z
 updated_by: implementation-session
 ---
 ## Goal
@@ -537,7 +545,7 @@ required internal PyPI mirror because it lacks `specify-cli==1.0.11`. The owner-
 [release dry run 36343485321](https://github.com/dermonaco-labs/baton/actions/runs/36343485321)
 on `main` at `6593a8fe0fd7c3b51a907a6ae227379d3bd35076` succeeded: hosted `npm run check` and
 `sync --check` passed. In this worktree `npm run check` stops at `markdownlint-cli2` because dependencies
-are absent; a permitted `npm ci` against the internal feed returned 404 for `ignore@7.0.10`. The lockfile
+are absent; a permitted `npm ci` against the internal feed returned 404 for npm `ignore` version 7.0.10. The lockfile
 was not changed. Its [downloadable artifact](https://github.com/dermonaco-labs/baton/actions/runs/36343485321/artifacts/10939627078)
 (`baton-release-dry-run`, 799498 bytes) contains `baton.mjs`, `baton-template-v0.1.0.tar.gz`,
 `baton.lock.json`, `SHA256SUMS` and `release-notes.md`. All three SHA256SUMS entries matched the downloaded bytes;
@@ -620,7 +628,7 @@ adds `roadmap.md`, a post-v0.1 backlog. It changes no v0.1 task or check; don't 
 - Template cleanup must never modify `.github/workflows/` (`GITHUB_TOKEN` can't push those changes).
 - Keep the repository's public registry pin. For this workstation use the internal npm and PyPI mirrors via
   environment overrides, with `npm_config_package_lock=false`; never leak those overrides into the lockfile.
-  The internal npm mirror currently lacks `ignore@7.0.10`, blocking local `npm ci`/`npm run check`. The hosted
+  The internal npm mirror currently lacks `ignore` version 7.0.10, blocking local `npm ci`/`npm run check`. The hosted
   check passed at the dry-run source commit, not on this documentation-only evidence branch.
 - ATV is pinned to main, not npm 2.6.3. Don't "downgrade" to the published package.
 - `ce-review` persona degradation, its headless output shape and the `extensions.yml` format are re-checked at the
