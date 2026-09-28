@@ -35,3 +35,27 @@ test('analyze exit detects open CRITICAL findings in the report even if the bato
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('implement exit excludes only the marked handoff-writing task, not other unchecked tasks', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'baton-tasks-'));
+  try {
+    const path = 'specs/001-example/tasks.md';
+    await mkdir(join(root, 'specs/001-example'), { recursive: true });
+    const check = { id: 'tasks-all-checked-or-deferred' };
+    const evaluate = () => evaluateBuiltIn(root, 'specs/001-example/handoff.md', {}, check);
+    const handoff = '- [ ] T007 Write the baton (`baton handoff write --phase implement`). <!-- baton:handoff-write:implement -->\n';
+    await writeFile(join(root, path), handoff);
+    assert.equal((await evaluate()).met, true);
+
+    await writeFile(join(root, path), `${handoff}- [ ] T008 Finish the real work.\n`);
+    assert.deepEqual(await evaluate(), { met: false, evidence: '1 outstanding tasks' });
+
+    await writeFile(join(root, path), '- [ ] T007 Write the baton (`baton handoff write --phase implement`).\n');
+    assert.equal((await evaluate()).met, false);
+
+    await writeFile(join(root, path), '- [ ] T008 Finish the real work. <!-- baton:handoff-write:implement -->\n');
+    assert.equal((await evaluate()).met, false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

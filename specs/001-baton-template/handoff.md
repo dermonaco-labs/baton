@@ -12,7 +12,7 @@ summary: Implement added public references, coverage, guarded CI and smoke, rele
 read_first:
   - path: specs/001-baton-template/tasks.md
     why: the unit of work, in order, and the Acceptance Registry
-    sha256: 5f6caa1f5d44678c55d71818d58d0c77ad20250e371dec4c27f53dc455890655
+    sha256: befe870780b7ca484cc2bdc83dba01d6ced5b1d45cbbb80d4dd57b087b797af0
   - path: specs/001-baton-template/plan.md
     why: structure, template disposition, key decisions, constitution check
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
@@ -27,10 +27,10 @@ read_first:
     sha256: 3b4b30985a64f882ab3ea02876a6a4442ebab50005be3f4575d5542e1955f9cc
   - path: specs/001-baton-template/contracts/phase-contracts.md
     why: phase table, check ids, transition rules
-    sha256: d9395b14ddded8ba7eac84752fcb36acee7b9f397748487a9b8e58e6d9a089e7
+    sha256: a98a00370cfbe328751d8f1754b243cc2b671005bfecdfa496cd742ab8841d21
   - path: specs/001-baton-template/contracts/cli.md
     why: commands, flags and exit codes (normative)
-    sha256: 5caa307b18a8b4edbfda4b289959344a5377e2a6a51a4fb75887db6027570050
+    sha256: 59607349bf8f5b5f8637b5efa1454cd4a6b4f4b357df1c10d3f289217984279e
   - path: specs/001-baton-template/contracts/packs.md
     why: core file list, pack storage, closure rules
     sha256: 75dcc68ac03b9caa0b731635e3ccfd5895ed0d00e05b19fca8cd6b438be4bbf4
@@ -74,7 +74,7 @@ artifacts:
     sha256: 3b4b30985a64f882ab3ea02876a6a4442ebab50005be3f4575d5542e1955f9cc
   - path: specs/001-baton-template/contracts/phase-contracts.md
     role: source-of-truth
-    sha256: d9395b14ddded8ba7eac84752fcb36acee7b9f397748487a9b8e58e6d9a089e7
+    sha256: a98a00370cfbe328751d8f1754b243cc2b671005bfecdfa496cd742ab8841d21
   - path: specs/001-baton-template/contracts/conflict-rules.md
     role: source-of-truth
     sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a
@@ -83,7 +83,7 @@ artifacts:
     sha256: 75dcc68ac03b9caa0b731635e3ccfd5895ed0d00e05b19fca8cd6b438be4bbf4
   - path: specs/001-baton-template/contracts/cli.md
     role: source-of-truth
-    sha256: 5caa307b18a8b4edbfda4b289959344a5377e2a6a51a4fb75887db6027570050
+    sha256: 59607349bf8f5b5f8637b5efa1454cd4a6b4f4b357df1c10d3f289217984279e
   - path: specs/001-baton-template/contracts/ci.md
     role: source-of-truth
     sha256: cb20d9cd65b0bc6ce21502730be20820d6b4715cd0eeeb1af4097aabe8428bc3
@@ -92,7 +92,7 @@ artifacts:
     sha256: eeba03b9716abce5e6073d3745114b3425074d578fcc97915d0cbe64b293bcbd
   - path: specs/001-baton-template/tasks.md
     role: derived
-    sha256: 5f6caa1f5d44678c55d71818d58d0c77ad20250e371dec4c27f53dc455890655
+    sha256: befe870780b7ca484cc2bdc83dba01d6ced5b1d45cbbb80d4dd57b087b797af0
   - path: specs/001-baton-template/analysis.md
     role: evidence
     sha256: cabcda605da244e6a427c0c0c81755b54fb7ec1468778726df3fab40411daf2d
@@ -482,6 +482,10 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Record green PR checks, defer owner-only subitems and log RM20
     by: implementation-session
+  - id: D51
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record the implement-handoff task marker and clarified exit contract for the checkbox-loop fix
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -530,7 +534,7 @@ history:
     at: 2026-09-24T07:53:35Z
     by: review-session
     commit: 23b1a1d
-updated_at: 2026-09-28T16:36:51.983Z
+updated_at: 2026-09-28T16:47:25.196Z
 updated_by: implementation-session
 ---
 ## Goal

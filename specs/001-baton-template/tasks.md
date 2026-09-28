@@ -410,7 +410,7 @@ files and have no unfinished dependencies. Paths are repo-relative.
   newcomer walkthrough for SC-001 (template → first validated baton in ≤ 10 min, following only the README; AC-US1-4).
   - [x] Agent: S1–S6 local evidence and S7 PR/annotation evidence recorded per acceptance check in the baton.
   - [ ] Owner pending: timed newcomer walkthrough (AC-US1-4) and visual README check (AC-US6-2).
-- [ ] T094 Write the baton `phase_completed: implement → next_phase: review` (`baton handoff write --phase implement`).
+- [ ] T094 Write the baton `phase_completed: implement → next_phase: review` (`baton handoff write --phase implement`). <!-- baton:handoff-write:implement -->
   Do not tag. Tagging `v0.1.0` is a human action after review and land.
   - [ ] Blocked here: the configured `local-checks-pass` executes `npm run check`, but this workstation's required
     internal npm feed lacks the pinned `ignore` package. Run the handoff on a registry-enabled machine or devcontainer;

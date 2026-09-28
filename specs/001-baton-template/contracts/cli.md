@@ -38,6 +38,10 @@ Global flags: `--cwd <dir>`, `--json` (machine output), `--github` (workflow ann
 | `handoff escalate --quick <slug>` | Quick → feature lane. It sets the quick baton to `next_phase: specify` with the reason and prints `/speckit-specify` with the quick baton as input. It never creates feature dirs (Spec Kit owns numbering). | `--reason` |
 | `handoff init --infer` | Builds a baton for a feature that started before Baton (`status: needs-human`). | |
 | `handoff migrate` | Upgrades batons to the current schema version. | `--dry-run` |
+
+When writing the implement → review handoff, the `tasks-all-checked-or-deferred` exit check treats only the
+explicitly marked `baton handoff write --phase implement` task as satisfied by that write. Other unchecked,
+non-deferred tasks still fail the check; see [phase-contracts.md](phase-contracts.md).
 | `models apply` | Writes `model:` into managed agent frontmatter from the role config (only when `apply_to_agents: true`, or with `--force`). Idempotent. | `--dry-run` |
 | `adopt` | Runs the template cleanup (plan.md "Template disposition"). It refuses to run in the Baton source repo (`GITHUB_REPOSITORY` or the `origin` remote is `dermonaco-labs/baton`; `baton.lock.json` alone is not a signal, because a fresh derived repo still has it) unless `BATON_FORCE_CLEANUP=1`. The `template-cleanup.yml` workflow calls `adopt --no-workflows`, because `GITHUB_TOKEN` cannot change `.github/workflows/`. | `--dry-run`, `--no-workflows`, `--prune-workflows` (deletes the dormant maintainer workflows; run locally) |
 | `uninstall` | Removes managed, unmodified files and the marker sections. It keeps `specs/`, `docs/brainstorms`, `docs/solutions` and the constitution. | `--dry-run` |

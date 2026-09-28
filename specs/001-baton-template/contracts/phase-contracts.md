@@ -47,6 +47,13 @@ flowchart LR
 | land | `baton-land` → `land` | implementation | **yes (PR review)** | `no-blocking-findings`, `local-checks-pass` | `pr-opened` | compound, done |
 | compound | `ce-compound` | planning | – | `pr-opened` | group `compound-recorded` = `any_of` [`artifact-exists:docs/solutions/*.md`, `decision:skip-compound`] (data-model §2.1) | done |
 
+For the implement exit, `tasks-all-checked-or-deferred` rejects unchecked, non-`DEFERRED` task rows.
+The sole exception is an unchecked task whose row explicitly contains both
+`baton handoff write --phase implement` and `<!-- baton:handoff-write:implement -->`.
+That marker is reserved for the task whose deliverable is writing this very implement → review handoff;
+the write satisfies that task, so requiring its checkbox beforehand would deadlock the exit check.
+An unchecked task without both the marker and the command still blocks the handoff.
+
 Entry and exit cells use the check keys of data-model §2.1. The phase table is the feature lane; `review`, `land`
 and `compound` are shared with the quick lane, which overrides them through `by_lane.quick` (below).
 

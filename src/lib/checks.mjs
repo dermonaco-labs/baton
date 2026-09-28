@@ -147,7 +147,11 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
         data.analysis['x-critical-evidence'] ?? 'Analysis severity could not be parsed; explicit evidence required');
     }
     case 'tasks-all-checked-or-deferred': {
-      const outstanding = (await text('tasks.md') ?? '').split('\n').filter((line) => /^\s*-\s+\[ \]\s+T\d{3}/.test(line) && !/\bDEFERRED\b/.test(line));
+      const outstanding = (await text('tasks.md') ?? '').split('\n').filter((line) =>
+        /^\s*-\s+\[ \]\s+T\d{3}/.test(line) &&
+        !/\bDEFERRED\b/.test(line) &&
+        !(line.includes('<!-- baton:handoff-write:implement -->') &&
+          /\bbaton\s+handoff\s+write\s+--phase\s+implement\b/.test(line)));
       return answer(outstanding.length === 0, `${outstanding.length} outstanding tasks`);
     }
     case 'acceptance-evidence': {
