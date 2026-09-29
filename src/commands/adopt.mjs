@@ -8,6 +8,7 @@ import { withinRoot } from '../lib/manifest.mjs';
 import { hashFile } from '../lib/hash.mjs';
 import { loadPacks, recommendedPacks } from '../lib/packs.mjs';
 import { maintainerWorkflows } from '../lib/maintainer-workflows.mjs';
+import { mergeAttributes } from '../lib/attributes.mjs';
 
 const execFileAsync = promisify(execFile);
 const preservedDocs = new Set(['brainstorms', 'solutions']);
@@ -253,6 +254,14 @@ export async function run(root, args) {
     const lines = new Set(current.split(/\r?\n/));
     const extra = additions.split(/\r?\n/).filter((line) => line && !lines.has(line)).map((line) => `${line}\n`).join('');
     await writeFile(ignore, current + (current && !current.endsWith('\n') && extra ? '\n' : '') + extra);
+    const attributes = withinRoot(root, '.gitattributes');
+    const existingAttributes = await readFile(attributes, 'utf8').catch((error) => {
+      if (error.code === 'ENOENT') return '';
+      throw error;
+    });
+    const desiredAttributes = mergeAttributes(existingAttributes,
+      await readFile(withinRoot(root, 'baton/templates/gitattributes.adopter'), 'utf8'));
+    if (desiredAttributes !== existingAttributes) await writeFile(attributes, desiredAttributes);
     if (!noWorkflows && !await present(root, '.github/workflows/baton.yml')) {
       await copyTemplate(root, 'baton/templates/workflows/baton.yml', '.github/workflows/baton.yml');
     }

@@ -58,6 +58,9 @@ test('init installs the locked core file set and is byte-for-byte idempotent', a
     const first = await cli(root, ['init']);
     assert.equal(first.code, 0, first.stderr);
     const manifest = JSON.parse(await readFile(join(root, '.baton/manifest.json'), 'utf8'));
+    const attributes = await readFile(join(root, '.gitattributes'), 'utf8');
+    assert.match(attributes, /# BATON:START\n\.baton\/\*\* text eol=lf/);
+    assert.match(attributes, /specs\/\*\*\/handoff\.md text eol=lf/);
     assert.equal(manifest.source, 'init');
     assert.deepEqual(manifest.packs, ['core']);
     const lock = JSON.parse(await readFile(join(sourceRoot, 'baton.lock.json'), 'utf8'));
@@ -74,6 +77,20 @@ test('init installs the locked core file set and is byte-for-byte idempotent', a
     assert.equal(again.code, 0, again.stderr);
     const after = await Promise.all((await files(root)).map(async path => [path, await readFile(join(root, path))]));
     assert.deepEqual(after, before, 'second init must not change any bytes or timestamps stored in files');
+  } finally { await cleanup(); }
+});
+
+test('init marker-merges LF attributes without replacing adopter rules', async () => {
+  const { root, cleanup } = await tempRepo('repos/empty');
+  try {
+    await writeFile(join(root, '.gitattributes'), '*.custom binary\r\n');
+    const first = await cli(root, ['init']);
+    assert.equal(first.code, 0, first.stdout);
+    const attributes = await readFile(join(root, '.gitattributes'), 'utf8');
+    assert.match(attributes, /^\*\.custom binary\r\n/);
+    assert.match(attributes, /# BATON:START[\s\S]*# BATON:END/);
+    assert.equal((await cli(root, ['init'])).code, 0);
+    assert.equal(await readFile(join(root, '.gitattributes'), 'utf8'), attributes);
   } finally { await cleanup(); }
 });
 

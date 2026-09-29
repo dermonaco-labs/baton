@@ -15,7 +15,7 @@ test('the draft PR runs a pinned Windows template-instantiation smoke without wr
   assert.match(job.if, /github\.repository == 'dermonaco-labs\/baton'/);
   assert.ok(job.steps.every((step) => !step.uses || /@[a-f0-9]{40}$/.test(step.uses)));
   const commands = job.steps.map((step) => step.run ?? '').join('\n');
-  for (const required of ['npm ci', 'npm run check', 'adopt --no-workflows',
+  for (const required of ['npm ci', 'npm run check', '--test-name-pattern=F86', 'adopt --no-workflows',
     'doctor --strict', 'baton.mjs validate', 'git status --porcelain -- .github/workflows']) {
     assert.ok(commands.includes(required), `missing ${required}`);
   }

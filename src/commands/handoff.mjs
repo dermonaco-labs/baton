@@ -1,5 +1,5 @@
 import { readFile, readdir, writeFile, mkdir, copyFile } from 'node:fs/promises';
-import { basename, dirname } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { execFile } from 'node:child_process';
 import { isDeepStrictEqual, promisify } from 'node:util';
 import { BatonError } from '../lib/report.mjs';
@@ -197,21 +197,28 @@ export async function run(root, args) {
   const options = parseOptions(rest);
   if (options['dry-run'] && action !== 'migrate') throw new BatonError('E_USAGE', 'handoff --dry-run is not supported for this action', 2);
   const writer = await writerHash(root);
+  const worktree = hashBytes(process.platform === 'win32' ? resolve(root).toLowerCase() : resolve(root));
   /** @param {Record<string,any>} data @param {string} by @param {string} phase @param {string} [actionName] */
   const record = async (data, by, phase, actionName = 'write') => {
+    if (phase === 'none') return;
     data.history = [...(data.history ?? []), {
-      phase, at: new Date().toISOString(), by, writer, commit: await commitId(root), 'x-action': actionName,
+      phase, at: new Date().toISOString(), by, writer, 'x-worktree': worktree,
+      commit: await commitId(root), 'x-action': actionName,
     }].slice(-20);
   };
   /** @param {Record<string,any>} data @param {string} phase */
   const selfReview = (data, phase) => {
     if (!['review', 'land'].includes(phase)) return false;
-    const implement = /** @type {Array<{phase:string,writer?:string,'x-action'?:string}>} */ (data.history ?? [])
+    const implement = /** @type {Array<{phase:string,at?:string,writer?:string,'x-worktree'?:string,'x-action'?:string}>} */ (data.history ?? [])
       .filter((item) => item.phase === (data.lane === 'quick' ? 'work' : 'implement') &&
         (!item['x-action'] || item['x-action'] === 'write')).at(-1);
-    return Boolean((data['x-implementation-writer'] ?? implement?.writer) === writer &&
-      !/** @type {Array<{tag?:string,by?:string}>} */ (data.decisions ?? [])
-      .some((item) => item.tag === 'self-review-override' && item.by?.startsWith('human:')));
+    const sameCheckout = (data['x-implementation-writer'] ?? implement?.writer) === writer ||
+      (data['x-implementation-worktree'] ?? implement?.['x-worktree']) === worktree;
+    const cycle = data['x-implementation-cycle'] ?? implement?.at;
+    return Boolean(sameCheckout &&
+      !/** @type {Array<{tag?:string,by?:string,'x-implementation-cycle'?:string}>} */ (data.decisions ?? [])
+      .some((item) => item.tag === 'self-review-override' && item.by?.startsWith('human:') &&
+        cycle && item['x-implementation-cycle'] === cycle));
   };
   if (action === 'receive' && options.phase === 'specify' && !options.feature && !options.quick) {
     let selected;
@@ -234,6 +241,14 @@ export async function run(root, args) {
     }
   }
   const path = await locate(root, options);
+  if (typeof options.quick === 'string' && action !== 'new') {
+    try {
+      await readFile(withinRoot(root, path));
+    } catch (error) {
+      if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+      throw new BatonError('E_USAGE', `Quick baton ${path} does not exist; use handoff new --quick ${options.quick} --reason <why>`, 2);
+    }
+  }
   if (action === 'redact') {
     if (typeof options.reason !== 'string' || typeof options.find !== 'string' ||
       typeof options.replace !== 'string' || options.find === options.replace) {
@@ -250,7 +265,7 @@ export async function run(root, args) {
       rationale: options.reason, by: 'baton' });
     data.updated_at = new Date().toISOString();
     data.updated_by = 'baton';
-    await record(data, 'baton', data.phase_completed === 'none' ? 'work' : data.phase_completed, 'redact');
+    await record(data, 'baton', data.phase_completed, 'redact');
     await writeHandoff(root, path, data, replacement);
     return { data: { path, redacted: true } };
   }
@@ -267,7 +282,7 @@ export async function run(root, args) {
       rationale: options.reason, by: 'baton', 'x-revoked': invalid.map((item) => item.id) });
     data.updated_at = new Date().toISOString();
     data.updated_by = 'baton';
-    await record(data, 'baton', data.phase_completed === 'none' ? 'work' : data.phase_completed, 'revoke-waivers');
+    await record(data, 'baton', data.phase_completed, 'revoke-waivers');
     await writeHandoff(root, path, data, body);
     return { data: { revoked: invalid.map((item) => item.id) } };
   }
@@ -293,7 +308,7 @@ export async function run(root, args) {
     data.status = 'needs-human';
     data.updated_at = new Date().toISOString();
     data.updated_by = 'baton';
-    await record(data, 'baton', data.phase_completed === 'none' ? 'work' : data.phase_completed, 'question');
+    await record(data, 'baton', data.phase_completed, 'question');
     await writeHandoff(root, path, data, body);
     return { data: { question: id, status: data.status } };
   }
@@ -477,11 +492,13 @@ export async function run(root, args) {
         'x-evidence-sha256': await hashFile(withinRoot(root, `${dirname(path)}/tasks.md`)),
       } : {}),
       ...(question['x-tag'] === 'self-review-override' && answer.choice === 'Allow self-review'
-        ? { tag: 'self-review-override' } : {}),
+        ? { tag: 'self-review-override', 'x-implementation-cycle': data['x-implementation-cycle'] ??
+          data.history?.filter((/** @type {{phase:string,'x-action'?:string}} */ item) => ['work', 'implement'].includes(item.phase) &&
+            (!item['x-action'] || item['x-action'] === 'write')).at(-1)?.at } : {}),
     });
     data.status = /** @type {Array<{blocking:boolean}>} */ (data.open_questions).some((item) => item.blocking) ? 'needs-human' : 'ready';
     await updateMetadata(root, data, `human:${options.by.replaceAll(' ', '-')}`, data.next_phase);
-    await record(data, `human:${options.by.replaceAll(' ', '-')}`, data.phase_completed === 'none' ? 'work' : data.phase_completed, 'answer');
+    await record(data, `human:${options.by.replaceAll(' ', '-')}`, data.phase_completed, 'answer');
     await writeHandoff(root, path, data, body);
     return { data: { question: answer.id, status: data.status } };
   }
@@ -698,7 +715,11 @@ export async function run(root, args) {
     if (!actorRole(actor, await gateVocabulary(root)) || actor.startsWith('human:')) {
       throw new BatonError('E_ACTOR_FORMAT', 'Write actor must be an agent identifier, not a human role', 2);
     }
-    if (['implement', 'work'].includes(options.phase)) data['x-implementation-writer'] = writer;
+    if (['implement', 'work'].includes(options.phase)) {
+      data['x-implementation-writer'] = writer;
+      data['x-implementation-worktree'] = worktree;
+      data['x-implementation-cycle'] = hashBytes(`${writer}:${worktree}:${new Date().toISOString()}:${data.history?.length ?? 0}`);
+    }
     await record(data, actor, options.phase);
     const unmet = results.filter((item) => !item.met).map((item) => ({ code: item.id === 'quick-scope-held' ? 'E_LANE_ESCALATE' : 'E_EXIT_UNMET', file: path,
       message: `${item.id}: ${item.evidence}${item.members ? ` (${item.members.map((member) => `${member.id}=${member.met}`).join(', ')})` : ''}` }));
@@ -755,7 +776,7 @@ export async function run(root, args) {
     data.gate.approved_at = date;
     data.updated_at = new Date().toISOString();
     data.updated_by = `human:${options.by.replaceAll(' ', '-')}`;
-    await record(data, data.updated_by, data.phase_completed === 'none' ? 'work' : data.phase_completed, 'approve');
+    await record(data, data.updated_by, data.phase_completed, 'approve');
     await writeHandoff(root, path, data, body);
     return { data: { gate: data.gate } };
   }
@@ -781,7 +802,7 @@ export async function run(root, args) {
     data.decisions.push({ id, decision: 'Artifact hashes refreshed after intentional edit', rationale: options.reason, by: 'implementation-session' });
     data.updated_at = new Date().toISOString();
     data.updated_by = 'implementation-session';
-    await record(data, 'implementation-session', data.phase_completed === 'none' ? 'work' : data.phase_completed, 'refresh');
+    await record(data, 'implementation-session', data.phase_completed, 'refresh');
     await writeHandoff(root, path, data, body);
     return { data: { decision: id } };
   }

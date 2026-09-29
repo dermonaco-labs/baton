@@ -17,3 +17,13 @@ test('tasks checkbox progress is not a semantic change', () => {
   assert.notEqual(hashArtifact('specs/001/spec.md', '- [ ] T001 build\n'),
     hashArtifact('specs/001/spec.md', '- [x] T001 build\n'));
 });
+
+test('artifact hashes normalize CRLF without changing existing LF digests', () => {
+  for (const path of ['specs/001/handoff.md', 'specs/001/spec.md', 'specs/001/review.json', 'specs/001/tasks.md']) {
+    const lf = '- [ ] T001 build\nmore text\n';
+    assert.equal(hashArtifact(path, Buffer.from(lf.replace(/\n/g, '\r\n'))), hashArtifact(path, lf));
+    if (!path.endsWith('tasks.md')) assert.equal(hashArtifact(path, lf), hashBytes(lf));
+  }
+  assert.equal(hashArtifact('image.bin', Buffer.from([0, 13, 10, 255])),
+    hashBytes(Buffer.from([0, 13, 10, 255])));
+});

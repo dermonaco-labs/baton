@@ -7,6 +7,7 @@ import { BatonError } from '../lib/report.mjs';
 import { readManifest, writeManifest, installedScript } from '../lib/manifest.mjs';
 import { optionalBytes, putBytes, safePath, digest } from '../lib/overlay.mjs';
 import { mergeMarker } from '../lib/markers.mjs';
+import { mergeAttributes } from '../lib/attributes.mjs';
 import { resolvePayload } from '../lib/payload.mjs';
 import { UpstreamError } from '../lib/upstream.mjs';
 import { run as init, mergeHooks, mergeExtensions, protectedPath } from './init.mjs';
@@ -132,6 +133,14 @@ export async function run(root, args) {
       if (old && (!old.managed || !current || digest(current) !== old.sha256)) {
         await conflict(entry.path, 'user-modified or missing managed file', desired);
         continue;
+      }
+      const attributePath = '.gitattributes';
+      const currentAttributes = (await optionalBytes(root, attributePath))?.toString() ?? '';
+      const stagedAttributes = await readFile(join(stage, attributePath), 'utf8');
+      const mergedAttributes = mergeAttributes(currentAttributes, stagedAttributes);
+      if (mergedAttributes !== currentAttributes) {
+        actions.push(`merge ${attributePath}`);
+        if (!opts.dryRun) await putBytes(root, attributePath, mergedAttributes);
       }
       if (!old && current) {
         await conflict(entry.path, 'unmanaged file', desired);

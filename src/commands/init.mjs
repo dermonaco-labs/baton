@@ -7,6 +7,7 @@ import { optionalBytes, putBytes, safePath, matches, digest, parsedObject } from
 import { readManifest, writeManifest, installedScript } from '../lib/manifest.mjs';
 import { loadPacks, resolvePacks, recommendedPacks } from '../lib/packs.mjs';
 import { mergeMarker } from '../lib/markers.mjs';
+import { mergeAttributes } from '../lib/attributes.mjs';
 import { repairAtv } from '../lib/repairs.mjs';
 import { prepareSpeckit, UpstreamError } from '../lib/upstream.mjs';
 import { mkdtemp } from 'node:fs/promises';
@@ -328,6 +329,14 @@ export async function run(root, args) {
       const next = ignoreCurrent + (ignoreCurrent && !/\r?\n$/.test(ignoreCurrent) ? '\n' : '') +
         missing.map(line => `${line}\n`).join('');
       if (!opts.dryRun) await putBytes(root, ignore, next);
+    }
+    const attributes = '.gitattributes';
+    const currentAttributes = (await optionalBytes(root, attributes))?.toString() ?? '';
+    const attributeTemplate = await readFile(join(payload.root, 'baton/templates/gitattributes.adopter'), 'utf8');
+    const mergedAttributes = mergeAttributes(currentAttributes, attributeTemplate);
+    if (currentAttributes !== mergedAttributes) {
+      actions.push(`merge ${attributes}`);
+      if (!opts.dryRun) await putBytes(root, attributes, mergedAttributes);
     }
     const manifest = {
       schema: 1, baton_version: '0.1.0', installed_at: previous?.installed_at ?? new Date().toISOString(),

@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 001-baton-template
-phase_completed: review
-next_phase: implement
-next_owner: speckit-implement
+phase_completed: implement
+next_phase: review
+next_owner: baton-review
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Re-review 3 of fix pass 3 (815ca0bd..1eb09bc6, PR 26): all 75 prior fixes verified through the real CLI, nine deferrals accepted, F61 dismissal sound; new F86 (P1, CRLF batons break overlay adopters on Windows second checkouts), F87/F88 (P2, self-review guard bypass and non-expiring override) and nine P3s. Back to implement for F86."
+model_role: review
+suggested_model: claude-opus-5.5
+summary: "Fix pass 4: CRLF-safe relay reads and hashes, marker-managed overlay attributes, worktree-aware self-review guard and one-cycle override; F89/F91/F96 repaired. Independent review required; nontrivial P3s deferred in review.json."
 read_first:
   - path: specs/001-baton-template/spec.md
     why: Review scope and acceptance criteria
@@ -21,7 +21,7 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: specs/001-baton-template/review.json
     why: Review fixed and deferred findings, including owner-raised F62
-    sha256: 4c0b0be84fbdc73e936f159871cebcbac9f0429a4232794c4c2c892e75a3986b
+    sha256: 1e2806b092fd4e9d4ff914997062d255c64d39650334ffa694e3398452d0942b
   - path: specs/001-baton-template/contracts/ci.md
     why: Review F39 hosted verification and restored link check
     sha256: d90ecc2e0839d0314ae4df5a4591c40b6ce538549db8fbca3fa5ef9d97791fb5
@@ -43,10 +43,10 @@ artifacts:
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
   - path: specs/001-baton-template/data-model.md
     role: source-of-truth
-    sha256: f07970cf0c0af205ae2ffab02442a09e6e919d1332023d2411b7eeca40940c40
+    sha256: 923bfff75c172f22ef081e09d4ded440926f6c8c39beaecc580187482dfa8654
   - path: specs/001-baton-template/contracts/handoff-contract.md
     role: source-of-truth
-    sha256: a00b346ccc56b6453f9457a8a5752076812f53ad147618da8e837d80f7cadf21
+    sha256: 92494280140abe8467ad936f4b6fa52bb5d30a5f6e21f777c1b44758aa2d1d66
   - path: specs/001-baton-template/contracts/phase-contracts.md
     role: source-of-truth
     sha256: c7b762f985dc3e0d2c6e09a53e8306eb46e42cf1375b1b3aaaf3f391e8414b9e
@@ -58,7 +58,7 @@ artifacts:
     sha256: 75dcc68ac03b9caa0b731635e3ccfd5895ed0d00e05b19fca8cd6b438be4bbf4
   - path: specs/001-baton-template/contracts/cli.md
     role: source-of-truth
-    sha256: 804c936a75e52a0c1e96123decb2798339c116bc6febd1f80fc0e75e62560522
+    sha256: 96a4eca544c8a9bf345ccad8da0b384efbd0a9994e0400169f3bd78ed78e1423
   - path: specs/001-baton-template/contracts/ci.md
     role: source-of-truth
     sha256: d90ecc2e0839d0314ae4df5a4591c40b6ce538549db8fbca3fa5ef9d97791fb5
@@ -76,7 +76,7 @@ artifacts:
     sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017
   - path: specs/001-baton-template/review.json
     role: evidence
-    sha256: 4c0b0be84fbdc73e936f159871cebcbac9f0429a4232794c4c2c892e75a3986b
+    sha256: 1e2806b092fd4e9d4ff914997062d255c64d39650334ffa694e3398452d0942b
 entry_checked:
   - id: tasks-exists
     ok: true
@@ -84,9 +84,15 @@ entry_checked:
     ok: true
     evidence: analyzed at 23b1a1d; the artifacts were then amended by the analyze fixes and amendments A1-A6 and re-hashed here
 exit_criteria:
-  - id: findings-json-valid
+  - id: tasks-all-checked-or-deferred
     met: true
-    evidence: specs/001-baton-template/review.json
+    evidence: 0 outstanding tasks
+  - id: acceptance-evidence
+    met: true
+    evidence: 0 checks lack evidence
+  - id: local-checks-pass
+    met: true
+    evidence: "baton: 0"
 analysis:
   report_path: specs/001-baton-template/analysis.md
   critical: 0
@@ -858,6 +864,38 @@ decisions:
     tag: diff-base
     x-base-commit: 1eb09bc6e22f3a03be333ae9888d4fc81a26c7fc
     by: baton
+  - id: D149
+    decision: Handoff body redacted
+    rationale: "F91: use stable test name rather than moved line number"
+    by: baton
+  - id: D150
+    decision: Handoff body redacted
+    rationale: "F91: cite exact stable test name"
+    by: baton
+  - id: D151
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Fix pass 4 updates to CRLF and self-review contracts and review evidence
+    by: implementation-session
+  - id: D152
+    decision: Handoff body redacted
+    rationale: "F90: replace stale fix pass 2 implementation description"
+    by: baton
+  - id: D153
+    decision: Handoff body redacted
+    rationale: "F90: replace stale review instructions"
+    by: baton
+  - id: D154
+    decision: Handoff body redacted
+    rationale: "F90: clear stale F62 warning"
+    by: baton
+  - id: D155
+    decision: Handoff body redacted
+    rationale: "F90: current smoke scope"
+    by: baton
+  - id: D156
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Clarify legacy baton token-only compatibility
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -888,65 +926,14 @@ risks:
   - id: R-SELF-REVIEW
     text: "F87/F88: the E_SELF_REVIEW guard is advisory; deleting .baton/.local or one old override answer lets the implement checkout review itself."
     severity: medium
+  - id: R-FIXPASS4
+    text: F86/F87/F88 are resolved locally; independent review must verify them. Older R-CRLF and R-SELF-REVIEW entries are historical. The guard is a process guard, not a security boundary; F90 metadata awaits the current PR.
+    severity: medium
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: review
-    at: 2026-09-28T22:32:04.446Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:04.826Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:05.208Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:05.611Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:06.003Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:06.392Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:06.808Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:07.210Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:07.630Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
   - phase: review
     at: 2026-09-28T22:32:08.044Z
     by: baton
@@ -1013,15 +1000,80 @@ history:
     writer: 846a37d767c3870ef41090f7d3b0532a814c55e1f5c959ac0cd2d613aa0930fc
     commit: 1eb09bc
     x-action: write
-updated_at: 2026-09-29T01:15:35.783Z
-updated_by: baton-review
+  - phase: review
+    at: 2026-09-29T01:33:32.673Z
+    by: baton
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: fd83bfa
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T01:33:41.515Z
+    by: baton
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: fd83bfa
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T01:34:27.193Z
+    by: implementation-session
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: fd83bfa
+    x-action: refresh
+  - phase: review
+    at: 2026-09-29T01:44:20.081Z
+    by: baton
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: fd83bfa
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T01:44:20.491Z
+    by: baton
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: fd83bfa
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T01:44:27.674Z
+    by: baton
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: fd83bfa
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T01:44:28.047Z
+    by: baton
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: fd83bfa
+    x-action: redact
+  - phase: implement
+    at: 2026-09-29T01:50:28.069Z
+    by: baton
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: fd83bfa
+    x-action: write
+  - phase: implement
+    at: 2026-09-29T01:51:13.324Z
+    by: implementation-session
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: fd83bfa
+    x-action: refresh
+updated_at: 2026-09-29T01:51:13.323Z
+updated_by: implementation-session
 review:
   findings_path: specs/001-baton-template/review.json
   blocking_findings: 1
 pr:
   url: https://github.com/dermonaco-labs/baton/pull/24
   number: 24
-x-implementation-writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
+x-implementation-writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+x-implementation-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+x-implementation-cycle: b762ef81e781d1b8ced2954b6dedc6e482fa18dafa9be5d437d61385a0ebedab
 ---
 ## Goal
 
@@ -1031,9 +1083,7 @@ optional packs, cheap CI and a public manual.
 
 ## What changed
 
-The owner reopened implement after the implementation session wrote review and land handoffs itself. The
-existing PR stays open, but an independent review session must receive `review` and verify these changes
-before land. F62 records the missing CLI role boundary as an open P1; it is not silently fixed here.
+Fix pass 4 resolves F86 (CRLF parsing, normalized artifact hashes, marker-managed overlay attributes), F87 (worktree-bound self-review guard), F88 (cycle-scoped override), F89, F91 and F96. Tests exercise the bundled CLI in scratch repositories. F90 remains partial until the new PR exists; F92 and other nontrivial P3s are deferred in review.json.
 F39's live PowerShell-flavour integration test ran and passed in hosted Linux CI job 109131737677
 (run 36482633555, `ok 38`, no skip). The same run exposed a separate Linux py-flavour assertion and
 pre-existing ShellCheck warnings, which this continuation fixes. The first CI run did not start jobs
@@ -1065,7 +1115,7 @@ as red evidence. Each waiver retains its existing green evidence in `tasks.md`.
 | D115 / AC-US3-6 | `5f539d8e10f0cd4f422f9d181734f6348e832b52` | `node .baton/bin/baton.mjs validate --path specs/001-baton-template/handoff.md` | Exit 1 only on `E_STALE_ARTIFACT` for data-model.md; not a missing validator behavior. Review base `8aeed8a` lacks the CLI. |
 | D116 / AC-US3-7 | `e32aaa3c2f0bd5fbf647da8369709549ad93f492` | `node --test --test-name-pattern='stale artifact then refresh and checkbox-insensitive progress' test/integration/relay.test.mjs` | Exit 1 at line 275 (`0 !== 3`) on pending gate; checkbox/rewording assertions at lines 280-282 never run. |
 | D117 / AC-US3-8 | `46225ec68c8a565615450167afba2211b8ad9adc` | `node --test --test-name-pattern='role-only A5 examples reject malformed approvers and actors with their stable codes' test/unit/validate-handoff.test.mjs` | Exit 0: role-format rejection already works at the earliest complete relay. |
-| D118 / AC-US3-9 | `46225ec68c8a565615450167afba2211b8ad9adc` | `test/integration/relay.test.mjs`:381, authored solution branch; companion skip-branch selector | Exit 0: grouped compound checks already work at the earliest complete relay. |
+| D118 / AC-US3-9 | `46225ec68c8a565615450167afba2211b8ad9adc` | relay.test.mjs test: compound accepts an authored solution document without a skip decision; companion skip-branch selector | Exit 0: grouped compound checks already work at the earliest complete relay. |
 | D119 / AC-US4-1 | `59dfa7795fb7212563858a103daefaebee47d93b` | `node --test --test-name-pattern='role resolution uses phase override and inherits when no role model is set' test/unit/models.test.mjs` | Exit 1 before assertions: old source lacks `src/lib/models.mjs`. |
 | D120 / AC-US4-2 | `59dfa7795fb7212563858a103daefaebee47d93b` | `node --test --test-name-pattern='allow list enforcement is off, warning or error for configured and agent models' test/unit/models.test.mjs` | Exit 1 before assertions: same missing module; no model allowlist assertion runs. |
 | D121 / AC-US4-3 | `59dfa7795fb7212563858a103daefaebee47d93b` | `node --test --test-name-pattern='models apply dry-run, managed-only, byte-preserving and idempotent' test/unit/models.test.mjs` | Exit 1 before assertions: same missing module; no apply/idempotency assertion runs. |
@@ -1074,15 +1124,12 @@ as red evidence. Each waiver retains its existing green evidence in `tasks.md`.
 
 ## Next steps
 
-Independent `/baton-review` should receive the implementation baton, review against the recorded
-`d61a7237bd7215615050aa594b6777a3197de2db` implementation base, and adjudicate F62 before
-any review→land transition. Do not treat this implementation session's former review/land writes
-as independent verification.
+Independent /baton-review should receive the fix-pass-4 implement baton in a separate checkout, verify F86-F89/F91/F96, and adjudicate the remaining P3 deferrals. Do not self-review in this implementation checkout.
 
 ## Watch out for
 
-- AC-US7-1's full three-OS smoke is owner-pending; no dispatch occurred in this continuation.
-- F62 is open at P1, so an honest review write routes back to implement until an independent
+- AC-US7-1 full three-OS smoke remains owner-pending; no three-OS dispatch was requested in fix pass 4.
+- F86/F87/F88 are fixed locally; independent review must verify them. Any open P1 finding routes back to implement until an independent
   reviewer resolves or defers it through an authorized decision.
 - The standalone lychee binary is SHA-256 pinned to its GitHub release asset and still runs
   the offline relative-link check; CI must prove the gate succeeds.

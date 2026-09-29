@@ -86,6 +86,20 @@ test('update preserves adopter Spec Kit extensions from a merged install', async
   } finally { await cleanup(); }
 });
 
+test('update preserves adopter gitattributes lines outside the Baton marker', async () => {
+  const { root, cleanup } = await installedRepo();
+  try {
+    const path = join(root, '.gitattributes');
+    await writeFile(path, '*.custom binary\n' + await readFile(path, 'utf8') + '*.local -text\n');
+    const result = await runCli(root, ['update', '--json']);
+    assert.equal(result.code, 0, result.stdout + result.stderr);
+    const attributes = await readFile(path, 'utf8');
+    assert.match(attributes, /^\*\.custom binary\n/);
+    assert.match(attributes, /\*\.local -text\n$/);
+    assert.equal((attributes.match(/# BATON:START/g) ?? []).length, 1);
+  } finally { await cleanup(); }
+});
+
 test('update preserves adopter Copilot hooks from a merged learning-pack install', async () => {
   const { root, cleanup } = await tempRepo('repos/empty');
   const path = '.github/hooks/copilot-hooks.json';

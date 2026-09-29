@@ -92,7 +92,8 @@ export async function validateHandoff(root, path, source) {
         errors.some((issue) => issue.code === 'E_ACTOR_FORMAT'))
     ))
     .map((entry) => ({ ...entry, file: path })));
-  const frontmatter = source ? source.slice(0, source.indexOf('\n---', 4)) : serializeFrontmatter(data, '');
+  const normalizedSource = source?.replace(/\r\n/g, '\n');
+  const frontmatter = normalizedSource ? normalizedSource.slice(0, normalizedSource.indexOf('\n---', 4)) : serializeFrontmatter(data, '');
   errors.push(...scanPersonalData(frontmatter, { frontmatter: true, terms }).map((entry) => ({ ...entry, file: path })));
   errors.push(...scanPersonalData(body, { terms }).map((entry) => ({ ...entry, file: path })));
 
@@ -100,7 +101,7 @@ export async function validateHandoff(root, path, source) {
   if (positions.some((index) => index < 0) || positions.some((index, position) => position && index <= positions[position - 1])) {
     errors.push({ code: 'E_BODY_SECTIONS', file: path, message: 'Body headings must appear in the required order' });
   }
-  if ((data.read_first?.length ?? 0) > phases.budgets.read_first_max || body.split('\n').length > phases.budgets.body_max_lines) {
+  if ((data.read_first?.length ?? 0) > phases.budgets.read_first_max || body.split(/\r?\n/).length > phases.budgets.body_max_lines) {
     errors.push({ code: 'E_BUDGET', file: path, message: 'Handoff exceeds the context budget' });
   }
   if (data.status === 'ready' && /** @type {Array<{blocking:boolean}>} */ (data.open_questions ?? []).some((question) => question.blocking)) {

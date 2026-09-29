@@ -2,7 +2,7 @@ import YAML from 'yaml';
 
 /** @param {string} source */
 export function parseFrontmatter(source) {
-  const match = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(source);
+  const match = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(source);
   if (!match) throw new Error('E_FRONTMATTER_MALFORMED: expected YAML delimiters at byte 0');
   let data;
   try {

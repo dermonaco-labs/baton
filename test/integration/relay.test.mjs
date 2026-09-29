@@ -298,6 +298,120 @@ test('stale artifact then refresh and checkbox-insensitive progress', async () =
   }
 });
 
+test('F86 CRLF checkout receives, writes, validates and refreshes with LF artifact hashes', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const featureBaton = join(root, handoff);
+    const paths = [featureBaton, ...['spec.md', 'plan.md', 'tasks.md', 'review.json']
+      .map((name) => join(root, 'specs', feature, name))];
+    for (const path of paths) {
+      await writeFile(path, (await readFile(path, 'utf8')).replace(/\r?\n/g, '\r\n'));
+    }
+    const received = await runCli(root, ['handoff', 'receive', '--phase', 'implement', '--feature', feature, '--json']);
+    assert.equal(received.code, 0, received.stdout || received.stderr);
+    assert.equal((await runCli(root, ['handoff', 'new', '--quick', 'crlf-fix', '--reason', 'Correct docs typo'])).code, 0);
+    const quick = join(root, '.baton/quick/crlf-fix.md');
+    await writeFile(quick, (await readFile(quick, 'utf8')).replace(/\n/g, '\r\n'));
+    assert.equal((await runCli(root, ['handoff', 'receive', '--phase', 'work', '--quick', 'crlf-fix'])).code, 0);
+    await writeInput(root, { summary: 'Corrected docs typo.' });
+    const written = await runCli(root, ['handoff', 'write', '--phase', 'work', '--quick', 'crlf-fix', '--from-json', 'handoff-input.json']);
+    assert.equal(written.code, 0, written.stdout || written.stderr);
+    const validated = await runCli(root, ['validate', '--path', handoff, '--json']);
+    assert.equal(validated.code, 0, validated.stdout || validated.stderr);
+    const refreshed = await runCli(root, ['handoff', 'refresh', '--feature', feature, '--reason', 'Confirm checkout normalization']);
+    assert.equal(refreshed.code, 0, refreshed.stdout || refreshed.stderr);
+    assert.equal((await runCli(root, ['validate', '--path', handoff])).code, 0);
+  } finally {
+    await cleanup();
+  }
+});
+
+test('F87 rotating checkout token cannot bypass the worktree self-review guard', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    assert.equal((await runCli(root, ['handoff', 'new', '--quick', 'token-rotation', '--reason', 'Correct docs typo'])).code, 0);
+    await writeInput(root, { summary: 'Corrected docs typo.' });
+    assert.equal((await runCli(root, ['handoff', 'write', '--phase', 'work', '--quick', 'token-rotation', '--from-json', 'handoff-input.json'])).code, 0);
+    const path = join(root, '.baton/.local/session.json');
+    await rm(path);
+    for (const phase of ['review']) {
+      const result = await runCli(root, ['handoff', 'receive', '--phase', phase, '--quick', 'token-rotation', '--json']);
+      assert.equal(result.code, 3, result.stdout || result.stderr);
+      assert.ok(JSON.parse(result.stdout).errors.some((issue) => issue.code === 'E_SELF_REVIEW'));
+    }
+    const denied = await runCli(root, ['handoff', 'write', '--phase', 'review', '--quick', 'token-rotation',
+      '--from-json', 'handoff-input.json', '--json']);
+    assert.equal(denied.code, 3, denied.stdout || denied.stderr);
+  } finally {
+    await cleanup();
+  }
+});
+
+test('F88 owner override expires after one work to review cycle', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const slug = 'single-cycle';
+    assert.equal((await runCli(root, ['handoff', 'new', '--quick', slug, '--reason', 'Correct docs typo'])).code, 0);
+    await writeInput(root, { summary: 'Corrected docs typo.' });
+    assert.equal((await runCli(root, ['handoff', 'write', '--phase', 'work', '--quick', slug, '--from-json', 'handoff-input.json'])).code, 0);
+    const question = await runCli(root, ['handoff', 'question', '--quick', slug, '--tag', 'self-review-override',
+      '--reason', 'Exercise one cycle', '--json']);
+    assert.equal(question.code, 0, question.stdout);
+    assert.equal((await runCli(root, ['handoff', 'answer', JSON.parse(question.stdout).data.question,
+      'Allow self-review', '--quick', slug, '--by', 'repository owner'])).code, 0);
+    assert.equal((await runCli(root, ['handoff', 'receive', '--phase', 'review', '--quick', slug])).code, 0);
+    const findings = JSON.parse(await readFile(join(root, 'specs', feature, 'review.json'), 'utf8'));
+    findings.source.run_artifact = `.baton/quick/${slug}.review.json`;
+    findings.findings = [{ id: 'F1', severity: 'P1', title: 'Open blocker', file: 'docs/label.md', line: 1,
+      persona: 'correctness-reviewer', confidence: 0.9, task: 'T001', disposition: 'open', reason: 'Pending' }];
+    await writeFile(join(root, `.baton/quick/${slug}.review.json`), JSON.stringify(findings));
+    const current = parseFrontmatter(await readFile(join(root, `.baton/quick/${slug}.md`), 'utf8')).data;
+    await writeInput(root, { summary: 'Blocking review finding.', review: {
+      findings_path: `.baton/quick/${slug}.review.json`, blocking_findings: 1 },
+    decisions: [...current.decisions, { id: 'D5', decision: 'Quick scope held',
+      rationale: 'No public contract change', tag: 'quick-scope-held', by: 'baton-review' }] });
+    const review = await runCli(root, ['handoff', 'write', '--phase', 'review', '--quick', slug, '--from-json', 'handoff-input.json']);
+    assert.equal(review.code, 0, review.stdout || review.stderr);
+    await writeInput(root, { summary: 'Addressed blocking finding.' });
+    const nextWork = await runCli(root, ['handoff', 'write', '--phase', 'work', '--quick', slug, '--from-json', 'handoff-input.json']);
+    assert.equal(nextWork.code, 0, nextWork.stdout || nextWork.stderr);
+    const denied = await runCli(root, ['handoff', 'receive', '--phase', 'review', '--quick', slug, '--json']);
+    assert.equal(denied.code, 3, denied.stdout || denied.stderr);
+    assert.ok(JSON.parse(denied.stdout).errors.some((issue) => issue.code === 'E_SELF_REVIEW'));
+  } finally {
+    await cleanup();
+  }
+});
+
+test('F89 initial quick metadata actions retain phase none until work write', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    assert.equal((await runCli(root, ['handoff', 'new', '--quick', 'fresh-quick', '--reason', 'Correct docs typo'])).code, 0);
+    assert.equal((await runCli(root, ['handoff', 'refresh', '--quick', 'fresh-quick', '--reason', 'Confirm hashes'])).code, 0);
+    assert.equal((await runCli(root, ['validate', '--path', '.baton/quick/fresh-quick.md'])).code, 0);
+    assert.equal((await runCli(root, ['handoff', 'receive', '--phase', 'work', '--quick', 'fresh-quick'])).code, 0);
+  } finally {
+    await cleanup();
+  }
+});
+
+test('F96 invalid writer token and missing quick baton return actionable errors', async () => {
+  const { root, cleanup } = await quickRepo();
+  try {
+    const missing = await runCli(root, ['handoff', 'receive', '--phase', 'work', '--quick', 'missing-baton', '--json']);
+    assert.equal(missing.code, 2, missing.stdout || missing.stderr);
+    assert.match(missing.stdout + missing.stderr, /E_USAGE/);
+    await mkdir(join(root, '.baton/.local'), { recursive: true });
+    await writeFile(join(root, '.baton/.local/session.json'), '{}');
+    const invalid = await runCli(root, ['handoff', 'next', '--quick', 'missing-baton', '--json']);
+    assert.equal(invalid.code, 2, invalid.stdout || invalid.stderr);
+    assert.match(invalid.stdout + invalid.stderr, /E_CHECKOUT_TOKEN/);
+    assert.match(invalid.stdout + invalid.stderr, /remove that file/);
+  } finally {
+    await cleanup();
+  }
+});
+
 test('missing preregistration and landing PR are explicit errors', async () => {
   const { root, cleanup } = await repo();
   try {

@@ -50,9 +50,11 @@ Markdown file = YAML frontmatter (the contract) + a short body (for humans and t
   recorded).
 - Staleness: for every `artifacts[*]` and `read_first[*]` entry that has a sha256, the current file hash MUST be equal,
   otherwise `E_STALE_ARTIFACT`.
-- Hashing: sha256 over the raw bytes, with one exception. For files named `tasks.md` the hash is computed after
-  normalizing task checkboxes (`^(\s*- )\[[xX]\]` → `$1[ ]`), so progress made during implement (including across
-  sessions) never makes the baton stale. Adding, removing or rewording tasks still does.
+- Hashing: SHA-256 over text bytes after normalizing CRLF to LF. Invalid UTF-8 and binary files retain raw-byte
+  hashes. For `tasks.md`, normalize task checkboxes (`^(\s*- )\[[xX]\]` → `$1[ ]`) after line endings, so
+  implementation progress does not make a baton stale. Existing LF hashes remain unchanged; previously recorded
+  CRLF hashes need one `baton handoff refresh --reason "Normalize artifact line endings"` (and renewed gate
+  approval if a source-of-truth artifact changed). Adding, removing or rewording tasks still makes the baton stale.
 - Branching: when a phase has several `next` values, `handoff write` uses the first one unless `--next <phase>` is
   given. `specify --next plan` (skipping clarify) is legal only when the spec has 0 `[NEEDS CLARIFICATION]`
   markers, and it sets `gate.required: true`.

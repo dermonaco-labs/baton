@@ -80,6 +80,11 @@ local-check commands. Any phase with `local-checks-pass` in its
 land does so by default. Review both files before running a handoff on an
 untrusted branch.
 
+**Self-review is a process guard, not a security boundary.** Baton compares the implement/work
+checkout token and hashed worktree path at review/land to catch accidental same-checkout review.
+An owner-answered override expires after one implement/work cycle. A local actor can edit the baton
+or claim a role; use an independent reviewer and checkout for meaningful separation.
+
 ## What you get
 
 - **The Spec Kit workflow** (v1.0.11, Copilot integration, skills mode): constitution, specify, clarify, plan, tasks,
