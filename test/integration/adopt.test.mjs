@@ -61,11 +61,15 @@ test('fixture setup removes its working directory when setup fails', async () =>
 test('adopt replaces the constitution, README and manifest without touching workflows', async () => {
   const { root, cleanup } = await derivedCopy();
   try {
+    await writeFile(join(root, '.gitattributes'), '*.custom binary\n');
     const workflows = join(root, '.github/workflows');
     const before = Object.fromEntries(await Promise.all((await readdir(workflows)).map(async (name) =>
       [name, await readFile(join(workflows, name), 'utf8')])));
     const result = await runSource(root, ['adopt', '--no-workflows'], { BATON_FORCE_CLEANUP: '1' });
     assert.equal(result.code, 0, result.stderr || result.stdout);
+    const attributes = await readFile(join(root, '.gitattributes'), 'utf8');
+    assert.match(attributes, /^\*\.custom binary\n/);
+    assert.match(attributes, /# BATON:START\n\.baton\/\*\* text eol=lf/);
     for (const name of ['src', 'test', 'packs', 'baton', 'package.json']) {
       await assert.rejects(stat(join(root, name)), { code: 'ENOENT' });
     }

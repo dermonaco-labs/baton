@@ -8,9 +8,11 @@ export function hashBytes(bytes) {
 
 /** @param {string} path @param {string | Buffer} bytes */
 export function hashArtifact(path, bytes) {
-  if (!/(?:^|[\\/])tasks\.md$/.test(path)) return hashBytes(bytes);
-  const text = Buffer.isBuffer(bytes) ? bytes.toString('utf8') : bytes;
-  return hashBytes(text.replace(/^(\s*- )\[[xX]\]/gm, '$1[ ]'));
+  const text = typeof bytes === 'string' ? bytes : Buffer.from(bytes).toString('utf8');
+  if (typeof bytes !== 'string' && (!Buffer.from(text).equals(Buffer.from(bytes)) || text.includes('\0'))) return hashBytes(bytes);
+  const normalized = text.replace(/\r\n/g, '\n');
+  return hashBytes(/(?:^|[\\/])tasks\.md$/.test(path)
+    ? normalized.replace(/^(\s*- )\[[xX]\]/gm, '$1[ ]') : normalized);
 }
 
 /** @param {string} path */

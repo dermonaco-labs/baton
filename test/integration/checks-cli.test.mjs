@@ -222,6 +222,7 @@ test('F33 a re-review after a fix pass without new code is rejected until code c
 
     const fixPass = await writeImplement(root, { summary: 'Fix pass recorded without code changes.' });
     assert.equal(fixPass.code, 0, fixPass.output);
+    await authorizeReview(root);
     const unchanged = await receiveReview(root);
     assert.equal(unchanged.code, 1, unchanged.output);
     assert.match(unchanged.output, /diff-nonempty unmet: 0 changed files/);

@@ -6,7 +6,7 @@
       "format": "esm"
     },
     "src/lib/hash.mjs": {
-      "bytes": 838,
+      "bytes": 1028,
       "imports": [
         {
           "path": "node:crypto",
@@ -3587,7 +3587,7 @@
       "format": "esm"
     },
     "src/lib/frontmatter.mjs": {
-      "bytes": 875,
+      "bytes": 884,
       "imports": [
         {
           "path": "node_modules/yaml/dist/index.js",
@@ -3666,7 +3666,7 @@
       "format": "esm"
     },
     "src/lib/handoff.mjs": {
-      "bytes": 12293,
+      "bytes": 12385,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3722,7 +3722,7 @@
       "format": "esm"
     },
     "src/lib/checks.mjs": {
-      "bytes": 20722,
+      "bytes": 20747,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3860,7 +3860,7 @@
       "format": "esm"
     },
     "src/lib/writer.mjs": {
-      "bytes": 938,
+      "bytes": 1248,
       "imports": [
         {
           "path": "node:crypto",
@@ -3886,12 +3886,17 @@
           "path": "src/lib/manifest.mjs",
           "kind": "import-statement",
           "original": "./manifest.mjs"
+        },
+        {
+          "path": "src/lib/report.mjs",
+          "kind": "import-statement",
+          "original": "./report.mjs"
         }
       ],
       "format": "esm"
     },
     "src/commands/handoff.mjs": {
-      "bytes": 51022,
+      "bytes": 52108,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3992,8 +3997,19 @@
       ],
       "format": "esm"
     },
+    "src/lib/attributes.mjs": {
+      "bytes": 939,
+      "imports": [
+        {
+          "path": "src/lib/report.mjs",
+          "kind": "import-statement",
+          "original": "./report.mjs"
+        }
+      ],
+      "format": "esm"
+    },
     "src/commands/adopt.mjs": {
-      "bytes": 13152,
+      "bytes": 13680,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4044,6 +4060,11 @@
           "path": "src/lib/maintainer-workflows.mjs",
           "kind": "import-statement",
           "original": "../lib/maintainer-workflows.mjs"
+        },
+        {
+          "path": "src/lib/attributes.mjs",
+          "kind": "import-statement",
+          "original": "../lib/attributes.mjs"
         }
       ],
       "format": "esm"
@@ -4182,7 +4203,7 @@
       "format": "esm"
     },
     "src/commands/init.mjs": {
-      "bytes": 19477,
+      "bytes": 20038,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4230,6 +4251,11 @@
           "original": "../lib/markers.mjs"
         },
         {
+          "path": "src/lib/attributes.mjs",
+          "kind": "import-statement",
+          "original": "../lib/attributes.mjs"
+        },
+        {
           "path": "src/lib/repairs.mjs",
           "kind": "import-statement",
           "original": "../lib/repairs.mjs"
@@ -4253,7 +4279,7 @@
       "format": "esm"
     },
     "src/commands/update.mjs": {
-      "bytes": 11343,
+      "bytes": 11897,
       "imports": [
         {
           "path": "node:fs",
@@ -4299,6 +4325,11 @@
           "path": "src/lib/markers.mjs",
           "kind": "import-statement",
           "original": "../lib/markers.mjs"
+        },
+        {
+          "path": "src/lib/attributes.mjs",
+          "kind": "import-statement",
+          "original": "../lib/attributes.mjs"
         },
         {
           "path": "src/lib/payload.mjs",
@@ -4861,7 +4892,7 @@
           "bytesInOutput": 1558
         },
         "src/lib/hash.mjs": {
-          "bytesInOutput": 383
+          "bytesInOutput": 505
         },
         "src/commands/build.mjs": {
           "bytesInOutput": 2855
@@ -5029,7 +5060,7 @@
           "bytesInOutput": 470
         },
         "node_modules/yaml/dist/compose/resolve-flow-collection.js": {
-          "bytesInOutput": 3485
+          "bytesInOutput": 3488
         },
         "node_modules/yaml/dist/compose/compose-collection.js": {
           "bytesInOutput": 1396
@@ -5101,7 +5132,7 @@
           "bytesInOutput": 1657
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 12048
+          "bytesInOutput": 12056
         },
         "node_modules/ajv/dist/compile/codegen/code.js": {
           "bytesInOutput": 2551
@@ -5182,7 +5213,7 @@
           "bytesInOutput": 155
         },
         "node_modules/ajv/dist/core.js": {
-          "bytesInOutput": 12276
+          "bytesInOutput": 12279
         },
         "node_modules/ajv/dist/vocabularies/core/id.js": {
           "bytesInOutput": 195
@@ -5389,7 +5420,7 @@
           "bytesInOutput": 980
         },
         "src/lib/frontmatter.mjs": {
-          "bytesInOutput": 589
+          "bytesInOutput": 598
         },
         "src/lib/phases.mjs": {
           "bytesInOutput": 7007
@@ -5401,10 +5432,10 @@
           "bytesInOutput": 949
         },
         "src/lib/handoff.mjs": {
-          "bytesInOutput": 6914
+          "bytesInOutput": 6944
         },
         "src/lib/checks.mjs": {
-          "bytesInOutput": 10996
+          "bytesInOutput": 11014
         },
         "src/lib/maintainer-workflows.mjs": {
           "bytesInOutput": 515
@@ -5413,16 +5444,19 @@
           "bytesInOutput": 7741
         },
         "src/lib/writer.mjs": {
-          "bytesInOutput": 606
+          "bytesInOutput": 818
         },
         "src/commands/handoff.mjs": {
-          "bytesInOutput": 30703
+          "bytesInOutput": 31239
         },
         "src/commands/status.mjs": {
           "bytesInOutput": 937
         },
+        "src/lib/attributes.mjs": {
+          "bytesInOutput": 541
+        },
         "src/commands/adopt.mjs": {
-          "bytesInOutput": 7315
+          "bytesInOutput": 7510
         },
         "src/commands/doctor.mjs": {
           "bytesInOutput": 3798
@@ -5437,10 +5471,10 @@
           "bytesInOutput": 740
         },
         "src/commands/init.mjs": {
-          "bytesInOutput": 10341
+          "bytesInOutput": 10579
         },
         "src/commands/update.mjs": {
-          "bytesInOutput": 5890
+          "bytesInOutput": 6047
         },
         "src/commands/models.mjs": {
           "bytesInOutput": 1977
@@ -5452,7 +5486,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 400586
+      "bytes": 402658
     }
   }
 }

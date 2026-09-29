@@ -24,6 +24,7 @@ jobs:
         run: |
           npm ci --registry=https://registry.npmjs.org/ --no-audit --no-fund
           npm run check
+          node --test --test-name-pattern=F86 test/integration/relay.test.mjs
       - name: Instantiate template
         shell: bash
         run: |

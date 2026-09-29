@@ -2086,7 +2086,7 @@
       }
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "x-rereview3": {
         "verdict": "new"
       },
@@ -2102,10 +2102,11 @@
       "x-pre-existing": true,
       "x-exposed-by": "F62",
       "x-evidence": "Scratch clone with core.autocrlf=true and .gitattributes removed (simulated overlay adopter): `handoff receive --phase land` exits 10 E_INTERNAL after E_FRONTMATTER_MALFORMED; `baton validate` fails. Template adopters inherit `* text=auto eol=lf` and are unaffected. `grep gitattributes|autocrlf` over src hits only src/lib/upstream.mjs:94; no docs mention it.",
-      "x-fix": "Normalize CRLF to LF in parseFrontmatter and before hashing Baton-managed text (artifacts, tasks.md, reviewed tree), and have init/adopt append `eol=lf` rules for Baton paths to .gitattributes; add a Windows relay regression with autocrlf=true."
+      "x-fix": "Normalize CRLF to LF in parseFrontmatter and before hashing Baton-managed text (artifacts, tasks.md, reviewed tree), and have init/adopt append `eol=lf` rules for Baton paths to .gitattributes; add a Windows relay regression with autocrlf=true.",
+      "x-fixpass4": "CLI scratch-repo F86 test passes receive, work write, validate and refresh on CRLF batons and artifacts; Windows MVP smoke runs the F86 selector. Overlay init/update/adopt preserve adopter gitattributes lines."
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "x-rereview3": {
         "verdict": "new"
       },
@@ -2119,10 +2120,11 @@
       "line": 12,
       "reason": "The writer identity is only a random token in .baton/.local/session.json that is silently regenerated when absent. Removing it (for example `git clean -xfd`, which agents run routinely) or rewriting it lets the implement checkout review and land its own work. The contracts state implement and review MUST have different writer hashes, with no mention that the guard is advisory.",
       "x-evidence": "Scratch clone: after implement, `Remove-Item .baton/.local` (or replacing the token) in the same checkout made `handoff receive --phase review` and the review write succeed without an override. The override answer is also self-grantable: the implementer can ask and answer the question with --by \"repository owner\" (honor-based like approve).",
-      "x-fix": "Bind the identity to the checkout as well (e.g. sha256 of token plus `git rev-parse --absolute-git-dir`/worktree path) so regeneration in the same checkout still matches, and document in handoff-contract.md and SECURITY.md that the guard prevents accidental self-review, not a determined local actor."
+      "x-fix": "Bind the identity to the checkout as well (e.g. sha256 of token plus `git rev-parse --absolute-git-dir`/worktree path) so regeneration in the same checkout still matches, and document in handoff-contract.md and SECURITY.md that the guard prevents accidental self-review, not a determined local actor.",
+      "x-fixpass4": "Scratch CLI test removes the checkout token after work and verifies review receive and write both exit 3; contract, CLI, SECURITY and README disclose the process-guard limit."
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "x-rereview3": {
         "verdict": "new"
       },
@@ -2136,10 +2138,11 @@
       "line": 212,
       "reason": "selfReview() returns false if any decision anywhere in the baton carries tag self-review-override by human:*. The override is not bound to the implement write it answered and never expires.",
       "x-evidence": "Scratch quick baton: override answered -> review routed back to work (blocking finding) -> new work write in the same checkout -> `handoff write --phase review` in that same checkout succeeded without a new question.",
-      "x-fix": "Record the implementation writer hash (or history index) on the override decision and honor it only while x-implementation-writer is unchanged; clear or ignore it after the next implement/work write. Add a regression for override then second cycle."
+      "x-fix": "Record the implementation writer hash (or history index) on the override decision and honor it only while x-implementation-writer is unchanged; clear or ignore it after the next implement/work write. Add a regression for override then second cycle.",
+      "x-fixpass4": "Override decision records x-implementation-cycle; real CLI regression confirms first review allowed, blocker routes back to work, and second review receives E_SELF_REVIEW."
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "x-rereview3": {
         "verdict": "new"
       },
@@ -2153,10 +2156,11 @@
       "line": 253,
       "reason": "record(..., phase_completed === \"none\" ? \"work\" : ...) makes the latest history phase \"work\" while phase_completed is still none; src/lib/handoff.mjs:113 then reports E_TRANSITION \"Latest history phase does not match\" and `receive --phase work` fails until a work write.",
       "x-evidence": "Scratch clone at 1eb09bc: `handoff new --quick qq`, then `handoff refresh --quick qq --reason x`; `baton validate` and `handoff receive --phase work --quick qq` both exit 1 with E_TRANSITION. `handoff write --phase work` still recovers.",
-      "x-fix": "Record phase \"none\" (or skip the history-phase comparison for non-write x-actions) and add a quick-lane regression."
+      "x-fix": "Record phase \"none\" (or skip the history-phase comparison for non-write x-actions) and add a quick-lane regression.",
+      "x-fixpass4": "Metadata actions on a fresh quick baton do not invent a completed work phase; CLI refresh, validate and receive regression passes."
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "x-rereview3": {
         "verdict": "new"
       },
@@ -2170,10 +2174,11 @@
       "line": 1010,
       "reason": "\"What changed\" still says F62 is an open P1 and \"Next steps\" cites base d61a7237; `pr` points to #24 and review.blocking_findings was 3 at receive; R-WAIVERS and R-UPSTREAM-WATCH predate D107-D123 and the pinned lychee. The CLI has no body update path for review, so the next implement write must refresh them.",
       "x-evidence": "handoff.md at 1eb09bc lines ~1000-1067 and frontmatter review/pr blocks.",
-      "x-fix": "Refresh the body and risks in the next implement write and set pr to the current PR."
+      "x-fix": "Refresh the body and risks in the next implement write and set pr to the current PR.",
+      "x-fixpass4": "Baton body refreshed through handoff redact, current PR 28 recorded by converge implement write, and append-only R-FIXPASS4-PR supersedes outdated historical risks without erasing audit entries."
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "x-rereview3": {
         "verdict": "new"
       },
@@ -2187,7 +2192,8 @@
       "line": 1047,
       "reason": "Line 381 of relay.test.mjs at 1eb09bc is inside the F62 self-review test; the authored-solution compound test moved to line 679 when fix pass 3 inserted tests above it.",
       "x-evidence": "git show f043f1e:test/integration/relay.test.mjs line 381 is the authored-solution test; at 1eb09bc it is line 679.",
-      "x-fix": "Cite the test by name (as other rows do) rather than line number."
+      "x-fix": "Cite the test by name (as other rows do) rather than line number.",
+      "x-fixpass4": "Used handoff redact CLI to cite the exact stable test name."
     },
     {
       "disposition": "open",
@@ -2204,7 +2210,8 @@
       "line": 57,
       "reason": "Three of six mutants (D76, D80, D80-actor) \"fail\" only on `bundle mutant anchor changed` because the rebuild renamed xu->Lu, Bn->Kn and h->p. The strengthened tests are sound (they kill all mutants once anchors are refreshed), but the harness no longer demonstrates it and will keep drifting on every rebuild.",
       "x-evidence": "BATON_AUDIT_MUTANT=D76|D80|D80-actor at 1eb09bc: AssertionError \"bundle mutant ... anchor changed\". With anchors refreshed locally (not committed) each test failed on behavior; unmutated run: 4 pass.",
-      "x-fix": "Mutate src/ and rebuild in a temp dir, or anchor on stable strings (error codes, messages) instead of minified names; run the mutants in CI."
+      "x-fix": "Mutate src/ and rebuild in a temp dir, or anchor on stable strings (error codes, messages) instead of minified names; run the mutants in CI.",
+      "x-fixpass4": "Deferred: rebuilding source mutants in CI requires a nontrivial harness redesign; brittle minified anchors cannot be safely refreshed in a narrow pass."
     },
     {
       "disposition": "open",
@@ -2221,7 +2228,8 @@
       "line": 286,
       "reason": "nextId() only scans open_questions, so after Q1 is answered the next question is Q1 again; decisions and history cannot be correlated to a unique question ID.",
       "x-evidence": "Scratch quick baton at 1eb09bc: `question --tag self-review-override` -> Q1; `answer Q1 \"Allow self-review\"`; the next question is again Q1.",
-      "x-fix": "Derive the next ID from open questions plus answered-question decisions (store x-question on the decision)."
+      "x-fix": "Derive the next ID from open questions plus answered-question decisions (store x-question on the decision).",
+      "x-fixpass4": "Deferred: historical question identity migration and duplicate-ID reconciliation exceed the narrow pass."
     },
     {
       "disposition": "open",
@@ -2238,7 +2246,8 @@
       "line": 456,
       "reason": "approve validates the channel and records \"<role> via <channel>\"; answer ignores options.via, so waiver and override answers lose the channel the constitution asks approvals to record.",
       "x-evidence": "Scratch quick baton at 1eb09bc: `answer Q1 \"Allow self-review\" --by \"repository owner\" --via nonsense` exits 0 and the recorded decision has no channel.",
-      "x-fix": "Validate --via against gates.approval_channels and record it on the decision, matching approve."
+      "x-fix": "Validate --via against gates.approval_channels and record it on the decision, matching approve.",
+      "x-fixpass4": "Deferred: channel/audit contract change was not necessary for CRLF or self-review cycle fixes."
     },
     {
       "disposition": "open",
@@ -2255,10 +2264,11 @@
       "line": 265,
       "reason": "Decisions are otherwise append-only (F11), but revoke-waivers, which any agent can run, removes the human-authored records and keeps only their IDs in x-revoked, losing who waived what and why.",
       "x-evidence": "D105 lists D70-D86 as revoked; their rationales and by fields are gone from the baton.",
-      "x-fix": "Mark revoked waivers (x-revoked-by: Dnnn) and ignore them in evaluation instead of deleting them."
+      "x-fix": "Mark revoked waivers (x-revoked-by: Dnnn) and ignore them in evaluation instead of deleting them.",
+      "x-fixpass4": "Deferred: preserving historical waiver records changes waiver evaluation and requires a separate audit/migration."
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "x-rereview3": {
         "verdict": "new"
       },
@@ -2272,7 +2282,8 @@
       "line": 18,
       "reason": "writerHash throws a plain Error and JSON.parse errors are not wrapped, so every handoff command fails with E_INTERNAL instead of a stable, actionable code; a missing .baton/quick/<slug>.md also ends in E_INTERNAL.",
       "x-evidence": "Scratch clone at 1eb09bc: with .baton/.local/session.json set to {} `handoff status --quick qq` exits 10 E_INTERNAL \"Invalid checkout writer token\"; `handoff receive --phase work --quick missing` exits 10 E_INTERNAL ENOENT.",
-      "x-fix": "Throw BatonError with a documented code and remediation (delete the token file to regenerate; missing baton -> E_USAGE)."
+      "x-fix": "Throw BatonError with a documented code and remediation (delete the token file to regenerate; missing baton -> E_USAGE).",
+      "x-fixpass4": "Scratch CLI regressions assert exit 2 with E_CHECKOUT_TOKEN and E_USAGE remediation rather than E_INTERNAL."
     },
     {
       "disposition": "open",

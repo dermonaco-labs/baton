@@ -1,0 +1,9 @@
+# BATON:START
+.baton/** text eol=lf
+specs/**/handoff.md text eol=lf
+specs/**/review.json text eol=lf
+specs/**/tasks.md text eol=lf
+.github/skills/** text eol=lf
+.agents/skills/** text eol=lf
+baton/skills/** text eol=lf
+# BATON:END

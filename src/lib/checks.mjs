@@ -14,7 +14,7 @@ const execFileAsync = promisify(execFile);
 /** @param {string} root @param {string} path */
 async function optionalText(root, path) {
   try {
-    return await readFile(withinRoot(root, path), 'utf8');
+    return (await readFile(withinRoot(root, path), 'utf8')).replace(/\r\n/g, '\n');
   } catch (error) {
     if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return null;
     throw error;
