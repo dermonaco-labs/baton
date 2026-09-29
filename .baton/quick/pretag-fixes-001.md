@@ -146,8 +146,8 @@ decisions:
     by: baton
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via direct approval
+  approved_at: 2026-09-29
 history:
   - phase: work
     at: 2026-09-29T03:08:01.903Z
@@ -261,8 +261,15 @@ history:
     x-worktree: c8d17e13e9ae0f664b030f7e432f71e7206fec9852219e5af8b9b9f9a0332b48
     commit: 7eab438
     x-action: redact
-updated_at: 2026-09-29T05:08:29.466Z
-updated_by: baton
+  - phase: land
+    at: 2026-09-29T09:22:10.668Z
+    by: human:repository-owner
+    writer: b50e1ce947eab4760f8d54acf9c5a9e44ece4cd7e547eaff4ed251d0d9d892d1
+    x-worktree: c8d17e13e9ae0f664b030f7e432f71e7206fec9852219e5af8b9b9f9a0332b48
+    commit: 8a748bd
+    x-action: approve
+updated_at: 2026-09-29T09:22:10.668Z
+updated_by: human:repository-owner
 x-implementation-writer: 8a44b7aec2b3281d1dce7877b097b21442fccfae8def9cf5a0c742317096e70f
 x-implementation-worktree: 460f84d3c666afcfb0299243e8426c4b553802b48ca5b0172feede66b32bda0d
 x-implementation-cycle: 58927275a1788d7283c5d6f91e1eb9d5e182db0f7d4bc471aea844aba71b2532
