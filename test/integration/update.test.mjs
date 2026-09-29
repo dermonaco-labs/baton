@@ -113,6 +113,27 @@ test('F101 update merges missing attributes once, including dry-run', async () =
   } finally { await cleanup(); }
 });
 
+test('F114 update preflights conflicting attributes before writing owned files', async () => {
+  const { root, cleanup } = await installedRepo();
+  try {
+    const path = '.github/agents/correctness-reviewer.agent.md';
+    const managed = join(root, path);
+    const manifestPath = join(root, '.baton/manifest.json');
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    const old = 'previous owned content\n';
+    await writeFile(managed, old);
+    manifest.files.find(entry => entry.path === path).sha256 = digest(old);
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+    await writeFile(join(root, '.gitattributes'), '# BATON:START\n');
+    const before = await readFile(manifestPath);
+    const result = await runCli(root, ['update', '--json']);
+    assert.equal(result.code, 4, result.stdout || result.stderr);
+    assert.match(result.stdout + result.stderr, /E_CONFLICT.*gitattributes|Unbalanced BATON marker/);
+    assert.equal(await readFile(managed, 'utf8'), old);
+    assert.deepEqual(await readFile(manifestPath), before);
+  } finally { await cleanup(); }
+});
+
 test('F99 core.autocrlf checkout keeps CRLF managed files owned through doctor, update and uninstall', async () => {
   const installed = await installedRepo();
   const clone = await tempRepo();

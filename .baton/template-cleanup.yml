@@ -19,7 +19,8 @@ remove:
   - CODE_OF_CONDUCT.md
   - .github/CODEOWNERS
   - .github/ISSUE_TEMPLATE/
-  - .baton/quick/
+  - .baton/quick/pretag-fixes-001.md
+  - .baton/quick/pretag-fixes-001.review.json
   - .baton/template-cleanup-pending
 replace:
   README.md: baton/templates/README.adopter.md

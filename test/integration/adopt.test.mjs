@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, cp, readFile, readdir, stat, rm, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
-import { sourceRoot } from '../helpers/index.mjs';
+import { sourceRoot, runCli } from '../helpers/index.mjs';
 
 async function runSource(root, args, environment = {}) {
   return await new Promise((resolve, reject) => {
@@ -73,7 +73,8 @@ test('adopt replaces the constitution, README and manifest without touching work
     for (const name of ['src', 'test', 'packs', 'baton', 'package.json']) {
       await assert.rejects(stat(join(root, name)), { code: 'ENOENT' });
     }
-    await assert.rejects(stat(join(root, '.baton/quick')), { code: 'ENOENT' });
+    await assert.rejects(stat(join(root, '.baton/quick/pretag-fixes-001.md')), { code: 'ENOENT' });
+    await assert.rejects(stat(join(root, '.baton/quick/pretag-fixes-001.review.json')), { code: 'ENOENT' });
     assert.equal((await readFile(join(root, '.baton/manifest.json'), 'utf8')).includes('"source": "template"'), true);
     const config = await readFile(join(root, '.baton/config.yml'), 'utf8');
     assert.match(config, /run: node \.baton\/bin\/baton\.mjs validate/);
@@ -93,6 +94,29 @@ test('adopt replaces the constitution, README and manifest without touching work
     await cleanup();
   }
 });
+
+for (const args of [[], ['--no-workflows']]) {
+  test(`F110 adopter quick baton survives adopt ${args.join(' ') || 'locally'}`, async () => {
+    const { root, cleanup } = await derivedCopy();
+    const own = '.baton/quick/sample-fix.md';
+    try {
+      const content = await readFile(join(sourceRoot, 'test/fixtures/handoffs/valid/quick/none.md'), 'utf8');
+      await writeFile(join(root, own), content);
+      const preview = await runCli(root, ['adopt', '--dry-run', ...args, '--json'], { BATON_FORCE_CLEANUP: '1' });
+      assert.equal(preview.code, 0, preview.stdout || preview.stderr);
+      assert.ok(!JSON.parse(preview.stdout).data.actions.includes('remove .baton/quick/'));
+      assert.equal(await readFile(join(root, own), 'utf8'), content);
+      const applied = await runCli(root, ['adopt', ...args, '--json'], { BATON_FORCE_CLEANUP: '1' });
+      assert.equal(applied.code, 0, applied.stdout || applied.stderr);
+      assert.equal(await readFile(join(root, own), 'utf8'), content);
+      for (const source of ['pretag-fixes-001.md', 'pretag-fixes-001.review.json']) {
+        await assert.rejects(stat(join(root, '.baton/quick', source)), { code: 'ENOENT' });
+      }
+      const validated = await runCli(root, ['validate', '--json']);
+      assert.equal(validated.code, 0, validated.stdout || validated.stderr);
+    } finally { await cleanup(); }
+  });
+}
 
 test('adopt refuses to clean the source repository', async () => {
   const { root, cleanup } = await derivedCopy();

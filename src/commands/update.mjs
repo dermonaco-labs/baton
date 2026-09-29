@@ -97,6 +97,10 @@ export async function run(root, args) {
       throw new BatonError('E_PREREQUISITE', `Cannot stage the new Baton payload: ${JSON.stringify(installed.errors)}`, 5);
     }
     const next = /** @type {Manifest} */ (await readManifest(stage));
+    const attributePath = '.gitattributes';
+    const currentAttributes = (await optionalBytes(root, attributePath))?.toString() ?? '';
+    const stagedAttributes = await readFile(join(stage, attributePath), 'utf8');
+    const mergedAttributes = mergeAttributes(currentAttributes, stagedAttributes);
     const files = previous.files.map(file => ({ ...file }));
     const sections = previous.marker_sections.map(section => ({ ...section }));
     /** @type {string[]} */
@@ -162,10 +166,6 @@ export async function run(root, args) {
       else files.push(mergedEntry);
       await clearConflict(entry.path);
     }
-    const attributePath = '.gitattributes';
-    const currentAttributes = (await optionalBytes(root, attributePath))?.toString() ?? '';
-    const stagedAttributes = await readFile(join(stage, attributePath), 'utf8');
-    const mergedAttributes = mergeAttributes(currentAttributes, stagedAttributes);
     if (mergedAttributes !== currentAttributes) {
       actions.push(`merge ${attributePath}`);
       if (!opts.dryRun) await putBytes(root, attributePath, mergedAttributes);

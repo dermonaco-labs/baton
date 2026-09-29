@@ -337,6 +337,7 @@ test('F87 rotating checkout token cannot bypass the worktree self-review guard',
     await git('git', ['add', '-A'], { cwd: root });
     await git('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
       'commit', '-qm', 'work result'], { cwd: root });
+    await rm(path);
     const aliasRoot = await mkdtemp(join(tmpdir(), 'baton-alias-'));
     const alias = join(aliasRoot, 'link');
     await symlink(root, alias, process.platform === 'win32' ? 'junction' : 'dir');
@@ -348,7 +349,6 @@ test('F87 rotating checkout token cannot bypass the worktree self-review guard',
       await rm(alias);
       await rm(aliasRoot, { recursive: true, force: true });
     }
-    await rm(path);
     await git('git', ['clean', '-xfd'], { cwd: root });
     for (const phase of ['review']) {
       const result = await runCli(root, ['handoff', 'receive', '--phase', phase, '--quick', 'token-rotation', '--json']);
