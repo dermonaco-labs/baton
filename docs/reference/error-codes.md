@@ -19,8 +19,8 @@ warnings are informational unless a command explicitly documents otherwise.
 | `E_EXIT_UNMET` | Meet the phase exit criteria before declaring ready. |
 | `E_CHECK_FAILED` | A configured local check failed; inspect the reported command and exit status (exit 1). |
 | `E_GATE_PENDING` | Obtain human role approval before receiving the next phase (exit 3). |
-| `E_SELF_REVIEW` | Review or land must use a different checkout from implement/work (exit 3); only an answered owner question tagged `self-review-override` permits an exception. |
-| `E_CHECKOUT_TOKEN` | The gitignored checkout token file is invalid (exit 2); remove `.baton/.local/session.json` to regenerate it. |
+| `E_SELF_REVIEW` | Review or land must use a different checkout from implement/work (exit 3). A fresh clone at the same filesystem path is independent; the same worktree remains identified after its local token is deleted. Only an answered owner question tagged `self-review-override` permits an exception. |
+| `E_CHECKOUT_TOKEN` | The gitignored checkout token is invalid (exit 2); remove `.baton/.local/session.json` to regenerate it. If the per-worktree git identity is invalid, remove the file returned by `git rev-parse --git-path baton/checkout-id`. |
 | `E_STALE_REVIEW` | Code changed after review; receive/write land stops until the changed tree is reviewed again. |
 | `E_APPROVER_FORMAT` | Use a configured role and channel, not a personal name/handle. |
 | `E_ACTOR_FORMAT` | Use an agent id or a configured `human:<role-slug>`. |

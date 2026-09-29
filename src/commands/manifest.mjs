@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import YAML from 'yaml';
 import { BatonError } from '../lib/report.mjs';
 import { withinRoot, writeManifest } from '../lib/manifest.mjs';
-import { hashBytes, hashFile } from '../lib/hash.mjs';
+import { hashManaged } from '../lib/hash.mjs';
 import { loadPacks, recommendedPacks } from '../lib/packs.mjs';
 
 /** @param {string} root @param {string[]} args */
@@ -17,7 +17,7 @@ export async function run(root, args) {
     const path = entry.stored_at;
     if (path !== entry.path) throw new BatonError('E_LOCK_MISMATCH', `Core file is not installed at ${entry.path}`);
     files.push({
-      path, sha256: await hashFile(withinRoot(root, path)),
+      path, sha256: hashManaged(await readFile(withinRoot(root, path))),
       pack: 'core', owner: entry.upstream === 'atv' ? 'atv' : entry.upstream === 'speckit' ? 'speckit' : 'baton',
       managed: true,
     });
@@ -48,7 +48,7 @@ export async function run(root, args) {
       atv: `${lock.upstreams.atv.ref}@${lock.upstreams.atv.commit.slice(0, 7)}` },
     packs: ['core'], recommended_packs: recommendedPacks(await loadPacks(root), ['core']),
     files, marker_sections: [{
-      path: '.github/copilot-instructions.md', marker: 'BATON', sha256: hashBytes(Buffer.from(marker[1])),
+      path: '.github/copilot-instructions.md', marker: 'BATON', sha256: hashManaged(marker[1]),
     }],
   };
   await writeManifest(root, manifest);

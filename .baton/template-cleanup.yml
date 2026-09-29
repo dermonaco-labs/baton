@@ -19,6 +19,7 @@ remove:
   - CODE_OF_CONDUCT.md
   - .github/CODEOWNERS
   - .github/ISSUE_TEMPLATE/
+  - .baton/quick/
   - .baton/template-cleanup-pending
 replace:
   README.md: baton/templates/README.adopter.md

@@ -37,6 +37,10 @@ report; `--from-brainstorm <path>` and `--from-quick <path>` apply when
 writing a specification handoff. `--from-json <file>` supplies phase evidence.
 Receive uses `--mode converge` for a converge re-entry. Use the documented
 role vocabulary in `.baton/config.yml` for approval and answers.
+Review uses a random identity in each worktree's git directory, not the
+checkout's absolute path: a fresh clone at the same path can review, while
+deleting `.baton/.local/session.json` or running `git clean -xfd` in the
+implementing worktree cannot bypass the guard.
 
 ## Other commands
 

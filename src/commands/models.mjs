@@ -2,7 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import YAML from 'yaml';
 import { BatonError } from '../lib/report.mjs';
 import { readManifest, writeManifest, withinRoot, isUserModified } from '../lib/manifest.mjs';
-import { hashFile } from '../lib/hash.mjs';
+import { hashManaged } from '../lib/hash.mjs';
 import { parseFrontmatter } from '../lib/frontmatter.mjs';
 import { agentModelRole, loadModelSettings, modelPolicyIssue } from '../lib/models.mjs';
 
@@ -51,19 +51,19 @@ export async function run(root, args) {
     const current = await readFile(withinRoot(root, path), 'utf8');
     const { data } = parseFrontmatter(current);
     if (data.model === model) continue;
-    const header = /^---\n([\s\S]*?\n)---(\r?\n|$)/.exec(current);
+    const header = /^---(\r?\n)([\s\S]*?\r?\n)---(\r?\n|$)/.exec(current);
     if (!header) throw new BatonError('E_FRONTMATTER_MALFORMED', `${path} has no valid frontmatter`, 1);
-    const document = YAML.parseDocument(header[1], { uniqueKeys: true });
+    const document = YAML.parseDocument(header[2], { uniqueKeys: true });
     if (document.errors.length) throw new BatonError('E_FRONTMATTER_MALFORMED', `${path}: ${document.errors[0].message}`, 1);
     document.set('model', model);
-    const content = `---\n${document.toString({ lineWidth: 0 })}---${header[2]}${current.slice(header[0].length)}`;
+    const content = `---${header[1]}${document.toString({ lineWidth: 0 }).replace(/\r?\n/g, header[1])}---${header[3]}${current.slice(header[0].length)}`;
     changes.push({ path, content, entry });
   }
   if (errors.length) return { errors, warnings, data: { changed: [] } };
   if (!dryRun) {
     for (const { path, content, entry } of changes) {
       await writeFile(withinRoot(root, path), content);
-      entry.sha256 = await hashFile(withinRoot(root, path));
+      entry.sha256 = hashManaged(content);
     }
     if (changes.length) await writeManifest(root, manifest);
   }

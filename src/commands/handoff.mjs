@@ -1,10 +1,10 @@
 import { readFile, readdir, writeFile, mkdir, copyFile } from 'node:fs/promises';
-import { basename, dirname, resolve } from 'node:path';
+import { basename, dirname } from 'node:path';
 import { execFile } from 'node:child_process';
 import { isDeepStrictEqual, promisify } from 'node:util';
 import { BatonError } from '../lib/report.mjs';
 import { readHandoff, writeHandoff, validateHandoff, gateVocabulary, approvedRole, actorRole } from '../lib/handoff.mjs';
-import { writerHash } from '../lib/writer.mjs';
+import { writerHash, checkoutHash } from '../lib/writer.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
 import { hashFile } from '../lib/hash.mjs';
 import { hashBytes } from '../lib/hash.mjs';
@@ -197,12 +197,12 @@ export async function run(root, args) {
   const options = parseOptions(rest);
   if (options['dry-run'] && action !== 'migrate') throw new BatonError('E_USAGE', 'handoff --dry-run is not supported for this action', 2);
   const writer = await writerHash(root);
-  const worktree = hashBytes(process.platform === 'win32' ? resolve(root).toLowerCase() : resolve(root));
+  const worktree = await checkoutHash(root);
   /** @param {Record<string,any>} data @param {string} by @param {string} phase @param {string} [actionName] */
   const record = async (data, by, phase, actionName = 'write') => {
     if (phase === 'none') return;
     data.history = [...(data.history ?? []), {
-      phase, at: new Date().toISOString(), by, writer, 'x-worktree': worktree,
+      phase, at: new Date().toISOString(), by, writer, ...(worktree ? { 'x-worktree': worktree } : {}),
       commit: await commitId(root), 'x-action': actionName,
     }].slice(-20);
   };
@@ -213,7 +213,7 @@ export async function run(root, args) {
       .filter((item) => item.phase === (data.lane === 'quick' ? 'work' : 'implement') &&
         (!item['x-action'] || item['x-action'] === 'write')).at(-1);
     const sameCheckout = (data['x-implementation-writer'] ?? implement?.writer) === writer ||
-      (data['x-implementation-worktree'] ?? implement?.['x-worktree']) === worktree;
+      (worktree !== null && (data['x-implementation-worktree'] ?? implement?.['x-worktree']) === worktree);
     const cycle = data['x-implementation-cycle'] ?? implement?.at;
     return Boolean(sameCheckout &&
       !/** @type {Array<{tag?:string,by?:string,'x-implementation-cycle'?:string}>} */ (data.decisions ?? [])
@@ -717,7 +717,7 @@ export async function run(root, args) {
     }
     if (['implement', 'work'].includes(options.phase)) {
       data['x-implementation-writer'] = writer;
-      data['x-implementation-worktree'] = worktree;
+      if (worktree) data['x-implementation-worktree'] = worktree;
       data['x-implementation-cycle'] = hashBytes(`${writer}:${worktree}:${new Date().toISOString()}:${data.history?.length ?? 0}`);
     }
     await record(data, actor, options.phase);

@@ -7,7 +7,7 @@ import YAML from 'yaml';
 export function assertFrontmatter(bytes, path) {
   const text = bytes.toString('utf8');
   const strict = path.endsWith('.agent.md');
-  if (!(strict ? text.startsWith('---\n') && text.includes('\n---\n') :
+  if (!(strict ? /^---\r?\n/.test(text) && /\r?\n---\r?\n/.test(text) :
     /^---\r?\n/.test(text) && /\r?\n---\r?\n/.test(text))) {
     throw new UpstreamError('E_FRONTMATTER_MALFORMED', `${path} lacks complete YAML frontmatter`);
   }
