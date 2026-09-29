@@ -2,43 +2,40 @@
 baton: 1
 lane: quick
 feature: pretag-fixes-001
-phase_completed: work
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: land
+next_owner: baton-land
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: F110 preserves adopter quick batons during local and workflow-path adopt; F114 preflights .gitattributes marker conflicts before managed writes; F118 tests alias rejection after token removal. The real bundled CLI regressions and 303 tests pass.
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Review 2 of the pretag-fixes-001 work cycle (a755ff8..c142fb7, PR 33): F110 and F114 fixed and verified with the real CLI and by mutation; the F118 alias test now fails without alias detection. F111 resolved by owner route (a) via PR #32. No open findings: route to land."
 read_first:
   - path: .baton/quick/pretag-fixes-001.md
-    why: Scope, deferred P3 decisions and diff base
-  - path: specs/001-baton-template/review.json
-    why: Original F98-F105 findings and evidence
-  - path: src/lib/writer.mjs
-    why: Per-worktree checkout identity
-  - path: src/commands/handoff.mjs
-    why: Self-review comparison
-  - path: src/lib/hash.mjs
-    why: Managed-file ownership hash
+    why: Quick scope, decisions D14-D15, land route and tag precondition
+  - path: .baton/quick/pretag-fixes-001.review.json
+    why: All findings fixed or dismissed with reasons; x-review2-summary
+  - path: .baton/template-cleanup.yml
+    why: "F110 fix and F122 tag precondition: source quick files must be listed in remove"
   - path: src/commands/update.mjs
-    why: CRLF update and one-time attributes merge
-  - path: src/commands/models.mjs
-    why: CRLF-preserving agent model rewrite
-  - path: test/integration/relay.test.mjs
-    why: Same-path clone, alias, clean and override regressions
+    why: F114 attributes preflight before managed writes
+  - path: test/integration/adopt.test.mjs
+    why: F110 adopter quick-baton survival tests
   - path: test/integration/update.test.mjs
-    why: Actual autocrlf clone and lifecycle regressions
-  - path: test/unit/models.test.mjs
-    why: CRLF agent rewrite regression
+    why: F114 no-partial-write regression
+  - path: test/integration/relay.test.mjs
+    why: F118 alias test after token removal
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: diff-nonempty
+  - id: findings-json-valid
     met: true
-    evidence: 4 changed files
-  - id: local-checks-pass
+    evidence: .baton/quick/pretag-fixes-001.review.json
+  - id: findings-fixed-or-dismissed
     met: true
-    evidence: "baton: 0"
+    evidence: 0 findings unresolved
+  - id: quick-scope-held
+    met: true
+    evidence: "The diff restores intended behavior without new commands, flags, error codes or handoff fields: the self-review guard still means 'same checkout', ownership hashes still mean 'user-unmodified', and E_CHECKOUT_TOKEN only gains a documented trigger. The stale absolute-path wording in specs/ contracts (F113) is documentation drift for a feature-lane amendment, not a contract change. The remaining quick-lane fixes (F110 cleanup list, F114 merge ordering) are small and stay in scope. F111 is an owner decision about feature 001, not quick-lane work."
 open_questions: []
 decisions:
   - id: D1
@@ -103,6 +100,48 @@ decisions:
     decision: Handoff body redacted
     rationale: Route completed work to independent review
     by: baton
+  - id: D14
+    decision: Quick scope held for the review 2 work cycle
+    rationale: "Independently re-checked a755ff8..c142fb7: F110 narrows the template-cleanup remove list, F114 reorders an existing merge before writes, and F118 changes only a test. No new command, flag, error code, handoff field or public contract; behavior moves back to what the contract already promised (adopt removes only template-owned files; a failed update writes nothing)."
+    tag: quick-scope-held
+    by: baton-review
+  - id: D15
+    decision: "F111 resolved by owner route (a): feature 001 lands at its reviewed tree c85bf3f via PR #32, and this quick lane covers c85bf3f..main"
+    rationale: "Owner decision received through Copilot and recorded in the feature 001 land handoff (PR #32, specs/001-baton-template/handoff.md). Option (b), a CLI route from a stale land back to review, is backlogged for v0.2 there. No specs/ edit in this lane."
+    by: baton-review
+  - id: D16
+    decision: Route review to land
+    rationale: No P0/P1 and no open findings. F122 (P2, hand-kept template quick list) is dismissed for v0.1 with a tag precondition; F124, F126 and F127 are dismissed with v0.2 follow-ups; F123 and F125 are fixed by this handoff.
+    by: baton-review
+  - id: D17
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 1d6890ec857b9419b65c693e4746e3688acecd6326fa19209c2ec7cdf89b0cbe
+    x-base-commit: a755ff838970f22707d32208ff88130e45d6dc8f
+    by: baton
+  - id: D18
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: c142fb7c2665b14addef7525b9d8804caee884a6
+    by: baton
+  - id: D19
+    decision: Handoff body redacted
+    rationale: Refresh next steps after review 2
+    by: baton
+  - id: D20
+    decision: Handoff body redacted
+    rationale: Refresh next steps after review 2
+    by: baton
+  - id: D21
+    decision: Handoff body redacted
+    rationale: Refresh next steps after review 2
+    by: baton
+  - id: D22
+    decision: Handoff body redacted
+    rationale: Mark review 2 outcome
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -164,7 +203,42 @@ history:
     x-worktree: 460f84d3c666afcfb0299243e8426c4b553802b48ca5b0172feede66b32bda0d
     commit: bb19665
     x-action: redact
-updated_at: 2026-09-29T04:19:53.957Z
+  - phase: review
+    at: 2026-09-29T04:39:47.713Z
+    by: baton-review
+    writer: ecb01d3baef0c1ea60b4aac41a9bca9af1d8e47b2ec3a39e7bcffc70a9f9ef29
+    x-worktree: 44021efbcb1fff1d7f1e6203f63085c561c88e445424157a99a501a72531f564
+    commit: c142fb7
+    x-action: write
+  - phase: review
+    at: 2026-09-29T04:40:15.684Z
+    by: baton
+    writer: ecb01d3baef0c1ea60b4aac41a9bca9af1d8e47b2ec3a39e7bcffc70a9f9ef29
+    x-worktree: 44021efbcb1fff1d7f1e6203f63085c561c88e445424157a99a501a72531f564
+    commit: c142fb7
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T04:40:16.369Z
+    by: baton
+    writer: ecb01d3baef0c1ea60b4aac41a9bca9af1d8e47b2ec3a39e7bcffc70a9f9ef29
+    x-worktree: 44021efbcb1fff1d7f1e6203f63085c561c88e445424157a99a501a72531f564
+    commit: c142fb7
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T04:40:16.781Z
+    by: baton
+    writer: ecb01d3baef0c1ea60b4aac41a9bca9af1d8e47b2ec3a39e7bcffc70a9f9ef29
+    x-worktree: 44021efbcb1fff1d7f1e6203f63085c561c88e445424157a99a501a72531f564
+    commit: c142fb7
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T04:40:17.209Z
+    by: baton
+    writer: ecb01d3baef0c1ea60b4aac41a9bca9af1d8e47b2ec3a39e7bcffc70a9f9ef29
+    x-worktree: 44021efbcb1fff1d7f1e6203f63085c561c88e445424157a99a501a72531f564
+    commit: c142fb7
+    x-action: redact
+updated_at: 2026-09-29T04:40:17.207Z
 updated_by: baton
 x-implementation-writer: 8a44b7aec2b3281d1dce7877b097b21442fccfae8def9cf5a0c742317096e70f
 x-implementation-worktree: 460f84d3c666afcfb0299243e8426c4b553802b48ca5b0172feede66b32bda0d
@@ -176,20 +250,29 @@ risks:
   - id: R2
     text: The self-review guard falls back to the token alone when git fails with exit 128, and for batons written before this pass (F115, F117). It is a process guard, not a security boundary.
     severity: low
+  - id: R3
+    text: "R1 is resolved by D15 (owner route (a), PR #32). Quick land must run before further code lands on main; otherwise land receive fails with E_STALE_REVIEW against this review's reviewed tree."
+    severity: medium
+  - id: R4
+    text: "F122: template-cleanup.yml names source quick batons by hand. Before tagging, git ls-files .baton/quick at the tag commit must be a subset of its remove list, or new maintainer batons ship to adopters and fail their first validate."
+    severity: medium
 review:
   findings_path: .baton/quick/pretag-fixes-001.review.json
   blocking_findings: 0
+do_not_read:
+  - path: specs/
+    why: "Feature 001 lands separately at c85bf3f through PR #32; this quick lane must not edit it"
 ---
 ## Goal
 Keep the work in scope.
 
 ## What changed
-F110: adopt and its --no-workflows path remove only the two source-owned quick files, preserving adopter batons. F114: update rejects a conflicting .gitattributes marker before writing managed files or the manifest. F118: the alias self-review test removes the token first. Bundled CLI integration tests passed (303 pass, 1 skip), with npm ci, npm run check, baton validate, actionlint and shellcheck.
+Review 2 (a755ff8..c142fb7): F110 fixed, adopt and its --no-workflows path remove only the two source-owned quick files, preserving adopter batons. F114: update rejects a conflicting .gitattributes marker before writing managed files or the manifest. F118: the alias self-review test removes the token first. Bundled CLI integration tests passed (303 pass, 1 skip), with npm ci, npm run check, baton validate, actionlint and shellcheck.
 
 ## Next steps
-1. `/baton-review` in an independent checkout to review F110, F114 and F118 before land.
-2. The owner decides F111 (feature 001 land route); record it before the next review.
-3. `/baton-review` in a fresh checkout, then `/baton-land`.
+1. Review 2 (baton-review, independent checkout at c142fb7) verified F110, F114 and the F118 alias test; all findings are fixed or dismissed (see review.json x-review2-summary). F111 is resolved by owner route (a) via PR #32 (D15).
+2. In an independent checkout at current main: `node .baton/bin/baton.mjs handoff receive --phase land --quick pretag-fixes-001`, then `/baton-land` (delegates to `/land`, opens the land PR without merging) and `handoff write --phase land --quick pretag-fixes-001 --from-json <input with pr>`. Run it before further code lands on main (R3).
+3. Stop at the human gate: the repository owner reviews the land PR and runs `node .baton/bin/baton.mjs handoff approve --quick pretag-fixes-001 --by "repository owner" --via "pull request review"`. Before tagging, confirm `git ls-files .baton/quick` is a subset of the .baton/template-cleanup.yml remove list (R4, F122).
 
 ## Watch out for
 - Escalate decisions that change behaviour or public contracts.
