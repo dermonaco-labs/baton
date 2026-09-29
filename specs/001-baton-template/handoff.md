@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 001-baton-template
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Fix pass 3: enforce checkout-separated review and land, restore quick review bases and CLI acceptance waivers, close relay freshness and workflow gaps, and hand off for independent review."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Re-review 3 of fix pass 3 (815ca0bd..1eb09bc6, PR 26): all 75 prior fixes verified through the real CLI, nine deferrals accepted, F61 dismissal sound; new F86 (P1, CRLF batons break overlay adopters on Windows second checkouts), F87/F88 (P2, self-review guard bypass and non-expiring override) and nine P3s. Back to implement for F86."
 read_first:
   - path: specs/001-baton-template/spec.md
     why: Review scope and acceptance criteria
@@ -21,7 +21,7 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: specs/001-baton-template/review.json
     why: Review fixed and deferred findings, including owner-raised F62
-    sha256: e08ca0d98267a1cd302eb8bcfc2a0d0d6de354628b8c1c8022745f070372849e
+    sha256: 4c0b0be84fbdc73e936f159871cebcbac9f0429a4232794c4c2c892e75a3986b
   - path: specs/001-baton-template/contracts/ci.md
     why: Review F39 hosted verification and restored link check
     sha256: d90ecc2e0839d0314ae4df5a4591c40b6ce538549db8fbca3fa5ef9d97791fb5
@@ -76,7 +76,7 @@ artifacts:
     sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017
   - path: specs/001-baton-template/review.json
     role: evidence
-    sha256: e08ca0d98267a1cd302eb8bcfc2a0d0d6de354628b8c1c8022745f070372849e
+    sha256: 4c0b0be84fbdc73e936f159871cebcbac9f0429a4232794c4c2c892e75a3986b
 entry_checked:
   - id: tasks-exists
     ok: true
@@ -84,15 +84,9 @@ entry_checked:
     ok: true
     evidence: analyzed at 23b1a1d; the artifacts were then amended by the analyze fixes and amendments A1-A6 and re-hashed here
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
-    met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: "baton: 0"
+    evidence: specs/001-baton-template/review.json
 analysis:
   report_path: specs/001-baton-template/analysis.md
   critical: 0
@@ -843,6 +837,27 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Fix-pass-3 implementation and evidence updates
     by: implementation-session
+  - id: D145
+    decision: "Re-review 3 verdict: v0.1 is not release-ready until F86 is fixed"
+    rationale: Every claimed fix F01-F85 reproduces through the CLI in scratch clones and worktrees (F62, F63/F66 waiver flow, F64, F44 tracked files, F70, F71-F74 mutants). F86 is a hard failure (E_INTERNAL) for overlay adopters on Windows with the Git default core.autocrlf=true, and F62 now makes such a second checkout mandatory for every review and land. F87/F88 should be fixed in the same pass; the P3s may be deferred with reasons.
+    by: baton-review
+  - id: D146
+    decision: Accept deferrals F21, F47, F51, F59, F78, F79, F80, F82 and F83 for v0.1
+    rationale: All are P3 except F59 (P2, test infrastructure only); none affects shipped relay correctness or adopter safety. Evidence per finding in review.json x-rereview3.
+    by: baton-review
+  - id: D147
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 4ece8ddcc50e1fae3c6030a865a9908d7558fa9ff3a7da9d37d755c906ab334c
+    x-base-commit: 815ca0bd754fe288b4dd80f641a60d0320568488
+    by: baton
+  - id: D148
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 1eb09bc6e22f3a03be333ae9888d4fc81a26c7fc
+    by: baton
 open_questions: []
 assumptions:
   - id: AS1
@@ -867,17 +882,17 @@ risks:
   - id: R-UPSTREAM-WATCH
     text: upstream-watch fails at startup on the blocked lychee action, so upstream drift detection is not running (F70).
     severity: medium
+  - id: R-CRLF
+    text: "F86: overlay adopters on Windows (core.autocrlf=true) cannot parse or hash batons in any fresh checkout, which F62 makes mandatory for review and land."
+    severity: high
+  - id: R-SELF-REVIEW
+    text: "F87/F88: the E_SELF_REVIEW guard is advisory; deleting .baton/.local or one old override answer lets the implement checkout review itself."
+    severity: medium
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: review
-    at: 2026-09-28T22:32:04.064Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
   - phase: review
     at: 2026-09-28T22:32:04.446Z
     by: baton
@@ -992,11 +1007,17 @@ history:
     writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
     commit: f043f1e
     x-action: write
-updated_at: 2026-09-28T22:45:37.734Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-09-29T01:15:35.796Z
+    by: baton-review
+    writer: 846a37d767c3870ef41090f7d3b0532a814c55e1f5c959ac0cd2d613aa0930fc
+    commit: 1eb09bc
+    x-action: write
+updated_at: 2026-09-29T01:15:35.783Z
+updated_by: baton-review
 review:
   findings_path: specs/001-baton-template/review.json
-  blocking_findings: 3
+  blocking_findings: 1
 pr:
   url: https://github.com/dermonaco-labs/baton/pull/24
   number: 24

@@ -3,12 +3,11 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/20260928-baton-rereview2/",
-    "x-scope": "Re-review 2: fix-pass-2 diff d61a7237..815ca0bd (PR 24) plus verification of every prior finding F01-F62, the D70-D86 acceptance-waiver audit, and the F21-F23/F47/F51/F59 deferrals and F60/F61 dismissals. safe_auto fixes were not applied: review-role session.",
-    "x-fixpass3": "Implementation remediation and disposition audit; independent review remains required. D107-D123 are owner-authorized waivers, not recovered historical red."
+    "run_artifact": ".context/compound-engineering/ce-review/20260929-baton-rereview3/",
+    "x-scope": "Re-review 3: fix-pass-3 diff 815ca0bd..1eb09bc6 (CLI scope; content-equivalent to f043f1e..1eb09bc6, which adds only re-review-2 artifacts; 35 files +1717/-487, PR 26) plus verification of every prior finding F01-F85 through the real CLI in scratch clones and worktrees, audit-waiver mutants, and the F21/F47/F51/F59/F78-F80/F82/F83 deferrals. Independent checkout (F62 guard accepted it). No code fixed: review-role session."
   },
-  "base": "d61a7237bd7215615050aa594b6777a3197de2db",
-  "head": "815ca0bd754fe288b4dd80f641a60d0320568488",
+  "base": "815ca0bd754fe288b4dd80f641a60d0320568488",
+  "head": "1eb09bc6e22f3a03be333ae9888d4fc81a26c7fc",
   "personas": [
     "correctness-reviewer",
     "testing-reviewer",
@@ -44,6 +43,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Fresh entry checks on write now include task evidence; F68 closes the remaining bypass."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced in a fresh clone: after a tasks.md evidence-row edit, `handoff write --phase review` exits 1 with E_STALE_ARTIFACT fresh:tasks (F68 path). Implement/answer freshness covered by relay tests."
       }
     },
     {
@@ -71,6 +74,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "The relay tests drive the handoff CLI in scratch git repos. A quick review write with an open P0 in .baton/quick/<slug>.review.json routes next_phase work, then work receive succeeds. A feature review routes to implement, and land receive recomputes E_REVIEW_BLOCKING instead of trusting a saved zero. All three F02 tests passed in this session and fail at base d61a7237 (testing persona)."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -96,6 +103,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "The F03 test reads the shipped hook command (baton/speckit-extension/commands/handoff.md and its installed copy), then runs `handoff write --phase implement --mode converge`, which writes the baton. The F03/F20 converge receive→write test also passes. Both passed in this session."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -123,6 +134,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "The before_specify path (receive --phase specify with finished features, ambiguous feature dirs, no specs dir, or escalated quick evidence) returns first-phase context rather than failing; 4 F04 tests passed in this session, red at base."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -149,6 +164,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "The after_specify hook write without --feature creates the new feature baton inferred from the branch, and a plain first specify write can skip clarification; both F05 tests passed in this session and are red at base."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -171,6 +190,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -193,6 +216,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -215,6 +242,10 @@
       "x-rereview2": {
         "verdict": "reopened",
         "evidence": "docs/08 stays clean, but fix pass 2 reintroduced the internal feed hostname in specs/001-baton-template/tasks.md:484 and handoff.md:842 (commits 17016a0, 28d35f7, eda45b8), violating constitution.md:93. The guarding test scans only docs/08. Tracked under F44."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -242,6 +273,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "The review write and the analyze->implement write record a durable diff-base decision at full HEAD, and reviewBase uses the last one (.at(-1)). Both F09 relay tests (including \"first review still sees implementation after origin advances\") passed in this session. The review receive in this session resolved base d61a7237. The quick-lane gap is tracked in F64."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -267,6 +302,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -296,6 +335,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Decision and question merge remains append-only; new provenance and base decisions are CLI-owned, not accepted from agent JSON."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced: --from-json decisions tagged diff-base, reviewed-tree or self-review-override are rejected with E_USAGE \"Reserved decisions can only be recorded by the CLI\"; an x-implementation-writer key is rejected as an unexpected field. Baton unchanged on rejection."
       }
     },
     {
@@ -321,6 +364,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -346,6 +393,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -368,6 +419,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -390,6 +445,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -412,6 +471,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -437,6 +500,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -459,6 +526,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -481,6 +552,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -503,6 +578,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -530,6 +609,10 @@
       "x-fixpass3": {
         "verdict": "deferred",
         "evidence": "Deferred: archive verification against release SHA256SUMS is a larger update/init distribution contract change."
+      },
+      "x-rereview3": {
+        "verdict": "deferral-accepted",
+        "evidence": "Deferral accepted for v0.1: P3; releases ship SHA256SUMS and --from archive is an explicit offline path. Track post-v0.1."
       }
     },
     {
@@ -557,6 +640,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Contracts document that local-check commands execute from the checked-out branch and require a trusted workspace."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "SECURITY.md, docs/06 and contracts now say any phase with local-checks-pass in phases.yml runs branch-controlled commands on receive/write; the timeout change (300 s) is benign. Documentation-only fix accepted for v0.1."
       }
     },
     {
@@ -584,6 +671,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Personal-data scan documentation now explicitly notes the backtick exclusion in JavaScript and YAML."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "SECURITY.md now states the backtick exclusion for Markdown, JavaScript and YAML. Accepted for v0.1."
       }
     },
     {
@@ -606,6 +697,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -628,6 +723,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -650,6 +749,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -677,6 +780,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "The baton-review skill now requires the recorded diff-base and an installed-persona-only dispatch; both skill copies are identical."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -699,6 +806,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -721,6 +832,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -743,6 +858,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -765,6 +884,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "The F31 relay test (passed in this session, red at base) shows a review write pointing at a clean decoy findings file is rejected, as is a findings replacement outside the review phase. Land entry also requires the canonical specs/<feature>/review.json. The wrong-path case reuses E_REVIEW_BLOCKING; see F80."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -784,6 +907,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Relay F32 test red at base, green at head."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -802,6 +929,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Red at base per the testing persona; green at head."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -820,6 +951,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "An unreachable recorded base is reported and skipped; the test also covers the non-hex guard incidentally."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -842,6 +977,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Stale approved spec or plan now blocks answer and escalate before metadata refresh; prior gate revocation remains intact."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced (F65 path): `handoff answer` while spec.md is edited after approval exits E_STALE_ARTIFACT before any metadata or approval refresh."
       }
     },
     {
@@ -861,6 +1000,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Red at base per the testing persona; green at head."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -880,6 +1023,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Red at base per the testing persona; green at head."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -899,6 +1046,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -918,6 +1069,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Hosted: job 109131737677 (run 36482633555, 7c4287f) passed the live ps test (ok 38) but failed ok 100 on a Node 20 matchAll().map incompatibility; job 109139358279 (run 36484913302, e2e4891) passed 268/268 with 0 skips including ok 38 and ok 100. Locally the live test skips because the mirror lacks specify-cli==1.0.11."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -936,6 +1091,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -954,6 +1113,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Red at base per the testing persona."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -972,6 +1135,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -990,6 +1157,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1012,6 +1183,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Private feed hostnames removed from tracked artifacts via CLI redaction and generic tasks wording; documentation regression checks for private hosts."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "git grep over every tracked file at 1eb09bc for packagefeedproxy, microsoft.io, pkgs.dev.azure.com, pkgs.visualstudio and similar: zero hostnames (only the generic words \"internal-feed\" in the D52 rationale). Residual: the hostname remains in git history (eda45b8, 28d35f7, 17016a0, 778f4a6, removed in 37e42a0); rewriting history is an owner decision, not a v0.1 blocker."
       }
     },
     {
@@ -1030,6 +1205,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1048,6 +1227,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1070,6 +1253,10 @@
       "x-fixpass3": {
         "verdict": "deferred",
         "evidence": "Deferred: consolidating duplicated findings parsing is a refactor; current validation and blocking checks agree."
+      },
+      "x-rereview3": {
+        "verdict": "deferral-accepted",
+        "evidence": "Deferral accepted: P3 duplication; validation and blocking-count paths agree in every reproduction this pass."
       }
     },
     {
@@ -1088,6 +1275,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1106,6 +1297,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1125,6 +1320,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Verified in re-review 1; the fix-pass-2 diff does not touch the fix and no regression was found by the 8 personas."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1147,6 +1346,10 @@
       "x-fixpass3": {
         "verdict": "deferred",
         "evidence": "Deferred: remaining fixture assertions span independent older fixes; prioritize focused regression work after this relay pass."
+      },
+      "x-rereview3": {
+        "verdict": "deferral-accepted",
+        "evidence": "Deferral accepted: P3 test gaps on older fixes; the behaviors reproduce correctly through the CLI."
       }
     },
     {
@@ -1165,6 +1368,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Red at base per the testing persona."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1184,6 +1391,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Red at base per the testing persona."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1209,6 +1420,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Implement write retains fresh spec/plan enforcement; F68 covers task evidence freshness at review write."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Implement write still enforces fresh spec/plan (relay regression green); F68 path reproduced for tasks.md at review write."
       }
     },
     {
@@ -1229,6 +1444,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "baton-review uses the CLI scope JSON for a reachable diff base and exact changed-file set."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "`handoff scope --json` in a fresh checkout returns the reachable recorded diff base 815ca0bd and the exact 24-file set; the shipped baton-review skill (baton/ and .github/ mirrors byte-identical) calls the bundled CLI with --quick support."
       }
     },
     {
@@ -1245,6 +1464,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Waivers are bound to x-evidence-sha256 and are invalidated by an evidence change. The mechanism works, and it is exactly why the committed waivers do not validate (F63)."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1261,6 +1484,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Red at base per the testing persona."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1277,6 +1504,10 @@
       "x-rereview2": {
         "verdict": "verified",
         "evidence": "Hosted run 36484913302 passed update py/ps flavour tests (ok 100)."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Verified in an earlier review; untouched or unregressed by the fix-pass-3 diff. npm run check green at 1eb09bc (289 tests: 288 pass, 1 skip = F39 live ps flavour, approved mirror lacks specify-cli 1.0.11); hosted Baton run 36504846815 green on push to main at 1eb09bc."
       }
     },
     {
@@ -1297,6 +1528,10 @@
       "x-fixpass3": {
         "verdict": "deferred",
         "evidence": "Deferred: replacing the temp-root source scanner requires a broader test-helper migration; current callers use OS temp roots."
+      },
+      "x-rereview3": {
+        "verdict": "deferral-accepted",
+        "evidence": "Deferral accepted: P2 but test-infrastructure only; no shipped behavior depends on it and all current callers use OS temp roots."
       }
     },
     {
@@ -1322,6 +1557,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Review writes fingerprint the relevant tree; land receive/write reject subsequent edits with E_STALE_REVIEW."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced: review write records reviewed-tree; a later commit in a third checkout makes `handoff receive --phase land` fail with E_STALE_REVIEW, while the reviewer checkout and a fresh clean checkout at the review commit pass. An untracked file in the repo root did not cause a false positive."
       }
     },
     {
@@ -1339,6 +1578,10 @@
       "x-rereview2": {
         "verdict": "dismissal-sound",
         "evidence": "Agree with the dismissal. Note: the findings schema no longer requires task, so feature-lane task mapping is enforced only by findings-mapped-to-tasks-or-dismissed."
+      },
+      "x-rereview3": {
+        "verdict": "dismissal-sound",
+        "evidence": "Unchanged; dismissal remains sound."
       }
     },
     {
@@ -1368,6 +1611,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Per-checkout gitignored token and recorded writer identity refuse self-review and self-land with exit 3; fresh worktree and owner override regressions pass, including bounded-history eviction."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced through the real CLI in scratch clones: receive/write review and receive land in the implement checkout exit 3 E_SELF_REVIEW (also with forged --by baton-review or a human-looking --by); a second worktree passes; `handoff next` prints the session break. --from-json forgery of self-review-override/reviewed-tree/x-implementation-writer is rejected (E_USAGE) and --by human:* is rejected (E_ACTOR_FORMAT). Override: an unanswered question or \"Require independent review\" still refuses; \"Allow self-review\" answered with --by \"repository owner\" permits it; --tag on implement is E_USAGE. Core fix verified, but the guard is bypassable by deleting/rotating .baton/.local (F87) and one override disables it permanently (F88)."
       }
     },
     {
@@ -1390,6 +1637,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "CLI revoked D70-D86, re-recorded D107-D123 under the owner delegation with normalized tasks hash; acceptance-evidence is met without a hand-edited exit criterion."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "At 1eb09bc all 17 waivers D107-D123 carry the checkbox-normalized tasks.md hash 16a67f00...9e6 and validate through the CLI; D70-D86 are absent (revoked by D105). acceptance-evidence and tasks-all-checked-or-deferred are met. Removing the waivers, or making them non-human, yields 17 unmet checks, so they are load-bearing."
       }
     },
     {
@@ -1406,6 +1657,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Quick baton creation now records a reachable diff-base decision; quick review scope regression exercises it."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced: `handoff new --quick` records a D2 diff-base at HEAD and `handoff scope --quick <slug> --json` returns that base and the changed files in both the work and a second checkout."
       }
     },
     {
@@ -1422,6 +1677,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Answer and escalate reject stale spec/plan before updating metadata or approvals."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced: `handoff answer` with an unapproved spec.md edit exits E_STALE_ARTIFACT and leaves the baton untouched."
       }
     },
     {
@@ -1438,6 +1697,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "CLI question --check and answer Waive <id> create audited, hash-bound check-specific waiver decisions, including after unmet implement evidence."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "End to end in a clone at f043f1e driven by the head CLI: revoke-waivers removed D70-D86; `question --check AC-US1-2` opened Q1; `answer Q1 \"Waive AC-US1-2\" --by \"repository owner\"` recorded an acceptance-waiver bound to the normalized hash, and unmet checks dropped from 17 to 16."
       }
     },
     {
@@ -1454,6 +1717,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Validation rejects a baton phase rewound behind its latest history phase."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced: hand-rewinding phase_completed/next_phase behind the latest history phase makes `baton validate` exit 1 with E_TRANSITION; restoring the file validates."
       }
     },
     {
@@ -1470,6 +1737,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Review write rechecks tasks.md freshness instead of laundering evidence changes."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced: a post-implement tasks.md evidence edit makes `handoff write --phase review` exit 1 with E_STALE_ARTIFACT fresh:tasks."
       }
     },
     {
@@ -1486,6 +1757,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Agent-supplied diff-base decisions cannot replace the recorded review base."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced: a well-formed --from-json diff-base decision is rejected with E_USAGE \"Reserved decisions can only be recorded by the CLI\"."
       }
     },
     {
@@ -1502,6 +1777,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "upstream-watch now downloads the same SHA256-verified standalone lychee as CI; regression checks parity."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "upstream-watch.yml downloads lychee v0.24.2 with the same SHA-256 (1f4e0ef7...c9a) and install lines as ci.yml; the identical ci.yml step is green in hosted runs 36494626692 and 36504846815. upstream-watch itself has not run: owner-manual dispatch remains."
       }
     },
     {
@@ -1518,6 +1797,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Scratch CLI test now asserts the exact missing adopt failure message; deliberate removal fails the test. Historical red remains waived."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Mutation BATON_AUDIT_MUTANT=D71 at head fails the D71 test on the missing \"Run baton adopt locally\" message. Historical red: at the true pre-implementation base 07be2be (46225ec^) no bundle exists (harness-only failure); at 46225ec/5f539d8 with fixtures overlaid the test passes because the behavior already existed, consistent with the retained waiver."
       }
     },
     {
@@ -1534,6 +1817,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Scratch CLI test now asserts per-story E_NO_PREREG behavior; deliberate any-check substitution fails. Historical red remains waived."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "D76 mutant (per-story -> any-check) fails the test only after refreshing a drifted minified anchor (see F92); with the refreshed anchor the implement receive wrongly succeeds and the test fails. Passes unmutated at head; behavior pre-exists at 46225ec (waived)."
       }
     },
     {
@@ -1550,6 +1837,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Scratch CLI tests reject unauthorized role vocabulary and channel; deliberate bypass fails. Historical red remains waived."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "D80-channel mutant fails the test as shipped; D80 (role vocabulary) and D80-actor mutants fail on behavior only after refreshing drifted anchors xu->Lu, Bn->Kn (F92): \"Jane Doe\" approval and a malformed actor are then accepted and the test fails."
       }
     },
     {
@@ -1566,6 +1857,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Scratch CLI test asserts persisted model_role and suggested_model on the baton; deliberate omission fails. Historical red remains waived."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "D82 mutant (suggested_model=null) fails the test at head; behavior pre-exists at 46225ec (suggestedModel in handoff.mjs:40), consistent with the waiver."
       }
     },
     {
@@ -1582,6 +1877,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Shipped review skill calls the bundled CLI with feature/quick scope and compares the CLI-provided file set."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "baton-review SKILL.md calls `node .baton/bin/baton.mjs handoff receive/scope --json` with --quick support; baton/ and .github/ skill mirrors are byte-identical."
       }
     },
     {
@@ -1598,6 +1897,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "D77 evidence citation now points to the F18 land-receive local-check regression, without claiming a historical red."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "D114 now cites the F18 land-receive local-check regression (relay.test.mjs:1393 at head) without claiming historical red."
       }
     },
     {
@@ -1614,6 +1917,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "D81 evidence citation now points to the authored-solution alternative at relay.test.mjs:381, without claiming a historical red."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "D118 points to the authored-solution alternative, but its line citation relay.test.mjs:381 is stale at head (the test is now at line 679); tracked as F91. Substance verified."
       }
     },
     {
@@ -1630,6 +1937,10 @@
       "x-fixpass3": {
         "verdict": "deferred",
         "evidence": "Deferred: duplicate helper extraction is a maintenance refactor outside the blocker fixes."
+      },
+      "x-rereview3": {
+        "verdict": "deferral-accepted",
+        "evidence": "Deferral accepted: P3 maintenance refactor."
       }
     },
     {
@@ -1646,6 +1957,10 @@
       "x-fixpass3": {
         "verdict": "deferred",
         "evidence": "Deferred: shared table parsing and test-helper consolidation require a separate focused refactor."
+      },
+      "x-rereview3": {
+        "verdict": "deferral-accepted",
+        "evidence": "Deferral accepted: P3 maintenance refactor."
       }
     },
     {
@@ -1662,6 +1977,10 @@
       "x-fixpass3": {
         "verdict": "deferred",
         "evidence": "Deferred: separating E_REVIEW_BLOCKING from invalid-path errors changes the public error contract."
+      },
+      "x-rereview3": {
+        "verdict": "deferral-accepted",
+        "evidence": "Deferral accepted: P3; changing the stable error code is a public-contract change better done post-v0.1. The contract text should mention the reuse."
       }
     },
     {
@@ -1678,6 +1997,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "data-model.md now documents the same x-check and normalized x-evidence-sha256 fields as phase-contracts.md."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "data-model.md and phase-contracts.md now describe the same x-check and normalized x-evidence-sha256 fields."
       }
     },
     {
@@ -1694,6 +2017,10 @@
       "x-fixpass3": {
         "verdict": "deferred",
         "evidence": "Deferred: distinguishing uv network failures from E_INTERNAL requires a more specific init error taxonomy."
+      },
+      "x-rereview3": {
+        "verdict": "deferral-accepted",
+        "evidence": "Deferral accepted: P3 error-taxonomy polish; the underlying uv message is surfaced."
       }
     },
     {
@@ -1710,6 +2037,10 @@
       "x-fixpass3": {
         "verdict": "deferred",
         "evidence": "Deferred: pinning the uv bootstrap by hash and changing CI trigger scope require independent supply-chain and workflow decisions."
+      },
+      "x-rereview3": {
+        "verdict": "deferral-accepted",
+        "evidence": "Deferral accepted for v0.1: P3; version-pinned uv bootstrap in CI only (no adopter surface). Hash-pinning should follow."
       }
     },
     {
@@ -1727,6 +2058,10 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "handoff write --dry-run is rejected as unsupported instead of silently writing."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced: `handoff write --dry-run` exits 2 E_USAGE \"--dry-run is not supported for this action\" and writes nothing."
       }
     },
     {
@@ -1744,7 +2079,217 @@
       "x-fixpass3": {
         "verdict": "verified",
         "evidence": "Write JSON risk updates retain owner-pending risks; regression prevents silent removal."
+      },
+      "x-rereview3": {
+        "verdict": "verified",
+        "evidence": "Reproduced: a review write with \"risks\": [] keeps R-3OS, R-WAIVERS and R-UPSTREAM-WATCH."
       }
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F86",
+      "severity": "P1",
+      "persona": "correctness-reviewer",
+      "confidence": 0.9,
+      "task": "T037",
+      "title": "Batons checked out with CRLF (Git for Windows core.autocrlf=true) break every handoff command in overlay adopter repos",
+      "file": "src/lib/frontmatter.mjs",
+      "line": 5,
+      "reason": "parseFrontmatter only matches LF (/^---\\n.../), and artifact, evidence and reviewed-tree hashes are raw bytes. init/adopt install no .gitattributes, so an overlay adopter on Windows with the Git default autocrlf=true gets CRLF batons in every fresh clone or worktree. F62 now mandates such a second checkout for every review and land.",
+      "x-pre-existing": true,
+      "x-exposed-by": "F62",
+      "x-evidence": "Scratch clone with core.autocrlf=true and .gitattributes removed (simulated overlay adopter): `handoff receive --phase land` exits 10 E_INTERNAL after E_FRONTMATTER_MALFORMED; `baton validate` fails. Template adopters inherit `* text=auto eol=lf` and are unaffected. `grep gitattributes|autocrlf` over src hits only src/lib/upstream.mjs:94; no docs mention it.",
+      "x-fix": "Normalize CRLF to LF in parseFrontmatter and before hashing Baton-managed text (artifacts, tasks.md, reviewed tree), and have init/adopt append `eol=lf` rules for Baton paths to .gitattributes; add a Windows relay regression with autocrlf=true."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F87",
+      "severity": "P2",
+      "persona": "security-reviewer",
+      "confidence": 0.9,
+      "task": "T037",
+      "title": "E_SELF_REVIEW is bypassed by deleting or rotating the gitignored checkout token, including by `git clean -xfd`",
+      "file": "src/lib/writer.mjs",
+      "line": 12,
+      "reason": "The writer identity is only a random token in .baton/.local/session.json that is silently regenerated when absent. Removing it (for example `git clean -xfd`, which agents run routinely) or rewriting it lets the implement checkout review and land its own work. The contracts state implement and review MUST have different writer hashes, with no mention that the guard is advisory.",
+      "x-evidence": "Scratch clone: after implement, `Remove-Item .baton/.local` (or replacing the token) in the same checkout made `handoff receive --phase review` and the review write succeed without an override. The override answer is also self-grantable: the implementer can ask and answer the question with --by \"repository owner\" (honor-based like approve).",
+      "x-fix": "Bind the identity to the checkout as well (e.g. sha256 of token plus `git rev-parse --absolute-git-dir`/worktree path) so regeneration in the same checkout still matches, and document in handoff-contract.md and SECURITY.md that the guard prevents accidental self-review, not a determined local actor."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F88",
+      "severity": "P2",
+      "persona": "adversarial-reviewer",
+      "confidence": 0.9,
+      "task": "T037",
+      "title": "One self-review-override answer disables the guard for every later implement/review cycle on that baton",
+      "file": "src/commands/handoff.mjs",
+      "line": 212,
+      "reason": "selfReview() returns false if any decision anywhere in the baton carries tag self-review-override by human:*. The override is not bound to the implement write it answered and never expires.",
+      "x-evidence": "Scratch quick baton: override answered -> review routed back to work (blocking finding) -> new work write in the same checkout -> `handoff write --phase review` in that same checkout succeeded without a new question.",
+      "x-fix": "Record the implementation writer hash (or history index) on the override decision and honor it only while x-implementation-writer is unchanged; clear or ignore it after the next implement/work write. Add a regression for override then second cycle."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F89",
+      "severity": "P3",
+      "persona": "correctness-reviewer",
+      "confidence": 0.85,
+      "task": "T037",
+      "title": "On a fresh quick baton, refresh/redact/answer/approve/question record history phase \"work\" and trip the new F67 check",
+      "file": "src/commands/handoff.mjs",
+      "line": 253,
+      "reason": "record(..., phase_completed === \"none\" ? \"work\" : ...) makes the latest history phase \"work\" while phase_completed is still none; src/lib/handoff.mjs:113 then reports E_TRANSITION \"Latest history phase does not match\" and `receive --phase work` fails until a work write.",
+      "x-evidence": "Scratch clone at 1eb09bc: `handoff new --quick qq`, then `handoff refresh --quick qq --reason x`; `baton validate` and `handoff receive --phase work --quick qq` both exit 1 with E_TRANSITION. `handoff write --phase work` still recovers.",
+      "x-fix": "Record phase \"none\" (or skip the history-phase comparison for non-write x-actions) and add a quick-lane regression."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F90",
+      "severity": "P3",
+      "persona": "project-standards-reviewer",
+      "confidence": 0.95,
+      "task": "T037",
+      "title": "The implement baton body, risks and PR metadata still describe fix pass 2",
+      "file": "specs/001-baton-template/handoff.md",
+      "line": 1010,
+      "reason": "\"What changed\" still says F62 is an open P1 and \"Next steps\" cites base d61a7237; `pr` points to #24 and review.blocking_findings was 3 at receive; R-WAIVERS and R-UPSTREAM-WATCH predate D107-D123 and the pinned lychee. The CLI has no body update path for review, so the next implement write must refresh them.",
+      "x-evidence": "handoff.md at 1eb09bc lines ~1000-1067 and frontmatter review/pr blocks.",
+      "x-fix": "Refresh the body and risks in the next implement write and set pr to the current PR."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F91",
+      "severity": "P3",
+      "persona": "testing-reviewer",
+      "confidence": 0.95,
+      "task": "T101",
+      "title": "D118 waiver-audit citation relay.test.mjs:381 is stale at head",
+      "file": "specs/001-baton-template/handoff.md",
+      "line": 1047,
+      "reason": "Line 381 of relay.test.mjs at 1eb09bc is inside the F62 self-review test; the authored-solution compound test moved to line 679 when fix pass 3 inserted tests above it.",
+      "x-evidence": "git show f043f1e:test/integration/relay.test.mjs line 381 is the authored-solution test; at 1eb09bc it is line 679.",
+      "x-fix": "Cite the test by name (as other rows do) rather than line number."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F92",
+      "severity": "P3",
+      "persona": "testing-reviewer",
+      "confidence": 0.95,
+      "task": "T052",
+      "title": "Audit-waiver mutation harness anchors on minified bundle identifiers that already drifted",
+      "file": "test/integration/audit-waivers.test.mjs",
+      "line": 57,
+      "reason": "Three of six mutants (D76, D80, D80-actor) \"fail\" only on `bundle mutant anchor changed` because the rebuild renamed xu->Lu, Bn->Kn and h->p. The strengthened tests are sound (they kill all mutants once anchors are refreshed), but the harness no longer demonstrates it and will keep drifting on every rebuild.",
+      "x-evidence": "BATON_AUDIT_MUTANT=D76|D80|D80-actor at 1eb09bc: AssertionError \"bundle mutant ... anchor changed\". With anchors refreshed locally (not committed) each test failed on behavior; unmutated run: 4 pass.",
+      "x-fix": "Mutate src/ and rebuild in a temp dir, or anchor on stable strings (error codes, messages) instead of minified names; run the mutants in CI."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F93",
+      "severity": "P3",
+      "persona": "agent-native-reviewer",
+      "confidence": 0.85,
+      "task": "T037",
+      "title": "Question IDs are reused after an answer",
+      "file": "src/commands/handoff.mjs",
+      "line": 286,
+      "reason": "nextId() only scans open_questions, so after Q1 is answered the next question is Q1 again; decisions and history cannot be correlated to a unique question ID.",
+      "x-evidence": "Scratch quick baton at 1eb09bc: `question --tag self-review-override` -> Q1; `answer Q1 \"Allow self-review\"`; the next question is again Q1.",
+      "x-fix": "Derive the next ID from open questions plus answered-question decisions (store x-question on the decision)."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F94",
+      "severity": "P3",
+      "persona": "agent-native-reviewer",
+      "confidence": 0.85,
+      "task": "T037",
+      "title": "`handoff answer --via` is accepted but neither validated nor recorded",
+      "file": "src/commands/handoff.mjs",
+      "line": 456,
+      "reason": "approve validates the channel and records \"<role> via <channel>\"; answer ignores options.via, so waiver and override answers lose the channel the constitution asks approvals to record.",
+      "x-evidence": "Scratch quick baton at 1eb09bc: `answer Q1 \"Allow self-review\" --by \"repository owner\" --via nonsense` exits 0 and the recorded decision has no channel.",
+      "x-fix": "Validate --via against gates.approval_channels and record it on the decision, matching approve."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F95",
+      "severity": "P3",
+      "persona": "adversarial-reviewer",
+      "confidence": 0.7,
+      "task": "T037",
+      "title": "revoke-waivers deletes human waiver decisions instead of superseding them",
+      "file": "src/commands/handoff.mjs",
+      "line": 265,
+      "reason": "Decisions are otherwise append-only (F11), but revoke-waivers, which any agent can run, removes the human-authored records and keeps only their IDs in x-revoked, losing who waived what and why.",
+      "x-evidence": "D105 lists D70-D86 as revoked; their rationales and by fields are gone from the baton.",
+      "x-fix": "Mark revoked waivers (x-revoked-by: Dnnn) and ignore them in evaluation instead of deleting them."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F96",
+      "severity": "P3",
+      "persona": "correctness-reviewer",
+      "confidence": 0.8,
+      "task": "T037",
+      "title": "A corrupt checkout token or missing quick baton surfaces as E_INTERNAL (exit 10)",
+      "file": "src/lib/writer.mjs",
+      "line": 18,
+      "reason": "writerHash throws a plain Error and JSON.parse errors are not wrapped, so every handoff command fails with E_INTERNAL instead of a stable, actionable code; a missing .baton/quick/<slug>.md also ends in E_INTERNAL.",
+      "x-evidence": "Scratch clone at 1eb09bc: with .baton/.local/session.json set to {} `handoff status --quick qq` exits 10 E_INTERNAL \"Invalid checkout writer token\"; `handoff receive --phase work --quick missing` exits 10 E_INTERNAL ENOENT.",
+      "x-fix": "Throw BatonError with a documented code and remediation (delete the token file to regenerate; missing baton -> E_USAGE)."
+    },
+    {
+      "disposition": "open",
+      "x-rereview3": {
+        "verdict": "new"
+      },
+      "id": "F97",
+      "severity": "P3",
+      "persona": "agent-native-reviewer",
+      "confidence": 0.7,
+      "task": "T037",
+      "title": "`handoff next` tells an already-independent review checkout to end its session",
+      "file": "src/commands/handoff.mjs",
+      "line": 802,
+      "reason": "The instruction for next_phase review is unconditional, so a fresh review session is told to end itself; it should check selfReview() and print the /baton-review command when the writer differs.",
+      "x-evidence": "Fresh worktree B: `handoff next` printed \"End this session; start a fresh review session...\" although receive review passed there.",
+      "x-fix": "Only print the session break when the current writer equals the implementation writer."
     }
   ],
   "x-rereview-summary": {
@@ -1795,6 +2340,18 @@
       "head": "815ca0bd754fe288b4dd80f641a60d0320568488",
       "run_artifact": ".context/compound-engineering/ce-review/20260928-baton-fix-pass2/",
       "kind": "fix pass 2 (PR 24), implementation-authored"
+    },
+    {
+      "base": "d61a7237bd7215615050aa594b6777a3197de2db",
+      "head": "815ca0bd754fe288b4dd80f641a60d0320568488",
+      "run_artifact": ".context/compound-engineering/ce-review/20260928-baton-rereview2/",
+      "kind": "re-review 2 (PR 24 fix pass 2)"
+    },
+    {
+      "base": "815ca0bd754fe288b4dd80f641a60d0320568488",
+      "head": "1eb09bc6e22f3a03be333ae9888d4fc81a26c7fc",
+      "run_artifact": ".context/compound-engineering/ce-review/20260928-baton-fix-pass3/",
+      "kind": "fix pass 3 (PR 26), implementation-authored"
     }
   ],
   "x-rereview2-summary": {
@@ -1865,6 +2422,44 @@
       "Four tests added in fix pass 2 pass at base (rehash guard, F51 malformed file, troubleshooting host scan, keep_dormant list): regression guards, not red-first proof.",
       "No hosted sync --check at 815ca0bd.",
       "The init.test F39 tests could not be classified red-first (the file fails to load at base)."
+    ]
+  },
+  "x-rereview3-summary": {
+    "prior_findings": 85,
+    "prior_claimed_fixed": 75,
+    "verified": 75,
+    "reopened": [],
+    "deferral_accepted": [
+      "F21",
+      "F47",
+      "F51",
+      "F59",
+      "F78",
+      "F79",
+      "F80",
+      "F82",
+      "F83"
+    ],
+    "dismissal_sound": [
+      "F61"
+    ],
+    "new_findings": {
+      "P0": 0,
+      "P1": 1,
+      "P2": 2,
+      "P3": 9
+    },
+    "blocking_open": [
+      "F86"
+    ],
+    "f62_verdict": "fixed; residual F87 (token deletion bypass) and F88 (override never expires) are P2",
+    "mutation_audit": "All six BATON_AUDIT_MUTANT variants make their test fail at 1eb09bc; three only via a drifted anchor assertion (F92). With refreshed anchors each fails on behavior.",
+    "historical_red": "F71-F74 tests fail at the true pre-implementation base 07be2be only because no CLI bundle exists; at 46225ec/5f539d8/59dfa77/815ca0b (fixtures overlaid where missing) they pass because the behavior pre-exists. This matches the owner waivers; discrimination is proven by mutation, not history.",
+    "residual_risks": [
+      "The internal feed hostname remains in git history (eda45b8, 28d35f7, 17016a0, 778f4a6); tracked files are clean. History rewrite is an owner decision.",
+      "upstream-watch has not run with the pinned lychee; owner-manual dispatch pending.",
+      "F39 live PowerShell test skips locally (approved mirror lacks specify-cli 1.0.11); hosted Linux proof retained.",
+      "Three-OS smoke, README visual review, private vulnerability reporting and the timed newcomer run remain owner-only."
     ]
   }
 }
