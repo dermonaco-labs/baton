@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: pretag-fixes-001
-phase_completed: review
-next_phase: work
-next_owner: ce-work
+phase_completed: work
+next_phase: review
+next_owner: baton-review
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Independent review of pre-tag fix pass 5 (c85bf3f..a755ff8, PR 30): F96, F98, F99, F100, F101, F102 (forward) and F107 are verified with the real CLI. Open: P2 F110 (adopt deletes adopter .baton/quick/ batons), P2 F111 (feature 001 stranded by E_STALE_REVIEW; owner decision) and P3 F114 (update attributes conflict after writes). Route to work."
+model_role: review
+suggested_model: claude-opus-5.5
+summary: F110 preserves adopter quick batons during local and workflow-path adopt; F114 preflights .gitattributes marker conflicts before managed writes; F118 tests alias rejection after token removal. The real bundled CLI regressions and 303 tests pass.
 read_first:
   - path: .baton/quick/pretag-fixes-001.md
     why: Scope, deferred P3 decisions and diff base
@@ -33,12 +33,12 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: diff-nonempty
     met: true
-    evidence: .baton/quick/pretag-fixes-001.review.json
-  - id: quick-scope-held
+    evidence: 4 changed files
+  - id: local-checks-pass
     met: true
-    evidence: "The diff restores intended behavior without new commands, flags, error codes or handoff fields: the self-review guard still means 'same checkout', ownership hashes still mean 'user-unmodified', and E_CHECKOUT_TOKEN only gains a documented trigger. The stale absolute-path wording in specs/ contracts (F113) is documentation drift for a feature-lane amendment, not a contract change. The remaining quick-lane fixes (F110 cleanup list, F114 merge ordering) are small and stay in scope. F111 is an owner decision about feature 001, not quick-lane work."
+    evidence: "baton: 0"
 open_questions: []
 decisions:
   - id: D1
@@ -90,6 +90,19 @@ decisions:
     decision: Handoff body redacted
     rationale: Point the handoff at the review outcome and next work
     by: baton
+  - id: D11
+    decision: Complete scoped pre-tag follow-up in the quick lane
+    rationale: F110 removes only two named source quick files; F114 changes validation order without altering the update contract; F118 is test-only. Feature 001 files remain untouched; F111 remains an owner decision in the review evidence.
+    tag: quick-scope-held
+    by: ce-work
+  - id: D12
+    decision: Handoff body redacted
+    rationale: Refresh work result for independent review
+    by: baton
+  - id: D13
+    decision: Handoff body redacted
+    rationale: Route completed work to independent review
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -130,11 +143,32 @@ history:
     x-worktree: 44021efbcb1fff1d7f1e6203f63085c561c88e445424157a99a501a72531f564
     commit: a755ff8
     x-action: redact
-updated_at: 2026-09-29T03:53:09.333Z
+  - phase: work
+    at: 2026-09-29T04:19:36.955Z
+    by: baton
+    writer: 8a44b7aec2b3281d1dce7877b097b21442fccfae8def9cf5a0c742317096e70f
+    x-worktree: 460f84d3c666afcfb0299243e8426c4b553802b48ca5b0172feede66b32bda0d
+    commit: bb19665
+    x-action: write
+  - phase: work
+    at: 2026-09-29T04:19:53.290Z
+    by: baton
+    writer: 8a44b7aec2b3281d1dce7877b097b21442fccfae8def9cf5a0c742317096e70f
+    x-worktree: 460f84d3c666afcfb0299243e8426c4b553802b48ca5b0172feede66b32bda0d
+    commit: bb19665
+    x-action: redact
+  - phase: work
+    at: 2026-09-29T04:19:53.959Z
+    by: baton
+    writer: 8a44b7aec2b3281d1dce7877b097b21442fccfae8def9cf5a0c742317096e70f
+    x-worktree: 460f84d3c666afcfb0299243e8426c4b553802b48ca5b0172feede66b32bda0d
+    commit: bb19665
+    x-action: redact
+updated_at: 2026-09-29T04:19:53.957Z
 updated_by: baton
 x-implementation-writer: 8a44b7aec2b3281d1dce7877b097b21442fccfae8def9cf5a0c742317096e70f
 x-implementation-worktree: 460f84d3c666afcfb0299243e8426c4b553802b48ca5b0172feede66b32bda0d
-x-implementation-cycle: c48cd513991861411cb20c33a0f97f2206d4b42874da007a3fef96acf746d52f
+x-implementation-cycle: 58927275a1788d7283c5d6f91e1eb9d5e182db0f7d4bc471aea844aba71b2532
 risks:
   - id: R1
     text: "F111: the feature 001 baton (review → land) cannot land at main: receive land gives E_STALE_REVIEW and no command returns it to review. Landing from the reviewed tree c85bf3f is verified (receive land exits 0); the owner must choose that route or a CLI fix."
@@ -150,10 +184,10 @@ review:
 Keep the work in scope.
 
 ## What changed
-Fixed F98/F99/F100 and P3 F96/F101; F90/F104/F105 are deferred as recorded in D3. Follow-up commit 825da35 added .baton/quick/ to template-cleanup.yml. Independent review verified the fixes; see pretag-fixes-001.review.json.
+F110: adopt and its --no-workflows path remove only the two source-owned quick files, preserving adopter batons. F114: update rejects a conflicting .gitattributes marker before writing managed files or the manifest. F118: the alias self-review test removes the token first. Bundled CLI integration tests passed (303 pass, 1 skip), with npm ci, npm run check, baton validate, actionlint and shellcheck.
 
 ## Next steps
-1. `/ce-work`: fix F110 (list only the template's own quick files in template-cleanup.yml and pin with an adopter-baton fixture) and F114 (merge .gitattributes before managed writes).
+1. `/baton-review` in an independent checkout to review F110, F114 and F118 before land.
 2. The owner decides F111 (feature 001 land route); record it before the next review.
 3. `/baton-review` in a fresh checkout, then `/baton-land`.
 

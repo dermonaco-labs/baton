@@ -5509,7 +5509,7 @@
           "bytesInOutput": 10582
         },
         "src/commands/update.mjs": {
-          "bytesInOutput": 6057
+          "bytesInOutput": 6053
         },
         "src/commands/models.mjs": {
           "bytesInOutput": 2004
@@ -5521,7 +5521,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 403554
+      "bytes": 403550
     }
   }
 }
