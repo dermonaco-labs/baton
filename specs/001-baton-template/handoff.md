@@ -21,7 +21,7 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: specs/001-baton-template/review.json
     why: Review fixed and deferred findings, including owner-raised F62
-    sha256: 1e2806b092fd4e9d4ff914997062d255c64d39650334ffa694e3398452d0942b
+    sha256: 59627bcec0176fa144e558f2454858dc9809631eabd0f6b02ffa785c8576943d
   - path: specs/001-baton-template/contracts/ci.md
     why: Review F39 hosted verification and restored link check
     sha256: d90ecc2e0839d0314ae4df5a4591c40b6ce538549db8fbca3fa5ef9d97791fb5
@@ -76,7 +76,7 @@ artifacts:
     sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017
   - path: specs/001-baton-template/review.json
     role: evidence
-    sha256: 1e2806b092fd4e9d4ff914997062d255c64d39650334ffa694e3398452d0942b
+    sha256: 59627bcec0176fa144e558f2454858dc9809631eabd0f6b02ffa785c8576943d
 entry_checked:
   - id: tasks-exists
     ok: true
@@ -896,6 +896,18 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Clarify legacy baton token-only compatibility
     by: implementation-session
+  - id: D157
+    decision: Handoff body redacted
+    rationale: "F90: PR now exists"
+    by: baton
+  - id: D158
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Record F90 current PR metadata and finding evidence
+    by: implementation-session
+  - id: D159
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: F90 current PR and superseding risk recorded
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -929,35 +941,14 @@ risks:
   - id: R-FIXPASS4
     text: F86/F87/F88 are resolved locally; independent review must verify them. Older R-CRLF and R-SELF-REVIEW entries are historical. The guard is a process guard, not a security boundary; F90 metadata awaits the current PR.
     severity: medium
+  - id: R-FIXPASS4-PR
+    text: "The prior R-FIXPASS4 PR-pending note is superseded: PR 28 is now recorded. R-CRLF and R-SELF-REVIEW describe pre-fix risks; independent review still needs to verify the fixes."
+    severity: medium
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: review
-    at: 2026-09-28T22:32:08.044Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:08.788Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:09.189Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:09.592Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
   - phase: review
     at: 2026-09-28T22:32:10.045Z
     by: baton
@@ -1063,17 +1054,45 @@ history:
     x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
     commit: fd83bfa
     x-action: refresh
-updated_at: 2026-09-29T01:51:13.323Z
+  - phase: implement
+    at: 2026-09-29T01:58:41.285Z
+    by: baton
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: "7585261"
+    x-action: redact
+  - phase: implement
+    at: 2026-09-29T01:58:41.519Z
+    by: implementation-session
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: "7585261"
+    x-action: refresh
+  - phase: implement
+    at: 2026-09-29T02:01:24.802Z
+    by: baton
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: "7585261"
+    x-action: write
+  - phase: implement
+    at: 2026-09-29T02:01:48.740Z
+    by: implementation-session
+    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
+    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
+    commit: "7585261"
+    x-action: refresh
+updated_at: 2026-09-29T02:01:48.739Z
 updated_by: implementation-session
 review:
   findings_path: specs/001-baton-template/review.json
   blocking_findings: 1
 pr:
-  url: https://github.com/dermonaco-labs/baton/pull/24
-  number: 24
+  url: https://github.com/dermonaco-labs/baton/pull/28
+  number: 28
 x-implementation-writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
 x-implementation-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
-x-implementation-cycle: b762ef81e781d1b8ced2954b6dedc6e482fa18dafa9be5d437d61385a0ebedab
+x-implementation-cycle: f1b625e7d4cf1082facadcfa5addec95be6f2a59122b29b84cafbcca850f3980
 ---
 ## Goal
 
@@ -1083,7 +1102,7 @@ optional packs, cheap CI and a public manual.
 
 ## What changed
 
-Fix pass 4 resolves F86 (CRLF parsing, normalized artifact hashes, marker-managed overlay attributes), F87 (worktree-bound self-review guard), F88 (cycle-scoped override), F89, F91 and F96. Tests exercise the bundled CLI in scratch repositories. F90 remains partial until the new PR exists; F92 and other nontrivial P3s are deferred in review.json.
+Fix pass 4 resolves F86 (CRLF parsing, normalized artifact hashes, marker-managed overlay attributes), F87 (worktree-bound self-review guard), F88 (cycle-scoped override), F89, F91 and F96. Tests exercise the bundled CLI in scratch repositories. F90 records the current PR; historical risk entries are superseded by R-FIXPASS4-PR. F92 and other nontrivial P3s are deferred in review.json.
 F39's live PowerShell-flavour integration test ran and passed in hosted Linux CI job 109131737677
 (run 36482633555, `ok 38`, no skip). The same run exposed a separate Linux py-flavour assertion and
 pre-existing ShellCheck warnings, which this continuation fixes. The first CI run did not start jobs

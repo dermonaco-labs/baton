@@ -2160,7 +2160,7 @@
       "x-fixpass4": "Metadata actions on a fresh quick baton do not invent a completed work phase; CLI refresh, validate and receive regression passes."
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "x-rereview3": {
         "verdict": "new"
       },
@@ -2175,7 +2175,7 @@
       "reason": "\"What changed\" still says F62 is an open P1 and \"Next steps\" cites base d61a7237; `pr` points to #24 and review.blocking_findings was 3 at receive; R-WAIVERS and R-UPSTREAM-WATCH predate D107-D123 and the pinned lychee. The CLI has no body update path for review, so the next implement write must refresh them.",
       "x-evidence": "handoff.md at 1eb09bc lines ~1000-1067 and frontmatter review/pr blocks.",
       "x-fix": "Refresh the body and risks in the next implement write and set pr to the current PR.",
-      "x-fixpass4": "Deferred: the append-only risks and current PR number cannot be replaced through the current implement write until a PR exists; historical body and risks remain visible for independent review."
+      "x-fixpass4": "Baton body refreshed through handoff redact, current PR 28 recorded by converge implement write, and append-only R-FIXPASS4-PR supersedes outdated historical risks without erasing audit entries."
     },
     {
       "disposition": "fixed",
