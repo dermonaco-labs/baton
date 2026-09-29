@@ -95,7 +95,11 @@ demand or tags.
 - When there are differences, it creates or updates **one** issue labelled `upstream-bump` with a table, the
   changelog links and the exact `baton sync --bump …` command.
 - It never pushes, and it never opens PRs (maintainers run sync locally; Principle II).
-- It also runs the external link check for docs and appends any failures to the same issue.
+- It checks external HTTP(S) links in docs with the same v0.24.2 standalone lychee archive and
+  published SHA-256 verification as `ci.yml`; it does not use `lychee-action` (blocked by the
+  repository Actions policy). The Markdown report is written to the runner's temporary directory
+  and failures are appended to the same issue. A download or checksum failure is also reported
+  through the issue as a failed link-check step.
 - It runs `baton sync --check` against the current pins (FR-072), so upstream drift, a moved or unreachable ATV commit
   (AS3) or a changed Spec Kit wheel hash also land in the same issue.
 - Every job has `if: github.repository == 'dermonaco-labs/baton'`.

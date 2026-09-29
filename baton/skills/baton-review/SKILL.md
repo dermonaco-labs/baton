@@ -8,18 +8,21 @@ description: Review feature or quick-lane changes through headless ce-review and
 Run `node .baton/bin/baton.mjs handoff receive --phase review` first
 (add `--quick <slug>` for a quick baton);
 stop on any failure, especially pending gates, staleness or a missing
-diff. Review intent is the feature's `spec.md` FR/SC, `plan.md`
+diff. `E_SELF_REVIEW` (exit 3) means the implement/work checkout is still
+in use: end this session and start an independent review checkout, or
+wait for an owner-answered `self-review-override` question. Quick batons
+pin their diff base at `handoff new --quick`. Review intent is the feature's `spec.md` FR/SC, `plan.md`
 structure/contracts and `tasks.md` (for a quick baton, its recorded
 intent), not the PR description alone. Load only `read_first`, honor
 `do_not_read`, and inspect the changed files.
 
-Run `baton handoff show --json` and select the latest `diff-base` decision
-whose `x-base-commit` exists as a commit in this clone (`git cat-file -e
-<sha>^{commit}`). Pass that exact commit as `base:<sha>` to
+Run `node .baton/bin/baton.mjs handoff scope --json` (add `--quick <slug>`
+for a quick baton). It reports the reachable recorded `diff-base` and the
+exact changed-file scope. Pass that base as `base:<sha>` to
 `/ce-review mode:headless`, and verify its reported base and reviewed file
-set match the baton review scope. Stop if no usable recorded base exists
-or ce-review cannot honor it; never silently review against `origin/HEAD`
-or an unrelated merge-base.
+set match the CLI scope. Stop if the CLI cannot resolve the base or ce-review
+cannot honor it; never silently review against `origin/HEAD` or an unrelated
+merge-base.
 
 Enumerate installed `.github/agents/*.agent.md` persona files; pass
 **only that installed list** to `/ce-review mode:headless`, with an

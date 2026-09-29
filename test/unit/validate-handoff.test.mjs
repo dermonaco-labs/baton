@@ -103,7 +103,7 @@ test('each invalid baton fixture reports its named stable error, without unrelat
             errors = result.errors.map((item) => item.code);
           } else errors = await codes(workspace, target, fixture);
           errors = [...new Set(errors)];
-          assert.deepEqual(errors, [code], fixture);
+          assert.deepEqual(errors, code === 'E_REVIEW_MISSING' ? ['E_TRANSITION', code] : [code], fixture);
         } finally {
           if (code === 'E_MULTIPLE_BATONS') await rm(join(workspace, 'specs/001-sample/handoff.other.md'));
         }

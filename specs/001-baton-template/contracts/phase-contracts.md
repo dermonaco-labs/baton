@@ -138,6 +138,14 @@ findings file is `.baton/quick/<slug>.review.json`. `{quick_dir}` in check paths
   input; stage them to count), scratch/tmp/temp paths, `.baton/` bookkeeping, `specs/*/handoff.md`, or any
   file under the current feature directory `specs/<feature>/` (Spec Kit and Baton artifacts such as tasks.md,
   analysis.md and review.json).
+- Quick `handoff new --quick` MUST pin the current commit as a `diff-base` decision before work starts. Implement/work
+  writers MUST end their session and use a fresh checkout for review. Review and land receive/write MUST reject the
+  implement/work checkout's writer-token hash with `E_SELF_REVIEW` (exit 3); only an owner answer to a blocking
+  `self-review-override` question permits the exception.
+- Review write records a SHA-256 of the sorted changed-file paths and file contents relative to its diff base as
+  `reviewed-tree`. Land receive/write recomputes that fingerprint and stops with `E_STALE_REVIEW` if code changed.
+  Review write also enforces freshness of tasks.md rather than rehashing unreviewed evidence. An agent-supplied
+  `diff-base` or `reviewed-tree` decision is rejected; only the CLI may create these scope markers.
 - `markers-bounded`: counts `[NEEDS CLARIFICATION` occurrences (Spec Kit's convention) and allows at most 3.
 - `tasks-reference-stories`: each `- [ ] T\d{3}` line in a story phase carries `[US\d+]`.
 - `acceptance-registered`: tasks.md has a `## Acceptance Registry` table (added by the `baton-templates` preset).
@@ -151,9 +159,10 @@ findings file is `.baton/quick/<slug>.review.json`. `{quick_dir}` in check paths
   an arrow or a spaced dash. `n/a — <reason>` is accepted only when the baton check is `expect_initial: n/a` and
   the registry's Expect initial column, if present, does not say `fail`; no waiver turns `n/a` into evidence for a
   `fail` check. `partial — <evidence>` stays unmet unless a configured `human:<role>` recorded a decision tagged
-  `acceptance-waiver` with `x-check: <id>`. To record this through the CLI, a blocking question must carry
-  `x-check: <registered id>` and offer a `Waive …` choice; `handoff answer Qn "Waive …" --by <role>` records
-  the tagged decision and the SHA-256 of the tasks evidence at approval time. A different choice remains untagged;
+  `acceptance-waiver` with `x-check: <id>`. Use `handoff question --check <id> --reason <audited reason>` even
+  when the implement exit is unmet; the blocking question offers `Waive <id>` or `Keep requirement`.
+  `handoff answer Qn "Waive <id>" --by <role>` records the tagged decision and the checkbox-normalized SHA-256
+  of tasks.md at approval time. A different choice remains untagged;
   edited tasks or evidence invalidate the old waiver and require a new human decision. Never answer for a human
   without their approval.
 - `local-checks-pass`: runs each `config.checks[*].run` and records the exit codes as evidence.

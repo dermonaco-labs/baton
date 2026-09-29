@@ -2,12 +2,30 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { maintainerWorkflows } from '../../src/lib/maintainer-workflows.mjs';
 import YAML from 'yaml';
 
 const source = (path) => new URL(`../../${path}`, import.meta.url);
 const publicHosts = new Set(['github.com', 'docs.github.com', 'registry.npmjs.org', 'pypi.org', 'files.pythonhosted.org']);
 const placeholderHost = /(?:^|\.)(?:example\.(?:com|org|net)|example|invalid|test|localhost)$/;
+
+test('tracked Baton documentation contains no private feed hostnames', async () => {
+  const root = fileURLToPath(source(''));
+  const paths = execFileSync('git', ['ls-files', '-z', '--', 'docs', 'specs', 'baton'], { cwd: root })
+    .toString().split('\0').filter(path => path.endsWith('.md'));
+  const violations = [];
+  for (const path of paths) {
+    const text = await readFile(source(path), 'utf8');
+    const hosts = [
+      ...[...text.matchAll(/https?:\/\/([^/\s)`>'"]+)/gi)].map(match => match[1]),
+      ...[...text.matchAll(/\b[a-z0-9-]+(?:\.[a-z0-9-]+)+\.(?:com|io|net|org|dev|cloud|app)\b/gi)].map(match => match[0]),
+    ].map(host => host.toLowerCase().replace(/:\d+$/, ''));
+    if (hosts.some(host => !publicHosts.has(host) && !placeholderHost.test(host))) violations.push(path);
+  }
+  assert.deepEqual(violations, [], 'Replace organisation-specific hosts with documented placeholders');
+});
 
 test('shipped troubleshooting names no concrete registry host beyond public or placeholder hosts', async () => {
   const text = await readFile(source('docs/08-troubleshooting.md'), 'utf8');

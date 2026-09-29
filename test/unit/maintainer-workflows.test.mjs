@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import YAML from 'yaml';
 import { sourceRoot, runCli } from '../helpers/index.mjs';
 import { maintainerWorkflowIssues } from '../../src/lib/maintainer-workflows.mjs';
@@ -94,6 +95,40 @@ test('CI, smoke and release expose the required checks and dry-run boundary', as
   assert.match(JSON.stringify(release.jobs.release), /SHA256SUMS/);
   assert.match(JSON.stringify(release.jobs.release), /attest-build-provenance/);
   assert.match(JSON.stringify(release.jobs.release), /dry_run/);
+});
+
+test('upstream watch verifies the CI-pinned lychee before checking external links', async () => {
+  const ci = YAML.parse(await readFile(path('ci'), 'utf8'));
+  const watch = YAML.parse(await readFile(path('upstream-watch'), 'utf8'));
+  const relative = ci.jobs.lint.steps.find(step => step.name === 'Check relative documentation links')?.run;
+  const links = watch.jobs.watch.steps.find(step => step.id === 'links');
+  assert.ok(relative && links?.run, 'both workflows run standalone lychee');
+  assert.ok(!watch.jobs.watch.steps.some(step => step.uses?.startsWith('lycheeverse/')),
+    'weekly watch cannot use the action blocked by the repository policy');
+  const install = relative.split('\n').slice(0, 4).join('\n');
+  assert.ok(install.includes('sha256sum -c -'), 'CI must verify the archive');
+  assert.ok(links.run.includes(install.trim()), 'watch must use the same pinned download and verification as CI');
+  assert.match(links.run, /--include '\^https\?:\/\/'/);
+  assert.match(links.run, /--format markdown/);
+  assert.match(links.run, /--output "\$RUNNER_TEMP\/lychee\.out\.md"/);
+  assert.match(links.run, /exit_code=\$result/);
+  const update = watch.jobs.watch.steps.find(step => step.name === 'Update the single upstream tracking issue');
+  assert.equal(update.env.LINKS_RESULT, '${{ steps.links.outputs.exit_code }}');
+  assert.match(update.run, /RUNNER_TEMP\}\/lychee\.out\.md/);
+
+  const scratch = await mkdtemp(join(tmpdir(), 'baton-lychee-regression-'));
+  try {
+    const bashScratch = scratch.replace(/^([A-Za-z]):/, (_, drive) => `/${drive.toLowerCase()}`).replaceAll('\\', '/');
+    const run = spawnSync('bash', ['-e', '-c',
+      `curl() { printf 'tampered archive' > "$RUNNER_TEMP/lychee.tar.gz"; }\n${links.run}`],
+    { cwd: sourceRoot, encoding: 'utf8',
+      env: { ...process.env, RUNNER_TEMP: bashScratch, GITHUB_OUTPUT: `${bashScratch}/outputs` } });
+    if (run.error) throw run.error;
+    assert.notEqual(run.status, 0, 'tampered download must not reach lychee');
+    assert.match(run.stdout + run.stderr, /FAILED|checksum did NOT match/);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
 });
 
 test('malformed frontmatter emits a GitHub error annotation', async () => {

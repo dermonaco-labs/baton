@@ -173,6 +173,7 @@
           "phase": { "$ref": "#/$defs/phase" },
           "at": { "$ref": "#/$defs/datetime" },
           "by": { "$ref": "#/$defs/actor" },
+          "writer": { "$ref": "#/$defs/sha256" },
           "commit": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{7,64}$" }
         },
         "patternProperties": { "^x-": {} }, "additionalProperties": false

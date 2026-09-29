@@ -3666,7 +3666,7 @@
       "format": "esm"
     },
     "src/lib/handoff.mjs": {
-      "bytes": 12082,
+      "bytes": 12293,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3722,7 +3722,7 @@
       "format": "esm"
     },
     "src/lib/checks.mjs": {
-      "bytes": 20715,
+      "bytes": 20722,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3859,8 +3859,39 @@
       ],
       "format": "esm"
     },
+    "src/lib/writer.mjs": {
+      "bytes": 938,
+      "imports": [
+        {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/hash.mjs",
+          "kind": "import-statement",
+          "original": "./hash.mjs"
+        },
+        {
+          "path": "src/lib/manifest.mjs",
+          "kind": "import-statement",
+          "original": "./manifest.mjs"
+        }
+      ],
+      "format": "esm"
+    },
     "src/commands/handoff.mjs": {
-      "bytes": 39919,
+      "bytes": 51022,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3893,6 +3924,11 @@
           "original": "../lib/handoff.mjs"
         },
         {
+          "path": "src/lib/writer.mjs",
+          "kind": "import-statement",
+          "original": "../lib/writer.mjs"
+        },
+        {
           "path": "src/lib/manifest.mjs",
           "kind": "import-statement",
           "original": "../lib/manifest.mjs"
@@ -3901,6 +3937,16 @@
           "path": "src/lib/hash.mjs",
           "kind": "import-statement",
           "original": "../lib/hash.mjs"
+        },
+        {
+          "path": "src/lib/hash.mjs",
+          "kind": "import-statement",
+          "original": "../lib/hash.mjs"
+        },
+        {
+          "path": "src/lib/checks.mjs",
+          "kind": "import-statement",
+          "original": "../lib/checks.mjs"
         },
         {
           "path": "src/lib/phases.mjs",
@@ -4630,6 +4676,21 @@
           "external": true
         },
         {
+          "path": "node:crypto",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
           "path": "node:fs/promises",
           "kind": "import-statement",
           "external": true
@@ -5052,7 +5113,7 @@
           "bytesInOutput": 11758
         },
         "node_modules/ajv/dist/compile/util.js": {
-          "bytesInOutput": 3570
+          "bytesInOutput": 3598
         },
         "node_modules/ajv/dist/compile/names.js": {
           "bytesInOutput": 629
@@ -5076,7 +5137,7 @@
           "bytesInOutput": 680
         },
         "node_modules/ajv/dist/vocabularies/code.js": {
-          "bytesInOutput": 3132
+          "bytesInOutput": 3160
         },
         "node_modules/ajv/dist/compile/validate/keyword.js": {
           "bytesInOutput": 2961
@@ -5340,10 +5401,10 @@
           "bytesInOutput": 949
         },
         "src/lib/handoff.mjs": {
-          "bytesInOutput": 6748
+          "bytesInOutput": 6914
         },
         "src/lib/checks.mjs": {
-          "bytesInOutput": 11018
+          "bytesInOutput": 10996
         },
         "src/lib/maintainer-workflows.mjs": {
           "bytesInOutput": 515
@@ -5351,8 +5412,11 @@
         "src/commands/validate.mjs": {
           "bytesInOutput": 7741
         },
+        "src/lib/writer.mjs": {
+          "bytesInOutput": 606
+        },
         "src/commands/handoff.mjs": {
-          "bytesInOutput": 23938
+          "bytesInOutput": 30703
         },
         "src/commands/status.mjs": {
           "bytesInOutput": 937
@@ -5373,7 +5437,7 @@
           "bytesInOutput": 740
         },
         "src/commands/init.mjs": {
-          "bytesInOutput": 10359
+          "bytesInOutput": 10341
         },
         "src/commands/update.mjs": {
           "bytesInOutput": 5890
@@ -5388,7 +5452,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 393033
+      "bytes": 400586
     }
   }
 }

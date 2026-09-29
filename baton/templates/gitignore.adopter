@@ -1,3 +1,4 @@
 .context/
 .baton/conflicts/
 .baton/.tmp/
+.baton/.local/
