@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: pretag-fixes-001
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Review 2 of the pretag-fixes-001 work cycle (a755ff8..c142fb7, PR 33): F110 and F114 fixed and verified with the real CLI and by mutation; the F118 alias test now fails without alias detection. F111 resolved by owner route (a) via PR #32. No open findings: route to land."
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Opened the independent quick-lane land PR for owner review; no implementation files changed or merged in this land checkout.
 read_first:
   - path: .baton/quick/pretag-fixes-001.md
     why: Quick scope, decisions D14-D15, land route and tag precondition
@@ -27,15 +27,9 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/pretag-fixes-001.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: "The diff restores intended behavior without new commands, flags, error codes or handoff fields: the self-review guard still means 'same checkout', ownership hashes still mean 'user-unmodified', and E_CHECKOUT_TOKEN only gains a documented trigger. The stale absolute-path wording in specs/ contracts (F113) is documentation drift for a feature-lane amendment, not a contract change. The remaining quick-lane fixes (F110 cleanup list, F114 merge ordering) are small and stay in scope. F111 is an owner decision about feature 001, not quick-lane work."
+    evidence: https://github.com/dermonaco-labs/baton/pull/35
 open_questions: []
 decisions:
   - id: D1
@@ -142,10 +136,18 @@ decisions:
     decision: Handoff body redacted
     rationale: Mark review 2 outcome
     by: baton
+  - id: D23
+    decision: Handoff body redacted
+    rationale: "Correct pre-land merge-order guidance after verifying the subject filter and PR #32 files"
+    by: baton
+  - id: D24
+    decision: Handoff body redacted
+    rationale: "Refresh land next steps now that PR #35 exists and the human review gate is pending"
+    by: baton
 gate:
-  required: false
-  approved_by: null
-  approved_at: null
+  required: true
+  approved_by: repository owner via direct approval
+  approved_at: 2026-09-29
 history:
   - phase: work
     at: 2026-09-29T03:08:01.903Z
@@ -238,8 +240,36 @@ history:
     x-worktree: 44021efbcb1fff1d7f1e6203f63085c561c88e445424157a99a501a72531f564
     commit: c142fb7
     x-action: redact
-updated_at: 2026-09-29T04:40:17.207Z
-updated_by: baton
+  - phase: review
+    at: 2026-09-29T05:00:56.677Z
+    by: baton
+    writer: b50e1ce947eab4760f8d54acf9c5a9e44ece4cd7e547eaff4ed251d0d9d892d1
+    x-worktree: c8d17e13e9ae0f664b030f7e432f71e7206fec9852219e5af8b9b9f9a0332b48
+    commit: 24f661e
+    x-action: redact
+  - phase: land
+    at: 2026-09-29T05:08:18.445Z
+    by: baton
+    writer: b50e1ce947eab4760f8d54acf9c5a9e44ece4cd7e547eaff4ed251d0d9d892d1
+    x-worktree: c8d17e13e9ae0f664b030f7e432f71e7206fec9852219e5af8b9b9f9a0332b48
+    commit: 7eab438
+    x-action: write
+  - phase: land
+    at: 2026-09-29T05:08:29.468Z
+    by: baton
+    writer: b50e1ce947eab4760f8d54acf9c5a9e44ece4cd7e547eaff4ed251d0d9d892d1
+    x-worktree: c8d17e13e9ae0f664b030f7e432f71e7206fec9852219e5af8b9b9f9a0332b48
+    commit: 7eab438
+    x-action: redact
+  - phase: land
+    at: 2026-09-29T09:22:10.668Z
+    by: human:repository-owner
+    writer: b50e1ce947eab4760f8d54acf9c5a9e44ece4cd7e547eaff4ed251d0d9d892d1
+    x-worktree: c8d17e13e9ae0f664b030f7e432f71e7206fec9852219e5af8b9b9f9a0332b48
+    commit: 8a748bd
+    x-action: approve
+updated_at: 2026-09-29T09:22:10.668Z
+updated_by: human:repository-owner
 x-implementation-writer: 8a44b7aec2b3281d1dce7877b097b21442fccfae8def9cf5a0c742317096e70f
 x-implementation-worktree: 460f84d3c666afcfb0299243e8426c4b553802b48ca5b0172feede66b32bda0d
 x-implementation-cycle: 58927275a1788d7283c5d6f91e1eb9d5e182db0f7d4bc471aea844aba71b2532
@@ -256,12 +286,18 @@ risks:
   - id: R4
     text: "F122: template-cleanup.yml names source quick batons by hand. Before tagging, git ls-files .baton/quick at the tag commit must be a subset of its remove list, or new maintainer batons ship to adopters and fail their first validate."
     severity: medium
+  - id: R5
+    text: "F122 pre-tag gate: at the tag commit, git ls-files .baton/quick must remain a subset of .baton/template-cleanup.yml remove. At land, both tracked quick files match its two listed source-owned quick paths; recheck immediately before tagging. No tag or three-OS dispatch in this land."
+    severity: medium
 review:
   findings_path: .baton/quick/pretag-fixes-001.review.json
   blocking_findings: 0
 do_not_read:
   - path: specs/
     why: "Feature 001 lands separately at c85bf3f through PR #32; this quick lane must not edit it"
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/35
+  number: 35
 ---
 ## Goal
 Keep the work in scope.
@@ -271,7 +307,7 @@ Review 2 (a755ff8..c142fb7): F110 fixed, adopt and its --no-workflows path remov
 
 ## Next steps
 1. Review 2 (baton-review, independent checkout at c142fb7) verified F110, F114 and the F118 alias test; all findings are fixed or dismissed (see review.json x-review2-summary). F111 is resolved by owner route (a) via PR #32 (D15).
-2. In an independent checkout at current main: `node .baton/bin/baton.mjs handoff receive --phase land --quick pretag-fixes-001`, then `/baton-land` (delegates to `/land`, opens the land PR without merging) and `handoff write --phase land --quick pretag-fixes-001 --from-json <input with pr>`. Run it before further code lands on main (R3).
+2. Land PR #35 is open for repository-owner review. PR #32 changes only a feature handoff and cannot by itself stale either reviewed code tree; either merge order is safe for those two baton-only diffs. New subject-code changes require a fresh receive/review check (R3).
 3. Stop at the human gate: the repository owner reviews the land PR and runs `node .baton/bin/baton.mjs handoff approve --quick pretag-fixes-001 --by "repository owner" --via "pull request review"`. Before tagging, confirm `git ls-files .baton/quick` is a subset of the .baton/template-cleanup.yml remove list (R4, F122).
 
 ## Watch out for
