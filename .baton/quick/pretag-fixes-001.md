@@ -142,6 +142,10 @@ decisions:
     decision: Handoff body redacted
     rationale: Mark review 2 outcome
     by: baton
+  - id: D23
+    decision: Handoff body redacted
+    rationale: "Correct pre-land merge-order guidance after verifying the subject filter and PR #32 files"
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -238,7 +242,14 @@ history:
     x-worktree: 44021efbcb1fff1d7f1e6203f63085c561c88e445424157a99a501a72531f564
     commit: c142fb7
     x-action: redact
-updated_at: 2026-09-29T04:40:17.207Z
+  - phase: review
+    at: 2026-09-29T05:00:56.677Z
+    by: baton
+    writer: b50e1ce947eab4760f8d54acf9c5a9e44ece4cd7e547eaff4ed251d0d9d892d1
+    x-worktree: c8d17e13e9ae0f664b030f7e432f71e7206fec9852219e5af8b9b9f9a0332b48
+    commit: 24f661e
+    x-action: redact
+updated_at: 2026-09-29T05:00:56.675Z
 updated_by: baton
 x-implementation-writer: 8a44b7aec2b3281d1dce7877b097b21442fccfae8def9cf5a0c742317096e70f
 x-implementation-worktree: 460f84d3c666afcfb0299243e8426c4b553802b48ca5b0172feede66b32bda0d
@@ -271,7 +282,7 @@ Review 2 (a755ff8..c142fb7): F110 fixed, adopt and its --no-workflows path remov
 
 ## Next steps
 1. Review 2 (baton-review, independent checkout at c142fb7) verified F110, F114 and the F118 alias test; all findings are fixed or dismissed (see review.json x-review2-summary). F111 is resolved by owner route (a) via PR #32 (D15).
-2. In an independent checkout at current main: `node .baton/bin/baton.mjs handoff receive --phase land --quick pretag-fixes-001`, then `/baton-land` (delegates to `/land`, opens the land PR without merging) and `handoff write --phase land --quick pretag-fixes-001 --from-json <input with pr>`. Run it before further code lands on main (R3).
+2. In an independent checkout at current main: `node .baton/bin/baton.mjs handoff receive --phase land --quick pretag-fixes-001`, then `/baton-land` (delegates to `/land`, opens the land PR without merging) and `handoff write --phase land --quick pretag-fixes-001 --from-json <input with pr>`. PR #32 changes only a feature handoff and cannot by itself stale either reviewed code tree. If subject code lands on main, rerun receive before this land (R3).
 3. Stop at the human gate: the repository owner reviews the land PR and runs `node .baton/bin/baton.mjs handoff approve --quick pretag-fixes-001 --by "repository owner" --via "pull request review"`. Before tagging, confirm `git ls-files .baton/quick` is a subset of the .baton/template-cleanup.yml remove list (R4, F122).
 
 ## Watch out for
