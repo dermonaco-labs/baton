@@ -1,0 +1,282 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/20260929-baton-pretag-pass5/",
+    "x-scope": "Independent quick-lane review of pre-tag fix pass 5 (PR 30): diff c85bf3f0..a755ff83, 24 files (19 in the CLI scope plus .baton/template-cleanup.yml, the rebuilt bundle and its metafile, and the quick baton). Verification used the real CLI in scratch repositories: an implement clone with a bare remote, a same-path re-clone, a second git worktree, junction/8.3/subst aliases, an overlay init with a core.autocrlf=true clone, a derived-clone adopt, and the c85bf3f bundle for before/after. Eight headless personas. Independent checkout; receive review passed. No code fixed: review-role session."
+  },
+  "base": "c85bf3f00c04ca192675281af623311ac5a98d64",
+  "head": "a755ff838970f22707d32208ff88130e45d6dc8f",
+  "personas": [
+    "correctness-reviewer",
+    "testing-reviewer",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "agent-native-reviewer",
+    "learnings-researcher",
+    "security-reviewer",
+    "adversarial-reviewer"
+  ],
+  "findings": [
+    {
+      "id": "F98",
+      "severity": "P2",
+      "title": "An independent fresh clone at the same absolute path as the implement checkout is refused with E_SELF_REVIEW",
+      "file": "src/lib/writer.mjs",
+      "line": 13,
+      "persona": "correctness-reviewer",
+      "confidence": 0.95,
+      "disposition": "fixed",
+      "x-evidence": "Real CLI, scratch implement clone plus bare remote: a fresh clone at the SAME absolute path passes receive review (exit 0). The implement checkout is still denied (exit 3 E_SELF_REVIEW) as-is, after deleting .baton/.local/session.json, and after git clean -xfd. A second git worktree passes; its identity lives at .git/worktrees/<name>/baton/checkout-id. The F88 one-cycle override still works: receive passes after the token is deleted, and after review routes to work and a new work write, the same checkout is denied again. Copying .git/baton/checkout-id into another clone makes that clone stricter (denied), not a bypass. Deleting both the token and the git identity in the implement checkout passes; that is a deliberate double deletion of documented files and is accepted for a process guard."
+    },
+    {
+      "id": "F107",
+      "severity": "P3",
+      "title": "Deleting the token and invoking through an alias path (junction, symlink, 8.3, subst) bypasses the worktree check",
+      "file": "src/lib/writer.mjs",
+      "line": 13,
+      "persona": "security-reviewer",
+      "confidence": 0.9,
+      "disposition": "fixed",
+      "x-evidence": "With the token deleted, receive review through a junction alias, the 8.3 short path and a subst drive of the implement checkout all exit 3 E_SELF_REVIEW. The identity comes from git rev-parse --git-path, so it doesn't depend on the path spelling. The automated alias assertion is weak (see F118)."
+    },
+    {
+      "id": "F102",
+      "severity": "P3",
+      "title": "The committed x-worktree / x-implementation-worktree is an unsalted sha256 of the absolute path, so the OS username can be recovered",
+      "file": "src/commands/handoff.mjs",
+      "line": 200,
+      "persona": "security-reviewer",
+      "confidence": 0.85,
+      "disposition": "fixed",
+      "x-evidence": "New entries hash a random 32-byte identity: the quick baton's x-worktree 460f84d3... matches no path candidate. Legacy values already committed in the feature baton remain; F112 tracks them."
+    },
+    {
+      "id": "F99",
+      "severity": "P2",
+      "title": "Manifest integrity uses normalized hashes in doctor/adopt/models and raw digests in update/uninstall/init; a CRLF overlay checkout cannot update",
+      "file": "src/lib/hash.mjs",
+      "line": 19,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.95,
+      "disposition": "fixed",
+      "x-evidence": "Overlay init, then a core.autocrlf=true clone (42 of 83 managed files CRLF). The c85bf3f CLI gives update --dry-run exit 4 with 42 conflicts, and uninstall keeps the files with W_USER_MODIFIED. The new CLI: doctor is clean apart from W_PACK_RECOMMENDED, update --dry-run and a real update exit 0 with 0 conflicts, 0 actions and no git changes, and uninstall exits 0, removes every managed file except the preserved constitution and removes the BATON marker. Integrity stays raw-byte strict: a CRLF-converted locked file gives lock verify E_LOCK_MISMATCH exit 1, build.mjs --check on a CRLF bundle exits 1, and the init payload lock check (init.mjs:186) still uses the raw digest. No payload file contains CRLF, so existing manifests remain valid."
+    },
+    {
+      "id": "F100",
+      "severity": "P2",
+      "title": "`models apply` on CRLF agent files now fails hard with E_FRONTMATTER_MALFORMED (regression from normalized isUserModified)",
+      "file": "src/commands/models.mjs",
+      "line": 54,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.95,
+      "disposition": "fixed",
+      "x-evidence": "On the autocrlf clone the c85bf3f CLI gives models apply --force E_FRONTMATTER_MALFORMED exit 1. The new CLI changes 9 agents; the files stay pure CRLF (no bare LF), and doctor stays clean afterwards."
+    },
+    {
+      "id": "F96",
+      "severity": "P3",
+      "title": "A corrupt checkout token or missing quick baton surfaces as E_INTERNAL (exit 10)",
+      "file": "src/lib/writer.mjs",
+      "line": 45,
+      "persona": "correctness-reviewer",
+      "confidence": 0.9,
+      "disposition": "fixed",
+      "x-evidence": "session.json containing null, null with CRLF, [], \"x\", 42, {} or truncated JSON gives E_CHECKOUT_TOKEN exit 2. A missing quick baton gives E_USAGE exit 2 with the handoff new --quick remediation."
+    },
+    {
+      "id": "F101",
+      "severity": "P3",
+      "title": "`update` merges .gitattributes inside the per-entry loop: dry-run repeats the action per file and the merge is skipped when every entry continues",
+      "file": "src/commands/update.mjs",
+      "line": 165,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.9,
+      "disposition": "fixed",
+      "x-evidence": "update --dry-run lists exactly one merge .gitattributes. With every managed entry modified (82 conflicts, exit 4), the attributes block is still merged, in dry-run and in a real run. Moving the merge after the loop introduced F114."
+    },
+    {
+      "id": "F90",
+      "severity": "P3",
+      "title": "The implement baton body, risks and PR metadata still describe fix pass 2",
+      "file": "specs/001-baton-template/handoff.md",
+      "line": 1010,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.95,
+      "disposition": "dismissed",
+      "reason": "Deferral accepted for this quick lane (D3). The quick lane may not touch specs/ (no-feature-tasks). The feature 001 land write can refresh the body, risks (R-WAIVERS, R-UPSTREAM-WATCH, R-REREVIEW4) and PR metadata, but first F111 has to be resolved."
+    },
+    {
+      "id": "F104",
+      "severity": "P3",
+      "title": "A stray, BOM-prefixed or merely mentioned BATON marker in .gitattributes aborts init/adopt after partial writes and before the manifest",
+      "file": "src/commands/init.mjs",
+      "line": 336,
+      "persona": "correctness-reviewer",
+      "confidence": 0.75,
+      "disposition": "dismissed",
+      "reason": "Deferral accepted as a v0.1 known issue: it needs a hand-damaged or mentioned marker, recovery is manual, and a transactional preflight is not a trivial pre-tag change. update gets the same failure mode via F114, which is kept open because this pass introduced it and its fix is small."
+    },
+    {
+      "id": "F105",
+      "severity": "P3",
+      "title": "The .gitattributes BATON block is undocumented and uninstall leaves it behind",
+      "file": "specs/001-baton-template/contracts/cli.md",
+      "line": 47,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.9,
+      "disposition": "dismissed",
+      "reason": "Confirmed: uninstall on the autocrlf clone leaves the block. Deferral accepted as a v0.1 known issue; the leftover block is inert (text=auto/eol rules only). Recommend a line in the release notes or known issues."
+    },
+    {
+      "id": "F110",
+      "severity": "P2",
+      "title": "adopt removes the whole .baton/quick/ directory, deleting adopter-authored quick batons, and plan.md's disposition does not list it",
+      "file": ".baton/template-cleanup.yml",
+      "line": 22,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.9,
+      "disposition": "open",
+      "x-evidence": "Real CLI in a derived clone (origin set to another org, template-cleanup-pending present). The adopter creates .baton/quick/my-own-fix.md before cleanup runs, for example on the documented fallback path where the cleanup workflow cannot push and the adopter runs baton adopt later. adopt --dry-run lists remove .baton/quick/, and a real adopt --no-workflows deletes the whole directory, including the adopter's baton (adopt.mjs:270-274 rm -r). update and uninstall keep adopter quick batons, and adopt on an overlay repo is a no-op. template-cleanup.yml:2 cites plan.md 'Template disposition' as its source, but plan.md:180 does not list .baton/quick/.",
+      "x-fix": "List only the template's own source-only files (.baton/quick/pretag-fixes-001.md and .baton/quick/pretag-fixes-001.review.json), not the directory. Alternatively, remove them from the template before tagging. Pin the behavior with a fixture that keeps an adopter-authored quick baton. The plan.md disposition row belongs in a feature-lane amendment.",
+      "x-personas": ["project-standards-reviewer", "correctness-reviewer", "learnings-researcher", "testing-reviewer"]
+    },
+    {
+      "id": "F111",
+      "severity": "P2",
+      "title": "After code changes, a feature baton at review → land is stranded: land stops with E_STALE_REVIEW and no command returns it to review",
+      "file": "src/commands/handoff.mjs",
+      "line": 598,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.95,
+      "disposition": "open",
+      "x-pre-existing": true,
+      "x-evidence": "PR 30 changed code after the feature 001 review. In a fresh clone at a755ff8, handoff receive --phase land --feature 001-baton-template exits 1 with E_STALE_REVIEW, and receive --phase review exits 1 with E_TRANSITION ('Expected land'). The land contract allows next compound/done only, and no handoff action rewinds land to review. error-codes.md:24 says to review the changed tree again but gives no command. The same trap hits any adopter who commits a fix after review, for example a CI fix during land. Verified workaround: at the reviewed tree c85bf3f, after npm ci, the same receive --phase land exits 0. So feature 001 can land from a checkout at c85bf3f, and this quick lane covers c85bf3f..main; the owner needs to decide.",
+      "x-fix": "Owner decision for feature 001: either land it at its reviewed tree (c85bf3f) and record a decision that quick baton pretag-fixes-001 reviews the delta, or add a CLI route back to review (for example, allow review write or receive when land is stale) through the feature lane. At minimum, document the workaround with E_STALE_REVIEW before tagging.",
+      "x-personas": ["adversarial-reviewer", "project-standards-reviewer"]
+    },
+    {
+      "id": "F112",
+      "severity": "P3",
+      "title": "Legacy path-hash x-worktree values are still committed in the feature 001 baton and can be reversed",
+      "file": "specs/001-baton-template/handoff.md",
+      "line": 1017,
+      "persona": "security-reviewer",
+      "confidence": 0.85,
+      "disposition": "dismissed",
+      "x-pre-existing": true,
+      "reason": "A dictionary attack recovers the 15 legacy values (2 unique) to d:\\privat\\copilot-worktrees\\baton\\{dermonaco-didactic-spoon,dermonaco-cautious-garbanzo}. They reveal no OS username, git history keeps them anyway, and the 20-entry history cap will drop them. The quick lane may not edit specs/. Cleanup is optional at the feature 001 land."
+    },
+    {
+      "id": "F113",
+      "severity": "P3",
+      "title": "Normative contracts still describe an absolute-worktree-path hash for x-implementation-worktree",
+      "file": "specs/001-baton-template/contracts/cli.md",
+      "line": 50,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.85,
+      "disposition": "dismissed",
+      "reason": "contracts/cli.md:50 and handoff-contract.md:187 still say 'hash of the absolute worktree path'. The reference docs (docs/reference/cli.md:40-43, error-codes.md:22-24) describe the random per-worktree identity. The guard's contract intent is unchanged (E_SELF_REVIEW still means the same checkout), so this is a documentation drift, not a public-contract change requiring escalation. The quick lane cannot edit specs/; amend the contracts in the feature 001 land or a later feature pass.",
+      "x-personas": ["project-standards-reviewer", "agent-native-reviewer"]
+    },
+    {
+      "id": "F114",
+      "severity": "P3",
+      "title": "A .gitattributes marker conflict now throws after update has rewritten managed files, leaving the manifest stale",
+      "file": "src/commands/update.mjs",
+      "line": 168,
+      "persona": "correctness-reviewer",
+      "confidence": 0.9,
+      "disposition": "open",
+      "x-evidence": "mergeAttributes throws E_CONFLICT on an unbalanced BATON marker. After F101 the throw happens after the per-entry loop's putBytes (update.mjs:159) and before writeManifest. The correctness persona reproduced it: the throw leaves a rewritten spec-template.md, and the next update reports that file as user-modified (exit 4). At c85bf3f the throw came before any managed write. This regression came from this pass.",
+      "x-fix": "Compute mergedAttributes before the loop (or map the BatonError to a .gitattributes conflict), and keep the single action entry and write after the loop. Add a regression test with an unbalanced marker plus an outdated owned file."
+    },
+    {
+      "id": "F115",
+      "severity": "P3",
+      "title": "checkoutHash silently drops the identity on any git exit 128 and leaves a stale x-implementation-worktree",
+      "file": "src/lib/writer.mjs",
+      "line": 19,
+      "persona": "security-reviewer",
+      "confidence": 0.65,
+      "disposition": "dismissed",
+      "reason": "Exit 128 from safe.directory 'dubious ownership', a bad GIT_DIR or a non-git root returns null with no warning. The guard then compares only the token, and handoff.mjs:720 keeps the previous cycle's x-implementation-worktree. Review and land writes still need git (reviewedTree), so the practical gap is receive in an unusual environment, for a process guard that is not a security boundary. Accepted for v0.1; recommend a W_ warning or a narrower null path later.",
+      "x-personas": ["security-reviewer", "agent-native-reviewer", "correctness-reviewer", "maintainability-reviewer"]
+    },
+    {
+      "id": "F116",
+      "severity": "P3",
+      "title": "Every handoff action fails with E_INTERNAL when the git dir is not writable",
+      "file": "src/lib/writer.mjs",
+      "line": 23,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.72,
+      "disposition": "dismissed",
+      "reason": "Reproduced by the adversarial persona with an icacls deny on .git: handoff next and receive give E_INTERNAL EPERM exit 10. Supported environments (local, Codespaces, Copilot cloud agent, Actions) have writable .git. Accepted for v0.1; later, map EACCES/EPERM/EROFS to an actionable error and skip identity creation for read-only actions."
+    },
+    {
+      "id": "F117",
+      "severity": "P3",
+      "title": "Batons written before this pass lose the worktree guard, so deleting the token re-enables self-review",
+      "file": "src/commands/handoff.mjs",
+      "line": 215,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.8,
+      "disposition": "dismissed",
+      "reason": "Reproduced by the adversarial persona: a legacy path-hash x-implementation-worktree never matches the random identity, so only the token check remains. v0.1 is the first release, so no adopter has in-flight batons from an older CLI. Here only feature 001 is affected, and it is already past review. Accepted; mention re-handing off in-flight batons in future upgrade notes."
+    },
+    {
+      "id": "F118",
+      "severity": "P3",
+      "title": "Fix-pass-5 tests leave key branches unpinned (alias check runs with the token present, CRLF update no-op, identity error, adopt fixture)",
+      "file": "test/integration/relay.test.mjs",
+      "line": 342,
+      "persona": "testing-reviewer",
+      "confidence": 0.85,
+      "disposition": "dismissed",
+      "reason": "The testing persona confirmed each gap by mutation. The F87 alias receive runs before the token is deleted, so a path-sensitive identity still passes. F99 doesn't assert zero update actions or marker removal. The invalid-identity E_CHECKOUT_TOKEN branch is untested. adopt.test.mjs:76 is vacuous without a source quick baton. hashManaged has no unit test. The behavior was verified manually in this review, so these are coverage gaps, not defects. Deferred with F109 as post-v0.1 test hardening; moving the alias block after token deletion is a one-line change worth folding into the next work pass.",
+      "x-personas": ["testing-reviewer", "correctness-reviewer", "agent-native-reviewer", "security-reviewer"]
+    },
+    {
+      "id": "F119",
+      "severity": "P3",
+      "title": "Invalid git checkout identity error names no path or command",
+      "file": "src/lib/writer.mjs",
+      "line": 31,
+      "persona": "agent-native-reviewer",
+      "confidence": 0.8,
+      "disposition": "dismissed",
+      "reason": "The message 'remove git-path baton/checkout-id' has no file field, and in a linked worktree the file is .git/worktrees/<name>/baton/checkout-id. docs/reference/error-codes.md gives the runnable command, and the corruption needs a manual edit. Accepted for v0.1, together with the related pre-existing F106; include the resolved path when F106 is fixed.",
+      "x-personas": ["agent-native-reviewer", "maintainability-reviewer"]
+    },
+    {
+      "id": "F120",
+      "severity": "P3",
+      "title": "Hash and identity helpers are duplicated or ambiguously named (hashManaged vs hashArtifact, digest, checkoutHash vs writerHash, attributes merge)",
+      "file": "src/lib/hash.mjs",
+      "line": 19,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.7,
+      "disposition": "dismissed",
+      "reason": "hashManaged repeats hashArtifact's text/binary rule. The raw digest alias is left only at init.mjs:186, and update.test.mjs still builds ownership hashes with the raw digest (correct only because the repo is eol=lf). The token and identity naming is blurred, and the .gitattributes merge exists three times. The ownership-hash paragraph sits under init in commands.md. None of this changes behavior; deferred as post-v0.1 refactoring."
+    },
+    {
+      "id": "F121",
+      "severity": "P3",
+      "title": "The quick baton summary and diff-nonempty evidence predate the follow-up template-cleanup commit",
+      "file": ".baton/quick/pretag-fixes-001.md",
+      "line": 38,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.8,
+      "disposition": "fixed",
+      "x-evidence": "The work handoff says 18 changed files and doesn't mention 825da35 (.baton/template-cleanup.yml plus adopt.test.mjs). The review handoff summary and F110 now record that change, so review and land see it."
+    }
+  ],
+  "x-review-summary": {
+    "verdict": "Fixes F96, F98, F99, F100, F101, F102 (going forward) and F107 are verified with the real CLI; raw-byte integrity is unchanged. Two open P2 findings keep the quick baton out of land: F110 (adopt deletes adopter quick batons, a small config fix) and F111 (the feature 001 baton is stranded by E_STALE_REVIEW, which needs an owner decision). F114 is an open P3 regression with a small fix. Route: review → work.",
+    "local_gates": "npm ci and npm run check (301 tests: 300 pass, 1 skipped, 0 fail) at a755ff8.",
+    "deferrals": "F90 can be done in the feature 001 land write once F111 is resolved. F104 and F105 are acceptable v0.1 known issues.",
+    "confidence_gate": 0.6
+  }
+}
