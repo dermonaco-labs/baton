@@ -100,6 +100,55 @@ test('update preserves adopter gitattributes lines outside the Baton marker', as
   } finally { await cleanup(); }
 });
 
+test('F101 update merges missing attributes once, including dry-run', async () => {
+  const { root, cleanup } = await installedRepo();
+  try {
+    await writeFile(join(root, '.gitattributes'), '*.custom binary\n');
+    const preview = await runCli(root, ['update', '--dry-run', '--json']);
+    assert.equal(preview.code, 0, preview.stdout || preview.stderr);
+    assert.equal(JSON.parse(preview.stdout).data.actions.filter(action => action === 'merge .gitattributes').length, 1);
+    const applied = await runCli(root, ['update', '--json']);
+    assert.equal(applied.code, 0, applied.stdout || applied.stderr);
+    assert.equal(JSON.parse(applied.stdout).data.actions.filter(action => action === 'merge .gitattributes').length, 1);
+  } finally { await cleanup(); }
+});
+
+test('F99 core.autocrlf checkout keeps CRLF managed files owned through doctor, update and uninstall', async () => {
+  const installed = await installedRepo();
+  const clone = await tempRepo();
+  try {
+    const { execFileSync } = await import('node:child_process');
+    execFileSync('git', ['init', '-q'], { cwd: installed.root });
+    execFileSync('git', ['add', '-A'], { cwd: installed.root });
+    execFileSync('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+      'commit', '-qm', 'installed files'], { cwd: installed.root });
+    await rm(clone.root, { recursive: true, force: true });
+    execFileSync('git', ['clone', '-q', '-c', 'core.autocrlf=true', installed.root, clone.root], { cwd: installed.root });
+    const root = clone.root;
+    const paths = ['.github/agents/correctness-reviewer.agent.md', '.specify/extensions.yml'];
+    for (const path of paths) {
+      assert.match(await readFile(join(root, path), 'utf8'), /\r\n/, `${path} must check out as CRLF`);
+    }
+    const doctor = await runCli(root, ['doctor', '--json']);
+    assert.equal(doctor.code, 0, doctor.stdout || doctor.stderr);
+    assert.ok(!JSON.parse(doctor.stdout).warnings.some(({ code, file }) =>
+      code === 'W_MANIFEST_INTEGRITY' && paths.includes(file)), doctor.stdout);
+    assert.ok(!JSON.parse(doctor.stdout).warnings.some(({ code, file }) =>
+      code === 'W_AGENT_CORRUPTED' && paths.includes(file)), doctor.stdout);
+    const models = await runCli(root, ['models', 'apply', '--force', '--dry-run', '--json']);
+    assert.equal(models.code, 0, models.stdout || models.stderr);
+    const update = await runCli(root, ['update', '--dry-run', '--json']);
+    assert.equal(update.code, 0, update.stdout || update.stderr);
+    assert.ok(!JSON.parse(update.stdout).data.conflicts.some(({ path }) => paths.includes(path)), update.stdout);
+    const uninstall = await runCli(root, ['uninstall', '--json']);
+    assert.equal(uninstall.code, 0, uninstall.stdout || uninstall.stderr);
+    for (const path of paths) assert.equal(await exists(root, path), false, `${path} should be removed`);
+  } finally {
+    await clone.cleanup();
+    await installed.cleanup();
+  }
+});
+
 test('update preserves adopter Copilot hooks from a merged learning-pack install', async () => {
   const { root, cleanup } = await tempRepo('repos/empty');
   const path = '.github/hooks/copilot-hooks.json';

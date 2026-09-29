@@ -8,6 +8,7 @@ import { readManifest, writeManifest, installedScript } from '../lib/manifest.mj
 import { loadPacks, resolvePacks, recommendedPacks } from '../lib/packs.mjs';
 import { mergeMarker } from '../lib/markers.mjs';
 import { mergeAttributes } from '../lib/attributes.mjs';
+import { hashManaged } from '../lib/hash.mjs';
 import { repairAtv } from '../lib/repairs.mjs';
 import { prepareSpeckit, UpstreamError } from '../lib/upstream.mjs';
 import { mkdtemp } from 'node:fs/promises';
@@ -266,8 +267,8 @@ export async function run(root, args) {
           continue;
         }
       }
-      if (current && current.equals(desired)) {
-        if (!old) installed.push({ path, sha256: digest(current), pack: entry.pack, owner: entry.owner, managed: true });
+      if (current && hashManaged(current) === hashManaged(desired)) {
+        if (!old) installed.push({ path, sha256: hashManaged(current), pack: entry.pack, owner: entry.owner, managed: true });
         continue;
       }
       if (current && entry.owner === 'atv' && path.endsWith('.agent.md')) {
@@ -278,7 +279,7 @@ export async function run(root, args) {
           if (!(error instanceof UpstreamError) || !['E_FRONTMATTER_MALFORMED', 'E_UPSTREAM_VERIFY'].includes(error.code)) throw error;
         }
       }
-      const owned = old && digest(current ?? '') === old.sha256;
+      const owned = old && current && hashManaged(current) === old.sha256;
       const mergeable = (path === hooks || path === extensions) && current && desired !== entry.bytes;
       if (current && !owned && !mergeable && !matches(opts.adopt, path) && !(repairable && opts.repair)) {
         conflicts.push({ path, reason: old ? 'user-modified file' : 'unmanaged file', ...(repairable ? { repairable: true } : {}) });
@@ -287,7 +288,7 @@ export async function run(root, args) {
       }
       actions.push(`${current ? 'update' : 'install'} ${path}`);
       if (!opts.dryRun) await writeIfChanged(root, path, desired, false);
-      const record = { path, sha256: digest(desired), pack: entry.pack, owner: entry.owner, managed: true };
+      const record = { path, sha256: hashManaged(desired), pack: entry.pack, owner: entry.owner, managed: true };
       if (old) Object.assign(old, record);
       else installed.push(record);
       if (!opts.dryRun && await optionalBytes(root, `.baton/conflicts/${path}.new`)) {
@@ -300,7 +301,7 @@ export async function run(root, args) {
     const original = await optionalBytes(root, instructions);
     const oldMarker = previous?.marker_sections.find((/** @type {{path:string,marker:string}} */ item) => item.path === instructions && item.marker === 'BATON');
     const oldContent = original ? marker.exec(original.toString())?.[1] : undefined;
-    if (original && oldContent !== undefined && (!oldMarker || digest(oldContent) !== oldMarker.sha256) &&
+    if (original && oldContent !== undefined && (!oldMarker || hashManaged(oldContent) !== oldMarker.sha256) &&
         !matches(opts.adopt, instructions) && !matches(opts.keep, instructions)) {
       conflicts.push({ path: instructions, reason: 'unmanaged or user-modified BATON marker' });
       if (!opts.dryRun) await putBytes(root, `.baton/conflicts/${instructions}.new`, mergeMarker(original.toString(), 'BATON', content));
@@ -317,7 +318,7 @@ export async function run(root, args) {
     }
     const sections = matches(opts.keep, instructions) ? previous?.marker_sections ?? [] :
       conflicts.some(item => item.path === instructions) ? previous?.marker_sections ?? [] :
-        [{ path: instructions, marker: 'BATON', sha256: digest(content) }];
+        [{ path: instructions, marker: 'BATON', sha256: hashManaged(content) }];
     const ignore = '.gitignore';
     const ignoreCurrent = (await optionalBytes(root, ignore))?.toString() ?? '';
     const additions = (await readFile(join(payload.root, 'baton/templates/gitignore.adopter'), 'utf8'))

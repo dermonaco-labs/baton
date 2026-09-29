@@ -14,6 +14,11 @@ When to use: overlay Baton on an existing repository, select optional packs,
 or preview an installation with `--dry-run`. Hands off to: `doctor`, then
 `/baton` to start the relay. Key options: `--packs a,b`, `--script sh|ps|py`,
 `--adopt-upstream`, `--keep`, `--repair`.
+Installed-file ownership hashes normalize CRLF to LF for valid UTF-8
+text while keeping binary files byte-exact. The same rule applies to
+`init`, `update`, `uninstall`, `doctor`, `adopt`, `manifest` and
+`models apply`; it does not weaken the raw-byte `lock verify` or bundle
+SHA-256 checks.
 
 ### `update`
 

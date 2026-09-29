@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, cp, readFile, writeFile, rm, mkdir, readdir } from 'node:fs/promises';
+import { mkdtemp, cp, readFile, writeFile, rm, mkdir, readdir, symlink } from 'node:fs/promises';
 import { join, relative, isAbsolute } from 'node:path';
+import { tmpdir } from 'node:os';
 import YAML from 'yaml';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -333,7 +334,22 @@ test('F87 rotating checkout token cannot bypass the worktree self-review guard',
     await writeInput(root, { summary: 'Corrected docs typo.' });
     assert.equal((await runCli(root, ['handoff', 'write', '--phase', 'work', '--quick', 'token-rotation', '--from-json', 'handoff-input.json'])).code, 0);
     const path = join(root, '.baton/.local/session.json');
+    await git('git', ['add', '-A'], { cwd: root });
+    await git('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+      'commit', '-qm', 'work result'], { cwd: root });
+    const aliasRoot = await mkdtemp(join(tmpdir(), 'baton-alias-'));
+    const alias = join(aliasRoot, 'link');
+    await symlink(root, alias, process.platform === 'win32' ? 'junction' : 'dir');
+    try {
+      const denied = await runCli(alias, ['handoff', 'receive', '--phase', 'review', '--quick', 'token-rotation']);
+      assert.equal(denied.code, 3, denied.stdout || denied.stderr);
+      assert.match(denied.stdout + denied.stderr, /E_SELF_REVIEW/);
+    } finally {
+      await rm(alias);
+      await rm(aliasRoot, { recursive: true, force: true });
+    }
     await rm(path);
+    await git('git', ['clean', '-xfd'], { cwd: root });
     for (const phase of ['review']) {
       const result = await runCli(root, ['handoff', 'receive', '--phase', phase, '--quick', 'token-rotation', '--json']);
       assert.equal(result.code, 3, result.stdout || result.stderr);
@@ -344,6 +360,37 @@ test('F87 rotating checkout token cannot bypass the worktree self-review guard',
     assert.equal(denied.code, 3, denied.stdout || denied.stderr);
   } finally {
     await cleanup();
+  }
+});
+
+test('F98 fresh clone at the same path can review, while a second worktree can review', async () => {
+  const { root, cleanup } = await quickRepo();
+  const bare = await mkdtemp(join(tmpdir(), 'baton-clone-source-'));
+  try {
+    const slug = 'same-path-clone';
+    assert.equal((await runCli(root, ['handoff', 'new', '--quick', slug, '--reason', 'Correct docs typo'])).code, 0);
+    await writeInput(root, { summary: 'Corrected docs typo.' });
+    assert.equal((await runCli(root, ['handoff', 'write', '--phase', 'work', '--quick', slug,
+      '--from-json', 'handoff-input.json'])).code, 0);
+    await git('git', ['add', '-A'], { cwd: root });
+    await git('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+      'commit', '-qm', 'work result'], { cwd: root });
+    const second = join(root, 'other-worktree');
+    await git('git', ['worktree', 'add', '--detach', second, 'HEAD'], { cwd: root });
+    try {
+      const other = await runCli(second, ['handoff', 'receive', '--phase', 'review', '--quick', slug]);
+      assert.equal(other.code, 0, other.stdout || other.stderr);
+    } finally {
+      await git('git', ['worktree', 'remove', '--force', second], { cwd: root });
+    }
+    await git('git', ['clone', '--bare', root, bare], { cwd: root });
+    await rm(root, { recursive: true, force: true });
+    await git('git', ['clone', bare, root], { cwd: sourceRoot });
+    const fresh = await runCli(root, ['handoff', 'receive', '--phase', 'review', '--quick', slug]);
+    assert.equal(fresh.code, 0, fresh.stdout || fresh.stderr);
+  } finally {
+    await cleanup();
+    await rm(bare, { recursive: true, force: true });
   }
 });
 
@@ -407,6 +454,10 @@ test('F96 invalid writer token and missing quick baton return actionable errors'
     assert.equal(invalid.code, 2, invalid.stdout || invalid.stderr);
     assert.match(invalid.stdout + invalid.stderr, /E_CHECKOUT_TOKEN/);
     assert.match(invalid.stdout + invalid.stderr, /remove that file/);
+    await writeFile(join(root, '.baton/.local/session.json'), 'null');
+    const nil = await runCli(root, ['handoff', 'next', '--quick', 'missing-baton', '--json']);
+    assert.equal(nil.code, 2, nil.stdout || nil.stderr);
+    assert.match(nil.stdout + nil.stderr, /E_CHECKOUT_TOKEN/);
   } finally {
     await cleanup();
   }

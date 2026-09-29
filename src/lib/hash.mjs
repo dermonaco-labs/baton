@@ -15,6 +15,13 @@ export function hashArtifact(path, bytes) {
     ? normalized.replace(/^(\s*- )\[[xX]\]/gm, '$1[ ]') : normalized);
 }
 
+/** @param {string | Uint8Array} bytes */
+export function hashManaged(bytes) {
+  const text = typeof bytes === 'string' ? bytes : Buffer.from(bytes).toString('utf8');
+  if (typeof bytes !== 'string' && (!Buffer.from(text).equals(Buffer.from(bytes)) || text.includes('\0'))) return hashBytes(bytes);
+  return hashBytes(text.replace(/\r\n/g, '\n'));
+}
+
 /** @param {string} path */
 export async function hashFile(path) {
   return hashArtifact(path, await readFile(path));

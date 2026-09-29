@@ -5,7 +5,7 @@ import { promisify } from 'node:util';
 import YAML from 'yaml';
 import { BatonError } from '../lib/report.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
-import { hashFile } from '../lib/hash.mjs';
+import { hashManaged } from '../lib/hash.mjs';
 import { loadPacks, recommendedPacks } from '../lib/packs.mjs';
 import { maintainerWorkflows } from '../lib/maintainer-workflows.mjs';
 import { mergeAttributes } from '../lib/attributes.mjs';
@@ -88,7 +88,7 @@ async function writeAdopterManifest(root) {
     if (entry.packs?.includes('core') && await present(root, entry.path)) {
       files.push({
         path: entry.path,
-        sha256: await hashFile(withinRoot(root, entry.path)),
+        sha256: hashManaged(await readFile(withinRoot(root, entry.path))),
         pack: 'core',
         owner: entry.upstream === 'atv' ? 'atv' : entry.upstream === 'speckit' ? 'speckit' : 'baton',
         managed: true,
@@ -98,7 +98,7 @@ async function writeAdopterManifest(root) {
   for (const name of await readdir(withinRoot(root, '.baton/schemas'))) {
     if (!name.endsWith('.schema.json')) continue;
     const path = `.baton/schemas/${name}`;
-    files.push({ path, sha256: await hashFile(withinRoot(root, path)), pack: 'core', owner: 'baton', managed: true });
+    files.push({ path, sha256: hashManaged(await readFile(withinRoot(root, path))), pack: 'core', owner: 'baton', managed: true });
   }
   const manifest = {
     schema: 1, baton_version: '0.1.0', installed_at: new Date().toISOString(), source: 'template',

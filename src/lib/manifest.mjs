@@ -1,6 +1,6 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve, dirname, sep } from 'node:path';
-import { hashFile } from './hash.mjs';
+import { hashManaged } from './hash.mjs';
 import { BatonError } from './report.mjs';
 
 /** @param {string} root @param {string} path */
@@ -43,7 +43,7 @@ export async function writeManifest(root, manifest) {
 /** @param {string} root @param {{path:string,sha256:string}} entry */
 export async function isUserModified(root, entry) {
   try {
-    return await hashFile(withinRoot(root, entry.path)) !== entry.sha256;
+    return hashManaged(await readFile(withinRoot(root, entry.path))) !== entry.sha256;
   } catch (error) {
     if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') return true;
     throw error;

@@ -125,6 +125,20 @@ test('models apply refuses to overwrite modified managed files', async () => {
   }
 });
 
+test('F100 models apply preserves CRLF agent frontmatter and body', async () => {
+  const { root, cleanup } = await fixture();
+  try {
+    const path = join(root, agent);
+    await writeFile(path, original.replace(/\n/g, '\r\n'));
+    const dry = await applyModels(root, ['apply', '--dry-run']);
+    assert.deepEqual(dry.data.changed, [agent]);
+    assert.deepEqual((await applyModels(root, ['apply'])).data.changed, [agent]);
+    const result = await readFile(path, 'utf8');
+    assert.equal(result.replace(/\r\n/g, '\n'), '---\ndescription: Reviews tests\nmodel: review-model\n---\nDo not change this body.\n');
+    assert.equal(result.replace(/\r\n/g, '').includes('\n'), false);
+  } finally { await cleanup(); }
+});
+
 test('models apply uses the planning role for the managed research analyst', async () => {
   const { root, cleanup } = await fixture();
   try {

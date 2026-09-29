@@ -3,7 +3,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import YAML from 'yaml';
 import { BatonError } from '../lib/report.mjs';
-import { hashFile } from '../lib/hash.mjs';
+import { hashManaged } from '../lib/hash.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
 import { missingRecommendations, recommendationWarnings } from '../lib/packs.mjs';
 import { assertFrontmatter } from '../lib/repairs.mjs';
@@ -46,7 +46,7 @@ export async function run(root, args) {
   }
   for (const entry of manifest?.files ?? []) {
     try {
-      if (await hashFile(withinRoot(root, entry.path)) !== entry.sha256) report('W_MANIFEST_INTEGRITY', entry.path, 'Managed file differs from manifest');
+      if (hashManaged(await readFile(withinRoot(root, entry.path))) !== entry.sha256) report('W_MANIFEST_INTEGRITY', entry.path, 'Managed file differs from manifest');
     } catch (error) {
       if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') report('W_MANIFEST_INTEGRITY', entry.path, 'Managed file is missing');
       else throw error;

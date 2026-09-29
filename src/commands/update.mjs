@@ -5,10 +5,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { BatonError } from '../lib/report.mjs';
 import { readManifest, writeManifest, installedScript } from '../lib/manifest.mjs';
-import { optionalBytes, putBytes, safePath, digest } from '../lib/overlay.mjs';
+import { optionalBytes, putBytes, safePath } from '../lib/overlay.mjs';
 import { mergeMarker } from '../lib/markers.mjs';
 import { mergeAttributes } from '../lib/attributes.mjs';
 import { resolvePayload } from '../lib/payload.mjs';
+import { hashManaged } from '../lib/hash.mjs';
 import { UpstreamError } from '../lib/upstream.mjs';
 import { run as init, mergeHooks, mergeExtensions, protectedPath } from './init.mjs';
 
@@ -130,17 +131,9 @@ export async function run(root, args) {
       /** @type {Buffer} */
       let desired = await readFile(join(stage, entry.path));
       if (scriptFallback && desired.includes('.specify/scripts/bash/')) continue;
-      if (old && (!old.managed || !current || digest(current) !== old.sha256)) {
+      if (old && (!old.managed || !current || hashManaged(current) !== old.sha256)) {
         await conflict(entry.path, 'user-modified or missing managed file', desired);
         continue;
-      }
-      const attributePath = '.gitattributes';
-      const currentAttributes = (await optionalBytes(root, attributePath))?.toString() ?? '';
-      const stagedAttributes = await readFile(join(stage, attributePath), 'utf8');
-      const mergedAttributes = mergeAttributes(currentAttributes, stagedAttributes);
-      if (mergedAttributes !== currentAttributes) {
-        actions.push(`merge ${attributePath}`);
-        if (!opts.dryRun) await putBytes(root, attributePath, mergedAttributes);
       }
       if (!old && current) {
         await conflict(entry.path, 'unmanaged file', desired);
@@ -156,8 +149,8 @@ export async function run(root, args) {
           continue;
         }
       }
-      const mergedEntry = { ...entry, sha256: digest(desired) };
-      if (current?.equals(desired)) {
+      const mergedEntry = { ...entry, sha256: hashManaged(desired) };
+      if (current && hashManaged(current) === mergedEntry.sha256) {
         if (old) Object.assign(old, mergedEntry);
         else files.push(mergedEntry);
         await clearConflict(entry.path);
@@ -169,12 +162,20 @@ export async function run(root, args) {
       else files.push(mergedEntry);
       await clearConflict(entry.path);
     }
+    const attributePath = '.gitattributes';
+    const currentAttributes = (await optionalBytes(root, attributePath))?.toString() ?? '';
+    const stagedAttributes = await readFile(join(stage, attributePath), 'utf8');
+    const mergedAttributes = mergeAttributes(currentAttributes, stagedAttributes);
+    if (mergedAttributes !== currentAttributes) {
+      actions.push(`merge ${attributePath}`);
+      if (!opts.dryRun) await putBytes(root, attributePath, mergedAttributes);
+    }
     const incoming = (await readFile(join(stage, instructions), 'utf8')).match(batonSection)?.[1];
     if (incoming === undefined) throw new BatonError('E_MISSING_ARTIFACT', 'Payload BATON marker is missing');
     const current = (await optionalBytes(root, instructions))?.toString('utf8');
     const existing = current?.match(batonSection)?.[1];
     const oldSection = sections.find(section => section.path === instructions && section.marker === 'BATON');
-    if (current !== undefined && (!oldSection || existing === undefined || digest(existing) !== oldSection.sha256)) {
+    if (current !== undefined && (!oldSection || existing === undefined || hashManaged(existing) !== oldSection.sha256)) {
       await conflict(instructions, 'user-modified or unmanaged BATON marker',
         Buffer.from(existing === undefined ? await readFile(join(stage, instructions), 'utf8') :
           current.replace(batonSection, `<!-- BATON:START -->\n${incoming}<!-- BATON:END -->`)));
@@ -188,7 +189,7 @@ export async function run(root, args) {
         if (!opts.dryRun) await putBytes(root, instructions, merged);
       }
       await clearConflict(instructions);
-      const hash = digest(/** @type {RegExpMatchArray} */ (merged.match(batonSection))[1]);
+      const hash = hashManaged(/** @type {RegExpMatchArray} */ (merged.match(batonSection))[1]);
       if (oldSection) oldSection.sha256 = hash;
       else sections.push({ path: instructions, marker: 'BATON', sha256: hash });
     }

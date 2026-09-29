@@ -1,8 +1,9 @@
 import { rm } from 'node:fs/promises';
 import { BatonError } from '../lib/report.mjs';
 import { readManifest, writeManifest } from '../lib/manifest.mjs';
-import { optionalBytes, safePath, putBytes, digest } from '../lib/overlay.mjs';
+import { optionalBytes, safePath, putBytes } from '../lib/overlay.mjs';
 import { removeMarker } from '../lib/markers.mjs';
+import { hashManaged } from '../lib/hash.mjs';
 
 const preserved = /^(?:specs\/|docs\/(?:brainstorms|solutions)\/|\.specify\/(?:feature\.json$|memory\/constitution\.md$))/;
 
@@ -33,7 +34,7 @@ export async function run(root, args) {
     }
     const bytes = await optionalBytes(root, entry.path);
     if (!bytes) continue;
-    if (digest(bytes) !== entry.sha256) {
+    if (hashManaged(bytes) !== entry.sha256) {
       warnings.push({ code: 'W_USER_MODIFIED', file: entry.path, message: 'Kept user-modified file' });
       retained.push(entry);
       continue;
@@ -47,7 +48,7 @@ export async function run(root, args) {
     if (!bytes) continue;
     const text = bytes.toString('utf8');
     const match = new RegExp(`<!-- ${section.marker}:START -->\\r?\\n([\\s\\S]*?)<!-- ${section.marker}:END -->`).exec(text);
-    if (!match || digest(match[1]) !== section.sha256) {
+    if (!match || hashManaged(match[1]) !== section.sha256) {
       warnings.push({ code: 'W_USER_MODIFIED', file: section.path, message: 'Kept user-modified marker section' });
       markers.push(section);
       continue;
