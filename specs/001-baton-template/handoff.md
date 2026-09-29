@@ -930,6 +930,22 @@ decisions:
     tag: diff-base
     x-base-commit: c4f3dcb047d94b975348504de558c42a19e7af08
     by: baton
+  - id: D165
+    decision: Handoff body redacted
+    rationale: "F90 land refresh: replace historical review-stage body with current evidence"
+    by: baton
+  - id: D166
+    decision: Handoff body redacted
+    rationale: "F90 land refresh: replace historical review-stage body with current evidence"
+    by: baton
+  - id: D167
+    decision: Handoff body redacted
+    rationale: "F90 land refresh: replace historical review-stage body with current evidence"
+    by: baton
+  - id: D168
+    decision: Handoff body redacted
+    rationale: "F90 land refresh: replace historical review-stage body with current evidence"
+    by: baton
 open_questions: []
 assumptions:
   - id: AS1
@@ -974,30 +990,6 @@ gate:
   approved_by: null
   approved_at: null
 history:
-  - phase: review
-    at: 2026-09-28T22:32:10.454Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:23.898Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:32:30.243Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
-  - phase: review
-    at: 2026-09-28T22:33:22.453Z
-    by: implementation-session
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: refresh
   - phase: implement
     at: 2026-09-28T22:48:36.947Z
     by: baton
@@ -1108,8 +1100,36 @@ history:
     x-worktree: a3507b64e6c7426852eb4251f9d1d20a8671bfa953bd24e9bc757810c5a466a7
     commit: c4f3dcb
     x-action: write
-updated_at: 2026-09-29T02:35:03.060Z
-updated_by: baton-review
+  - phase: review
+    at: 2026-09-29T04:13:13.306Z
+    by: baton
+    writer: 63e3b91cf4e842eb2dbd15d97f83a12735a9a6e9fbb5ab1ef1d1fd75fcc70145
+    x-worktree: aa0ca8f3df6a167374f25f488928e55720edded4536fdeaba4762661098c1bcf
+    commit: c85bf3f
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T04:13:14.057Z
+    by: baton
+    writer: 63e3b91cf4e842eb2dbd15d97f83a12735a9a6e9fbb5ab1ef1d1fd75fcc70145
+    x-worktree: aa0ca8f3df6a167374f25f488928e55720edded4536fdeaba4762661098c1bcf
+    commit: c85bf3f
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T04:13:14.446Z
+    by: baton
+    writer: 63e3b91cf4e842eb2dbd15d97f83a12735a9a6e9fbb5ab1ef1d1fd75fcc70145
+    x-worktree: aa0ca8f3df6a167374f25f488928e55720edded4536fdeaba4762661098c1bcf
+    commit: c85bf3f
+    x-action: redact
+  - phase: review
+    at: 2026-09-29T04:13:14.825Z
+    by: baton
+    writer: 63e3b91cf4e842eb2dbd15d97f83a12735a9a6e9fbb5ab1ef1d1fd75fcc70145
+    x-worktree: aa0ca8f3df6a167374f25f488928e55720edded4536fdeaba4762661098c1bcf
+    commit: c85bf3f
+    x-action: redact
+updated_at: 2026-09-29T04:13:14.825Z
+updated_by: baton
 review:
   findings_path: specs/001-baton-template/review.json
   blocking_findings: 0
@@ -1128,7 +1148,7 @@ optional packs, cheap CI and a public manual.
 
 ## What changed
 
-Fix pass 4 resolves F86 (CRLF parsing, normalized artifact hashes, marker-managed overlay attributes), F87 (worktree-bound self-review guard), F88 (cycle-scoped override), F89, F91 and F96. Tests exercise the bundled CLI in scratch repositories. F90 records the current PR; historical risk entries are superseded by R-FIXPASS4-PR. F92 and other nontrivial P3s are deferred in review.json.
+Re-review 4 verified F86-F89 and F91 at c85bf3f; F90 and F96 remain P3 follow-ups. The feature lands at that reviewed tree. The post-review delta c85bf3f..main is covered by the separately reviewed pretag-fixes-001 quick lane (PR #31, merged f74f99dd) and its follow-up work cycle. D107-D123 are the CLI-recorded acceptance waivers; historical R-WAIVERS and R-UPSTREAM-WATCH are superseded.
 F39's live PowerShell-flavour integration test ran and passed in hosted Linux CI job 109131737677
 (run 36482633555, `ok 38`, no skip). The same run exposed a separate Linux py-flavour assertion and
 pre-existing ShellCheck warnings, which this continuation fixes. The first CI run did not start jobs
@@ -1169,12 +1189,12 @@ as red evidence. Each waiver retains its existing green evidence in `tasks.md`.
 
 ## Next steps
 
-Independent /baton-review should receive the fix-pass-4 implement baton in a separate checkout, verify F86-F89/F91/F96, and adjudicate the remaining P3 deferrals. Do not self-review in this implementation checkout.
+Review is complete. This PR carries only the feature 001 land handoff from the reviewed c85bf3f tree; the repository owner must review the PR and explicitly approve the land gate before compound. Do not merge, tag, or dispatch the full three-OS run as part of this handoff.
 
 ## Watch out for
 
-- AC-US7-1 full three-OS smoke remains owner-pending; no three-OS dispatch was requested in fix pass 4.
-- F86/F87/F88 are fixed locally; independent review must verify them. Any open P1 finding routes back to implement until an independent
+- AC-US7-1 full three-OS smoke remains owner-pending; no three-OS dispatch has been requested.
+- F86/F87/F88 were independently verified in re-review 4. Any open P1 finding routes back to implement until an independent
   reviewer resolves or defers it through an authorized decision.
 - The standalone lychee binary is SHA-256 pinned to its GitHub release asset and still runs
   the offline relative-link check; CI must prove the gate succeeds.
