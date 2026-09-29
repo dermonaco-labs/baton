@@ -1001,16 +1001,9 @@ risks:
     severity: medium
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via direct approval
+  approved_at: 2026-09-29
 history:
-  - phase: review
-    at: 2026-09-29T01:33:32.673Z
-    by: baton
-    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
-    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
-    commit: fd83bfa
-    x-action: redact
   - phase: review
     at: 2026-09-29T01:33:41.515Z
     by: baton
@@ -1144,7 +1137,14 @@ history:
     x-worktree: aa0ca8f3df6a167374f25f488928e55720edded4536fdeaba4762661098c1bcf
     commit: f350f12
     x-action: answer
-updated_at: 2026-09-29T04:21:56.553Z
+  - phase: land
+    at: 2026-09-29T09:35:09.610Z
+    by: human:repository-owner
+    writer: 63e3b91cf4e842eb2dbd15d97f83a12735a9a6e9fbb5ab1ef1d1fd75fcc70145
+    x-worktree: aa0ca8f3df6a167374f25f488928e55720edded4536fdeaba4762661098c1bcf
+    commit: 5af3b38
+    x-action: approve
+updated_at: 2026-09-29T09:35:09.610Z
 updated_by: human:repository-owner
 review:
   findings_path: specs/001-baton-template/review.json
