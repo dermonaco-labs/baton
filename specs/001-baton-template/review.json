@@ -3,11 +3,11 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/20260929-baton-rereview3/",
-    "x-scope": "Re-review 3: fix-pass-3 diff 815ca0bd..1eb09bc6 (CLI scope; content-equivalent to f043f1e..1eb09bc6, which adds only re-review-2 artifacts; 35 files +1717/-487, PR 26) plus verification of every prior finding F01-F85 through the real CLI in scratch clones and worktrees, audit-waiver mutants, and the F21/F47/F51/F59/F78-F80/F82/F83 deferrals. Independent checkout (F62 guard accepted it). No code fixed: review-role session."
+    "run_artifact": ".context/compound-engineering/ce-review/20260929-baton-rereview4/",
+    "x-scope": "Re-review 4 (narrow): fix-pass-4 diff fd83bfa1..c4f3dcb0 (30 files, PR 28). The CLI scope base 1eb09bc6 is content-equivalent because 1eb09bc6..fd83bfa1 adds only the re-review-3 handoff.md and review.json. Covers verification of F86-F91 and F96 through the real CLI in scratch repos (overlay init adopter plus core.autocrlf=true clone, CRLF-forced checkout of this repo, fd83bfa bundle for before/after, same-path and different-path clones, a quick-lane override cycle); a regression sweep of every hash comparison after the CRLF normalization; and judgment of the F92-F95/F97 deferrals. Independent checkout; receive review passed. No code fixed: review-role session."
   },
-  "base": "815ca0bd754fe288b4dd80f641a60d0320568488",
-  "head": "1eb09bc6e22f3a03be333ae9888d4fc81a26c7fc",
+  "base": "1eb09bc6e22f3a03be333ae9888d4fc81a26c7fc",
+  "head": "c4f3dcb047d94b975348504de558c42a19e7af08",
   "personas": [
     "correctness-reviewer",
     "testing-reviewer",
@@ -2103,7 +2103,11 @@
       "x-exposed-by": "F62",
       "x-evidence": "Scratch clone with core.autocrlf=true and .gitattributes removed (simulated overlay adopter): `handoff receive --phase land` exits 10 E_INTERNAL after E_FRONTMATTER_MALFORMED; `baton validate` fails. Template adopters inherit `* text=auto eol=lf` and are unaffected. `grep gitattributes|autocrlf` over src hits only src/lib/upstream.mjs:94; no docs mention it.",
       "x-fix": "Normalize CRLF to LF in parseFrontmatter and before hashing Baton-managed text (artifacts, tasks.md, reviewed tree), and have init/adopt append `eol=lf` rules for Baton paths to .gitattributes; add a Windows relay regression with autocrlf=true.",
-      "x-fixpass4": "CLI scratch-repo F86 test passes receive, work write, validate and refresh on CRLF batons and artifacts; Windows MVP smoke runs the F86 selector. Overlay init/update/adopt preserve adopter gitattributes lines."
+      "x-fixpass4": "CLI scratch-repo F86 test passes receive, work write, validate and refresh on CRLF batons and artifacts; Windows MVP smoke runs the F86 selector. Overlay init/update/adopt preserve adopter gitattributes lines.",
+      "x-rereview4": {
+        "verdict": "verified",
+        "evidence": "fd83bfa bundle on a CRLF checkout of this repo: `handoff receive --phase review` exit 10 E_INTERNAL (E_FRONTMATTER_MALFORMED). c4f3dcb bundle on the same checkout: receive, validate, scope and refresh exit 0, and refresh rewrote 0 sha256 lines, so existing LF hashes stay valid. A CRLF quick baton passed receive/write/validate/refresh. An overlay adopter cloned with core.autocrlf=true passed receive. hashArtifact folds CRLF to LF only for valid UTF-8 without NUL, as data-model documents. init, update (1 real merge action) and adopt (test) install the `# BATON:START/END` .gitattributes block and keep adopter lines (`*.custom binary`, `*.sh text eol=lf`). Residuals are recorded as F99-F101, F103 and F105: the manifest-hash split, models, CRLF in reviewed-tree, the update-loop merge and uninstall. A write to a CRLF baton leaves mixed line endings (LF frontmatter, CRLF body); validate still passes, so this is cosmetic."
+      }
     },
     {
       "disposition": "fixed",
@@ -2121,7 +2125,11 @@
       "reason": "The writer identity is only a random token in .baton/.local/session.json that is silently regenerated when absent. Removing it (for example `git clean -xfd`, which agents run routinely) or rewriting it lets the implement checkout review and land its own work. The contracts state implement and review MUST have different writer hashes, with no mention that the guard is advisory.",
       "x-evidence": "Scratch clone: after implement, `Remove-Item .baton/.local` (or replacing the token) in the same checkout made `handoff receive --phase review` and the review write succeed without an override. The override answer is also self-grantable: the implementer can ask and answer the question with --by \"repository owner\" (honor-based like approve).",
       "x-fix": "Bind the identity to the checkout as well (e.g. sha256 of token plus `git rev-parse --absolute-git-dir`/worktree path) so regeneration in the same checkout still matches, and document in handoff-contract.md and SECURITY.md that the guard prevents accidental self-review, not a determined local actor.",
-      "x-fixpass4": "Scratch CLI test removes the checkout token after work and verifies review receive and write both exit 3; contract, CLI, SECURITY and README disclose the process-guard limit."
+      "x-fixpass4": "Scratch CLI test removes the checkout token after work and verifies review receive and write both exit 3; contract, CLI, SECURITY and README disclose the process-guard limit.",
+      "x-rereview4": {
+        "verdict": "verified",
+        "evidence": "Implement checkout: deleting .baton/.local/session.json, rotating it, and `git clean -xfd` each still give `receive --phase review` exit 3 E_SELF_REVIEW. Land receive from the implement checkout after an independent review also gives E_SELF_REVIEW. README, SECURITY.md, cli.md and handoff-contract.md call it a \"process guard, not a security boundary\". Residuals: F98 (a same-path fresh clone is a false positive), F102 (committed path hash), F107 (alias-path bypass). The test covers review only; the land path was verified by hand."
+      }
     },
     {
       "disposition": "fixed",
@@ -2139,7 +2147,11 @@
       "reason": "selfReview() returns false if any decision anywhere in the baton carries tag self-review-override by human:*. The override is not bound to the implement write it answered and never expires.",
       "x-evidence": "Scratch quick baton: override answered -> review routed back to work (blocking finding) -> new work write in the same checkout -> `handoff write --phase review` in that same checkout succeeded without a new question.",
       "x-fix": "Record the implementation writer hash (or history index) on the override decision and honor it only while x-implementation-writer is unchanged; clear or ignore it after the next implement/work write. Add a regression for override then second cycle.",
-      "x-fixpass4": "Override decision records x-implementation-cycle; real CLI regression confirms first review allowed, blocker routes back to work, and second review receives E_SELF_REVIEW."
+      "x-fixpass4": "Override decision records x-implementation-cycle; real CLI regression confirms first review allowed, blocker routes back to work, and second review receives E_SELF_REVIEW.",
+      "x-rereview4": {
+        "verdict": "verified",
+        "evidence": "Quick lane: owner override answered (records x-implementation-cycle) -> review allowed -> blocking finding routes to work -> second work write in the same checkout -> `receive --phase review` exit 3 E_SELF_REVIEW. The override is bound to one cycle."
+      }
     },
     {
       "disposition": "fixed",
@@ -2157,10 +2169,14 @@
       "reason": "record(..., phase_completed === \"none\" ? \"work\" : ...) makes the latest history phase \"work\" while phase_completed is still none; src/lib/handoff.mjs:113 then reports E_TRANSITION \"Latest history phase does not match\" and `receive --phase work` fails until a work write.",
       "x-evidence": "Scratch clone at 1eb09bc: `handoff new --quick qq`, then `handoff refresh --quick qq --reason x`; `baton validate` and `handoff receive --phase work --quick qq` both exit 1 with E_TRANSITION. `handoff write --phase work` still recovers.",
       "x-fix": "Record phase \"none\" (or skip the history-phase comparison for non-write x-actions) and add a quick-lane regression.",
-      "x-fixpass4": "Metadata actions on a fresh quick baton do not invent a completed work phase; CLI refresh, validate and receive regression passes."
+      "x-fixpass4": "Metadata actions on a fresh quick baton do not invent a completed work phase; CLI refresh, validate and receive regression passes.",
+      "x-rereview4": {
+        "verdict": "verified",
+        "evidence": "Fresh quick baton: `handoff refresh`, `validate` and `receive --phase work` all exit 0; history stays [] and phase_completed stays none."
+      }
     },
     {
-      "disposition": "fixed",
+      "disposition": "open",
       "x-rereview3": {
         "verdict": "new"
       },
@@ -2175,7 +2191,12 @@
       "reason": "\"What changed\" still says F62 is an open P1 and \"Next steps\" cites base d61a7237; `pr` points to #24 and review.blocking_findings was 3 at receive; R-WAIVERS and R-UPSTREAM-WATCH predate D107-D123 and the pinned lychee. The CLI has no body update path for review, so the next implement write must refresh them.",
       "x-evidence": "handoff.md at 1eb09bc lines ~1000-1067 and frontmatter review/pr blocks.",
       "x-fix": "Refresh the body and risks in the next implement write and set pr to the current PR.",
-      "x-fixpass4": "Baton body refreshed through handoff redact, current PR 28 recorded by converge implement write, and append-only R-FIXPASS4-PR supersedes outdated historical risks without erasing audit entries."
+      "x-fixpass4": "Baton body refreshed through handoff redact, current PR 28 recorded by converge implement write, and append-only R-FIXPASS4-PR supersedes outdated historical risks without erasing audit entries.",
+      "x-rereview4": {
+        "verdict": "partial",
+        "evidence": "Body \"What changed\" is refreshed and pr is #28. But R-WAIVERS (severity high, \"must be re-recorded\"; done by D107-D123) and R-UPSTREAM-WATCH (\"fails at startup on the blocked lychee action\"; F70 is fixed) are still stated as current risks. R-FIXPASS4-PR (handoff.md ~944) supersedes only R-FIXPASS4, R-CRLF and R-SELF-REVIEW, and the body claims historical risks are superseded. Reopened as P3."
+      },
+      "x-fix-residual": "In the next implement write, add a risk entry that explicitly supersedes R-WAIVERS (D107-D123) and R-UPSTREAM-WATCH (F70 fixed; owner dispatch pending)."
     },
     {
       "disposition": "fixed",
@@ -2193,7 +2214,11 @@
       "reason": "Line 381 of relay.test.mjs at 1eb09bc is inside the F62 self-review test; the authored-solution compound test moved to line 679 when fix pass 3 inserted tests above it.",
       "x-evidence": "git show f043f1e:test/integration/relay.test.mjs line 381 is the authored-solution test; at 1eb09bc it is line 679.",
       "x-fix": "Cite the test by name (as other rows do) rather than line number.",
-      "x-fixpass4": "Used handoff redact CLI to cite the exact stable test name."
+      "x-fixpass4": "Used handoff redact CLI to cite the exact stable test name.",
+      "x-rereview4": {
+        "verdict": "verified",
+        "evidence": "The D118 row cites the authored-solution compound test by name, not by line number."
+      }
     },
     {
       "disposition": "open",
@@ -2211,7 +2236,11 @@
       "reason": "Three of six mutants (D76, D80, D80-actor) \"fail\" only on `bundle mutant anchor changed` because the rebuild renamed xu->Lu, Bn->Kn and h->p. The strengthened tests are sound (they kill all mutants once anchors are refreshed), but the harness no longer demonstrates it and will keep drifting on every rebuild.",
       "x-evidence": "BATON_AUDIT_MUTANT=D76|D80|D80-actor at 1eb09bc: AssertionError \"bundle mutant ... anchor changed\". With anchors refreshed locally (not committed) each test failed on behavior; unmutated run: 4 pass.",
       "x-fix": "Mutate src/ and rebuild in a temp dir, or anchor on stable strings (error codes, messages) instead of minified names; run the mutants in CI.",
-      "x-fixpass4": "Deferred: rebuilding source mutants in CI requires a nontrivial harness redesign; brittle minified anchors cannot be safely refreshed in a narrow pass."
+      "x-fixpass4": "Deferred: rebuilding source mutants in CI requires a nontrivial harness redesign; brittle minified anchors cannot be safely refreshed in a narrow pass.",
+      "x-rereview4": {
+        "verdict": "deferral-accepted",
+        "evidence": "Still reproduces at c4f3dcb: BATON_AUDIT_MUTANT=D76|D80|D80-actor fail only on \"bundle mutant ... anchor changed\". The harness only demonstrates, and re-review 3 proved the tests kill every mutant with refreshed anchors, so it is acceptable for v0.1. Refresh or de-minify the anchors before the next waiver audit."
+      }
     },
     {
       "disposition": "open",
@@ -2229,7 +2258,11 @@
       "reason": "nextId() only scans open_questions, so after Q1 is answered the next question is Q1 again; decisions and history cannot be correlated to a unique question ID.",
       "x-evidence": "Scratch quick baton at 1eb09bc: `question --tag self-review-override` -> Q1; `answer Q1 \"Allow self-review\"`; the next question is again Q1.",
       "x-fix": "Derive the next ID from open questions plus answered-question decisions (store x-question on the decision).",
-      "x-fixpass4": "Deferred: historical question identity migration and duplicate-ID reconciliation exceed the narrow pass."
+      "x-fixpass4": "Deferred: historical question identity migration and duplicate-ID reconciliation exceed the narrow pass.",
+      "x-rereview4": {
+        "verdict": "deferral-accepted",
+        "evidence": "Still reproduces: after Q1 is answered, the next question is Q1 again. Correlation is cosmetic because decisions carry their own IDs; acceptable for v0.1."
+      }
     },
     {
       "disposition": "open",
@@ -2247,7 +2280,11 @@
       "reason": "approve validates the channel and records \"<role> via <channel>\"; answer ignores options.via, so waiver and override answers lose the channel the constitution asks approvals to record.",
       "x-evidence": "Scratch quick baton at 1eb09bc: `answer Q1 \"Allow self-review\" --by \"repository owner\" --via nonsense` exits 0 and the recorded decision has no channel.",
       "x-fix": "Validate --via against gates.approval_channels and record it on the decision, matching approve.",
-      "x-fixpass4": "Deferred: channel/audit contract change was not necessary for CRLF or self-review cycle fixes."
+      "x-fixpass4": "Deferred: channel/audit contract change was not necessary for CRLF or self-review cycle fixes.",
+      "x-rereview4": {
+        "verdict": "deferral-accepted",
+        "evidence": "Unchanged. answer --via is ignored. Channel capture on answers is an audit nicety; approve records channels, so this is acceptable for v0.1."
+      }
     },
     {
       "disposition": "open",
@@ -2265,10 +2302,14 @@
       "reason": "Decisions are otherwise append-only (F11), but revoke-waivers, which any agent can run, removes the human-authored records and keeps only their IDs in x-revoked, losing who waived what and why.",
       "x-evidence": "D105 lists D70-D86 as revoked; their rationales and by fields are gone from the baton.",
       "x-fix": "Mark revoked waivers (x-revoked-by: Dnnn) and ignore them in evaluation instead of deleting them.",
-      "x-fixpass4": "Deferred: preserving historical waiver records changes waiver evaluation and requires a separate audit/migration."
+      "x-fixpass4": "Deferred: preserving historical waiver records changes waiver evaluation and requires a separate audit/migration.",
+      "x-rereview4": {
+        "verdict": "deferral-accepted",
+        "evidence": "Unchanged. revoke-waivers removes the bodies of the revoked decisions but keeps their IDs and git history keeps the text. Acceptable for v0.1 because git history preserves the audit trail."
+      }
     },
     {
-      "disposition": "fixed",
+      "disposition": "open",
       "x-rereview3": {
         "verdict": "new"
       },
@@ -2283,7 +2324,12 @@
       "reason": "writerHash throws a plain Error and JSON.parse errors are not wrapped, so every handoff command fails with E_INTERNAL instead of a stable, actionable code; a missing .baton/quick/<slug>.md also ends in E_INTERNAL.",
       "x-evidence": "Scratch clone at 1eb09bc: with .baton/.local/session.json set to {} `handoff status --quick qq` exits 10 E_INTERNAL \"Invalid checkout writer token\"; `handoff receive --phase work --quick missing` exits 10 E_INTERNAL ENOENT.",
       "x-fix": "Throw BatonError with a documented code and remediation (delete the token file to regenerate; missing baton -> E_USAGE).",
-      "x-fixpass4": "Scratch CLI regressions assert exit 2 with E_CHECKOUT_TOKEN and E_USAGE remediation rather than E_INTERNAL."
+      "x-fixpass4": "Scratch CLI regressions assert exit 2 with E_CHECKOUT_TOKEN and E_USAGE remediation rather than E_INTERNAL.",
+      "x-rereview4": {
+        "verdict": "partial",
+        "evidence": "Fixed for the reported inputs: `{` and `{}` give E_CHECKOUT_TOKEN exit 2, and a missing quick baton gives E_USAGE exit 2 for receive, next and status. Still broken for session.json containing the valid-JSON value `null`: `handoff next --quick q89` gives exit 10 E_INTERNAL \"Cannot read properties of null (reading 'token')\" (writer.mjs:24 dereferences parsed.token before the shape check). Reopened as P3."
+      },
+      "x-fix-residual": "Check `parsed && typeof parsed === \"object\"` before reading parsed.token and add a `null` / truncated-JSON regression."
     },
     {
       "disposition": "open",
@@ -2300,7 +2346,299 @@
       "line": 802,
       "reason": "The instruction for next_phase review is unconditional, so a fresh review session is told to end itself; it should check selfReview() and print the /baton-review command when the writer differs.",
       "x-evidence": "Fresh worktree B: `handoff next` printed \"End this session; start a fresh review session...\" although receive review passed there.",
-      "x-fix": "Only print the session break when the current writer equals the implementation writer."
+      "x-fix": "Only print the session break when the current writer equals the implementation writer.",
+      "x-rereview4": {
+        "verdict": "deferral-accepted",
+        "evidence": "Still reproduces: `handoff next` in an independent review worktree printed \"End this session; start a fresh review session...\". It also routes land to /baton-land from the implement checkout, where receive now refuses. `next` is advisory and receive is authoritative, so this is acceptable for v0.1. The selfReview() helper added in fix pass 4 makes the fix small; fold it into the F98 fix."
+      }
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F98",
+      "severity": "P2",
+      "persona": "correctness-reviewer",
+      "confidence": 0.85,
+      "task": "T037",
+      "title": "An independent fresh clone at the same absolute path as the implement checkout is refused with E_SELF_REVIEW",
+      "file": "src/commands/handoff.mjs",
+      "line": 216,
+      "reason": "The F87 fix ORs the token match with sha256(resolve(root)), and the path hash is committed in x-implementation-worktree. Any fresh checkout at the same path is treated as the implementer even though it has a new token. The Copilot cloud agent (the fixed runner workspace path .../work/<repo>/<repo>), Codespaces (/workspaces/<repo>) and CI containers always use the same path, so agent-only relays there cannot review or land without an owner override on every cycle (F88). The remediation text (\"start a fresh review session\") loops, because the fresh session lands on the same path. Neither README (line 123 lists the cloud agent as supported), the E_SELF_REVIEW contract row nor error-codes.md mentions path dependence.",
+      "x-evidence": "Reproduced independently by the orchestrator and the adversarial persona. Delete the implement checkout and re-clone the same bare repo to the same absolute path: `handoff receive --phase review` exits 3 E_SELF_REVIEW. The same flow in a clone at a different path exits 0. The checks-cli F33 test needed authorizeReview() for this reason.",
+      "x-fix": "Anchor checkout identity in a per-clone location that survives `git clean -xfd` but is new for every clone, such as a random token under `git rev-parse --git-path baton/checkout` (per-worktree .git dir). Drop the committed absolute-path hash; this also fixes F102 and F107. Add a same-path re-clone test. Until then, document the fixed-path limitation in E_SELF_REVIEW docs, and make the error say whether the token or the path matched.",
+      "x-severity-dissent": "adversarial-reviewer rated P1 (a supported environment is blocked). Rated P2 because the owner override works around it, local worktrees use distinct paths, and multi-session cloud-agent dispatch is post-v0.1 backlog (README:604). Recommended before release.",
+      "x-personas": [
+        "correctness-reviewer",
+        "agent-native-reviewer",
+        "project-standards-reviewer",
+        "adversarial-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F99",
+      "severity": "P2",
+      "persona": "maintainability-reviewer",
+      "confidence": 0.85,
+      "task": "T070",
+      "title": "Manifest integrity uses normalized hashes in doctor/adopt/models and raw digests in update/uninstall/init; a CRLF overlay checkout cannot update",
+      "file": "src/commands/update.mjs",
+      "line": 133,
+      "reason": "hashFile now folds CRLF, so doctor (W_MANIFEST_INTEGRITY), isUserModified/models, adopt and manifest treat CRLF copies as intact. update.mjs:133/159, uninstall.mjs:36 and init.mjs:281 still compare raw digest(). The adopter .gitattributes block only covers .baton/**, specs batons/review/tasks and skill dirs, so .github/agents, .specify/**, workflows and copilot-instructions still check out as CRLF under core.autocrlf=true. On those checkouts update exits 4 with dozens of false \"user-modified\" conflicts and a .new proposal that cannot resolve them, uninstall keeps the files with W_USER_MODIFIED, and doctor, which reported 36 W_MANIFEST_INTEGRITY at fd83bfa, now reports none and hides the cause. data-model §6 defines one hash rule, and the CRLF normalization is documented only for batons and artifacts.",
+      "x-evidence": "Overlay adopter %TEMP%\\rr4\\ovc cloned with core.autocrlf=true (40 of 88 files CRLF): `update --dry-run` exit 4 with 36 E_CONFLICT; `uninstall --dry-run` 36 W_USER_MODIFIED; new doctor 0 W_MANIFEST_INTEGRITY versus 36 with the fd83bfa doctor. The adversarial persona reproduced it independently (42 conflicts; `init` re-run exits 4).",
+      "x-fix": "Define one manifest-integrity hash (e.g. hashManaged) and use it for every write and compare in init/update/uninstall/doctor/adopt/models/manifest, or have update/uninstall call isUserModified. Widen gitattributes.adopter to every managed path, document the rule in data-model §6, and add a core.autocrlf=true overlay test covering update, uninstall, doctor and models.",
+      "x-personas": [
+        "maintainability-reviewer",
+        "correctness-reviewer",
+        "agent-native-reviewer",
+        "project-standards-reviewer",
+        "adversarial-reviewer",
+        "testing-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F100",
+      "severity": "P2",
+      "persona": "adversarial-reviewer",
+      "confidence": 0.9,
+      "task": "T067",
+      "title": "`models apply` on CRLF agent files now fails hard with E_FRONTMATTER_MALFORMED (regression from normalized isUserModified)",
+      "file": "src/commands/models.mjs",
+      "line": 54,
+      "reason": "Previously CRLF agents failed the raw isUserModified check and were skipped with W_USER_MODIFIED. Now isUserModified normalizes CRLF and parseFrontmatter accepts CRLF, so execution reaches the LF-only header regex at models.mjs:54-55, which throws. The whole command exits 1 and applies nothing. Doctor's LF-only agent-frontmatter parser also reports W_AGENT_CORRUPTED on these files (pre-existing).",
+      "x-evidence": "Orchestrator re-ran on %TEMP%\\rr4\\ovc (CRLF agents): `models apply --dry-run --force --json` exit 1 E_FRONTMATTER_MALFORMED \".github/agents/adversarial-reviewer.agent.md has no valid frontmatter\". Adversarial and correctness personas: the fd83bfa bundle on the same checkout exits 0 with W_USER_MODIFIED.",
+      "x-fix": "Make the models header regex and doctor's agent-frontmatter parser CRLF-tolerant, preserve the file's EOL on rewrite, and add a CRLF models test.",
+      "x-personas": [
+        "adversarial-reviewer",
+        "correctness-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F101",
+      "severity": "P3",
+      "persona": "maintainability-reviewer",
+      "confidence": 0.9,
+      "task": "T070",
+      "title": "`update` merges .gitattributes inside the per-entry loop: dry-run repeats the action per file and the merge is skipped when every entry continues",
+      "file": "src/commands/update.mjs",
+      "line": 137,
+      "reason": "The one-time repo operation at update.mjs:137-144 runs after the protected/fallback/conflict `continue` statements for every managed entry. In dry-run the file is never written, so the action is pushed again on each iteration, and the preview differs from a real run. If every entry conflicts or is skipped, which is likely on the CRLF checkouts F86 targets, the block is never merged. The merge code is also triplicated across init, update and adopt, and the update test is vacuous because init already wrote an identical block.",
+      "x-evidence": "%TEMP%\\rr4\\upd: `update --dry-run --json` data.actions contains \"merge .gitattributes\" 82 times; a real update produces 1 (adversarial: 41 in its own repro). Testing persona: update.test.mjs:89 passes with update.mjs:137-144 deleted.",
+      "x-fix": "Move the merge out of the loop into a single syncAttributes(root, template, {dryRun, actions}) helper shared by init, update and adopt. Test a pre-fix adopter (no block) and a stale block, and assert exactly one action in both dry-run and real runs.",
+      "x-personas": [
+        "maintainability-reviewer",
+        "testing-reviewer",
+        "correctness-reviewer",
+        "agent-native-reviewer",
+        "adversarial-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F102",
+      "severity": "P3",
+      "persona": "security-reviewer",
+      "confidence": 0.75,
+      "task": "T037",
+      "title": "The committed x-worktree / x-implementation-worktree is an unsalted sha256 of the absolute path, so the OS username can be recovered",
+      "file": "src/commands/handoff.mjs",
+      "line": 200,
+      "reason": "record() adds x-worktree to every history entry, including human answer and approve actions, and implement/work writes commit x-implementation-worktree. Local paths have low entropy (a user-profile or home directory plus a repo name), so a short dictionary recovers the OS username. That conflicts with \"do not persist names, handles or emails\" and the denylist intent for user-home paths. cli.md says only implement/work writes record the path hash.",
+      "x-evidence": "Verified: sha256 of the lowercased absolute path of the %TEMP%\\rr4\\runner scratch clone equals the x-worktree value committed in its baton; the security persona recovered the OS username from 5 candidates. This repo's own specs/001-baton-template/handoff.md commits x-worktree values for the maintainer checkout.",
+      "x-fix": "Resolved by the F98 fix (per-clone random identity kept under the git dir; commit only a hash of a random value). Alternatively, HMAC with a never-committed local salt. Stop adding x-worktree to non-implement history entries.",
+      "x-severity-dissent": "project-standards-reviewer rated P2 (policy conflict); calibrated P3 because recovery needs a guessed path and exposes only a username/layout, and the F98 fix removes it.",
+      "x-personas": [
+        "security-reviewer",
+        "project-standards-reviewer",
+        "maintainability-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F103",
+      "severity": "P3",
+      "persona": "security-reviewer",
+      "confidence": 0.62,
+      "task": "T037",
+      "title": "reviewed-tree fingerprint now ignores CRLF-only changes, so post-review line-ending edits to scripts pass the land gate",
+      "file": "src/lib/hash.mjs",
+      "line": 13,
+      "reason": "reviewedTree() (handoff.mjs:25) uses hashFile, which now folds CRLF for every valid-UTF-8 file, not just Baton artifacts. A post-review change that only adds or removes \\r in a .sh/.bat/Makefile or a CRLF-sensitive fixture no longer triggers E_STALE_REVIEW. The effect is small: git with text=auto normalizes such changes, and an actual content change is still detected. It is the one place where the normalization made a guard laxer. Lock verify, bundle sha256, sync mirrors and the init payload lock stay raw and strict.",
+      "x-evidence": "hashArtifact(\"deploy.sh\", \"rm -rf /tmp/build\\nexit 0\\n\") === hashArtifact(\"deploy.sh\", \"rm -rf /tmp/build\\r\\nexit 0\\r\\n\") is true. Orchestrator regression sweep: lock.mjs:33, build.mjs:65/74, sync.mjs:367 and init.mjs:185 compare raw bytes.",
+      "x-fix": "Hash git blobs for reviewed-tree (e.g. `git hash-object` or `ls-files -s`, which honours eol attributes), or restrict normalization to Baton-owned artifact paths.",
+      "x-personas": [
+        "security-reviewer",
+        "adversarial-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F104",
+      "severity": "P3",
+      "persona": "correctness-reviewer",
+      "confidence": 0.75,
+      "task": "T058",
+      "title": "A stray, BOM-prefixed or merely mentioned BATON marker in .gitattributes aborts init/adopt after partial writes and before the manifest",
+      "file": "src/commands/init.mjs",
+      "line": 336,
+      "reason": "mergeAttributes throws E_CONFLICT (empty file field, no fix) on a substring match of \"# BATON:START\". That covers a comment mentioning it, an indented marker, a leading BOM or lone-CR endings. init calls it after managed files and the instructions marker are written but before writeManifest, and adopt calls it after the CHANGELOG, dependabot and .gitignore rewrites. The repo is left half-installed with no manifest, and the re-run then conflicts on the instructions marker.",
+      "x-evidence": "Adversarial %TEMP%\\rr4-adversarial\\unbal: init exit 4 \"Unbalanced BATON marker\"; copilot-instructions.md exists and manifest.json does not; after fixing, the init re-run exits 4 on the instructions marker. Probes: \"# see # BATON:START docs\" and a BOM prefix throw.",
+      "x-fix": "Compute the merge in preflight, report the problem as a normal conflict entry with a .new proposal, anchor markers on whole lines, and strip the BOM.",
+      "x-personas": [
+        "correctness-reviewer",
+        "adversarial-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F105",
+      "severity": "P3",
+      "persona": "project-standards-reviewer",
+      "confidence": 0.75,
+      "task": "T062",
+      "title": "The .gitattributes BATON block is undocumented and uninstall leaves it behind",
+      "file": "specs/001-baton-template/contracts/cli.md",
+      "line": 47,
+      "reason": "init, update and adopt now write a .gitattributes block, but the cli.md rows, data-model and README do not mention it. It is not recorded in manifest.marker_sections, so uninstall, which the contract says \"removes ... the marker sections\", leaves eol rules for paths that no longer exist.",
+      "x-evidence": "uninstall.mjs:44-58 iterates only the HTML-comment marker_sections; init.mjs:318-320 records only copilot-instructions. `git grep gitattributes` finds no contract or doc mention.",
+      "x-fix": "Record the block in marker_sections (or a dedicated entry), remove it on uninstall when it is unmodified, and document it in cli.md for init, update, adopt and uninstall.",
+      "x-personas": [
+        "project-standards-reviewer",
+        "adversarial-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F106",
+      "severity": "P3",
+      "persona": "agent-native-reviewer",
+      "confidence": 0.8,
+      "task": "T037",
+      "title": "E_SELF_REVIEW remediation neither names the override command nor explains an expired override, and error-codes.md omits the one-cycle rule",
+      "file": "src/commands/handoff.mjs",
+      "line": 432,
+      "reason": "After F88, an older self-review-override decision stays visible but is silently ignored, and the error text is identical. The receive message (handoff.mjs:432) and the write message (:593) differ; neither sets `fix`. baton-review and baton-land SKILL.md say to \"wait for an owner-answered question\" without saying how to create one. docs/reference/error-codes.md:22 still says any answered override permits an exception.",
+      "x-evidence": "handoff.mjs:219-221 filters by x-implementation-cycle; error-codes.md:22 wording; report.mjs:27 supports issue.fix.",
+      "x-fix": "Unify the message, set fix to `handoff question --tag self-review-override --reason \"<why>\"`, name the expired override D<n> when one exists, and update error-codes.md and the review/land skills.",
+      "x-personas": [
+        "agent-native-reviewer",
+        "project-standards-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F107",
+      "severity": "P3",
+      "persona": "security-reviewer",
+      "confidence": 0.7,
+      "task": "T037",
+      "title": "Deleting the token and invoking through an alias path (junction, symlink, 8.3, subst) bypasses the worktree check",
+      "file": "src/commands/handoff.mjs",
+      "line": 200,
+      "reason": "The worktree hash uses resolve(root) without realpath, so alias spellings of the same checkout hash differently. That contradicts the contract sentence \"Deleting or rotating the token in the same worktree still triggers the guard\". The guard is documented as a process guard, so this is a wording and robustness issue, not a boundary break.",
+      "x-evidence": "Security persona: after the token was deleted, `--cwd` through a junction to the same checkout gave `receive --phase review` exit 0.",
+      "x-fix": "Resolved by the F98 fix (git-dir anchored identity). Otherwise realpath the root and qualify the contract sentence.",
+      "x-personas": [
+        "security-reviewer",
+        "correctness-reviewer",
+        "adversarial-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F108",
+      "severity": "P3",
+      "persona": "maintainability-reviewer",
+      "confidence": 0.72,
+      "task": "T037",
+      "title": "Implementation-cycle derivation is duplicated between answer and selfReview, and the two copies already differ",
+      "file": "src/commands/handoff.mjs",
+      "line": 495,
+      "reason": "selfReview filters on the lane-specific phase (work or implement), while the answer handler accepts either. For legacy batons without x-implementation-cycle, or when the implement entry is pruned from the 20-entry history, the stored cycle can be undefined or different, so the override is silently not honoured.",
+      "x-evidence": "handoff.mjs:212-217 vs 495-497.",
+      "x-fix": "Extract a single implementationCycle(data) helper and use it in both places; test the legacy fallback.",
+      "x-personas": [
+        "maintainability-reviewer",
+        "agent-native-reviewer",
+        "adversarial-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F109",
+      "severity": "P3",
+      "persona": "testing-reviewer",
+      "confidence": 0.8,
+      "task": "T033",
+      "title": "Fix-pass-4 tests have weak assertions and miss real-autocrlf, land-path, attribute-merge and hash-fallback branches",
+      "file": "test/integration/relay.test.mjs",
+      "line": 337,
+      "reason": "The F86 test fakes CRLF on 5 files instead of running a core.autocrlf=true clone, and the Windows smoke re-runs the same test that npm run check already ran. The F87 loop is `for (const phase of ['review'])`, so land is untested. The F87 write denial asserts only exit 3, which is shared with E_GATE_PENDING. The F96 test uses `{}`, so neither the SyntaxError branch nor `null` is exercised. The hash fallback fixture mixes NUL and invalid UTF-8. mergeAttributes has no unit tests for its conflict or replace branches.",
+      "x-evidence": "relay.test.mjs:305-309, 337, 342-345, 405; mvp-windows-smoke.yml:26-27; hash.test.mjs:27-28; no test imports mergeAttributes.",
+      "x-fix": "Add an autocrlf clone overlay test (see F99), land-path and error-code assertions, `null`/truncated-token cases, separate NUL and invalid-UTF-8 fixtures, and attributes.test.mjs.",
+      "x-personas": [
+        "testing-reviewer",
+        "correctness-reviewer",
+        "security-reviewer"
+      ]
+    },
+    {
+      "disposition": "open",
+      "x-rereview4": {
+        "verdict": "new"
+      },
+      "id": "F110",
+      "severity": "P3",
+      "persona": "agent-native-reviewer",
+      "confidence": 0.62,
+      "task": "T037",
+      "title": "New F96 error paths use exit 2 for local state, have no file field, block read-only actions, and suggest `handoff new` for review/land slug typos",
+      "file": "src/lib/writer.mjs",
+      "line": 22,
+      "reason": "cli.md defines exit 2 as a usage error, but E_CHECKOUT_TOKEN is corrupt local state and has an empty file field. writerHash runs for show, next and scope, so a corrupt token blocks diagnosis. A missing quick baton on review or land suggests `handoff new --quick <typo>`, which would create an orphan baton instead of listing candidates as the feature path does.",
+      "x-evidence": "writer.mjs:22,25; handoff.mjs:249 vs 126; contracts/cli.md exit table.",
+      "x-fix": "Set file to .baton/.local/session.json, document exit 2 (or use 5) for E_CHECKOUT_TOKEN, compute writerHash lazily, and list quick-baton candidates.",
+      "x-personas": [
+        "agent-native-reviewer",
+        "project-standards-reviewer"
+      ]
     }
   ],
   "x-rereview-summary": {
@@ -2363,6 +2701,18 @@
       "head": "1eb09bc6e22f3a03be333ae9888d4fc81a26c7fc",
       "run_artifact": ".context/compound-engineering/ce-review/20260928-baton-fix-pass3/",
       "kind": "fix pass 3 (PR 26), implementation-authored"
+    },
+    {
+      "base": "815ca0bd754fe288b4dd80f641a60d0320568488",
+      "head": "1eb09bc6e22f3a03be333ae9888d4fc81a26c7fc",
+      "run_artifact": ".context/compound-engineering/ce-review/20260929-baton-rereview3/",
+      "kind": "re-review 3 (PR 26 fix pass 3)"
+    },
+    {
+      "base": "1eb09bc6e22f3a03be333ae9888d4fc81a26c7fc",
+      "head": "c4f3dcb047d94b975348504de558c42a19e7af08",
+      "run_artifact": ".context/compound-engineering/ce-review/20260929-baton-fix-pass4/",
+      "kind": "fix pass 4 (PR 28), implementation-authored"
     }
   ],
   "x-rereview2-summary": {
@@ -2471,6 +2821,50 @@
       "upstream-watch has not run with the pinned lychee; owner-manual dispatch pending.",
       "F39 live PowerShell test skips locally (approved mirror lacks specify-cli 1.0.11); hosted Linux proof retained.",
       "Three-OS smoke, README visual review, private vulnerability reporting and the timed newcomer run remain owner-only."
+    ]
+  },
+  "x-rereview4-summary": {
+    "subject": "fix pass 4 (PR 28) fd83bfa1..c4f3dcb0",
+    "prior_claimed_fixed": [
+      "F86",
+      "F87",
+      "F88",
+      "F89",
+      "F90",
+      "F91",
+      "F96"
+    ],
+    "verified": [
+      "F86",
+      "F87",
+      "F88",
+      "F89",
+      "F91"
+    ],
+    "partial_reopened": [
+      "F90",
+      "F96"
+    ],
+    "deferral_accepted": [
+      "F92",
+      "F93",
+      "F94",
+      "F95",
+      "F97"
+    ],
+    "new_findings": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 3,
+      "P3": 10
+    },
+    "blocking_open": [],
+    "normalization_regression_sweep": "Raw and strict, unchanged: lock verify (lock.mjs:33; a CRLF checkout still exits 1), bundle sha256 (build.mjs:65/74), sync mirror comparison (sync.mjs:367), init payload lock check (init.mjs:185) and payloadBytes mirrors. Normalized for cross-OS relay as intended: artifact freshness, waiver evidence hash, read_first. Real content changes are still detected. Laxer or inconsistent: reviewed-tree ignores CR-only changes (F103, P3); manifest integrity split between normalized and raw (F99, P2); models regression (F100, P2).",
+    "release_readiness": "No open P0/P1. v0.1 is release-ready apart from the owner-only items, provided F98 (same-path self-review false positive) and F99/F100 (CRLF overlay update/models) are either fixed or accepted as documented known issues. Recommended: fix F98-F100 in a small fix pass 5 before tagging.",
+    "residual_risks": [
+      "Owner-only: three-OS smoke, README visual review, private vulnerability reporting, the timed newcomer run and the upstream-watch manual dispatch.",
+      "The internal feed hostname remains in git history; tracked files are clean.",
+      "The self-review guard remains a process guard: agent-editable baton frontmatter and owner-role answers can be forged locally."
     ]
   }
 }

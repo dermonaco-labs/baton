@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 001-baton-template
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: land
+next_owner: baton-land
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Fix pass 4: CRLF-safe relay reads and hashes, marker-managed overlay attributes, worktree-aware self-review guard and one-cycle override; F89/F91/F96 repaired. Independent review required; nontrivial P3s deferred in review.json."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Re-review 4 of fix pass 4 (PR 28): F86-F89 and F91 verified, F90/F96 partial (P3), F92-F95/F97 deferrals accepted; 13 new findings (0 P0, 0 P1, 3 P2, 10 P3). No blocking findings."
 read_first:
   - path: specs/001-baton-template/spec.md
     why: Review scope and acceptance criteria
@@ -21,7 +21,7 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: specs/001-baton-template/review.json
     why: Review fixed and deferred findings, including owner-raised F62
-    sha256: 59627bcec0176fa144e558f2454858dc9809631eabd0f6b02ffa785c8576943d
+    sha256: 5f75801603a27b1115807dcf912350e3bfd2e8496fa16b592e36dcbdd1889539
   - path: specs/001-baton-template/contracts/ci.md
     why: Review F39 hosted verification and restored link check
     sha256: d90ecc2e0839d0314ae4df5a4591c40b6ce538549db8fbca3fa5ef9d97791fb5
@@ -76,7 +76,7 @@ artifacts:
     sha256: 893d152f9bb358301756d5485d7b34cc767e4466a933f9417eaced35c3eea017
   - path: specs/001-baton-template/review.json
     role: evidence
-    sha256: 59627bcec0176fa144e558f2454858dc9809631eabd0f6b02ffa785c8576943d
+    sha256: 5f75801603a27b1115807dcf912350e3bfd2e8496fa16b592e36dcbdd1889539
 entry_checked:
   - id: tasks-exists
     ok: true
@@ -84,15 +84,12 @@ entry_checked:
     ok: true
     evidence: analyzed at 23b1a1d; the artifacts were then amended by the analyze fixes and amendments A1-A6 and re-hashed here
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
+    evidence: specs/001-baton-template/review.json
+  - id: findings-mapped-to-tasks-or-dismissed
     met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: "baton: 0"
+    evidence: 0 findings unresolved
 analysis:
   report_path: specs/001-baton-template/analysis.md
   critical: 0
@@ -908,6 +905,31 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: F90 current PR and superseding risk recorded
     by: implementation-session
+  - id: D160
+    decision: "Re-review 4: F86, F87, F88, F89 and F91 verified; F90 and F96 partial and reopened as P3"
+    rationale: "Reproduced through the real CLI in scratch repos: a core.autocrlf=true overlay clone, a CRLF checkout of this repo against the fd83bfa bundle, token deletion/rotation/git clean, and a quick-lane override cycle. Evidence per finding in review.json x-rereview4."
+    by: baton-review
+  - id: D161
+    decision: Accept deferrals F92, F93, F94, F95 and F97 for v0.1
+    rationale: All P3; none affects relay correctness or adopter safety. F97 should be folded into the F98 fix.
+    by: baton-review
+  - id: D162
+    decision: Rate F98 (same-path fresh clone refused with E_SELF_REVIEW) P2, not P1
+    rationale: Owner override works around it, local worktrees use distinct paths and cloud-agent dispatch is post-v0.1 backlog; adversarial persona dissent recorded. Recommended to fix before tagging together with F99/F100.
+    by: baton-review
+  - id: D163
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 562ebdfc135d91fb632fef5052d9c1abc380918bf588422856bf04dcf5199bf8
+    x-base-commit: 1eb09bc6e22f3a03be333ae9888d4fc81a26c7fc
+    by: baton
+  - id: D164
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: c4f3dcb047d94b975348504de558c42a19e7af08
+    by: baton
 open_questions: []
 assumptions:
   - id: AS1
@@ -944,17 +966,14 @@ risks:
   - id: R-FIXPASS4-PR
     text: "The prior R-FIXPASS4 PR-pending note is superseded: PR 28 is now recorded. R-CRLF and R-SELF-REVIEW describe pre-fix risks; independent review still needs to verify the fixes."
     severity: medium
+  - id: R-REREVIEW4
+    text: "Re-review 4 supersedes R-CRLF, R-SELF-REVIEW, R-FIXPASS4 and R-FIXPASS4-PR (fixes verified). R-WAIVERS is resolved by D107-D123 and R-UPSTREAM-WATCH only awaits owner dispatch (F90). Open: F98 same-path self-review false positive (cloud agent, Codespaces), F99 CRLF overlay update conflicts, and F100 models apply regression on CRLF agents."
+    severity: medium
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: review
-    at: 2026-09-28T22:32:10.045Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: redact
   - phase: review
     at: 2026-09-28T22:32:10.454Z
     by: baton
@@ -1082,11 +1101,18 @@ history:
     x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
     commit: "7585261"
     x-action: refresh
-updated_at: 2026-09-29T02:01:48.739Z
-updated_by: implementation-session
+  - phase: review
+    at: 2026-09-29T02:35:03.076Z
+    by: baton
+    writer: 7b75152510874dc5ecbe724a0c2feede19496061f170895cedbc167e06efd3e8
+    x-worktree: a3507b64e6c7426852eb4251f9d1d20a8671bfa953bd24e9bc757810c5a466a7
+    commit: c4f3dcb
+    x-action: write
+updated_at: 2026-09-29T02:35:03.060Z
+updated_by: baton-review
 review:
   findings_path: specs/001-baton-template/review.json
-  blocking_findings: 1
+  blocking_findings: 0
 pr:
   url: https://github.com/dermonaco-labs/baton/pull/28
   number: 28
