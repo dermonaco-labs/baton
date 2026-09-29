@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 001-baton-template
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Re-review 4 of fix pass 4 (PR 28): F86-F89 and F91 verified, F90/F96 partial (P3), F92-F95/F97 deferrals accepted; 13 new findings (0 P0, 0 P1, 3 P2, 10 P3). No blocking findings."
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: "Feature 001 land handoff at reviewed tree c85bf3f; PR #32 awaits repository-owner review and approval. Later changes are independently reviewed through pretag-fixes-001."
 read_first:
   - path: specs/001-baton-template/spec.md
     why: Review scope and acceptance criteria
@@ -84,12 +84,9 @@ entry_checked:
     ok: true
     evidence: analyzed at 23b1a1d; the artifacts were then amended by the analyze fixes and amendments A1-A6 and re-hashed here
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: specs/001-baton-template/review.json
-  - id: findings-mapped-to-tasks-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
+    evidence: https://github.com/dermonaco-labs/baton/pull/32
 analysis:
   report_path: specs/001-baton-template/analysis.md
   critical: 0
@@ -946,6 +943,14 @@ decisions:
     decision: Handoff body redacted
     rationale: "F90 land refresh: replace historical review-stage body with current evidence"
     by: baton
+  - id: D169
+    decision: "Backlog for v0.2: add a CLI route from land back to review when a reviewed tree is stale (F111 option b)"
+    rationale: A future Spec Kit feature should define a safe re-review transition; roadmap.md is excluded from this land handoff's read/write scope, so the follow-up is recorded here instead.
+    by: baton-land
+  - id: D170
+    decision: "feature 001 lands at reviewed tree c85bf3f; the post-review delta c85bf3f..main is covered by quick lane pretag-fixes-001 (reviewed in PR #31, merged f74f99dd) and its follow-up work cycle"
+    rationale: "Owner decision received through Copilot on 2026-09-29 via control-plane delegation: select F111 option (a) for feature 001 land rather than rewriting the reviewed tree."
+    by: human:repository-owner
 open_questions: []
 assumptions:
   - id: AS1
@@ -985,23 +990,20 @@ risks:
   - id: R-REREVIEW4
     text: "Re-review 4 supersedes R-CRLF, R-SELF-REVIEW, R-FIXPASS4 and R-FIXPASS4-PR (fixes verified). R-WAIVERS is resolved by D107-D123 and R-UPSTREAM-WATCH only awaits owner dispatch (F90). Open: F98 same-path self-review false positive (cloud agent, Codespaces), F99 CRLF overlay update conflicts, and F100 models apply regression on CRLF agents."
     severity: medium
+  - id: R-LAND-WAIVERS
+    text: "Supersedes R-WAIVERS: all 17 acceptance waivers were re-recorded through the CLI as D107-D123 against the normalized tasks hash; the prior must-be-re-recorded warning is historical, not an open blocker."
+    severity: low
+  - id: R-LAND-UPSTREAM-WATCH
+    text: "Supersedes R-UPSTREAM-WATCH: CI uses the verified standalone lychee release and preserves the offline relative-link check. The upstream-watch manual check and full three-OS smoke remain owner-pending; neither is claimed complete."
+    severity: medium
+  - id: R-LAND-POSTREVIEW
+    text: "Supersedes the open F98/F99/F100 wording in R-REREVIEW4: those post-review fixes were independently reviewed in quick-lane PR #31 and merged at f74f99dd; its follow-up work cycle remains separate from this feature land."
+    severity: medium
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
-  - phase: implement
-    at: 2026-09-28T22:48:36.947Z
-    by: baton
-    writer: 945618938881955ed51b7641dc5954b3a7ce4569df49392a1d54b6031e147c04
-    commit: f043f1e
-    x-action: write
-  - phase: review
-    at: 2026-09-29T01:15:35.796Z
-    by: baton-review
-    writer: 846a37d767c3870ef41090f7d3b0532a814c55e1f5c959ac0cd2d613aa0930fc
-    commit: 1eb09bc
-    x-action: write
   - phase: review
     at: 2026-09-29T01:33:32.673Z
     by: baton
@@ -1128,14 +1130,28 @@ history:
     x-worktree: aa0ca8f3df6a167374f25f488928e55720edded4536fdeaba4762661098c1bcf
     commit: c85bf3f
     x-action: redact
-updated_at: 2026-09-29T04:13:14.825Z
-updated_by: baton
+  - phase: land
+    at: 2026-09-29T04:21:40.438Z
+    by: baton
+    writer: 63e3b91cf4e842eb2dbd15d97f83a12735a9a6e9fbb5ab1ef1d1fd75fcc70145
+    x-worktree: aa0ca8f3df6a167374f25f488928e55720edded4536fdeaba4762661098c1bcf
+    commit: f350f12
+    x-action: write
+  - phase: land
+    at: 2026-09-29T04:21:56.568Z
+    by: human:repository-owner
+    writer: 63e3b91cf4e842eb2dbd15d97f83a12735a9a6e9fbb5ab1ef1d1fd75fcc70145
+    x-worktree: aa0ca8f3df6a167374f25f488928e55720edded4536fdeaba4762661098c1bcf
+    commit: f350f12
+    x-action: answer
+updated_at: 2026-09-29T04:21:56.553Z
+updated_by: human:repository-owner
 review:
   findings_path: specs/001-baton-template/review.json
   blocking_findings: 0
 pr:
-  url: https://github.com/dermonaco-labs/baton/pull/28
-  number: 28
+  url: https://github.com/dermonaco-labs/baton/pull/32
+  number: 32
 x-implementation-writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
 x-implementation-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
 x-implementation-cycle: f1b625e7d4cf1082facadcfa5addec95be6f2a59122b29b84cafbcca850f3980
