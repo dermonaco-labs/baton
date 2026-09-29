@@ -73,6 +73,7 @@ test('adopt replaces the constitution, README and manifest without touching work
     for (const name of ['src', 'test', 'packs', 'baton', 'package.json']) {
       await assert.rejects(stat(join(root, name)), { code: 'ENOENT' });
     }
+    await assert.rejects(stat(join(root, '.baton/quick')), { code: 'ENOENT' });
     assert.equal((await readFile(join(root, '.baton/manifest.json'), 'utf8')).includes('"source": "template"'), true);
     const config = await readFile(join(root, '.baton/config.yml'), 'utf8');
     assert.match(config, /run: node \.baton\/bin\/baton\.mjs validate/);
