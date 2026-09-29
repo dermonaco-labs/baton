@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 001-baton-template
-phase_completed: land
-next_phase: compound
-next_owner: ce-compound
-status: ready
+phase_completed: compound
+next_phase: done
+next_owner: none
+status: done
 model_role: planning
 suggested_model: claude-opus-5.5
-summary: "Feature 001 land handoff at reviewed tree c85bf3f; PR #32 awaits repository-owner review and approval. Later changes are independently reviewed through pretag-fixes-001."
+summary: "Compound recorded for feature 001 after PR #32 merged with repository-owner approval: four docs/solutions learnings and the v0.2 backlog follow-ups RM21-RM25 in roadmap.md."
 read_first:
   - path: specs/001-baton-template/spec.md
     why: Review scope and acceptance criteria
@@ -84,9 +84,16 @@ entry_checked:
     ok: true
     evidence: analyzed at 23b1a1d; the artifacts were then amended by the analyze fixes and amendments A1-A6 and re-hashed here
 exit_criteria:
-  - id: pr-opened
+  - id: compound-recorded
     met: true
-    evidence: https://github.com/dermonaco-labs/baton/pull/32
+    evidence: "any_of: 1/2 met"
+    members:
+      - id: artifact-exists:docs/solutions/*.md
+        met: true
+        evidence: docs/solutions/*.md
+      - id: decision:skip-compound
+        met: false
+        evidence: No reasoned skip-compound decision
 analysis:
   report_path: specs/001-baton-template/analysis.md
   critical: 0
@@ -951,6 +958,18 @@ decisions:
     decision: "feature 001 lands at reviewed tree c85bf3f; the post-review delta c85bf3f..main is covered by quick lane pretag-fixes-001 (reviewed in PR #31, merged f74f99dd) and its follow-up work cycle"
     rationale: "Owner decision received through Copilot on 2026-09-29 via control-plane delegation: select F111 option (a) for feature 001 land rather than rewriting the reviewed tree."
     by: human:repository-owner
+  - decision: Record feature 001 learnings in docs/solutions
+    by: ce-compound
+    rationale: "Captured durable v0.1 learnings with ce-compound: docs/solutions/restricted-mirror-env-only-2026-09-29.md, docs/solutions/per-checkout-identity-self-review-2026-09-29.md, docs/solutions/crlf-normalized-ownership-hashing-2026-09-29.md and docs/solutions/quick-lane-scope-and-stranded-land-2026-09-29.md (restricted mirrors via UV_DEFAULT_INDEX and npm_config_registry in the environment only; random per-checkout identity for the self-review guard; CRLF-normalized ownership hashes with raw integrity hashes; quick-lane scope and the F111 stranded land)."
+    id: D171
+  - decision: Write learnings flat in docs/solutions with category in frontmatter
+    by: ce-compound
+    rationale: The compound exit check compound-recorded uses artifact-exists docs/solutions/*.md, whose single star does not match subdirectories, so ce-compound category folders would not satisfy it. Per the precedence rule the phase contract wins over the upstream skill layout; each doc keeps its schema category in frontmatter.
+    id: D172
+  - decision: Add v0.2 backlog rows RM21-RM25 to roadmap.md; RM20 confirmed present
+    by: ce-compound
+    rationale: Explicit owner request supersedes the do_not_read hint for roadmap.md (same precedent as the RM19 decision). RM21 stale land to review CLI route (F111 option b), RM22 template-cleanup guard test (F122), RM23 author- and cycle-aware quick scope (F124), RM24 two-phase update (F126), RM25 BOM-tolerant gitattributes block (F127). v0.1 scope, tasks and acceptance checks unchanged.
+    id: D173
 open_questions: []
 assumptions:
   - id: AS1
@@ -1000,17 +1019,10 @@ risks:
     text: "Supersedes the open F98/F99/F100 wording in R-REREVIEW4: those post-review fixes were independently reviewed in quick-lane PR #31 and merged at f74f99dd; its follow-up work cycle remains separate from this feature land."
     severity: medium
 gate:
-  required: true
-  approved_by: repository owner via direct approval
-  approved_at: 2026-09-29
+  required: false
+  approved_by: null
+  approved_at: null
 history:
-  - phase: review
-    at: 2026-09-29T01:33:41.515Z
-    by: baton
-    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
-    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
-    commit: fd83bfa
-    x-action: redact
   - phase: review
     at: 2026-09-29T01:34:27.193Z
     by: implementation-session
@@ -1144,8 +1156,15 @@ history:
     x-worktree: aa0ca8f3df6a167374f25f488928e55720edded4536fdeaba4762661098c1bcf
     commit: 5af3b38
     x-action: approve
-updated_at: 2026-09-29T09:35:09.610Z
-updated_by: human:repository-owner
+  - phase: compound
+    at: 2026-09-29T09:47:56.929Z
+    by: baton
+    writer: 8d1154c9e333bf18d69496511a69a1f66d2a6fe6b4b697012d674b96cf1ded50
+    x-worktree: 1748b5d70f028f928cb325eb4dd562cd373730d493c87b23d75614efb229f82f
+    commit: "2965744"
+    x-action: write
+updated_at: 2026-09-29T09:47:56.912Z
+updated_by: ce-compound
 review:
   findings_path: specs/001-baton-template/review.json
   blocking_findings: 0

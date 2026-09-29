@@ -2,34 +2,33 @@
 baton: 1
 lane: quick
 feature: pretag-fixes-001
-phase_completed: land
-next_phase: compound
-next_owner: ce-compound
-status: ready
+phase_completed: compound
+next_phase: done
+next_owner: none
+status: done
 model_role: planning
 suggested_model: claude-opus-5.5
-summary: Opened the independent quick-lane land PR for owner review; no implementation files changed or merged in this land checkout.
+summary: "Compound recorded for pretag-fixes-001 after PR #35 merged with repository-owner approval; learnings in docs/solutions, follow-ups in the feature 001 roadmap."
 read_first:
-  - path: .baton/quick/pretag-fixes-001.md
-    why: Quick scope, decisions D14-D15, land route and tag precondition
-  - path: .baton/quick/pretag-fixes-001.review.json
-    why: All findings fixed or dismissed with reasons; x-review2-summary
-  - path: .baton/template-cleanup.yml
-    why: "F110 fix and F122 tag precondition: source quick files must be listed in remove"
-  - path: src/commands/update.mjs
-    why: F114 attributes preflight before managed writes
-  - path: test/integration/adopt.test.mjs
-    why: F110 adopter quick-baton survival tests
-  - path: test/integration/update.test.mjs
-    why: F114 no-partial-write regression
-  - path: test/integration/relay.test.mjs
-    why: F118 alias test after token removal
+  - path: docs/solutions/quick-lane-scope-and-stranded-land-2026-09-29.md
+    why: Quick-lane scope, F111 stranded land and F122 tag precondition
+  - path: docs/solutions/per-checkout-identity-self-review-2026-09-29.md
+    why: F98/F102/F107/F118 identity learnings
+  - path: docs/solutions/crlf-normalized-ownership-hashing-2026-09-29.md
+    why: F99/F100 CRLF hashing learnings
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: pr-opened
+  - id: compound-recorded
     met: true
-    evidence: https://github.com/dermonaco-labs/baton/pull/35
+    evidence: "any_of: 1/2 met"
+    members:
+      - id: artifact-exists:docs/solutions/*.md
+        met: true
+        evidence: docs/solutions/*.md
+      - id: decision:skip-compound
+        met: false
+        evidence: No reasoned skip-compound decision
 open_questions: []
 decisions:
   - id: D1
@@ -144,10 +143,18 @@ decisions:
     decision: Handoff body redacted
     rationale: "Refresh land next steps now that PR #35 exists and the human review gate is pending"
     by: baton
+  - decision: Record pretag-fixes-001 learnings in docs/solutions
+    by: ce-compound
+    rationale: "Captured with ce-compound: docs/solutions/restricted-mirror-env-only-2026-09-29.md, docs/solutions/per-checkout-identity-self-review-2026-09-29.md, docs/solutions/crlf-normalized-ownership-hashing-2026-09-29.md and docs/solutions/quick-lane-scope-and-stranded-land-2026-09-29.md. Flat layout because the compound exit glob docs/solutions/*.md does not match category subdirectories."
+    id: D25
+  - decision: Backlog quick-lane follow-ups in the feature 001 roadmap
+    by: ce-compound
+    rationale: F111 option b, F122 guard test, F124, F126 and F127 are recorded as v0.2 rows RM21-RM25 in specs/001-baton-template/roadmap.md through the feature 001 compound handoff, not by this quick lane.
+    id: D26
 gate:
-  required: true
-  approved_by: repository owner via direct approval
-  approved_at: 2026-09-29
+  required: false
+  approved_by: null
+  approved_at: null
 history:
   - phase: work
     at: 2026-09-29T03:08:01.903Z
@@ -268,8 +275,15 @@ history:
     x-worktree: c8d17e13e9ae0f664b030f7e432f71e7206fec9852219e5af8b9b9f9a0332b48
     commit: 8a748bd
     x-action: approve
-updated_at: 2026-09-29T09:22:10.668Z
-updated_by: human:repository-owner
+  - phase: compound
+    at: 2026-09-29T09:47:57.411Z
+    by: baton
+    writer: 8d1154c9e333bf18d69496511a69a1f66d2a6fe6b4b697012d674b96cf1ded50
+    x-worktree: 1748b5d70f028f928cb325eb4dd562cd373730d493c87b23d75614efb229f82f
+    commit: "2965744"
+    x-action: write
+updated_at: 2026-09-29T09:47:57.405Z
+updated_by: ce-compound
 x-implementation-writer: 8a44b7aec2b3281d1dce7877b097b21442fccfae8def9cf5a0c742317096e70f
 x-implementation-worktree: 460f84d3c666afcfb0299243e8426c4b553802b48ca5b0172feede66b32bda0d
 x-implementation-cycle: 58927275a1788d7283c5d6f91e1eb9d5e182db0f7d4bc471aea844aba71b2532
