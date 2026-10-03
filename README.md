@@ -101,8 +101,8 @@ or claim a role; use an independent reviewer and checkout for meaningful separat
 
 ## Project status
 
-Baton is at **v0.1 (pre-release)**. The relay, template, overlay and public manual are available;
-the owner has not cut the v0.1.0 tag or release yet.
+Baton **v0.1.0** is the first release line. Published releases with checksums and build-provenance attestations
+are listed on the [Releases page](https://github.com/dermonaco-labs/baton/releases).
 
 | Area | Status |
 |---|---|
@@ -161,7 +161,9 @@ npx --yes github:dermonaco-labs/baton#main init --dry-run
 npx --yes github:dermonaco-labs/baton#main init
 ```
 
-Before the owner cuts v0.1.0, use a reviewed commit ref instead of `#main` for a stable install. The installer adds
+For a stable install, pin a published release tag such as `#v0.1.0` (see the
+[Releases page](https://github.com/dermonaco-labs/baton/releases)); if that tag is not published yet,
+use a reviewed commit ref instead of `#main`. The installer adds
 the core relay and adopter CI without replacing existing instructions, Spec Kit feature data, or user-modified files.
 Use `--packs core,learning` to opt into the learning pack, `--repair` for known-corrupted ATV agents, and
 `--keep <glob>` or `--adopt-upstream <glob>` to resolve conflicts reported under `.baton/conflicts/`.
