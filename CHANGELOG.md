@@ -6,17 +6,14 @@ All notable changes to Baton are documented here. This follows
 
 ## [Unreleased]
 
-### Added
-
-- Pre-release maintainer checks, community templates, and the release dry run.
-
-## [0.1.0] - Planned
+## [0.1.0] - 2026-10-03
 
 ### Added
 
 - Pinned Spec Kit and ATV template with a validated feature and quick-lane relay.
 - Offline CLI for adopting, installing, updating, validating, and routing models.
 - Public manual, optional packs, GitHub Actions checks, and a dry-run release path.
+- Pre-release maintainer checks, community templates, and the release dry run.
 
 ### Upstream
 
