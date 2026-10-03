@@ -1,5 +1,5 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
-import { exec, execFile } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { dirname, join } from 'node:path';
 import YAML from 'yaml';
@@ -7,8 +7,8 @@ import { withinRoot } from './manifest.mjs';
 import { hashFile } from './hash.mjs';
 import { loadSchemas, validateSchema } from './schema.mjs';
 import { actorRole, gateVocabulary } from './handoff.mjs';
+import { checkTimeout, runLocalCheck } from './local-checks.mjs';
 
-const execAsync = promisify(exec);
 const execFileAsync = promisify(execFile);
 
 /** @param {string} root @param {string} path */
@@ -295,16 +295,14 @@ export async function evaluateBuiltIn(root, batonPath, data, check) {
       if (!configText) return answer(false, 'Missing .baton/config.yml');
       const config = YAML.parse(configText);
       if (!Array.isArray(config.checks) || !config.checks.length) return answer(false, 'No configured local checks');
+      for (const item of config.checks) checkTimeout(item);
       const results = [];
       for (const item of config.checks) {
-        try {
-          await execAsync(item.run, { cwd: root, timeout: 300000, windowsHide: true });
-          results.push(`${item.name}: 0`);
-        } catch (error) {
-          results.push(`${item.name}: ${/** @type {{code?:number}} */ (error).code ?? 'error'}`);
-        }
+        results.push(await runLocalCheck(root, item));
       }
-      return answer(results.every((item) => item.endsWith(': 0')), results.join(', '));
+      return answer(results.every(item => item.met), results.map(item => item.met && item.stdout
+        ? `${item.evidence}\nstdout (tail):\n${item.stdout.trim().slice(-4096)}`
+        : item.evidence).join('\n'));
     }
     case 'diff-nonempty': {
       const { base, notes, invalid } = await reviewBase(root, data);
