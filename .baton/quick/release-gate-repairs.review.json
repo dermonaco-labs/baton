@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/release-gate-repairs-r1-20261003/report.json"
+  },
+  "base": "23a0c9690f99651ee5861942436541714df365c7",
+  "head": "550f1f2ef8a1c4b2916fa0b4d10ab5e5b13ea350",
+  "personas": [
+    "testing-reviewer"
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "P2",
+      "title": "Exercise cleanup failure before the child closes",
+      "file": "src/lib/local-checks.mjs",
+      "line": 60,
+      "persona": "testing-reviewer",
+      "confidence": 0.93,
+      "disposition": "fixed",
+      "reason": "Owner-authorized regression independently verified at 550f1f2 by one genuine installed testing-persona run and a passing Windows real-process test. Forced cleanup denial preserves a live shell/child, rejects within 5000ms with timeout/cause/both tails, then independently terminates the specific fixture tree and asserts both PIDs ESRCH. POSIX inspected, not locally executed.",
+      "x-evidence": [
+        "The rejection handler at lines 59-62 is necessary to settle before a surviving child's close event.",
+        "The close handler at lines 79-89 need not execute promptly after failed termination.",
+        "Current timeout/output-limit regressions at test/unit/local-checks.test.mjs:82-116 only exercise successful cleanup.",
+        "Existing spawn-error and numeric exit-7 cases do not cover cleanup rejection."
+      ],
+      "x-route": "manual -> downstream-resolver",
+      "x-requires-verification": true
+    }
+  ],
+  "x-reviewer-app-session": "34c127ba-26a4-4548-93ce-54bd38e4a704",
+  "x-reviewer-cli-session": "121f8696-d464-4e62-8ecc-41672feb8e24",
+  "x-scope": "Bounded R1 delta over 58bb274: test/unit/local-checks.test.mjs and quick baton. Canonical base23a0c969 scope also includes the unchanged carried original run report. Full original 29-file scope remains in that historical report, not repeated.",
+  "x-verdict": "R1 fixed; no new findings. Ready for gated land handoff, not merge or release approval.",
+  "x-original-run": ".context/compound-engineering/ce-review/release-gate-repairs-20261003/report.json",
+  "x-original-open-evidence-commit": "58bb274df74c8fdb701e33b4d4b6841bbec3dba7"
+}

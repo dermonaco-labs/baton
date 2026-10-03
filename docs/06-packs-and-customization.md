@@ -47,6 +47,13 @@ examples; identities there can escape those checks. Review
 published code examples manually rather than treating the denylist as a
 complete privacy filter.
 
+Each check may set `timeout_ms` to a finite integer from 1 to 3,600,000;
+omitting it keeps the 300,000 ms default. The source suite uses 600,000 ms
+because its measured passing Windows test stage exceeds five minutes.
+Timeouts remain failed checks, with captured output and PID/process-group
+cleanup of foreground command trees. Commands must not daemonize or reparent
+background work. Failed exit codes and cleanup errors are never success.
+
 `.baton/phases.yml` can override entry, exit, next and gate rules. Overrides
 are schema-checked; removing a built-in exit check (including by moving it
 inside `any_of`) warns `W_WEAKENED_CONTRACT`. Treat that as a contract

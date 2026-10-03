@@ -60,6 +60,7 @@ jobs:
         with:
           node-version: '20'
           cache: npm
+      - uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v6.6.1
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Template instantiation
         shell: bash
@@ -100,6 +101,7 @@ jobs:
         with:
           node-version: '20'
           cache: npm
+      - uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v6.6.1
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Template instantiation
         shell: bash

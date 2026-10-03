@@ -15,6 +15,40 @@ function git(root, ...args) {
   return execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
 }
 
+test('local check respects its finite configured timeout and reports captured failure output', async () => {
+  const root = await fixtureRoot('timeout-');
+  try {
+    await mkdir(join(root, '.baton'));
+    await writeFile(join(root, 'check.mjs'), "console.error('deadline evidence'); setTimeout(() => {}, 2500);\n");
+    await writeFile(join(root, '.baton/config.yml'),
+      `checks:\n  - name: bounded\n    run: '"${process.execPath}" check.mjs'\n    timeout_ms: 1000\n`);
+    const result = await evaluateBuiltIn(root, '.baton/quick/example.md', {}, { id: 'local-checks-pass' });
+    assert.equal(result.met, false, 'configured deadline must not silently use the default');
+    assert.match(result.evidence, /bounded: timeout after 1000ms/);
+    assert.match(result.evidence, /deadline evidence/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('invalid local check deadlines fail explicitly before running a command', async () => {
+  const root = await fixtureRoot('invalid-timeout-');
+  try {
+    await mkdir(join(root, '.baton'));
+    for (const value of ['0', '-1', '1.5', '3600001', 'null', '"1000"', '.inf', '.nan']) {
+      await writeFile(join(root, '.baton/config.yml'),
+        `checks:\n  - name: invalid\n    run: node -e "process.exit(0)"\n    timeout_ms: ${value}\n`);
+      await assert.rejects(
+        evaluateBuiltIn(root, '.baton/quick/example.md', {}, { id: 'local-checks-pass' }),
+        error => error.code === 'E_CONFIG' && /timeout_ms/.test(error.message),
+        value,
+      );
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('quick scope requires an explicit reviewer decision rather than self-asserted exit evidence', async () => {
   const check = { id: 'quick-scope-held' };
   const path = '.baton/quick/fix-typo.md';

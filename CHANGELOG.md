@@ -6,6 +6,17 @@ All notable changes to Baton are documented here. This follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep formal local checks bounded with a per-check timeout, retaining the
+  five-minute default and using ten minutes for the source suite on Windows;
+  report timeout output and terminate the timed-out foreground process tree.
+- Regenerate Baton-owned hook skills with explicit source provenance while
+  retaining pinned upstream verification; check snapshot and source-manifest
+  freshness in the normal local/PR gate.
+- Install the same pinned `uv` prerequisite in all three OS smoke jobs,
+  preserving the unconditional live PowerShell-script installation check.
+
 ## [0.1.0] - 2026-10-03
 
 ### Added

@@ -1,0 +1,185 @@
+{
+  "run": "release-gate-repairs-20261003",
+  "engine": "ce-review",
+  "mode": "headless",
+  "base": "7abec5a1d771408f4712173eed3dbad1d881b76e",
+  "head": "23a0c9690f99651ee5861942436541714df365c7",
+  "reviewer": {
+    "actor": "baton-review",
+    "app_session": "34c127ba-26a4-4548-93ce-54bd38e4a704",
+    "cli_session": "121f8696-d464-4e62-8ecc-41672feb8e24",
+    "independent_checkout": true,
+    "identity_limit": "Session identity supplied by the app; routing settings were requested, not independently verified."
+  },
+  "installed_personas": [
+    "adversarial-reviewer",
+    "agent-native-reviewer",
+    "correctness-reviewer",
+    "learnings-researcher",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "repo-research-analyst",
+    "security-reviewer",
+    "testing-reviewer"
+  ],
+  "selected_and_dispatched": [
+    "correctness-reviewer",
+    "testing-reviewer",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "agent-native-reviewer",
+    "learnings-researcher",
+    "adversarial-reviewer"
+  ],
+  "selection": "Six installed always-on reviewers plus the installed adversarial reviewer for the large non-test diff. No absent optional persona was dispatched. Seven real synchronous persona tasks were dispatched together. No nested review or fixer run occurred.",
+  "scope": {
+    "baton_implementation_files": 22,
+    "additional_generated_bookkeeping_files": 7,
+    "total": 29,
+    "files": [
+      ".baton/bin/baton.mjs",
+      ".baton/bin/baton.mjs.metafile.json",
+      ".baton/bin/baton.mjs.sha256",
+      ".baton/config.yml",
+      ".baton/manifest.json",
+      ".baton/quick/release-gate-repairs.md",
+      ".baton/template-cleanup.yml",
+      ".github/skills/speckit-baton-handoff/SKILL.md",
+      ".github/workflows/ci.yml",
+      ".github/workflows/smoke.yml",
+      ".specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-handoff/SKILL.md",
+      "CHANGELOG.md",
+      "CONTRIBUTING.md",
+      "baton.lock.json",
+      "baton/schemas/config.schema.json",
+      "docs/06-packs-and-customization.md",
+      "docs/reference/upstream-diff.md",
+      "package.json",
+      "src/commands/adopt.mjs",
+      "src/commands/sync.mjs",
+      "src/lib/checks.mjs",
+      "src/lib/local-checks.mjs",
+      "test/fixtures/sync/speckit-baton-handoff.md",
+      "test/integration/adopt.test.mjs",
+      "test/unit/checks.test.mjs",
+      "test/unit/local-checks.test.mjs",
+      "test/unit/maintainer-workflows.test.mjs",
+      "test/unit/manifest-command.test.mjs",
+      "test/unit/sync.test.mjs"
+    ],
+    "untracked_excluded": [],
+    "coverage_limit": "Personas inspected bounded per-file diffs and coupled context. Minified bundle coverage was targeted, not an exhaustive dependency audit. Learnings researcher performed an institutional lookup rather than a code verdict."
+  },
+  "persona_results": [
+    {
+      "persona": "correctness-reviewer",
+      "findings": [],
+      "summary": "No correctness finding met the confidence threshold. Static review of all 29 files; noted missing cleanup-rejection execution coverage."
+    },
+    {
+      "persona": "testing-reviewer",
+      "findings": [
+        {
+          "title": "Exercise cleanup failure before the child closes",
+          "severity": "P2",
+          "file": "src/lib/local-checks.mjs",
+          "line": 60,
+          "why_it_matters": "The cleanup-rejection handler settles a failed check when termination fails and the foreground process remains alive. Existing successful-cleanup tests would not detect removal of this handler, which could leave a formal gate waiting indefinitely for close.",
+          "autofix_class": "safe_auto",
+          "owner": "review-fixer",
+          "requires_verification": true,
+          "suggested_fix": "Add a bounded regression forcing tree termination to fail while the foreground child remains alive. Assert prompt E_CHECK_FAILED rejection, the original timeout or output-limit reason, cleanup details and captured output; independently clean fixture processes in finally.",
+          "confidence": 0.93,
+          "evidence": [
+            "src/lib/local-checks.mjs:59-62 attaches a rejection handler to terminateTree specifically to reject before a surviving child's close event.",
+            "src/lib/local-checks.mjs:79-89 otherwise settles through child.once('close'); unsuccessful termination need not cause that event promptly.",
+            "test/unit/local-checks.test.mjs:82-116 exercises timeout and output overflow with successful cleanup and ESRCH assertions, but never forces cleanup rejection.",
+            "Existing E_CHECK_FAILED regressions cover spawn failure and F18's numeric exit-7 diagnostic, not process-tree cleanup failure."
+          ],
+          "pre_existing": false
+        }
+      ]
+    },
+    {
+      "persona": "maintainability-reviewer",
+      "findings": [],
+      "summary": "No actionable correctness-impacting maintainability finding met the threshold. Process cleanup remains limited to foreground trees/groups."
+    },
+    {
+      "persona": "project-standards-reviewer",
+      "findings": [],
+      "summary": "No actionable standards violation against the constitution, recorded quick decisions and declared docs/reference/AGENTS.md. Generated bytes and hosted three-OS behavior were not rerun."
+    },
+    {
+      "persona": "agent-native-reviewer",
+      "findings": [],
+      "summary": "Static parity assessment passed for changed CLI/skill surfaces, including converge mode in both hooks and matching CLI behavior. No runtime Copilot invocation was performed."
+    },
+    {
+      "persona": "adversarial-reviewer",
+      "findings": [],
+      "summary": "No concrete adversarial finding met the threshold. Cross-platform process cleanup was inspected statically, not executed."
+    },
+    {
+      "persona": "learnings-researcher",
+      "summary": "Read all four institutional solution documents; three directly relevant lessons and one conditional environmental lesson.",
+      "solutions": [
+        "docs/solutions/crlf-normalized-ownership-hashing-2026-09-29.md",
+        "docs/solutions/per-checkout-identity-self-review-2026-09-29.md",
+        "docs/solutions/quick-lane-scope-and-stranded-land-2026-09-29.md",
+        "docs/solutions/restricted-mirror-env-only-2026-09-29.md"
+      ],
+      "lessons": [
+        "Keep ownership normalization distinct from raw upstream integrity.",
+        "Independent review requires a separate checkout identity, not a path alias.",
+        "Scope decisions need concrete diff reasoning; source-only quick records need cleanup removal.",
+        "Registry workarounds are environmental; unavailable pins are not permission to repin or claim success."
+      ],
+      "no_match": "No dedicated solution for finite check budgets, cleanup failure behavior, numeric diagnostic compatibility, all-OS uv wiring or the exact eight-file provenance boundary. Critical-patterns document is absent."
+    }
+  ],
+  "synthesis": {
+    "verdict": "Not ready",
+    "finding_count": 1,
+    "p0_p1_count": 0,
+    "suppressed_count": 0,
+    "malformed_findings_dropped": 0,
+    "fixes_applied": 0,
+    "finding": "R1",
+    "route": "manual -> downstream-resolver; needs verification",
+    "reason": "Retain the concrete testing coverage gap as open P2. No observed runtime defect is claimed. The correctness persona independently noted the same gap as a limitation, not a second finding or confidence-boosting vote. Fixes are outside this authorization.",
+    "handoff_intent": "Return to work with a blocking owner question for fix authorization; do not claim findings fixed or dismissed or proceed to land."
+  },
+  "formal_transition": {
+    "command": "node .baton/bin/baton.mjs handoff write --phase review --quick release-gate-repairs --next work --by baton-review --from-json .baton/.tmp/formal-review-payload.json --json",
+    "result": "passed; phase_completed review, next_phase work, status needs-human, blocking question Q3",
+    "reviewer_writer": "0257db31ca4f3b101504b9a3ed3c06498cd3677bc8c57a95afae526ab91f496f",
+    "reviewer_checkout": "200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89",
+    "implementation_writer_unchanged": "335d071e9e92da4bf86b82c418267e2e45f6ca069cc113cf7d929bf71dd2d868",
+    "implementation_checkout_unchanged": "777ace4f832b301758a339fa3b1561dd95dfb2e20882b3956e77753e00cbcd5a",
+    "exit_checks": "findings-json-valid and quick-scope-held passed. Explicit return-to-work uses the existing contract's omission of findings-fixed-or-dismissed for non-land transitions. No validator or gate change.",
+    "next": "Blocked by Q3; no implementation or land permission."
+  },
+  "evidence_boundaries": {
+    "formal_run": "Static persona review only: no tests, builds, generation, installs or workflow dispatches. Earlier single-context report is separate and was not relabeled as this run.",
+    "prior_independent_head": "23a0c9690f99651ee5861942436541714df365c7",
+    "prior_independent_commands": [
+      {
+        "command": "node --test test/unit/local-checks.test.mjs test/unit/checks.test.mjs test/unit/sync.test.mjs test/unit/maintainer-workflows.test.mjs test/unit/manifest-command.test.mjs",
+        "result": "74 passed, zero failed or skipped"
+      },
+      {
+        "command": "node --test --test-name-pattern='F18 local check failures|adopt replaces the constitution' test/integration/relay.test.mjs test/integration/adopt.test.mjs",
+        "result": "2 passed, zero failed or skipped"
+      },
+      { "command": "npm run typecheck", "result": "passed" },
+      { "command": "node .baton/bin/baton.mjs build --check", "result": "passed" },
+      { "command": "node .baton/bin/baton.mjs lock verify", "result": "passed" }
+    ],
+    "writer_work_check": "Existing work evidence: 315 tests, 315 pass, zero fail/skip, test duration 288061.1018ms; not independently rerun in this formal review.",
+    "historical_failure": "D6 remains 313/314, 326595.243ms, failing: 7 versus failing: exit 7, E_EXIT_UNMET and no successful write. Later corrected writer evidence does not rewrite this failure.",
+    "observed_ci_head": "23a0c9690f99651ee5861942436541714df365c7",
+    "observed_ci": "Baton/baton, CI/lint, CI/test and Windows MVP smoke/smoke were SUCCESS before evidence changes; no new evidence commit is covered by these results.",
+    "later_release": "New merged RC three-OS Smoke and dry-run artifacts/checksums/attestations remain separately authorized. No merge, publication or tag approval is asserted."
+  }
+}
