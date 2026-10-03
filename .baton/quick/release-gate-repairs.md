@@ -2,104 +2,32 @@
 baton: 1
 lane: quick
 feature: release-gate-repairs
-phase_completed: work
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: land
+next_owner: baton-land
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: Q3-authorized regression exercises R1 cleanup rejection with a real surviving foreground child, bounded explicit error/output evidence and independent PID-specific fixture cleanup. Production and existing assertions remain unchanged. Return to review pending separately authorized independent verification; no finding acceptance or land authority.
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: Independent bounded ce-review headless testing verification at 550f1f2 accepts R1's owner-authorized regression. One Windows real-process test passed; no new findings or production edits. Historical seven-persona review and prior results retain original SHAs. Ready for gated land handoff only; owner merge/release approval remains separate.
 read_first:
-  - path: test/unit/local-checks.test.mjs
-    why: Q3 real-process failure injection, survival, rejection bound and independent cleanup
   - path: .baton/quick/release-gate-repairs.review.json
-    why: Historical open R1 and genuine original reviewer provenance, not rewritten
-  - path: .context/compound-engineering/ce-review/release-gate-repairs-20261003/report.json
-    why: Actual structured finding and exact independent review boundaries
+    why: Current fixed R1 disposition and original-run reference
+  - path: .context/compound-engineering/ce-review/release-gate-repairs-r1-20261003/report.json
+    why: Genuine bounded persona result, independent runtime evidence and platform limits
   - path: .baton/quick/release-gate-repairs.md
-    why: Q3 owner permission and historical D6/check evidence
+    why: Historical decisions, tested-SHA boundaries and separate owner authority
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: diff-nonempty
+  - id: findings-json-valid
     met: true
-    evidence: 2 changed files
-  - id: local-checks-pass
+    evidence: .baton/quick/release-gate-repairs.review.json
+  - id: findings-fixed-or-dismissed
     met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      s for nested gitignore files (15.7743ms)
-      ✔ built-in phase defaults deeply match the shipped phase template (22.3324ms)
-      ✔ every feature phase has entry and exit checks (1.2076ms)
-      ✔ removing a built-in exit criterion warns (0.5599ms)
-      ✔ check groups evaluate every member and preserve evidence (2.5671ms)
-      ✔ check validation rejects unknown checks, malformed groups and duplicate keys (0.5616ms)
-      ✔ weakened contract detects moving mandatory exit into a disjunction (0.7481ms)
-      ✔ weakened contracts report removed entry checks, including quick-lane entry overrides (1.3715ms)
-      ✔ weakened contracts report disabled human gates without flagging unchanged defaults (0.5073ms)
-      ✔ shipped phase template is valid and never weakens its built-in contracts (21.6831ms)
-      ✔ tracked Baton documentation contains no private feed hostnames (562.4271ms)
-      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.8882ms)
-      ✔ adopter command table remains contiguous (0.8489ms)
-      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.6897ms)
-      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.5351ms)
-      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (33.8604ms)
-      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (2.7549ms)
-      ✔ compiles all draft 2020-12 schemas once (152.4907ms)
-      ✔ findings fixture validates and invalid fixture reports a JSON pointer (3.5174ms)
-      ✔ pack schema requires a classified reason for every optional reference (0.8819ms)
-      ✔ sync bump explains pin and file changes for a PR body (1.4068ms)
-      ✔ sync rejects unpinned bump values and check/bump combination (29.41ms)
-      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (156.0441ms)
-      ✔ generated registry preserves verified bytes when only installation time changes (7.8014ms)
-      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (5.1493ms)
-      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (3754.5952ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (278.3784ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (102.4463ms)
-        ✔ E_ANALYSIS_CRITICAL (6.6533ms)
-        ✔ E_ANALYSIS_MISSING (3.9042ms)
-        ✔ E_APPROVER_FORMAT (3.6812ms)
-        ✔ E_BLOCKING_OPEN (4.2049ms)
-        ✔ E_BODY_SECTIONS (4.394ms)
-        ✔ E_BUDGET (7.0638ms)
-        ✔ E_DENYLIST (3.5673ms)
-        ✔ E_EXIT_UNMET (4.6548ms)
-        ✔ E_GATE_PENDING (109.3462ms)
-        ✔ E_LANE_ESCALATE (3998.669ms)
-        ✔ E_LANE_MISMATCH (4.8043ms)
-        ✔ E_MISSING_ARTIFACT (5.7528ms)
-        ✔ E_MODEL_NOT_ALLOWED (9.3244ms)
-        ✔ E_MULTIPLE_BATONS (7.9033ms)
-        ✔ E_NO_PREREG (6.1698ms)
-        ✔ E_OWNER (5.6532ms)
-        ✔ E_PR_MISSING (5.0522ms)
-        ✔ E_REVIEW_BLOCKING (293.6537ms)
-        ✔ E_REVIEW_MISSING (7.1965ms)
-        ✔ E_SCHEMA (5.3693ms)
-        ✔ E_STALE_ARTIFACT (6.4851ms)
-        ✔ E_TRANSITION (4.7467ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (4658.7279ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (152.9992ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (50.1307ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (123.385ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (12.28ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (176.8452ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (151.0844ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (3.1774ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (40.0745ms)
-      ✔ ready with a blocking question is rejected (120.3384ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (177.2933ms)
-      ℹ tests 316
-      ℹ suites 0
-      ℹ pass 316
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 0
-      ℹ todo 0
-      ℹ duration_ms 229216.1985
+    evidence: 0 findings unresolved
+  - id: quick-scope-held
+    met: true
+    evidence: "All 29 paths serve the recorded repair: eight exact owned-derived mappings, regenerated hooks/metadata, pinned uv prerequisites and integrity gates, plus D4/D5's separately owner-authorized bounded timeout schema addition and Q2 numeric diagnostic compatibility. D5 explicitly supersedes D3's no-schema-change statement; this is not a claim that timeout_ms is no contract addition. No change beyond those recorded authorizations, upstream pin, adopter default budget or release authority is introduced. Seven bookkeeping/generated paths supplement the 22 implementation paths."
 open_questions: []
 decisions:
   - id: D1
@@ -175,6 +103,24 @@ decisions:
     decision: Preserve historical review evidence without claiming independent R1 resolution
     rationale: Original technical evidence applies to 23a0c969; evidence-only head is 58bb274. Leave the genuine report/findings, original identity and historical D6 untouched. This test candidate needs separately authorized independent verification; no reviewer impersonation, formal review rerun, remote approval, land, merge, dispatch, pin/workflow change or publication.
     by: ce-work
+  - id: D17
+    decision: Independently verify and resolve the R1 coverage gap
+    tag: quick-scope-held
+    rationale: Owner-authorized test-only delta over 58bb274 adds one bounded cleanup-rejection regression and the work baton, with production unchanged. One real installed testing-reviewer verification and one independently passing Windows test at 550f1f2 support R1 fixed. Canonical scope retains base23a0c969 and includes the unchanged carried original report. Earlier full scope authorization is D10; no new contract, runtime defect claim, merge/release authority or whole-review rerun.
+    by: baton-review
+  - id: D18
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: f4b7d29f8fcfabeb395ad86caec28db2a06f221b77fbe825b23009375dbe8b2f
+    x-base-commit: 23a0c9690f99651ee5861942436541714df365c7
+    by: baton
+  - id: D19
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 550f1f2ef8a1c4b2916fa0b4d10ab5e5b13ea350
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -208,8 +154,15 @@ history:
     x-worktree: 777ace4f832b301758a339fa3b1561dd95dfb2e20882b3956e77753e00cbcd5a
     commit: 58bb274
     x-action: write
-updated_at: 2026-10-03T11:38:15.739Z
-updated_by: ce-work
+  - phase: review
+    at: 2026-10-03T11:48:39.182Z
+    by: baton-review
+    writer: 0257db31ca4f3b101504b9a3ed3c06498cd3677bc8c57a95afae526ab91f496f
+    x-worktree: 200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89
+    commit: 550f1f2
+    x-action: write
+updated_at: 2026-10-03T11:48:39.162Z
+updated_by: baton-review
 risks:
   - id: R1
     text: Local Windows checks and structural-only actionlint do not prove hosted full lint, three-OS smoke or release artifacts. New-RC workflows require separate authorization.
@@ -315,23 +268,13 @@ only on POSIX, where the shell has that signal behavior.
    smoke and a fresh release dry run need separate authorization at a new
    merged RC; no dispatch, tag, release, publication or settings change here.
 
-### Formal independent review
+### Formal independent review (historical at 58bb274)
 
-One genuine `ce-review mode:headless` run, `release-gate-repairs-20261003`,
-reviewed code `23a0c9690f99651ee5861942436541714df365c7` against
-`7abec5a1d771408f4712173eed3dbad1d881b76e`. Seven real installed persona
-tasks returned: correctness, testing, maintainability, project standards,
-agent native, learnings and adversarial. This is separate from the earlier
-single-context report. All 29 changed paths were covered: the 22
-implementation paths plus seven generated/bookkeeping paths.
-
-The run artifact is
-`.context/compound-engineering/ce-review/release-gate-repairs-20261003/report.json`;
-normalized findings are `.baton/quick/release-gate-repairs.review.json`.
-Both process paths are explicitly cleanup-removable, not adopter content.
-Reviewer app session `34c127ba-26a4-4548-93ce-54bd38e4a704` and CLI
-session `121f8696-d464-4e62-8ecc-41672feb8e24` are distinct from implementation.
-The CLI recorded its own reviewer writer and checkout identities in history.
+Genuine headless run `release-gate-repairs-20261003` reviewed `23a0c969` against `7abec5a`, separately from the earlier single-context report.
+Seven real installed personas returned: correctness, testing, maintainability, project standards, agent native, learnings and adversarial.
+All 29 paths were covered: 22 implementation plus seven generated/bookkeeping.
+The unchanged original artifact is `.context/compound-engineering/ce-review/release-gate-repairs-20261003/report.json`; normalized findings are `.baton/quick/release-gate-repairs.review.json`, both cleanup-removable.
+Reviewer app session `34c127ba-26a4-4548-93ce-54bd38e4a704` and CLI session `121f8696-d464-4e62-8ecc-41672feb8e24` are distinct from implementation; CLI history records its own writer/checkout identities.
 
 R1 is an open P2 testing gap, confidence 0.93:
 `src/lib/local-checks.mjs:60` rejects when tree termination fails, but the
@@ -349,6 +292,16 @@ bundle freshness and lock verification apply only to code `23a0c969`.
 The writer's 315/315 result and historical D6 failure retain their original
 provenance. Green automatic checks observed at `23a0c969` do not establish
 checks for the later evidence commit or fresh three-OS release validation.
+
+### Bounded independent R1 verification
+
+One genuine installed testing-persona headless run verified `550f1f2` against canonical base `23a0c969`; new delta over `58bb274` is only the test/baton, with the original report carried unchanged.
+`node --test --test-name-pattern='cleanup rejection settles promptly' test/unit/local-checks.test.mjs` passed independently on Windows: 1 pass, zero fail/cancel/skip, test 2367.8761 ms, total 2545.5301 ms.
+Missing dependencies blocked the first attempt before assertions; frozen restoration enabled that pass. No full suite or generation ran.
+Live shell/child survived injected denial; prompt rejection retained timeout/cause/both tails; independent tree cleanup left both PIDs ESRCH. POSIX inspected only; separate 3000 ms taskkill/close bounds are not one total bound.
+R1 is fixed; original OPEN evidence and D6 remain historical. Details/provenance are in `.context/compound-engineering/ce-review/release-gate-repairs-r1-20261003/report.json`, with exact cleanup removal.
+Canonical review write passed all exits: `review -> land`, ready. No land/merge/release approval or remote approval was performed.
+316/316 writer evidence stays at `550f1f2`; prior 315/74+2/type/build/lock stay at `23a0c969`. Four candidate checks were SUCCESS, not evidence-head checks; fresh release validation remains separate.
 
 ## Watch out for
 - The larger quick diff includes the separately authorized optional bounded
