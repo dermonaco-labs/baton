@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.0",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.2",
     "markdownlint-cli2": "^0.18.1",
     "typescript": "^5.9.2"
   },
