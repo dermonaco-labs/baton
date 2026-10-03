@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import childProcess from 'node:child_process';
+import { syncBuiltinESMExports } from 'node:module';
+import { promisify } from 'node:util';
 import {
   checkTimeout, runLocalCheck, DEFAULT_CHECK_TIMEOUT_MS, MAX_CHECK_TIMEOUT_MS,
 } from '../../src/lib/local-checks.mjs';
@@ -112,6 +115,88 @@ test('excess output fails boundedly and cleans up the foreground command', { tim
     const pid = Number(await readFile(join(root, 'check.pid'), 'utf8'));
     assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
   } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('cleanup rejection settles promptly while the real foreground child survives', { timeout: 15000 }, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'baton-local-cleanup-failure-'));
+  const realSpawn = childProcess.spawn;
+  const originalExecFile = childProcess.execFile;
+  const realExecFile = promisify(childProcess.execFile);
+  const realKill = process.kill.bind(process);
+  let shell;
+  let closed;
+  let foregroundPid;
+  let cleanupAttempts = 0;
+  let watchdog;
+  try {
+    await writeFile(join(root, 'check.mjs'),
+      "import { writeFileSync } from 'node:fs'; writeFileSync('check.pid', String(process.pid)); console.log('surviving stdout'); console.error('surviving stderr'); setInterval(() => {}, 1000);\n");
+    t.mock.method(childProcess, 'spawn', (...args) => {
+      shell = realSpawn(...args);
+      closed = new Promise(resolve => shell.once('close', resolve));
+      return shell;
+    });
+    if (process.platform === 'win32') {
+      // Do not inherit execFile's custom promisifier, which invokes the real executable.
+      childProcess.execFile = (file, args, options, callback) => {
+        assert.equal(file, 'taskkill.exe');
+        assert.deepEqual(args, ['/PID', String(shell.pid), '/T', '/F']);
+        cleanupAttempts++;
+        callback(new Error('forced fixture cleanup denial'), '', '');
+      };
+    } else {
+      t.mock.method(process, 'kill', (pid, signal) => {
+        assert.equal(pid, -shell.pid);
+        assert.equal(signal, 'SIGKILL');
+        cleanupAttempts++;
+        throw new Error('forced fixture cleanup denial');
+      });
+    }
+    syncBuiltinESMExports();
+    // A fresh instance captures the injected OS termination failure, not a fake check result.
+    const { runLocalCheck: runWithFailedCleanup } = await import('../../src/lib/local-checks.mjs?cleanup-failure');
+    const started = performance.now();
+    const pending = runWithFailedCleanup(root,
+      { name: 'survivor', run: `"${process.execPath}" check.mjs`, timeout_ms: 2000 });
+    await assert.rejects(Promise.race([pending, new Promise((resolve, reject) => {
+      watchdog = setTimeout(() => reject(new Error('check did not reject within 5000ms')), 5000);
+    })]), error => {
+      assert.equal(error.code, 'E_CHECK_FAILED');
+      assert.match(error.message, /survivor: timeout after 2000ms; process-tree cleanup failed: forced fixture cleanup denial/);
+      assert.match(error.message, /stdout \(tail\):\nsurviving stdout/);
+      assert.match(error.message, /stderr \(tail\):\nsurviving stderr/);
+      return true;
+    });
+    assert.ok(performance.now() - started < 5000, 'rejection must not wait for child close');
+    assert.equal(cleanupAttempts, 1);
+    foregroundPid = Number(await readFile(join(root, 'check.pid'), 'utf8'));
+    assert.equal(realKill(shell.pid, 0), true, 'shell is still alive after rejected cleanup');
+    assert.equal(realKill(foregroundPid, 0), true, 'foreground child is still alive after rejection');
+  } finally {
+    clearTimeout(watchdog);
+    t.mock.restoreAll();
+    childProcess.execFile = originalExecFile;
+    syncBuiltinESMExports();
+    if (shell?.pid) {
+      if (process.platform === 'win32') {
+        await realExecFile('taskkill.exe', ['/PID', String(shell.pid), '/T', '/F'],
+          { windowsHide: true, timeout: 3000 });
+      } else {
+        realKill(-shell.pid, 'SIGKILL');
+      }
+      let cleanupWatchdog;
+      try {
+        await Promise.race([closed, new Promise((resolve, reject) => {
+          cleanupWatchdog = setTimeout(() => reject(new Error('fixture tree did not close within 3000ms')), 3000);
+        })]);
+      } finally {
+        clearTimeout(cleanupWatchdog);
+      }
+      assert.throws(() => realKill(shell.pid, 0), { code: 'ESRCH' });
+      if (foregroundPid) assert.throws(() => realKill(foregroundPid, 0), { code: 'ESRCH' });
+    }
     await rm(root, { recursive: true, force: true });
   }
 });

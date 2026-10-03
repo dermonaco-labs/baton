@@ -2,37 +2,105 @@
 baton: 1
 lane: quick
 feature: release-gate-repairs
-phase_completed: review
-next_phase: work
-next_owner: ce-work
-status: needs-human
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: Independent ce-review headless run reviewed code 23a0c969 against 7abec5a with seven real installed personas and all 29 changed files. One open P2 cleanup-failure coverage gap; no observed runtime defect or P0/P1 finding. Return to work awaiting separate owner authorization, not land or merge.
+phase_completed: work
+next_phase: review
+next_owner: baton-review
+status: ready
+model_role: review
+suggested_model: claude-opus-5.5
+summary: Q3-authorized regression exercises R1 cleanup rejection with a real surviving foreground child, bounded explicit error/output evidence and independent PID-specific fixture cleanup. Production and existing assertions remain unchanged. Return to review pending separately authorized independent verification; no finding acceptance or land authority.
 read_first:
+  - path: test/unit/local-checks.test.mjs
+    why: Q3 real-process failure injection, survival, rejection bound and independent cleanup
   - path: .baton/quick/release-gate-repairs.review.json
-    why: Open R1 and actual independent reviewer provenance
+    why: Historical open R1 and genuine original reviewer provenance, not rewritten
   - path: .context/compound-engineering/ce-review/release-gate-repairs-20261003/report.json
-    why: Real persona results, exact 29-file scope, earlier evidence boundaries and limitations
+    why: Actual structured finding and exact independent review boundaries
   - path: .baton/quick/release-gate-repairs.md
-    why: Owner decisions and unchanged historical work evidence
+    why: Q3 owner permission and historical D6/check evidence
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: diff-nonempty
     met: true
-    evidence: .baton/quick/release-gate-repairs.review.json
-  - id: quick-scope-held
+    evidence: 2 changed files
+  - id: local-checks-pass
     met: true
-    evidence: "All 29 paths serve the recorded repair: eight exact owned-derived mappings, regenerated hooks/metadata, pinned uv prerequisites and integrity gates, plus D4/D5's separately owner-authorized bounded timeout schema addition and Q2 numeric diagnostic compatibility. D5 explicitly supersedes D3's no-schema-change statement; this is not a claim that timeout_ms is no contract addition. No change beyond those recorded authorizations, upstream pin, adopter default budget or release authority is introduced. Seven bookkeeping/generated paths supplement the 22 implementation paths."
-open_questions:
-  - id: Q3
-    question: Authorize a bounded regression for R1 that forces foreground process-tree cleanup failure and verifies prompt E_CHECK_FAILED rejection with captured diagnostics?
-    blocking: true
-    options:
-      - Authorize the focused regression fix
-      - Keep the finding open and defer the repair
-    owner: human:repository-owner
+    evidence: |-
+      baton: 0
+      stdout (tail):
+      s for nested gitignore files (15.7743ms)
+      ✔ built-in phase defaults deeply match the shipped phase template (22.3324ms)
+      ✔ every feature phase has entry and exit checks (1.2076ms)
+      ✔ removing a built-in exit criterion warns (0.5599ms)
+      ✔ check groups evaluate every member and preserve evidence (2.5671ms)
+      ✔ check validation rejects unknown checks, malformed groups and duplicate keys (0.5616ms)
+      ✔ weakened contract detects moving mandatory exit into a disjunction (0.7481ms)
+      ✔ weakened contracts report removed entry checks, including quick-lane entry overrides (1.3715ms)
+      ✔ weakened contracts report disabled human gates without flagging unchanged defaults (0.5073ms)
+      ✔ shipped phase template is valid and never weakens its built-in contracts (21.6831ms)
+      ✔ tracked Baton documentation contains no private feed hostnames (562.4271ms)
+      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.8882ms)
+      ✔ adopter command table remains contiguous (0.8489ms)
+      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.6897ms)
+      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.5351ms)
+      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (33.8604ms)
+      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (2.7549ms)
+      ✔ compiles all draft 2020-12 schemas once (152.4907ms)
+      ✔ findings fixture validates and invalid fixture reports a JSON pointer (3.5174ms)
+      ✔ pack schema requires a classified reason for every optional reference (0.8819ms)
+      ✔ sync bump explains pin and file changes for a PR body (1.4068ms)
+      ✔ sync rejects unpinned bump values and check/bump combination (29.41ms)
+      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (156.0441ms)
+      ✔ generated registry preserves verified bytes when only installation time changes (7.8014ms)
+      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (5.1493ms)
+      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (3754.5952ms)
+      ✔ every feature phase and quick lane phase has a valid independent fixture (278.3784ms)
+      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
+        ✔ E_ACTOR_FORMAT (102.4463ms)
+        ✔ E_ANALYSIS_CRITICAL (6.6533ms)
+        ✔ E_ANALYSIS_MISSING (3.9042ms)
+        ✔ E_APPROVER_FORMAT (3.6812ms)
+        ✔ E_BLOCKING_OPEN (4.2049ms)
+        ✔ E_BODY_SECTIONS (4.394ms)
+        ✔ E_BUDGET (7.0638ms)
+        ✔ E_DENYLIST (3.5673ms)
+        ✔ E_EXIT_UNMET (4.6548ms)
+        ✔ E_GATE_PENDING (109.3462ms)
+        ✔ E_LANE_ESCALATE (3998.669ms)
+        ✔ E_LANE_MISMATCH (4.8043ms)
+        ✔ E_MISSING_ARTIFACT (5.7528ms)
+        ✔ E_MODEL_NOT_ALLOWED (9.3244ms)
+        ✔ E_MULTIPLE_BATONS (7.9033ms)
+        ✔ E_NO_PREREG (6.1698ms)
+        ✔ E_OWNER (5.6532ms)
+        ✔ E_PR_MISSING (5.0522ms)
+        ✔ E_REVIEW_BLOCKING (293.6537ms)
+        ✔ E_REVIEW_MISSING (7.1965ms)
+        ✔ E_SCHEMA (5.3693ms)
+        ✔ E_STALE_ARTIFACT (6.4851ms)
+        ✔ E_TRANSITION (4.7467ms)
+      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (4658.7279ms)
+      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (152.9992ms)
+      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (50.1307ms)
+      ▶ model allowlist warns in warn mode and errors in error mode
+        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (123.385ms)
+        ✔ error mode emits E_MODEL_NOT_ALLOWED (12.28ms)
+      ✔ model allowlist warns in warn mode and errors in error mode (176.8452ms)
+      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (151.0844ms)
+      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (3.1774ms)
+      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (40.0745ms)
+      ✔ ready with a blocking question is rejected (120.3384ms)
+      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (177.2933ms)
+      ℹ tests 316
+      ℹ suites 0
+      ℹ pass 316
+      ℹ fail 0
+      ℹ cancelled 0
+      ℹ skipped 0
+      ℹ todo 0
+      ℹ duration_ms 229216.1985
+open_questions: []
 decisions:
   - id: D1
     decision: Start a quick lane
@@ -95,6 +163,18 @@ decisions:
     tag: diff-base
     x-base-commit: 23a0c9690f99651ee5861942436541714df365c7
     by: baton
+  - id: D14
+    decision: Authorize the focused regression fix
+    rationale: Authorize a bounded regression for R1 that forces foreground process-tree cleanup failure and verifies prompt E_CHECK_FAILED rejection with captured diagnostics?
+    by: human:repository-owner
+  - id: D15
+    decision: Implement only Q3's bounded cleanup-rejection regression
+    rationale: Owner selected Approve Q3 regression and one required work-gate attempt (Recommended) through control-plane delegation. Configured Q3/D14 answer records the role-only authorization. R1 is a coverage gap, not an observed production defect. Force OS cleanup failure while a real foreground process runs; assert prompt E_CHECK_FAILED preserving timeout, cleanup cause and captured stdout/stderr, then independently terminate only the fixture PID tree/group. No production behavior or existing assertion changes. Focused runner 6/6 and coupled 10/10 pass. One changed full configured work-gate attempt is authorized; failure stops without retries.
+    by: ce-work
+  - id: D16
+    decision: Preserve historical review evidence without claiming independent R1 resolution
+    rationale: Original technical evidence applies to 23a0c969; evidence-only head is 58bb274. Leave the genuine report/findings, original identity and historical D6 untouched. This test candidate needs separately authorized independent verification; no reviewer impersonation, formal review rerun, remote approval, land, merge, dispatch, pin/workflow change or publication.
+    by: ce-work
 gate:
   required: false
   approved_by: null
@@ -114,8 +194,22 @@ history:
     x-worktree: 200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89
     commit: 23a0c96
     x-action: write
-updated_at: 2026-10-03T11:14:24.966Z
-updated_by: baton-review
+  - phase: review
+    at: 2026-10-03T11:36:10.456Z
+    by: human:repository-owner
+    writer: 335d071e9e92da4bf86b82c418267e2e45f6ca069cc113cf7d929bf71dd2d868
+    x-worktree: 777ace4f832b301758a339fa3b1561dd95dfb2e20882b3956e77753e00cbcd5a
+    commit: 58bb274
+    x-action: answer
+  - phase: work
+    at: 2026-10-03T11:42:26.101Z
+    by: baton
+    writer: 335d071e9e92da4bf86b82c418267e2e45f6ca069cc113cf7d929bf71dd2d868
+    x-worktree: 777ace4f832b301758a339fa3b1561dd95dfb2e20882b3956e77753e00cbcd5a
+    commit: 58bb274
+    x-action: write
+updated_at: 2026-10-03T11:38:15.739Z
+updated_by: ce-work
 risks:
   - id: R1
     text: Local Windows checks and structural-only actionlint do not prove hosted full lint, three-OS smoke or release artifacts. New-RC workflows require separate authorization.
@@ -128,7 +222,7 @@ risks:
     severity: medium
 x-implementation-writer: 335d071e9e92da4bf86b82c418267e2e45f6ca069cc113cf7d929bf71dd2d868
 x-implementation-worktree: 777ace4f832b301758a339fa3b1561dd95dfb2e20882b3956e77753e00cbcd5a
-x-implementation-cycle: 590d33f11746e1a4893a55ac9ad67d53cc7a12c2f3281afd9554022a1107e4ba
+x-implementation-cycle: a263f039656bab8f8f826bdb2f9bc1397f291f82949a2f472295a7236c3a9cc9
 review:
   findings_path: .baton/quick/release-gate-repairs.review.json
   blocking_findings: 0
@@ -261,3 +355,22 @@ checks for the later evidence commit or fresh three-OS release validation.
   deadline field as well as generated metadata, tests and procedural docs.
   Default/adopter budgets and historical DONE batons are unchanged.
 - Local Windows evidence does not establish hosted macOS/Linux smoke success.
+
+### Q3 implementation follow-up
+
+Owner selected "Approve Q3 regression and one required work-gate attempt
+(Recommended)" through control-plane delegation; configured Q3/D14 answer
+and work receive passed. Only the test and truthful work bookkeeping change.
+The new test injects OS termination denial, not a fake check outcome: a real
+shell/foreground child survives while `E_CHECK_FAILED` rejects before 5,000 ms,
+preserving the 2,000 ms timeout and both captured streams. Independent
+fixture cleanup targets only that shell PID tree/group, waits at most 3,000 ms
+for close, and verifies both PIDs return ESRCH. Six runner tests and ten
+coupled focused cases pass. Existing tests/assertions and production bytes
+are unchanged. R1 remains independently unverified/open in the historical
+review artifacts; no review rerun, acceptance or land permission is claimed.
+The one Q3-authorized formal work write passed the actual configured check:
+316/316 tests, zero failures/cancelled/skipped, test stage 229,216.1985 ms.
+Active exit evidence and next phase review are persisted above. This is the
+test candidate based on evidence head `58bb274`, not a relabeling of the
+original `23a0c969` independent review or its 315-test run.
