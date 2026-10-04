@@ -3,12 +3,12 @@ baton: 1
 lane: quick
 feature: release-gate-repairs
 phase_completed: review
-next_phase: land
-next_owner: baton-land
+next_phase: work
+next_owner: ce-work
 status: ready
 model_role: implementation
 suggested_model: gpt-6-sol
-summary: Independent bounded ce-review headless testing verification at 550f1f2 accepts R1's owner-authorized regression. One Windows real-process test passed; no new findings or production edits. Historical seven-persona review and prior results retain original SHAs. Ready for gated land handoff only; owner merge/release approval remains separate.
+summary: Owner-authorized audited metadata-only recovery routes the completed review to pending work after Ubuntu CI 37120945370 failed at 430491c. Historical Windows-backed R1 disposition and all genuine review evidence remain unchanged, not cross-platform clearance. Prior land-readiness is superseded; fixture repair and fresh independent acceptance remain pending. No new formal review or gate approval occurred.
 read_first:
   - path: .baton/quick/release-gate-repairs.review.json
     why: Current fixed R1 disposition and original-run reference
@@ -121,6 +121,10 @@ decisions:
     tag: diff-base
     x-base-commit: 550f1f2ef8a1c4b2916fa0b4d10ab5e5b13ea350
     by: baton
+  - id: D20
+    decision: Authorize an audited metadata-only return to pending work
+    rationale: Owner selected Approve the audited metadata-only return to work (Recommended) through control-plane delegation on 2026-10-04. At source 430491c4c09aacc66ab84eef92423f26aaf53332, Ubuntu CI 37120945370 failed the fixture foreground-PID ESRCH assertion at test/unit/local-checks.test.mjs:198 (315/316 passed). Required review receive failed E_TRANSITION Expected land, received review; no new persona run or canonical review write occurred. This one-off owner recovery outside unsupported review re-entry preserves phase_completed review, all genuine history, normalized findings, report blobs, review IDs, exit evidence and tested SHAs while changing only the pending route to work. Historical Windows-backed R1 fixed evidence remains platform-limited; prior land-readiness is superseded, with fixture repair and fresh independent acceptance pending. No production defect or historical live/zombie cause is inferred, and no gate approval, waiver, future-fix acceptance or merge/release authority is granted.
+    by: human:repository-owner
 gate:
   required: false
   approved_by: null
@@ -161,7 +165,7 @@ history:
     x-worktree: 200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89
     commit: 550f1f2
     x-action: write
-updated_at: 2026-10-03T11:48:39.162Z
+updated_at: 2026-10-04T10:01:34.958Z
 updated_by: baton-review
 risks:
   - id: R1
