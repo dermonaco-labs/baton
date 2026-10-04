@@ -2,104 +2,32 @@
 baton: 1
 lane: quick
 feature: release-gate-repairs
-phase_completed: work
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: land
+next_owner: baton-land
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: Owner-authorized POSIX fixture cleanup correction preserves both ESRCH assertions and bounded real survival/error/streams checks. Native Linux and Windows focused6/6 pass; controlled delayed-reaping proof retained. Prior configured attempt failed E_BUDGET before tests; only new prose compacted to actual150-line unchanged budget, standard validation passes. This is the one fresh changed attempt authorized by owner; independent review pending, land paused.
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: Independent bounded headless testing review accepts POSIX fixture candidate5bd with six focused passes each on Windows/nativeLinux and one selected delayed-subreaper pass. No new findings or production edits. Historical reports/D6/D20-D22/testedSHAs remain distinct; land remains parent-paused0/3, no merge/release acceptance.
 read_first:
-  - path: test/unit/local-checks.test.mjs
-    why: POSIX-only fixture child-first cleanup; all existing meaningful assertions retained
-  - path: .baton/quick/release-gate-repairs.md
-    why: D20 recovery, owner authorizations, native runtime/controlled proof and historical failed gate
   - path: .baton/quick/release-gate-repairs.review.json
-    why: Historical genuine reviewer disposition/provenance unchanged, not independently reaccepted
-  - path: .context/compound-engineering/ce-review/release-gate-repairs-r1-20261003/report.json
-    why: Original Windows-limited independent evidence retains its tested SHA
+    why: Current bounded acceptance and preserved historical references
+  - path: .context/compound-engineering/ce-review/release-gate-repairs-posix-20261004/report.json
+    why: Actual persona output, runtime proof, scope and limits
+  - path: .baton/quick/release-gate-repairs.md
+    why: Historical decisions, current authority and tested-SHA boundaries
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: diff-nonempty
+  - id: findings-json-valid
     met: true
-    evidence: 2 changed files
-  - id: local-checks-pass
+    evidence: .baton/quick/release-gate-repairs.review.json
+  - id: findings-fixed-or-dismissed
     met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      ytes for nested gitignore files (21.8119ms)
-      ✔ built-in phase defaults deeply match the shipped phase template (21.1454ms)
-      ✔ every feature phase has entry and exit checks (1.1362ms)
-      ✔ removing a built-in exit criterion warns (0.5298ms)
-      ✔ check groups evaluate every member and preserve evidence (1.3475ms)
-      ✔ check validation rejects unknown checks, malformed groups and duplicate keys (0.2594ms)
-      ✔ weakened contract detects moving mandatory exit into a disjunction (0.2309ms)
-      ✔ weakened contracts report removed entry checks, including quick-lane entry overrides (0.868ms)
-      ✔ weakened contracts report disabled human gates without flagging unchanged defaults (0.2669ms)
-      ✔ shipped phase template is valid and never weakens its built-in contracts (19.3145ms)
-      ✔ tracked Baton documentation contains no private feed hostnames (88.4504ms)
-      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.7521ms)
-      ✔ adopter command table remains contiguous (0.6177ms)
-      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.6704ms)
-      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.5004ms)
-      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (31.8402ms)
-      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (2.0086ms)
-      ✔ compiles all draft 2020-12 schemas once (133.9838ms)
-      ✔ findings fixture validates and invalid fixture reports a JSON pointer (3.1979ms)
-      ✔ pack schema requires a classified reason for every optional reference (0.816ms)
-      ✔ sync bump explains pin and file changes for a PR body (1.5986ms)
-      ✔ sync rejects unpinned bump values and check/bump combination (28.5648ms)
-      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (142.6748ms)
-      ✔ generated registry preserves verified bytes when only installation time changes (6.8823ms)
-      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (5.0071ms)
-      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (976.1298ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (256.7448ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (94.3206ms)
-        ✔ E_ANALYSIS_CRITICAL (4.1391ms)
-        ✔ E_ANALYSIS_MISSING (3.326ms)
-        ✔ E_APPROVER_FORMAT (2.9855ms)
-        ✔ E_BLOCKING_OPEN (3.8252ms)
-        ✔ E_BODY_SECTIONS (3.6784ms)
-        ✔ E_BUDGET (6.5487ms)
-        ✔ E_DENYLIST (3.3996ms)
-        ✔ E_EXIT_UNMET (4.6727ms)
-        ✔ E_GATE_PENDING (98.3097ms)
-        ✔ E_LANE_ESCALATE (3492.6784ms)
-        ✔ E_LANE_MISMATCH (3.8765ms)
-        ✔ E_MISSING_ARTIFACT (4.4169ms)
-        ✔ E_MODEL_NOT_ALLOWED (7.2848ms)
-        ✔ E_MULTIPLE_BATONS (7.1842ms)
-        ✔ E_NO_PREREG (5.8616ms)
-        ✔ E_OWNER (4.8333ms)
-        ✔ E_PR_MISSING (13.2185ms)
-        ✔ E_REVIEW_BLOCKING (231.6913ms)
-        ✔ E_REVIEW_MISSING (5.8735ms)
-        ✔ E_SCHEMA (5.4006ms)
-        ✔ E_STALE_ARTIFACT (5.8297ms)
-        ✔ E_TRANSITION (4.298ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (4056.4892ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (125.4086ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (40.5614ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (83.3847ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (9.1616ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (124.754ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (122.6836ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (2.8374ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (32.4087ms)
-      ✔ ready with a blocking question is rejected (110.4048ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (150.2687ms)
-      ℹ tests 316
-      ℹ suites 0
-      ℹ pass 316
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 0
-      ℹ todo 0
-      ℹ duration_ms 221994.4975
+    evidence: 0 findings unresolved
+  - id: quick-scope-held
+    met: true
+    evidence: "All 29 paths serve the recorded repair: eight exact owned-derived mappings, regenerated hooks/metadata, pinned uv prerequisites and integrity gates, plus D4/D5's separately owner-authorized bounded timeout schema addition and Q2 numeric diagnostic compatibility. D5 explicitly supersedes D3's no-schema-change statement; this is not a claim that timeout_ms is no contract addition. No change beyond those recorded authorizations, upstream pin, adopter default budget or release authority is introduced. Seven bookkeeping/generated paths supplement the 22 implementation paths."
 open_questions: []
 decisions:
   - id: D1
@@ -205,6 +133,24 @@ decisions:
     decision: Record failed E_BUDGET attempt and fresh owner-authorized changed work attempt
     rationale: Previous configured write failed E_EXIT_UNMET/E_BUDGET at validate before npm test and persisted no success. Owner selected Approve prose compaction and one changed work attempt (Recommended). Compact only added prose; actual body150 lines/unchanged budget and standard baton validate now pass (advisory warnings), no focused reruns merely for docs. One changed configured600000ms work gate authorized; further failure stops. Preserve D6,23a original evidence,550f Windows/316,430 Ubuntu failure,5ce recovery distinctly. No validator/protocol/config/workflow/pin/production changes or new formal review/land (0/3 paused), dispatch/rerun, PR readiness/approval, merge/publication/adopter authority.
     by: ce-work
+  - id: D23
+    decision: Accept the bounded POSIX fixture correction without expanding scope
+    tag: quick-scope-held
+    rationale: One actual installed testing-persona headless run and independent focused Windows/nativeLinux6/6 each plus controlled delayed-subreaper1selected/5selector skips support R1 fixed at5bd. Actual canonical D19 base550f covers test plus carried prior report; writer5ce->5bd delta is only test/baton. No user-facing behavior, production/public-contract change or whole29-file rerun. D10/D17 retain original authorized scope; D20-D22, priorOPEN/fixedreports/430Ubuntu failure stay historical. Land0/3 remains paused; future checkpoint and merge/release acceptance are separate.
+    by: baton-review
+  - id: D24
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 4a35ce2b7c930de2246ecd4f4529bfdc0ee4504d7e8fb24ea052f6190c9fa0c6
+    x-base-commit: 550f1f2ef8a1c4b2916fa0b4d10ab5e5b13ea350
+    by: baton
+  - id: D25
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 5bd1b9cc3694f00cf25d640cfcb15c29a30f9722
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -252,8 +198,15 @@ history:
     x-worktree: 777ace4f832b301758a339fa3b1561dd95dfb2e20882b3956e77753e00cbcd5a
     commit: 5ce92d6
     x-action: write
-updated_at: 2026-10-04T10:08:37.520Z
-updated_by: ce-work
+  - phase: review
+    at: 2026-10-04T13:43:38.188Z
+    by: baton-review
+    writer: 0257db31ca4f3b101504b9a3ed3c06498cd3677bc8c57a95afae526ab91f496f
+    x-worktree: 200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89
+    commit: 5bd1b9c
+    x-action: write
+updated_at: 2026-10-04T13:43:38.182Z
+updated_by: baton-review
 risks:
   - id: R1
     text: Local Windows checks and structural-only actionlint do not prove hosted full lint, three-OS smoke or release artifacts. New-RC workflows require separate authorization.
