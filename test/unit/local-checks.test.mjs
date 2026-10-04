@@ -184,7 +184,9 @@ test('cleanup rejection settles promptly while the real foreground child survive
         await realExecFile('taskkill.exe', ['/PID', String(shell.pid), '/T', '/F'],
           { windowsHide: true, timeout: 3000 });
       } else {
-        realKill(-shell.pid, 'SIGKILL');
+        // Keep the shell alive to reap its child before Node reaps the shell.
+        const childPid = foregroundPid ?? Number(await readFile(join(root, 'check.pid'), 'utf8'));
+        realKill(childPid, 'SIGKILL');
       }
       let cleanupWatchdog;
       try {
