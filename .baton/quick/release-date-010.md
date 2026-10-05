@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: release-date-010
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: Independent date-only review completed with six installed personas and no findings. Required land checks and new human acceptance remain pending; no publication or fresh A3 proof.
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Date-only candidate and immutable independent review published as a draft PR. Required full quick-lane land checks precede the new unapproved human gate. No acceptance, merge, publication or fresh A3 completion.
 read_first:
   - path: .baton/quick/release-date-010.md
     why: Current relay and unapproved acceptance boundary
@@ -23,15 +23,9 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/release-date-010.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: Independent review against d1470505bbe81d1ceb64961a928b0212affc2bd8 verified CHANGELOG.md is byte-identical except the v0.1.0 heading date 2026-10-03 to 2026-10-05. Exactly three new source-only cleanup entries and new relay/review evidence add no user-facing behavior or public contract. Six installed personas returned no findings. OD3's earlier exception is not reused; full default checks and a new human acceptance gate remain required.
+    evidence: https://github.com/dermonaco-labs/baton/pull/43
 open_questions: []
 decisions:
   - id: D1
@@ -71,8 +65,16 @@ decisions:
     tag: diff-base
     x-base-commit: d1470505bbe81d1ceb64961a928b0212affc2bd8
     by: baton
+  - id: D8
+    decision: Record the real draft PR and bounded prepublication checks
+    rationale: The genuine independent review found no issues. Canonical land receive ran one configured npm run check with timeout_ms 600000 and exit 0, elapsed 167916 ms; its successful response does not expose suite totals. The required explicit wrapper ran npm run check once through runLocalCheck with timeout_ms 600000, exit 0, elapsed 166659 ms and 316 tests, 316 pass, zero fail, cancelled, skipped or todo. node .baton/bin/baton.mjs validate --json passed with zero errors and seven advisory missing-recommended-pack warnings. The writer's earlier one configured check is separate work evidence. Canonical land write must execute the final third independent configured check before this payload can persist; no retries or waived checks. A real open draft PR now exists for this exact publication branch.
+    by: baton-land
+  - id: D9
+    decision: Freeze publication at the new human acceptance boundary
+    rationale: Only the date correction and mandatory five-path relay evidence are published. The immutable review report and canonical reviewed-tree digest remain unchanged. The installed protocol requires a land-evidence-only follow-up commit after recording the real draft PR, followed by observation of automatic CI on that final head. Draft publication is not owner acceptance, mark-ready or merge authorization. Historical checks and A3 prove only their prior candidate. Fresh A3 remains separately gated after actual acceptance and merge; no compound, tag, release, settings change or manual workflow dispatch.
+    by: baton-land
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -90,8 +92,15 @@ history:
     x-worktree: 6ca9fafb316ae4c66e881e1f7845802a52a2147dc04c26393f5e221a57214036
     commit: d147050
     x-action: write
-updated_at: 2026-10-05T20:07:12.113Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-10-05T20:19:13.136Z
+    by: baton-land
+    writer: e1c35340fcda0e3e6998a38f03b69c3748ab3934a0e8a946d15eacfb4ee0cf02
+    x-worktree: 6ca9fafb316ae4c66e881e1f7845802a52a2147dc04c26393f5e221a57214036
+    commit: 34f7c2e
+    x-action: write
+updated_at: 2026-10-05T20:19:13.130Z
+updated_by: baton-land
 risks:
   - id: R1
     text: 2026-10-05 is the intended candidate date, not evidence of publication. Stop if the local day changes; later publication needs a new authorized date correction or owner decision under OD1.
@@ -105,6 +114,9 @@ x-implementation-cycle: 7ffd13ac3fba5af489c1c5d4caa70e005e79628e4956e37d39164814
 review:
   findings_path: .baton/quick/release-date-010.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/43
+  number: 43
 ---
 ## Goal
 Keep the work in scope.
