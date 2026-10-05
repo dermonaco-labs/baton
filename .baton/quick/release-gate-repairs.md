@@ -159,8 +159,8 @@ decisions:
     by: baton-land
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-10-05
 history:
   - phase: work
     at: 2026-10-03T10:33:15.212Z
@@ -218,8 +218,15 @@ history:
     x-worktree: 200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89
     commit: 92b194e
     x-action: write
-updated_at: 2026-10-05T09:37:52.313Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-10-05T15:49:38.179Z
+    by: human:repository-owner
+    writer: 0257db31ca4f3b101504b9a3ed3c06498cd3677bc8c57a95afae526ab91f496f
+    x-worktree: 200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89
+    commit: 75bce57
+    x-action: approve
+updated_at: 2026-10-05T15:49:38.179Z
+updated_by: human:repository-owner
 risks:
   - id: R1
     text: Local Windows checks and structural-only actionlint do not prove hosted full lint, three-OS smoke or release artifacts. New-RC workflows require separate authorization.
