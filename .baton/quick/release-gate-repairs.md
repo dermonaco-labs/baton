@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: release-gate-repairs
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: Independent bounded headless testing review accepts POSIX fixture candidate5bd with six focused passes each on Windows/nativeLinux and one selected delayed-subreaper pass. No new findings or production edits. Historical reports/D6/D20-D22/testedSHAs remain distinct; land remains parent-paused0/3, no merge/release acceptance.
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Formal land checkpoint completed for existing draft PR39 at92b194e after the separately authorized fourth configured entry and canonical write exited0. Original third-write E_USAGE remains D27. Next compound is blocked by required human PR acceptance, not approved. Reviewed candidate5bd and all historic results remain distinct; no merge/release authority.
 read_first:
   - path: .baton/quick/release-gate-repairs.review.json
     why: Current bounded acceptance and preserved historical references
@@ -19,15 +19,9 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/release-gate-repairs.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: "All 29 paths serve the recorded repair: eight exact owned-derived mappings, regenerated hooks/metadata, pinned uv prerequisites and integrity gates, plus D4/D5's separately owner-authorized bounded timeout schema addition and Q2 numeric diagnostic compatibility. D5 explicitly supersedes D3's no-schema-change statement; this is not a claim that timeout_ms is no contract addition. No change beyond those recorded authorizations, upstream pin, adopter default budget or release authority is introduced. Seven bookkeeping/generated paths supplement the 22 implementation paths."
+    evidence: https://github.com/dermonaco-labs/baton/pull/39
 open_questions: []
 decisions:
   - id: D1
@@ -151,8 +145,20 @@ decisions:
     tag: diff-base
     x-base-commit: 5bd1b9cc3694f00cf25d640cfcb15c29a30f9722
     by: baton
+  - id: D26
+    decision: Record delegated owner instructions as the land agent
+    rationale: "Actual agent record, not a human decision or approval: owner selected Resume the bounded land checkpoint (Recommended) on2026-10-05, then after disclosed stage3 E_USAGE selected Approve corrected payload and one fourth write attempt (Recommended) through control-plane delegation. Exactly one fresh fourth configured write entry is now authorized; no fifth/retry, PR acceptance, merge, release or optional compound authority. Existing draftPR39 reused. The rejected payload's fabricated write-supplied human-role decision is archived, not re-attributed as if accepted."
+    by: baton-land
+  - id: D27
+    decision: Preserve three consumed starts and the agent's failed write
+    rationale: "At92b194e6c9fa4dd2b3be2fd6ab77e2678237a5a5 on WindowsNode24.14.0arm64: stage1 canonical receive implicit600000ms configured check exit0, receipt has no test totals; stage2 explicit npm run check exit0,316/316 zero fail/cancel/skip268201.0555ms; stage3 entry check returned no E_CHECK_FAILED, but overall write exit2 E_USAGE Reserved decisions can only be recorded by the CLI from my invalid new human:* decision, no persisted handoff/D26/D27. Three starts remain consumed. Original rejected payload and three logs retained in reviewer session scratch. Fourth actual result is not predicted here. No new persona/focused runtime/full standalone suite or subject change; reviewed snapshot4a35ce2b7c930de2246ecd4f4529bfdc0ee4504d7e8fb24ea052f6190c9fa0c6/base550f unchanged; all historic results keep actual SHAs."
+    by: baton-land
+  - id: D28
+    decision: Record the actual fourth entry and completed land write
+    rationale: Canonical handoff write --phase land --quick release-gate-repairs --by baton-land --from-json .baton/.tmp/land-payload.json --json exited0 at92b194e6c9fa4dd2b3be2fd6ab77e2678237a5a5 after its mandatory600000ms configured npm run check entry passed. CLI receipt exposes success, not test totals; no invented316 count or timing for this entry. ExistingPR39 pr-opened exit met, phase_completed land/next compound and required unapproved human gate persisted by CLI. Fourth start consumed; no fifth. Actual log retained in session scratch land-stage4.log. This post-result agent evidence annotation changes only non-subject bookkeeping; reviewed reports/test/digest unchanged. D27 failure and all historical evidence preserved; no PR acceptance, compound execution, merge or release.
+    by: baton-land
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -205,8 +211,15 @@ history:
     x-worktree: 200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89
     commit: 5bd1b9c
     x-action: write
-updated_at: 2026-10-04T13:43:38.182Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-10-05T09:37:52.332Z
+    by: baton-land
+    writer: 0257db31ca4f3b101504b9a3ed3c06498cd3677bc8c57a95afae526ab91f496f
+    x-worktree: 200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89
+    commit: 92b194e
+    x-action: write
+updated_at: 2026-10-05T09:37:52.313Z
+updated_by: baton-land
 risks:
   - id: R1
     text: Local Windows checks and structural-only actionlint do not prove hosted full lint, three-OS smoke or release artifacts. New-RC workflows require separate authorization.
@@ -223,6 +236,9 @@ x-implementation-cycle: 7df394fc37b71e044a19595f0699936f57c3100099bab24aa6284f70
 review:
   findings_path: .baton/quick/release-gate-repairs.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/39
+  number: 39
 ---
 ## Goal
 Repair the two release blockers at RC `7abec5a` and the separately
