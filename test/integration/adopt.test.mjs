@@ -79,6 +79,7 @@ test('adopt replaces the constitution, README and manifest without touching work
     const config = await readFile(join(root, '.baton/config.yml'), 'utf8');
     assert.match(config, /run: node \.baton\/bin\/baton\.mjs validate/);
     assert.doesNotMatch(config, /npm run check/);
+    assert.doesNotMatch(config, /timeout_ms/, 'source suite budget must not change adopter validation');
     const diagnosed = await runSource(root, ['doctor', '--strict', '--json']);
     assert.equal(diagnosed.code, 0, diagnosed.stdout || diagnosed.stderr);
     const validated = await runSource(root, ['validate', '--json']);

@@ -1788,7 +1788,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 22991,
+      "bytes": 25775,
       "imports": [
         {
           "path": "node:fs",
@@ -3721,8 +3721,29 @@
       ],
       "format": "esm"
     },
+    "src/lib/local-checks.mjs": {
+      "bytes": 4147,
+      "imports": [
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "src/lib/report.mjs",
+          "kind": "import-statement",
+          "original": "./report.mjs"
+        }
+      ],
+      "format": "esm"
+    },
     "src/lib/checks.mjs": {
-      "bytes": 20747,
+      "bytes": 20736,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3768,6 +3789,11 @@
           "path": "src/lib/handoff.mjs",
           "kind": "import-statement",
           "original": "./handoff.mjs"
+        },
+        {
+          "path": "src/lib/local-checks.mjs",
+          "kind": "import-statement",
+          "original": "./local-checks.mjs"
         }
       ],
       "format": "esm"
@@ -4019,7 +4045,7 @@
       "format": "esm"
     },
     "src/commands/adopt.mjs": {
-      "bytes": 13709,
+      "bytes": 13744,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4702,6 +4728,16 @@
           "external": true
         },
         {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
           "path": "node:fs/promises",
           "kind": "import-statement",
           "external": true
@@ -5167,7 +5203,7 @@
           "bytesInOutput": 1660
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 12048
+          "bytesInOutput": 13773
         },
         "node_modules/ajv/dist/compile/codegen/code.js": {
           "bytesInOutput": 2551
@@ -5469,8 +5505,11 @@
         "src/lib/handoff.mjs": {
           "bytesInOutput": 6945
         },
+        "src/lib/local-checks.mjs": {
+          "bytesInOutput": 1967
+        },
         "src/lib/checks.mjs": {
-          "bytesInOutput": 11014
+          "bytesInOutput": 11003
         },
         "src/lib/maintainer-workflows.mjs": {
           "bytesInOutput": 515
@@ -5491,7 +5530,7 @@
           "bytesInOutput": 541
         },
         "src/commands/adopt.mjs": {
-          "bytesInOutput": 7520
+          "bytesInOutput": 7540
         },
         "src/commands/doctor.mjs": {
           "bytesInOutput": 3803
@@ -5521,7 +5560,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 403550
+      "bytes": 407251
     }
   }
 }

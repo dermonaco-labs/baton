@@ -239,6 +239,7 @@ export async function run(root, args) {
   if (sourceCheck) {
     record('replace source-only npm check with adopter validation');
     sourceCheck.run = adopterConfig.checks[0].run;
+    delete sourceCheck.timeout_ms;
   }
   if (!dryRun) {
     if (sourceCheck || configMissing) await writeFile(configPath, YAML.stringify(localConfig));

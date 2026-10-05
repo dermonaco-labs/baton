@@ -12,6 +12,32 @@ import { run as validate } from '../../src/commands/validate.mjs';
 const names = ['ci', 'smoke', 'upstream-watch', 'release'];
 const path = (name) => join(sourceRoot, `.github/workflows/${name}.yml`);
 
+test('every smoke OS installs the same verified uv prerequisite before unconditional F39', async () => {
+  const smoke = YAML.parse(await readFile(path('smoke'), 'utf8'));
+  const setup = 'astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6';
+  for (const [os, job] of Object.entries(smoke.jobs)) {
+    const uv = job.steps.findIndex(step => step.uses === setup);
+    const scenarios = job.steps.findIndex(step => step.name === 'Overlay, handoff and update scenarios');
+    assert.ok(uv >= 0 && uv < scenarios, `${os}: pinned uv must precede live init`);
+    assert.equal(job.steps[uv].if, undefined, `${os}: uv must not be conditional`);
+    assert.equal(job.steps[scenarios].if, undefined, `${os}: F39 must not be conditional`);
+    assert.equal(job.steps[scenarios]['continue-on-error'], undefined, `${os}: F39 must fail the job`);
+    assert.match(job.steps[scenarios].run, /test\/integration\/init\.test\.mjs/);
+    assert.doesNotMatch(job.steps[scenarios].run, /test-name-pattern|test-skip-pattern/);
+  }
+});
+
+test('normal CI and local checks reproduce pinned sync before accepting source integrity', async () => {
+  const ci = YAML.parse(await readFile(path('ci'), 'utf8'));
+  const sync = ci.jobs.lint.steps.find(step => step.run === 'node .baton/bin/baton.mjs sync --check');
+  assert.ok(sync, 'PR CI must reproduce the pinned generator');
+  assert.equal(sync.if, undefined, 'source sync is unconditional');
+  assert.equal(sync['continue-on-error'], undefined);
+  const pkg = JSON.parse(await readFile(join(sourceRoot, 'package.json'), 'utf8'));
+  assert.ok(pkg.scripts.check.split(' && ').includes('node .baton/bin/baton.mjs sync --check'),
+    'the standard local gate must match CI');
+});
+
 test('maintainer workflow guard rejects a missing job guard', async () => {
   const fixture = "on: workflow_dispatch\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps: []\n";
   assert.deepEqual(maintainerWorkflowIssues('ci.yml', fixture).map(issue => issue.code), ['E_WORKFLOW_GUARD']);

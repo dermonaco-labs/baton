@@ -12,8 +12,8 @@ metadata:
 # Hand off the baton
 
 This is a mandatory `after_*` hook. Take `<phase>` from the invoking parent
-command (`after_converge` maps to `implement`); standalone calls must supply
-`--phase`. Do not redo the parent phase.
+command (`after_converge` maps to `implement` with `--mode converge`);
+standalone calls must supply `--phase`. Do not redo the parent phase.
 
 For `analyze`, first write the **complete, unchanged** read-only
 `speckit-analyze` chat report to a local staging file under
@@ -24,7 +24,8 @@ report cannot be supplied, stop.
 
 Supply the CLI's judgement fields as JSON using
 `node .baton/bin/baton.mjs handoff write --phase <phase> --from-json <file>`
-(and `--analysis-from <file>` for analyze). Include a brief `summary`,
+(and `--mode converge` for after_converge, or `--analysis-from <file>`
+for analyze). Include a brief `summary`,
 ordered `read_first` paths with reasons for the next phase, any
 `do_not_read`, decisions with rationale, assumptions, risks, blocking
 questions with options and owners, and evidence for exit checks. The CLI

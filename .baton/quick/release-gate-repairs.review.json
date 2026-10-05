@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/release-gate-repairs-posix-20261004/report.json"
+  },
+  "base": "550f1f2ef8a1c4b2916fa0b4d10ab5e5b13ea350",
+  "head": "5bd1b9cc3694f00cf25d640cfcb15c29a30f9722",
+  "personas": [
+    "testing-reviewer"
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "P2",
+      "title": "Exercise cleanup failure before the child closes",
+      "file": "src/lib/local-checks.mjs",
+      "line": 60,
+      "persona": "testing-reviewer",
+      "confidence": 0.93,
+      "disposition": "fixed",
+      "reason": "Candidate5bd POSIX fixture repair accepted by one genuine installed testing-persona run and independently passing focused files on Windows24.14.0arm64 and nativeLinux20.20.2arm64 (6/6 each, no skips). Controlled process-local delayed-subreaper selected regression passed1/1 with5selector skips and no adopted children. Live shell/child survival, E_CHECK_FAILED/2000ms/reason/both tails/<5000ms rejection and both final ESRCH assertions remain intact. Historical550 Windows-only acceptance and430 Ubuntu failure remain unchanged in prior reports; exact hosted PID state unknown.",
+      "x-evidence": [
+        "The rejection handler at lines 59-62 is necessary to settle before a surviving child's close event.",
+        "The close handler at lines 79-89 need not execute promptly after failed termination.",
+        "Current timeout/output-limit regressions at test/unit/local-checks.test.mjs:82-116 only exercise successful cleanup.",
+        "Existing spawn-error and numeric exit-7 cases do not cover cleanup rejection."
+      ],
+      "x-route": "manual -> downstream-resolver",
+      "x-requires-verification": true
+    }
+  ],
+  "x-reviewer-app-session": "34c127ba-26a4-4548-93ce-54bd38e4a704",
+  "x-reviewer-cli-session": "121f8696-d464-4e62-8ecc-41672feb8e24",
+  "x-scope": "Actual canonical D19 base550f scope: changed test and unchanged carried R1 report. Actual writer delta5ce->5bd: test and quick baton. Original23a/full29-file review remains historical, not rerun. No production change.",
+  "x-verdict": "R1 fixed with bounded cross-platform fixture verification; no new findings. Ready for gated land routing only; land remains parent-paused0/3, not merge/release approval.",
+  "x-prior-fixed-run": ".context/compound-engineering/ce-review/release-gate-repairs-r1-20261003/report.json",
+  "x-original-run": ".context/compound-engineering/ce-review/release-gate-repairs-20261003/report.json",
+  "x-original-open-evidence-commit": "58bb274df74c8fdb701e33b4d4b6841bbec3dba7"
+}

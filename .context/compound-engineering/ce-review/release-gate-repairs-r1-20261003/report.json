@@ -1,0 +1,79 @@
+{
+  "run": "release-gate-repairs-r1-20261003",
+  "engine": "ce-review",
+  "mode": "headless",
+  "head": "550f1f2ef8a1c4b2916fa0b4d10ab5e5b13ea350",
+  "base": "23a0c9690f99651ee5861942436541714df365c7",
+  "candidate_delta_base": "58bb274df74c8fdb701e33b4d4b6841bbec3dba7",
+  "main": "7abec5a1d771408f4712173eed3dbad1d881b76e",
+  "scope": {
+    "baton_implementation_files": [
+      ".context/compound-engineering/ce-review/release-gate-repairs-20261003/report.json",
+      "test/unit/local-checks.test.mjs"
+    ],
+    "actual_new_candidate_delta": [
+      "test/unit/local-checks.test.mjs",
+      ".baton/quick/release-gate-repairs.md"
+    ],
+    "explanation": "The canonical scope retains the earlier reviewed-code base 23a0c969, so it includes the carried original report. The actual new writer delta over evidence commit 58bb274 is exactly the test and quick baton. The carried report was inspected as historical provenance, not falsely treated as newly implemented code. This bounded run verifies R1 and does not repeat the prior seven-persona 29-file review.",
+    "production_unchanged": true,
+    "original_findings_report_cleanup_unchanged_by_candidate": true
+  },
+  "selected_and_dispatched": ["testing-reviewer"],
+  "installed_persona_path": ".github/agents/testing-reviewer.agent.md",
+  "selection": "One actual testing-reviewer task, the installed persona needed for the bounded R1 verification. No additional or nested review agents, whole-review repetition or fixer.",
+  "routing": "Requested gpt-6.1-sol with medium reasoning; actual routing effort not independently verified.",
+  "reviewer": {
+    "actor": "baton-review",
+    "app_session": "34c127ba-26a4-4548-93ce-54bd38e4a704",
+    "cli_session": "121f8696-d464-4e62-8ecc-41672feb8e24",
+    "writer": "0257db31ca4f3b101504b9a3ed3c06498cd3677bc8c57a95afae526ab91f496f",
+    "checkout": "200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89",
+    "independence": "Separate reviewer checkout; CLI receive passed. Implementation identities remain writer-owned and distinct."
+  },
+  "persona_result": {
+    "reviewer": "testing",
+    "findings": [],
+    "residual_risks": [
+      "R1 disposition recommendation: accept the coverage repair at 550f1f2, subject to the parent's independent bounded test passing. The regression exercises the actual cleanup-rejection handler using real spawning, asserts E_CHECK_FAILED before 5000ms with the original 2000ms timeout, injected cleanup reason and both captured streams, and verifies that shell and foreground process survive rejection. Removing the rejection handler would cause the watchdog to fail the test.",
+      "Windows replaces execFile with a plain callback function before syncBuiltinESMExports and fresh module import, avoiding the original custom promisifier. POSIX injects failure into owned process-group SIGKILL. Finally restores patched exports and uses captured real termination functions independently of injection, then asserts ESRCH for both PIDs.",
+      "Windows taskkill and subsequent close wait each have a 3000ms bound. This does not establish a single total cleanup duration below 3000ms.",
+      "The persona performed static review only. No runtime timing or platform execution was performed by the persona; parent execution is recorded separately.",
+      "The first writer 5/6 custom-promisifier harness failure was a test-harness failure, not production RED. The original OPEN R1 and D6 remain historical, not rewritten.",
+      "Earlier 74+2, typecheck/build/lock evidence remains at 23a0c969; writer 316/316 at candidate 550f1f2 is not this reviewer's execution. Hosted three-OS behavior is not established here."
+    ],
+    "testing_gaps": []
+  },
+  "independent_execution": {
+    "head": "550f1f2ef8a1c4b2916fa0b4d10ab5e5b13ea350",
+    "platform": "Windows",
+    "node": "24.14.0",
+    "command": "node --test --test-name-pattern='cleanup rejection settles promptly' test/unit/local-checks.test.mjs",
+    "result": "1 pass, 0 fail, 0 cancelled, 0 skipped; test 2367.8761ms, total 2545.5301ms",
+    "initial_attempt": "Could not load ajv in this clean checkout; no test assertion executed. Restored frozen dependencies after this actual missing-dependency failure, then the focused test passed.",
+    "limits": "Only this regression ran; no full suite, generation or new production edits. POSIX branch inspected statically; local execution covers Windows, not all three OS. Neither result establishes a total fixture cleanup bound below 3000ms.",
+    "assertions_observed": "Injected OS termination failed once; real shell and foreground child remained alive; prompt E_CHECK_FAILED preserved 2000ms timeout, cleanup denial and both output tails; independent PID-specific cleanup completed and both PIDs were ESRCH."
+  },
+  "synthesis": {
+    "finding": "R1",
+    "disposition": "fixed",
+    "reason": "Real installed testing-persona verification plus independently passing Windows bounded regression covers the previously untested cleanup-rejection branch. No new findings met the threshold.",
+    "verdict": "Ready for gated land handoff, not merge or release approval",
+    "fixes_applied_in_review": 0
+  },
+  "historical_evidence": {
+    "original_run": ".context/compound-engineering/ce-review/release-gate-repairs-20261003/report.json",
+    "original_reviewed_head": "23a0c9690f99651ee5861942436541714df365c7",
+    "original_open_finding_evidence_commit": "58bb274df74c8fdb701e33b4d4b6841bbec3dba7",
+    "writer_work_head": "550f1f2ef8a1c4b2916fa0b4d10ab5e5b13ea350",
+    "writer_work_result": "316/316, zero failures/cancellations/skips, test duration 229216.1985ms. Not independently rerun.",
+    "prior_results": "315/315 and independent 74+2/typecheck/build/lock remain tied to original 23a0c969 state. Historical D6 remains failed 313/314.",
+    "candidate_ci": "Final observation: Baton/baton, CI/lint, CI/test and Windows MVP smoke SUCCESS at candidate 550f1f2. These are not results for the future evidence commit."
+  },
+  "formal_transition": {
+    "command": "node .baton/bin/baton.mjs handoff write --phase review --quick release-gate-repairs --by baton-review --from-json .baton/.tmp/r1-review-payload.json --json",
+    "result": "passed; review -> land, ready, no blocking questions",
+    "exit_checks": "findings-json-valid, findings-fixed-or-dismissed and quick-scope-held passed",
+    "authority_limit": "Routing to land is not owner merge/release approval. No land command or remote review approval was performed."
+  }
+}

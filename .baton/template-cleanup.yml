@@ -21,6 +21,11 @@ remove:
   - .github/ISSUE_TEMPLATE/
   - .baton/quick/pretag-fixes-001.md
   - .baton/quick/pretag-fixes-001.review.json
+  - .baton/quick/release-gate-repairs.md
+  - .baton/quick/release-gate-repairs.review.json
+  - .context/compound-engineering/ce-review/release-gate-repairs-20261003/
+  - .context/compound-engineering/ce-review/release-gate-repairs-r1-20261003/
+  - .context/compound-engineering/ce-review/release-gate-repairs-posix-20261004/
   - .baton/template-cleanup-pending
 replace:
   README.md: baton/templates/README.adopter.md

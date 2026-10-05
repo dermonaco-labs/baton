@@ -14,8 +14,25 @@ const forbidden = /(?:^|\/)(?:karpathy-guidelines|\.env(?:\..*)?|\.context|node_
 /** @typedef {{from:string,path:string,upstream_path?:string}} PackFile */
 /** @typedef {{id:string,requires:string[],conflicts:string[],files:PackFile[],optional_refs?:Array<{ref:string,reason:string,note:string}>}} PackDefinition */
 /** @typedef {{id:string,match:string,applies_to:string,reason:string,upstream_issue:string}} RepairRule */
-/** @typedef {{path:string,upstream:'speckit'|'atv',upstream_path:string,stored_at:string,sha256_upstream:string,sha256:string,license:string,repair:{id:string,reason:string,upstream_issue:string}|null,packs:string[],bytes:Buffer}} VendoredEntry */
+/** @typedef {{path:string,upstream:'speckit'|'atv',upstream_path:string,stored_at:string,sha256_upstream:string,sha256:string,license:string,repair:{id:string,reason:string,upstream_issue:string}|null,packs:string[],bytes:Buffer,'x-baton-source'?:string,'x-baton-source-sha256'?:string}} VendoredEntry */
 /** @typedef {{path:string,stored_at:string,packs:string[],bytes:Buffer}} AuthoredEntry */
+
+const extensionSources = new Map([
+  ['.specify/extensions/baton/README.md', 'baton/speckit-extension/README.md'],
+  ['.specify/extensions/baton/extension.yml', 'baton/speckit-extension/extension.yml'],
+  ['.specify/extensions/baton/commands/receive.md', 'baton/speckit-extension/commands/receive.md'],
+  ['.specify/extensions/baton/commands/handoff.md', 'baton/speckit-extension/commands/handoff.md'],
+  ['.specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-receive/SKILL.md',
+    'baton/speckit-extension/commands/receive.md'],
+  ['.specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-handoff/SKILL.md',
+    'baton/speckit-extension/commands/handoff.md'],
+  ['.github/skills/speckit-baton-receive/SKILL.md', 'baton/speckit-extension/commands/receive.md'],
+  ['.github/skills/speckit-baton-handoff/SKILL.md', 'baton/speckit-extension/commands/handoff.md'],
+]);
+const generatedText = new Set([
+  '.specify/extensions.yml',
+  ...[...extensionSources.keys()].filter(path => path.endsWith('/SKILL.md')),
+]);
 
 /** @param {string} path */
 const clean = path => path.split(sep).join('/');
@@ -147,7 +164,7 @@ export function referenceClosure(entries, packs, options = {}) {
 }
 
 /** @param {string} root @param {string} generated @param {string} atv @param {PackDefinition[]} packs @param {RepairRule[]} repairs @param {any} oldLock @param {boolean} bump */
-function prepareEntries(root, generated, atv, packs, repairs, oldLock, bump) {
+export function prepareEntries(root, generated, atv, packs, repairs, oldLock, bump) {
   /** @type {Map<string,VendoredEntry>} */
   const entries = new Map();
   /** @type {AuthoredEntry[]} */
@@ -168,11 +185,30 @@ function prepareEntries(root, generated, atv, packs, repairs, oldLock, bump) {
     }
     /** @type {Buffer} */
     let bytes = readFileSync(source);
+    // Spec Kit writes these generated texts with host-native newlines; copied upstream bytes are untouched.
+    if (upstream === 'speckit' && generatedText.has(path)) {
+      bytes = Buffer.from(bytes.toString('utf8').replaceAll('\r\n', '\n'));
+    }
     if (preserve) bytes = generatedStable(bytes, path, root);
     const upstreamHash = sha256(bytes);
+    const authoredSource = upstream === 'speckit' ? extensionSources.get(path) : undefined;
+    let provenance;
+    if (authoredSource) {
+      const input = join(root, ...authoredSource.split('/'));
+      if (!existsSync(input) || !lstatSync(input).isFile() ||
+          relative(realpathSync(root), realpathSync(input)).startsWith('..')) {
+        throw new UpstreamError('E_UPSTREAM_VERIFY', `Missing regular Baton source: ${authoredSource}`);
+      }
+      const inputHash = sha256(readFileSync(input));
+      if (!path.endsWith('/SKILL.md') && inputHash !== upstreamHash) {
+        throw new UpstreamError('E_UPSTREAM_VERIFY', `${path}: generated copy differs from ${authoredSource}`);
+      }
+      provenance = { 'x-baton-source': authoredSource, 'x-baton-source-sha256': inputHash };
+    }
     const previous = (/** @type {Array<{path:string,packs:string[],sha256_upstream:string}>|undefined} */ (oldLock?.files))
       ?.find(row => row.path === path && row.packs.includes(pack));
-    if (!bump && previous && previous.sha256_upstream !== upstreamHash) {
+    // Authored inputs may change without an upstream bump, but --check still compares every fresh output and lock row.
+    if (!bump && !authoredSource && previous && previous.sha256_upstream !== upstreamHash) {
       throw new UpstreamError('E_UPSTREAM_VERIFY', `${path}: upstream sha256 differs from the lock`);
     }
     let repair = null;
@@ -192,7 +228,7 @@ function prepareEntries(root, generated, atv, packs, repairs, oldLock, bump) {
     entries.set(storedAt, {
       path, upstream, upstream_path: upstreamPath, stored_at: storedAt,
       sha256_upstream: upstreamHash, sha256: sha256(bytes), license: 'MIT', repair,
-      packs: [pack], bytes
+      packs: [pack], bytes, ...provenance
     });
   };
   for (const file of filesUnder(join(generated, '.specify'))) {
@@ -285,8 +321,17 @@ function diffDocument(lock) {
     return `- ${id}: ${channel} at \`${pin.commit}\`${tree ? ` (tree \`${tree}\`)` : ''}`;
   }).join('\n');
   const rows = lock.files.map(entry =>
-    `| \`${entry.stored_at}\` | ${entry.upstream} | \`${entry.upstream_path}\` | \`${entry.sha256.slice(0, 12)}\` | ${entry.repair?.id || 'none'} |`).join('\n');
-  return `# Upstream snapshot\n\nGenerated by \`baton sync\`. Files are byte-identical to their verified upstream source unless a declared repair is recorded.\n\n${upstreamCounts}\n\n${lock['x-bump-summary'] ? `${lock['x-bump-summary']}\n` : ''}| Stored at | Source | Upstream path | SHA-256 prefix | Repair |\n|---|---|---|---|---|\n${rows}\n`;
+    `| \`${entry.stored_at}\` | ${entry['x-baton-source'] ? 'Baton via Spec Kit' : entry.upstream} | \`${entry['x-baton-source'] || entry.upstream_path}\` | \`${entry.sha256.slice(0, 12)}\` | ${entry.repair?.id || 'none'} |`).join('\n');
+  return `# Upstream snapshot\n\nGenerated by \`baton sync\`. Upstream files are byte-identical to their verified source unless a declared repair is recorded. Baton extension copies and hook skills are produced from the recorded local source by the pinned Spec Kit generator; generated hook text and hooks YAML use LF on every host.\n\n${upstreamCounts}\n\n${lock['x-bump-summary'] ? `${lock['x-bump-summary']}\n` : ''}| Stored at | Source | Upstream path | SHA-256 prefix | Repair |\n|---|---|---|---|---|\n${rows}\n`;
+}
+
+/** @param {string} root @param {Array<{path:string,bytes:Buffer}>} expected @param {boolean} check */
+export function snapshotDrift(root, expected, check) {
+  const drift = expected.filter(({ path, bytes }) =>
+    !existsSync(join(root, ...path.split('/'))) ||
+    sha256(readFileSync(join(root, ...path.split('/')))) !== sha256(bytes)).map(item => item.path);
+  if (check && drift.length) throw new UpstreamError('E_SYNC_DRIFT', drift.join('\n'));
+  return drift;
 }
 
 /** @param {{cwd?:string,check?:boolean,bump?:string|null}} [options] */
@@ -362,10 +407,7 @@ export function sync({ cwd = process.cwd(), check = false, bump = null } = {}) {
       { path: 'baton.lock.json', bytes: Buffer.from(`${JSON.stringify(lock, null, 2)}\n`) },
       { path: 'docs/reference/upstream-diff.md', bytes: Buffer.from(diffDocument(lock)) }
     ];
-    const drift = expected.filter(({ path, bytes }) =>
-      !existsSync(join(root, ...path.split('/'))) ||
-      sha256(readFileSync(join(root, ...path.split('/')))) !== sha256(bytes)).map(item => item.path);
-    if (check && drift.length) throw new UpstreamError('E_SYNC_DRIFT', drift.join('\n'));
+    const drift = snapshotDrift(root, expected, check);
     if (!check) for (const { path, bytes } of expected) {
       const target = join(root, ...path.split('/'));
       mkdirSync(dirname(target), { recursive: true });

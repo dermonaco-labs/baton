@@ -39,6 +39,7 @@ jobs:
         run: go run "github.com/rhysd/actionlint/cmd/actionlint@$ACTIONLINT_VERSION" -color
       - run: npm run typecheck
       - run: node .baton/bin/baton.mjs build --check
+      - run: node .baton/bin/baton.mjs sync --check
       - run: node .baton/bin/baton.mjs lock verify
       - run: node .baton/bin/baton.mjs validate --github
       - name: Check relative documentation links

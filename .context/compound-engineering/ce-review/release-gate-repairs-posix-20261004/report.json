@@ -1,0 +1,110 @@
+{
+  "run": "release-gate-repairs-posix-20261004",
+  "engine": "ce-review",
+  "mode": "headless",
+  "head": "5bd1b9cc3694f00cf25d640cfcb15c29a30f9722",
+  "base": "550f1f2ef8a1c4b2916fa0b4d10ab5e5b13ea350",
+  "main": "7abec5a1d771408f4712173eed3dbad1d881b76e",
+  "candidate_delta_base": "5ce92d65fefcaa35323b09bd7afface53dfb6f62",
+  "scope": {
+    "canonical_files": [
+      ".context/compound-engineering/ce-review/release-gate-repairs-r1-20261003/report.json",
+      "test/unit/local-checks.test.mjs"
+    ],
+    "actual_writer_delta": [
+      ".baton/quick/release-gate-repairs.md",
+      "test/unit/local-checks.test.mjs"
+    ],
+    "explanation": "Successful canonical receive and scope resolve latest D19 base550f, correcting the coordinator's stale23a expectation. The carried R1 report is historical provenance, not newly implemented code. Original23a/29-file/seven-persona scope remains historical. Actual writer delta5ce->5bd is the test and quick baton; production unchanged."
+  },
+  "installed_personas": [
+    "testing-reviewer", "security-reviewer", "repo-research-analyst",
+    "project-standards-reviewer", "maintainability-reviewer",
+    "learnings-researcher", "correctness-reviewer",
+    "agent-native-reviewer", "adversarial-reviewer"
+  ],
+  "selected_and_dispatched": ["testing-reviewer"],
+  "selection": "Explicit owner-authorized bounded testing verification overrides broader upstream selection. One actual synchronous installed testing-reviewer task; no nested agents or fixer.",
+  "routing": "Requested gpt-6.1-sol/medium; actual routing effort not independently verified.",
+  "reviewer": {
+    "actor": "baton-review",
+    "app_session": "34c127ba-26a4-4548-93ce-54bd38e4a704",
+    "cli_session": "121f8696-d464-4e62-8ecc-41672feb8e24",
+    "writer": "0257db31ca4f3b101504b9a3ed3c06498cd3677bc8c57a95afae526ab91f496f",
+    "checkout": "200e302ac3614ab4bd231313dd1301575b602b15591149776e3737a5e461fd89",
+    "independence": "Distinct reviewer checkout safely fast-forwarded; no writer source/evidence execution or primary-checkout access. Only explicitly authorized external Linux runtime reused read-only."
+  },
+  "persona_result": {
+    "reviewer": "testing",
+    "findings": [],
+    "residual_risks": [
+      "R1 acceptance recommendation: accept the POSIX fixture repair contingent on the parent's focused runtime proof at HEAD 5bd1b9cc3694f00cf25d640cfcb15c29a30f9722 on Linux and Windows. Static inspection found no high-confidence new defect. This persona ran no runtime tests.",
+      "Review used the authorized base 550f1f2ef8a1c4b2916fa0b4d10ab5e5b13ea350 and two-file scope. The actual test delta is three additions and one removal in POSIX finally cleanup; Windows cleanup and production code are unchanged. Other baton changes visible in repository metadata were not audited.",
+      "The regression faithfully injects termination failure at the OS boundary while retaining real process spawning: POSIX denies the owned process-group SIGKILL; Windows replaces execFile before export synchronization and fresh module import, avoiding the real executable's custom promisifier.",
+      "Assertions remain intact for E_CHECK_FAILED, the original 2000ms timeout, the injected cleanup-denial reason, both stdout/stderr tails, rejection before 5000ms, and real shell and foreground-child existence before independent cleanup. The watchdog cannot satisfy the expected rejection assertions.",
+      "POSIX independent cleanup now kills the captured foreground child, falling back to the owned fixture's check.pid. It leaves the shell available to reap that child, awaits close with a 3000ms watchdog, and retains final ESRCH assertions for both recorded PIDs on the successful assertion path. Windows cleanup is unchanged. The close watchdog does not establish a total finally duration below 3000ms.",
+      "Failure-path fixture limitations remain: an early failure before PID-file availability can make fallback reading fail; final foreground-child ESRCH is conditional on foregroundPid having been assigned. These do not establish a new normal-path defect or invalidate the preserved two-PID assertions when the regression reaches its intended path.",
+      "The carried release-gate-repairs-r1-20261003/report.json is immutable historical provenance for the earlier 550f review and Windows execution, not current POSIX runtime proof. Its fixed disposition does not independently establish acceptance of this repair.",
+      "The reported Ubuntu hosted failure in run 37120945370 at 430 remains distinct from the reported successful checks at 5bd. Hosted PID state is unknown; neither an exact live-versus-zombie explanation nor a production defect is established by this static review."
+    ],
+    "testing_gaps": [
+      "Parent-owned focused runtime verification must demonstrate that the repaired POSIX fixture closes within its watchdog and both recorded PIDs yield ESRCH, while preserving cleanup-denial rejection and pre-cleanup survival assertions. Windows verification must confirm the unchanged branch still passes. No such execution was performed or independently verified by this persona."
+    ]
+  },
+  "independent_execution": [
+    {
+      "platform": "win32",
+      "architecture": "arm64",
+      "node": "24.14.0",
+      "command": "node --test test\\unit\\local-checks.test.mjs",
+      "result": "6/6 pass, zero fail/cancel/skip, total6195.8895ms; cleanup-rejection2415.3803ms"
+    },
+    {
+      "platform": "linux (native Ubuntu WSL)",
+      "architecture": "arm64",
+      "node": "20.20.2",
+      "command": "Authorized external node-v20.20.2-linux-arm64/bin/node --test test/unit/local-checks.test.mjs, cwd independent reviewer checkout",
+      "result": "6/6 pass, zero fail/cancel/skip, total5153.152763ms; cleanup-rejection2019.264535ms"
+    },
+    {
+      "platform": "linux (native Ubuntu WSL)",
+      "architecture": "arm64",
+      "node": "20.20.2",
+      "command": "Existing python3 reviewer-owned wrapper sets process-local PR_SET_CHILD_SUBREAPER, runs node --test --test-name-pattern=cleanup rejection settles promptly test/unit/local-checks.test.mjs, delays adopted-child reaping600ms",
+      "result": "1 selected pass, 5 selector skips, zero fail/cancel; cleanup-rejection2026.142155ms; total3472.611703ms; no adopted children remained",
+      "limits": "One controlled verification of repaired test; no repeated eight-probe run, original failure reproduction or exact hosted-PID diagnosis. Both ESRCH assertions remained active; zombies were not accepted as success."
+    }
+  ],
+  "execution_preflight": "Missing ajv before assertions triggered frozen internal npm ci --ignore-scripts --no-audit --no-fund --registry=https://packagefeedproxy.microsoft.io/npm/. No lock change. Linux initial command transport carried CRLF in filename and could not load file; stripping CR at transport enabled the one actual full focused-file execution. Initial runtime path required locating its nested executable. These were pre-execution transport/preflight failures, not assertion failures.",
+  "synthesis": {
+    "findings": [],
+    "suppressed": 0,
+    "malformed": 0,
+    "failed_reviewers": 0,
+    "fixes_applied": 0,
+    "r1_disposition": "fixed",
+    "reason": "Actual installed testing-persona inspection and independent complete focused Windows/Linux files plus controlled delayed-subreaper selected regression accept the fixture repair at5bd. Preserved survival, error diagnostics, timing and both final ESRCH assertions passed.",
+    "verdict": "Bounded candidate accepted; ready for gated land routing only. Land remains parent-paused0/3, not merge/release acceptance.",
+    "limits": "LocalLinuxarm64 is not hostedx64 or macOS. Close watchdog is not a combined total cleanup duration. Static persona failure-path caveats remain disclosed, not silently treated as new defects."
+  },
+  "historical_evidence": {
+    "original_open_report": ".context/compound-engineering/ce-review/release-gate-repairs-20261003/report.json",
+    "prior_windows_fixed_report": ".context/compound-engineering/ce-review/release-gate-repairs-r1-20261003/report.json",
+    "preservation": "Both reports unchanged. Original315/74+2/type/build/lock at23a; writer316 and independent selectedWindows at550f; D6 remains failed.430 Ubuntu37120945370 failed315/316; no exact hostedPID cause inferred. D20 owner-recovery and D22 budget failure remain unchanged.",
+    "writer_candidate_gate": "Owner-authorized actual candidate-state316/316 zero fail/cancel/skip221994.4975ms, not independently repeated.",
+    "candidate_ci": "Read-only actual5bd observation: Baton37194641731 SUCCESS; CI37194641734 lint/test SUCCESS; WindowsMVP37194641732 SUCCESS. These are not future evidence-head results."
+  },
+  "formal_transition": {
+    "command": "node .baton/bin/baton.mjs handoff write --phase review --quick release-gate-repairs --by baton-review --from-json .baton/.tmp/posix-review-payload.json --json",
+    "result": "exit0; review->land, ready, no blocking questions; findings-json-valid/findings-fixed-or-dismissed/quick-scope-held all met. No land execution.",
+    "authority_limit": "Evidence-only publication owned by caller; no in-skill fixes, land, remote review approval or merge."
+  },
+  "canonical_replay_audit": {
+    "authorization": "On2026-10-04 owner selected Approve the audited canonical evidence re-write (Recommended) through control-plane delegation. Exactly one canonical metadata replay authorized; no new persona, runtime test, full suite or land.",
+    "first_receipt": "Actual first canonical write succeeded at2026-10-04T10:30:41.151Z, review->land, ready. Unpublished D24 recorded base550f and digest57b65721b482d8dcd1bdd3cdad49f53558de279e7c5511342c8e4a979842f4f2; D25 recorded base5bd. Entire generated handoff including decisions/history archived in reviewer session files/first-stale-review-handoff.md. Receipt is genuine but its tree digest became stale; not a failed persona/runtime run.",
+    "sequencing_error": "New ignored report was unstaged at first write, so canonical changedFiles omitted it. After write, only report synthesis.reason typo delayed-subreeper was corrected to delayed-subreaper, formal_transition.planned_command was renamed command without changing its value, and actual first-transition result was added. No persona result/runtime outcome changed. Report was then force-staged; other repository evidence bytes were unchanged after first write.",
+    "recovery_plan": "Restore only own unpublished generated quick baton to verified source5bd pre-write state; retain finalized normalized findings/report/cleanup. Finalize and stage all subject bytes before the single replay. CLI, not a manual reserved-tag edit, must regenerate tree/diff-base/history. This report records authorization and plan, not predicted replay success; actual replay receipt stays in baton/session scratch without subsequent report-byte mutation.",
+    "scope_distinctions": "Original persona run used canonical D19 base550f with carried oldR1report and test. Final evidence snapshot additionally includes this new report. First write's D25 advanced subsequent CLI scope base to5bd; its scope was only the new report. Actual writer5ce->5bd delta remains test+quick baton. Original23a/full29-file/seven-persona review stays historical.",
+    "preservation": "All published source5bd history/decisions, old report blobs/test bytes retained. First unpublished generated output preserved in scratch and disclosed here, not falsely persisted as a second completed review. No self-referential final snapshot digest is embedded in this report."
+  }
+}

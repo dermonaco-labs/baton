@@ -240,7 +240,7 @@
     },
     {
       "path": ".github/skills/speckit-baton-handoff/SKILL.md",
-      "sha256": "892e4bcb62250ec2edf361cf2a2738cec724cde776c0600ba5bb8caf70e9bd93",
+      "sha256": "c56e675e5c599099f2caf3577d1cdc17bf694e5d64d662115bba6fe1f6471672",
       "pack": "core",
       "owner": "speckit",
       "managed": true
@@ -331,7 +331,7 @@
     },
     {
       "path": ".specify/extensions/baton/.specify-dev/extension-skills/speckit-baton-handoff/SKILL.md",
-      "sha256": "892e4bcb62250ec2edf361cf2a2738cec724cde776c0600ba5bb8caf70e9bd93",
+      "sha256": "c56e675e5c599099f2caf3577d1cdc17bf694e5d64d662115bba6fe1f6471672",
       "pack": "core",
       "owner": "speckit",
       "managed": true
@@ -345,7 +345,7 @@
     },
     {
       "path": ".specify/extensions/baton/commands/handoff.md",
-      "sha256": "548265571f3fcdddfee8244aa65c5d35c08b421e3229b695d3f1056760eee2da",
+      "sha256": "687dc583093b8e15986382a6640b5614e71f92aa6629ba8a45ba38194d34be30",
       "pack": "core",
       "owner": "speckit",
       "managed": true
