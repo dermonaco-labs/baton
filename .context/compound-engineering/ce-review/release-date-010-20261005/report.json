@@ -1,0 +1,216 @@
+{
+  "schema": 1,
+  "engine": "ce-review",
+  "mode": "headless",
+  "run": "release-date-010-20261005",
+  "base": "d1470505bbe81d1ceb64961a928b0212affc2bd8",
+  "head": "d1470505bbe81d1ceb64961a928b0212affc2bd8",
+  "candidate_state": "Uncommitted staged candidate at the recorded work base; head identifies the checkout commit, not a commit containing the pending date correction.",
+  "reviewed_files": ["CHANGELOG.md"],
+  "supporting_files": [
+    ".baton/quick/release-date-010.md",
+    ".baton/template-cleanup.yml"
+  ],
+  "generated_evidence": [
+    ".baton/quick/release-date-010.review.json",
+    ".context/compound-engineering/ce-review/release-date-010-20261005/report.json"
+  ],
+  "intent": "Owner-directed OD1 correction of the v0.1.0 intended candidate date from 2026-10-03 to 2026-10-05. No new behavior or public contract, no publication proof, deadline, human acceptance, merge, tag, release or rehearsal authorization.",
+  "requirements_source": ".baton/quick/release-date-010.md",
+  "installed_allowlist": [
+    "adversarial-reviewer",
+    "agent-native-reviewer",
+    "correctness-reviewer",
+    "learnings-researcher",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "repo-research-analyst",
+    "security-reviewer",
+    "testing-reviewer"
+  ],
+  "selected_personas": [
+    "correctness-reviewer",
+    "testing-reviewer",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "agent-native-reviewer",
+    "learnings-researcher"
+  ],
+  "dispatched_personas": [
+    "correctness-reviewer",
+    "testing-reviewer",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "agent-native-reviewer",
+    "learnings-researcher"
+  ],
+  "selection": "Six installed always-on personas. No conditional persona warranted by the one-line nonbehavioral product diff. Generated canonical relay metadata is supporting bookkeeping, not additional product code.",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "medium",
+  "model_authority": "Explicit caller instruction; configured routing is advisory, with warn enforcement and no allowed-model restriction. No configuration changes.",
+  "identity": {
+    "review_actor": "baton-review",
+    "review_writer_hash": "e1c35340fcda0e3e6998a38f03b69c3748ab3934a0e8a946d15eacfb4ee0cf02",
+    "review_checkout_hash": "6ca9fafb316ae4c66e881e1f7845802a52a2147dc04c26393f5e221a57214036",
+    "work_writer_hash": "028fd37b8fbc9701b2d359b69a850a19e02a3b621b2fbe1caf11bcbdbf92492c",
+    "work_checkout_hash": "d4e7132ec662ceb1fe23b34ca8cb8b8f26027e6ab9c9861544b291b7703ecc1c",
+    "distinct_writer_and_checkout_verified": true,
+    "self_review_override_used": false
+  },
+  "work_transfer": {
+    "patch_raw_sha256": "68c2749702cbfe623d542af4964cc7137d2a44d6057f9a50a628a8054483957e",
+    "receipt_raw_sha256": "19c46b236a3a7dcf53fc6bd39c3dce19e7618fbc9ffe78336a2572644f633b67",
+    "hash_purpose": "Transfer-file integrity only, not canonical reviewed-tree hashing.",
+    "canonical_receipt_ok": true,
+    "work_next_phase": "review",
+    "work_gate_required": false,
+    "configured_checks": 1,
+    "command": "npm run check",
+    "timeout_ms": 600000,
+    "exit_code": 0,
+    "tests": 316,
+    "pass": 316,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 154728.2577,
+    "evidence_limit": "Genuine canonical writer-work evidence only; not independent reviewer checks, final-head CI or fresh rehearsal."
+  },
+  "preflight_provenance": [
+    {
+      "stage": "independent-review-receive",
+      "command": "node .baton/bin/baton.mjs handoff receive --phase review --quick release-date-010 --json",
+      "ok": true,
+      "configured_checks": 0
+    },
+    {
+      "stage": "scope",
+      "command": "node .baton/bin/baton.mjs handoff scope --quick release-date-010 --json",
+      "ok": true,
+      "base": "d1470505bbe81d1ceb64961a928b0212affc2bd8",
+      "files": ["CHANGELOG.md"],
+      "configured_checks": 0
+    },
+    {
+      "stage": "schema-dependency-preflight",
+      "command": "node --input-type=module -e \"import { loadSchemas } from './src/lib/schema.mjs'; await loadSchemas(process.cwd());\"",
+      "exit_code": 1,
+      "error": "ERR_MODULE_NOT_FOUND: Cannot find package 'ajv' imported from src/lib/schema.mjs",
+      "configured_checks": 0,
+      "response": "Stopped and reported the actual missing dependency. Coordinator explicitly authorized frozen-lock restoration and one retry of this failed dependency preflight, not a configured-check retry."
+    },
+    {
+      "stage": "authorized-frozen-dependency-restore",
+      "command": "npm ci --ignore-scripts --no-audit --no-fund --registry <authorized internal npm feed>",
+      "exit_code": 0,
+      "packages_added": 92,
+      "manifest_and_lock_unchanged": true,
+      "configured_checks": 0
+    },
+    {
+      "stage": "schema-dependency-preflight-resume",
+      "command": "node --input-type=module -e \"import { loadSchemas } from './src/lib/schema.mjs'; await loadSchemas(process.cwd());\"",
+      "exit_code": 0,
+      "configured_checks": 0,
+      "retry_count": 1
+    }
+  ],
+  "persona_outcomes": [
+    {
+      "persona": "correctness-reviewer",
+      "status": "completed",
+      "output": {
+        "reviewer": "correctness",
+        "findings": [],
+        "residual_risks": [],
+        "testing_gaps": []
+      }
+    },
+    {
+      "persona": "testing-reviewer",
+      "status": "completed",
+      "output": {
+        "reviewer": "testing",
+        "findings": [],
+        "residual_risks": [
+          "No tests were run by this reviewer. The recorded 316 passing tests establish writer-work evidence only; the three configured reviewer/land full-check entries remain pending.",
+          "The changelog date records an intended candidate, not publication. Historical CI or rehearsal evidence does not establish fresh candidate release readiness."
+        ],
+        "testing_gaps": []
+      }
+    },
+    {
+      "persona": "maintainability-reviewer",
+      "status": "completed",
+      "output": {
+        "reviewer": "maintainability",
+        "findings": [],
+        "residual_risks": [],
+        "testing_gaps": []
+      }
+    },
+    {
+      "persona": "project-standards-reviewer",
+      "status": "completed",
+      "output": {
+        "reviewer": "project-standards",
+        "findings": [],
+        "residual_risks": [],
+        "testing_gaps": []
+      }
+    },
+    {
+      "persona": "agent-native-reviewer",
+      "status": "completed",
+      "output": "## Agent-Native Architecture Review\n\n### Summary\n**PASS for this incremental scope; no agent-native gaps found.** Read the installed `agent-native-reviewer.agent.md` and ce-review `diff-scope.md`, then inspected the immediate diff against verified HEAD/base `d1470505bbe81d1ceb64961a928b0212affc2bd8`.\n\nBaton\u2019s CLI/agent relay integration is represented by the supporting quick-lane record. The sole product change is `CHANGELOG.md:21`: the v0.1.0 intended date changes from `2026-10-03` to `2026-10-05`. Supporting changes add the work-success relay and exactly three cleanup entries. No UI actions, agent tools, prompts, contracts, or runtime behavior change.\n\n### Capability Map\n\n| UI Action / Scoped Change | Location | Agent Tool | In Prompt? | Priority | Status |\n|---|---|---|---|---|---|\n| Intended release-date correction | `CHANGELOG.md:21` | No new tool required | N/A | Documentation only | No parity impact |\n| Work-to-review context handoff | `.baton/quick/release-date-010.md` | Existing relay; unchanged | Explicit `read_first`, intent and boundaries in relay | Supporting context | No new gap identified |\n| Source-only artifact cleanup classification | `.baton/template-cleanup.yml` | Existing mechanism; unchanged | N/A | Bookkeeping | Exactly three additions; no new capability |\n| Human acceptance of own-work candidate | Intentionally retained acceptance boundary | Agent self-approval intentionally unavailable | Boundary explicit in supplied intent and relay | Human-only gate | Not a parity defect |\n\n### Findings\n- **Critical:** None.\n- **Warnings:** None.\n- **Agent-native gaps:** None identified in the reviewed scope.\n\n### What\u2019s Working Well\n- The relay makes the intended date correction and review handoff discoverable through explicit context references.\n- Recorded intent distinguishes the candidate date from publication evidence and preserves independent review and explicit merge acceptance.\n- Cleanup additions identify the new baton, prospective findings file, and prospective report directory. Their not-yet-created review outputs are expected at this stage, not evidence of an accessibility gap.\n\n### Limitations\n- This is **not a full parity audit**. Existing tool coverage, runtime context injection, shared-workspace synchronization, and broader domain capabilities were not assessed.\n- Product review was limited to `CHANGELOG.md`; the two supporting files were inspected for immediate agent-native implications. No untracked files were listed.\n- The relay records **316/316 passing work checks**; I did not execute or independently reproduce them. Further checks remain pending, and historical rehearsal evidence is not fresh validation of this candidate.\n- Operationally read-only: no files or artifacts written, no dispatch, relay execution, tests, installation, checkout changes, or repository/publication actions performed.\n- This assessment grants **no publication, deadline, approval, or merge authority**.\n\n### Score\n- **New or modified high-priority user capabilities: 0; accessibility ratio N/A.**\n- **Verdict: PASS \u2014 scoped agent-native assessment only.**\n\nReview complete"
+    },
+    {
+      "persona": "learnings-researcher",
+      "status": "completed",
+      "output": "## Institutional Learnings Search Results\n\n**Mode:** ce-review `mode:headless`, learnings-researcher read-only component only.  \n**Scope supplied by caller:** BASE `d1470505bbe81d1ceb64961a928b0212affc2bd8`; `CHANGELOG.md:21`, v0.1.0 date `2026-10-03` \u2192 `2026-10-05`. Supporting quick record and three source-only cleanup entries are context, not expanded subject scope.\n\nRead the installed instructions:\n- `.github/agents/learnings-researcher.agent.md`\n- `.github/skills/ce-review/references/diff-scope.md`\n\nThe latter explicitly prioritizes: **\u201cUser-specified scope. If the caller passed `BASE:`, `FILES:`, or `DIFF:` markers, use that scope exactly.\u201d**\n\n### Native search outcome\n\n- Native `glob` discovered **4 Markdown solution files**.\n- Case-insensitive native `rg` searched frontmatter fields for quick/lane/scope/release/changelog/date/evidence/cleanup/review/identity, then broader content for quick/changelog/release-date/canonical/stranded/cleanup.\n- **3 candidates** had their first 30 lines read; **1 directly relevant document** was fully read.\n- `docs/solutions/patterns/critical-patterns.md`: **no file matched**.\n- **No changelog-date-specific institutional solution was found.**\n\n### Relevant match \u2014 Known Pattern\n\n**File:** `docs/solutions/quick-lane-scope-and-stranded-land-2026-09-29.md`  \n**Title:** \u201cKeep quick lanes inside their scope and land reviewed trees before new code\u201d  \n**Module:** `baton relay (quick lane, review, land)`  \n**Problem type:** `workflow_issue` \u00b7 **Severity:** `high`\n\nExact relevant quotes:\n\n> \u201cA quick lane may restore behavior the contract already promised; it may not add commands, flags, error codes, handoff fields or public contracts, and it must not edit the feature's `specs/` files.\u201d\n\n> \u201cRecord `quick-scope-held` with a concrete diff range and reasoning each review cycle. The reviewer, not the implementer, should own that decision\u201d\n\n> \u201c`.baton/template-cleanup.yml` names source-only quick batons explicitly.\u201d\n\n> \u201cA reviewed-tree hash is the proof that land ships exactly what review saw.\u201d\n\n**Application:** Preserve the date-only intent; leave the current-cycle scope decision to reviewers. The source-only cleanup guidance is relevant to the supporting quick record. Historical review evidence cannot establish what reviewers saw for this new candidate. This search does **not** verify the three cleanup entries or authorize publication, merge, or land.\n\n### MemPalace recall and checkout verification\n\nCalled search with **wing `baton`** and **agent identity `laptop:copilot:baton`** in context. Recall was available and returned three indexed excerpts.\n\nRelevant verbatim result excerpts:\n\n- Indexed `/src/baton/README.md`:\n  > \u201cNot everything deserves a spec. The quick lane (`work \u2192 review \u2192 land \u2192 compound`) is for small changes with **no new behavior and no new public contract**: a bug fix with a clear cause, a dependency bump, a refactor, docs.\u201d\n\n- Indexed `/src/baton/README.md`:\n  > \u201clives in `.baton/quick/<slug>.md`.\u201d\n\n- Indexed `/src/baton/specs/001-baton-template/plan.md`:\n  > \u201cThe CHANGELOG follows Keep a Changelog with a mandatory \"Upstream\" subsection.\u201d\n\nTargeted native `rg` verified corresponding current-checkout evidence at:\n- `README.md:285` \u2014 \u201cnew behavior and no new public contract**: a bug fix with a clear cause, a dependency bump, a refactor, docs.\u201d\n- `README.md:292` \u2014 \u201clives in `.baton/quick/<slug>.md`.\u201d\n- `specs/001-baton-template/plan.md:243` \u2014 `The CHANGELOG follows Keep a Changelog with a mandatory \"Upstream\" subsection.`\n\nThese recalled conventions support scope interpretation, **not release-date correctness or new-candidate proof**.\n\n### Search limitations\n\n- Identity/self-review and CRLF hashing candidates were screened out as tangential to this date-only subject.\n- No repository sweep, old PR39 re-review, or historical rehearsal-proof validation occurred.\n- The supplied `316/316` work-check result and pending downstream checks remain **caller-provided context**, not independently verified results.\n- No mutations, tests, relay CLI, token reads, installs, dispatches, durable notes, artifacts, commits, pushes, PR actions, or approvals. The orchestrator retains report/findings ownership.\n- This is a completed bounded learnings search, **not a full review verdict**.\n\nReview complete"
+    }
+  ],
+  "findings": [],
+  "pre_existing_findings": [],
+  "applied_fixes": [],
+  "residual_actionable_work": [],
+  "advisory_outputs": [
+    "Keep intended date distinct from publication proof.",
+    "Human acceptance and merge remain required before a separately authorized fresh rehearsal at the actual new merged-main SHA."
+  ],
+  "residual_risks": [
+    "No tests were run by personas. Writer checks do not replace independent land checks or final-head automatic CI.",
+    "Historical A3 and smoke outcomes prove only the prior candidate, not this date candidate.",
+    "Stop if the local date changes from 2026-10-05 or live main drifts from the recorded base before completion."
+  ],
+  "testing_gaps": [],
+  "coverage": {
+    "reviewers_selected": 6,
+    "reviewers_completed": 6,
+    "failed_reviewers": [],
+    "timed_out_reviewers": [],
+    "malformed_findings_dropped": 0,
+    "suppressed_findings": 0,
+    "deduplicated_findings": 0,
+    "untracked_files_excluded": [],
+    "product_changelog_exact_byte_substitution_verified": true,
+    "cleanup_exact_three_new_entries_verified": true,
+    "supporting_relay_metadata_inspected": true,
+    "broader_historical_review_repeated": false
+  },
+  "verdict": "Ready to merge",
+  "verdict_limit": "ce-review code verdict only. Not human acceptance, permission to merge, publication proof, or fresh A3 completion.",
+  "checks_at_report_finalization": {
+    "writer_configured_full_checks": 1,
+    "reviewer_configured_full_checks": 0,
+    "remaining_authorized_full_checks": [
+      "land receive: npm run check, timeout_ms 600000",
+      "explicit baton-land wrapper: npm run check, timeout_ms 600000, followed by baton validate",
+      "canonical land write entry: npm run check, timeout_ms 600000 after the real draft PR exists"
+    ],
+    "review_receive_scope_and_write_configured_checks": 0,
+    "no_check_retry_or_waiver": true
+  },
+  "immutability": "Finalized before canonical review write; force-stage this ignored report before the reviewed-tree snapshot. No later report mutation or added reviewed subject. Subsequent land and CI outcomes belong to canonical land history and session evidence, not an amendment of this review report."
+}
