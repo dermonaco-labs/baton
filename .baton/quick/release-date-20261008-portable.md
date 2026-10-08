@@ -2,34 +2,28 @@
 baton: 1
 lane: quick
 feature: release-date-20261008-portable
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: Independent installed six-persona headless review found no product findings. The entire portable public candidate was audited; historical evidence is untouched. Only the date heading and mandatory source-only relay support change.
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Independent installed review is complete with zero findings, and required finite local checks passed after an honestly retained missing-tool failure and one frozen-lock restoration. The real draft PR is open. Freeze at separate canonical owner acceptance and normal PR-review/merge gates; no release authority.
 read_first:
   - path: .baton/quick/release-date-20261008-portable.md
-    why: Canonical scope, distinct writer provenance and pending LAND routing
+    why: Canonical LAND evidence and unapproved human PR-review gate
   - path: .baton/quick/release-date-20261008-portable.review.json
-    why: Validated canonical findings from genuine installed reviewers
+    why: Validated zero-finding independent review
   - path: .context/compound-engineering/ce-review/release-date-20261008-portable-20261008/report.json
-    why: Finalized independent review evidence and complete public-candidate audit
+    why: Finalized real persona outputs and portability audit
   - path: CHANGELOG.md
-    why: Exact date-only product delta
+    why: Exact dated candidate heading correction
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/release-date-20261008-portable.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: The exact CLI subject scope is CHANGELOG.md, with only the v0.1.0 heading changing from 2026-10-05 to 2026-10-08. Exactly three new cleanup entries classify this new relay and its real review evidence as source-only. No new user-facing behavior or public contract; six installed always-on personas genuinely reviewed the replacement on gpt-6.1-sol with medium reasoning. Complete public metadata, decisions, history and report were audited for portability. Both reviewer identity hashes differ from WORK. All old committed evidence remains unchanged.
+    evidence: https://github.com/dermonaco-labs/baton/pull/44
 open_questions: []
 decisions:
   - id: D1
@@ -73,8 +67,12 @@ decisions:
     tag: diff-base
     x-base-commit: ebb3182ea8c42008fe2a2328576107542341cff7
     by: baton
+  - id: D9
+    decision: Publish only the checked draft candidate and preserve separate human gates
+    rationale: Canonical LAND receive first failed for a missing local lint dependency; the actual failure is preserved privately. One authorized process-scoped frozen-lock restoration resolved the tool without repository or global configuration edits. Canonical LAND receive then passed its uncached configured check. The separately required npm run check passed with 316 tests, 316 passes, zero failures and a 600000 ms bound, elapsed 203917 ms. Installed validate passed with zero errors and seven advisory pack warnings. The real draft PR URL is recorded through this canonical LAND write, which independently executes its required entry check again before accepting this payload. Only the resulting final head's automatic CI may be observed; no old run reuse, dispatch or rerun. Source baseline and local day must remain fixed. Canonical owner acceptance and normal PR review/merge are still separate required human decisions.
+    by: baton-land
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -92,8 +90,15 @@ history:
     x-worktree: 67c7789b396dad485517d8631b11e49627784fd9d28896adf545c9b412f357d7
     commit: ebb3182
     x-action: write
-updated_at: 2026-10-08T08:12:05.059Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-10-08T08:26:10.536Z
+    by: baton-land
+    writer: 0f109547db460ce5854b068a729cb043750d58696519243b50f8eb5e3fde003b
+    x-worktree: 67c7789b396dad485517d8631b11e49627784fd9d28896adf545c9b412f357d7
+    commit: dd14866
+    x-action: write
+updated_at: 2026-10-08T08:26:10.527Z
+updated_by: baton-land
 risks:
   - id: R1
     text: 2026-10-08 is a dated candidate, not a publication promise or permission. Stop if the local day changes; do not automatically date-roll.
@@ -107,6 +112,9 @@ x-implementation-cycle: 46eb7351d83ec6360816a3baeb64f7075b2c1292cfdba7d4acc2332d
 review:
   findings_path: .baton/quick/release-date-20261008-portable.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/44
+  number: 44
 ---
 ## Goal
 Prepare the authorized October 8 v0.1.0 dated candidate without treating
@@ -127,10 +135,10 @@ the heading date as release publication authority or a deadline.
   by installed `validate` with zero errors and seven advisory pack warnings.
 
 ## Next steps
-1. Open a draft PR only after the required pre-push checks.
-2. Record its real URL through canonical LAND write, then publish that
-   append-only evidence commit and observe only the final head's automatic CI.
-3. Freeze at the separate owner acceptance and normal PR-review/merge gates.
+1. Publish the canonical LAND record as an append-only follow-up commit,
+   then observe only that final head's automatic CI within the finite bound.
+2. Freeze at the separate owner acceptance and normal PR-review/merge gates.
+   The draft PR URL is recorded in canonical metadata, not a placeholder.
 
 ## Watch out for
 - Preserve all historical October 7 acceptance and old candidate evidence.
