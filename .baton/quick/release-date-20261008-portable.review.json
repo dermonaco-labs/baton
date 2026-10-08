@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/release-date-20261008-portable-20261008/report.json"
+  },
+  "base": "ebb3182ea8c42008fe2a2328576107542341cff7",
+  "head": "ebb3182ea8c42008fe2a2328576107542341cff7",
+  "personas": [
+    "correctness-reviewer",
+    "testing-reviewer",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "agent-native-reviewer",
+    "learnings-researcher"
+  ],
+  "findings": []
+}
