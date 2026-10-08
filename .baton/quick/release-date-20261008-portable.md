@@ -73,8 +73,8 @@ decisions:
     by: baton-land
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-10-08
 history:
   - phase: work
     at: 2026-10-08T08:05:22.298Z
@@ -97,8 +97,15 @@ history:
     x-worktree: 67c7789b396dad485517d8631b11e49627784fd9d28896adf545c9b412f357d7
     commit: dd14866
     x-action: write
-updated_at: 2026-10-08T08:26:10.527Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-10-08T17:22:33.507Z
+    by: human:repository-owner
+    writer: 0f109547db460ce5854b068a729cb043750d58696519243b50f8eb5e3fde003b
+    x-worktree: 67c7789b396dad485517d8631b11e49627784fd9d28896adf545c9b412f357d7
+    commit: 6be5e1b
+    x-action: approve
+updated_at: 2026-10-08T17:22:33.507Z
+updated_by: human:repository-owner
 risks:
   - id: R1
     text: 2026-10-08 is a dated candidate, not a publication promise or permission. Stop if the local day changes; do not automatically date-roll.
