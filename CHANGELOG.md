@@ -17,7 +17,7 @@ All notable changes to Baton are documented here. This follows
 - Install the same pinned `uv` prerequisite in all three OS smoke jobs,
   preserving the unconditional live PowerShell-script installation check.
 
-## [0.1.0] - 2026-10-08
+## [0.1.0] - 2026-10-09
 
 ### Added
 
