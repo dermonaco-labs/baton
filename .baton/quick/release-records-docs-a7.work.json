@@ -1,0 +1,83 @@
+{
+  "summary": "Documentation-only A7 WORK records published v0.1.0 and verified A3/A5/A6 evidence on existing README, CONTRIBUTING and SECURITY surfaces. All specs/task and historical evidence bytes remain unchanged; T088/T090 bookkeeping and T093 remain deferred. Freeze for genuinely independent REVIEW/LAND without commit, push, PR, owner acceptance or merge.",
+  "read_first": [
+    {
+      "path": ".baton/quick/release-records-docs-a7.md",
+      "why": "New canonical docs-only lane scope, source base, WORK receipt and CLI-owned writer/checkout proof"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "why": "Portable release evidence, main-dispatch versus tag-push provenance and explicitly deferred task bookkeeping",
+      "sha256": "22e28d2178758bc3f6c85619d08ed1404d169782715f3318b9413a60a7701487"
+    },
+    {
+      "path": "README.md",
+      "why": "Published release status and evidence link",
+      "sha256": "e71bd70ccac7b4317887dd46a8a4e50ce3c5b8118031e0a243e693fae6f73fe3"
+    },
+    {
+      "path": "SECURITY.md",
+      "why": "Supported v0.1 release line after publication",
+      "sha256": "61ecec33aad1e5a6ee9fed40994ee287150751564952eda98a054537c3156ae2"
+    },
+    {
+      "path": "specs/001-baton-template/tasks.md",
+      "why": "Read-only original task definitions and unchanged pending bookkeeping; not this lane's task plan",
+      "sha256": "16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6"
+    },
+    {
+      "path": ".baton/template-cleanup.yml",
+      "why": "Source-only cleanup coverage for new docs lane and later canonical review artifacts",
+      "sha256": "c4e34122b79f7776dbc8ceaf8dc6dea61097e72a1b9974a9531a572a7b2813fe"
+    },
+    {
+      "path": ".baton/quick/release-records-docs-a7.work.json",
+      "why": "Actual judgment-only input to this new canonical WORK write"
+    }
+  ],
+  "do_not_read": [
+    {
+      "path": "specs/001-baton-template/roadmap.md",
+      "why": "Future feature scope is not authorized by this docs-only lane"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "CONTRIBUTING.md",
+      "role": "evidence",
+      "sha256": "22e28d2178758bc3f6c85619d08ed1404d169782715f3318b9413a60a7701487"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D3",
+      "decision": "Narrow A7 to supported documentation-only WORK",
+      "rationale": "The coordinator directs a narrower route under the original approved release-documentation request and autonomous instruction, not new owner acceptance. Task bookkeeping is deferred; every original specs file remains unchanged. No new feature, gate assumption or contract override is introduced.",
+      "by": "a7-docs-work-agent"
+    },
+    {
+      "id": "D4",
+      "decision": "Preserve refused WORK separately without retry or success claims",
+      "rationale": "The earlier quick WORK including task-checkbox edits was refused with E_TRANSITION because no-feature-tasks forbids specs changes. Its exact input, output, lane, staged patch and failure receipts are archived privately. This is a newly initialized lane, not a rewrite or retry of the refusal.",
+      "by": "a7-docs-work-agent"
+    },
+    {
+      "id": "D5",
+      "decision": "Use configured validation and unchanged locked dependencies",
+      "rationale": "The earlier npm run check probe failed because markdownlint-cli2 was missing; frozen-lock npm ci succeeded without manifest or lock changes. Reuse those dependencies. This new WORK exit must run the actual configured check with its 600000 ms timeout and 1048576-byte output cap; hosted release evidence cannot substitute for local exit evidence.",
+      "by": "a7-docs-work-agent"
+    },
+    {
+      "id": "D6",
+      "decision": "End author work at frozen WORK for independent REVIEW/LAND",
+      "rationale": "The separately coordinated reviewer must use another actor and checkout with its own genuine canonical identity. Upstream ce-work self-review and shipping instructions are superseded here: no author review, commit, push, PR, owner acceptance, compound, gate waiver or merge is authorized.",
+      "by": "a7-docs-work-agent"
+    },
+    {
+      "id": "D7",
+      "decision": "Keep repository model routing unchanged",
+      "rationale": "The execution model is directed for A7; configured model suggestions remain advisory. No model configuration edits or additional planning/execution/review agents are introduced.",
+      "by": "a7-docs-work-agent"
+    }
+  ]
+}

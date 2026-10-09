@@ -101,8 +101,11 @@ or claim a role; use an independent reviewer and checkout for meaningful separat
 
 ## Project status
 
-Baton **v0.1.0** is the first release line. Published releases with checksums and build-provenance attestations
-are listed on the [Releases page](https://github.com/dermonaco-labs/baton/releases).
+Baton **[v0.1.0](https://github.com/dermonaco-labs/baton/releases/tag/v0.1.0)** was published on
+2026-10-09, with four attached assets, checksums and verified tag-push build provenance.
+The [release evidence record](CONTRIBUTING.md#v010-release-evidence) distinguishes the exact-commit
+rehearsal, publication and pinned consumer dry run. Release publication does not close the pending
+timed newcomer walkthrough, README visual review or other unperformed acceptance work.
 
 | Area | Status |
 |---|---|
