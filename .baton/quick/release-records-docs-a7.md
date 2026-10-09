@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: release-records-docs-a7
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: Independent headless review of the exact recorded-base documentation scope returned no actionable findings from seven installed subject-review personas plus the installed learnings lookup. Frozen WORK context and source evidence remain unchanged. Quick scope held; proceed only to checked draft-PR LAND, preserving separate owner acceptance and merge authority.
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Independent documentation-only A7 review and local checks passed; an open draft PR records verified v0.1.0 release evidence without changing release or acceptance authority. Preserve original WORK and review objects. Freeze at the PR-review human gate after final-head automatic checks; T088/T090 bookkeeping, T093, owner acceptance, ready status, merge and compound remain deferred.
 read_first:
   - path: .baton/quick/release-records-docs-a7.md
     why: New canonical docs-only lane scope, source base, WORK receipt and CLI-owned writer/checkout proof
@@ -41,15 +41,9 @@ artifacts:
     sha256: facefac83179029df600d152af113009ecf21ff555d66d6b93bf73a722581a4e
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/release-records-docs-a7.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: Against recorded base 60064bfb1cde27b792603b78c3b36a22d28b9918, the canonical subject set is CONTRIBUTING.md, README.md and SECURITY.md. It records existing release observations and the already documented support policy after publication, without executable behavior, public-contract, workflow, pin, manifest or feature-task changes. The remaining frozen files are the genuine lane/input and source-only cleanup entries for this lane and its review artifacts.
+    evidence: https://github.com/dermonaco-labs/baton/pull/46
 open_questions: []
 decisions:
   - id: D1
@@ -105,8 +99,12 @@ decisions:
     tag: diff-base
     x-base-commit: 60064bfb1cde27b792603b78c3b36a22d28b9918
     by: baton
+  - id: D12
+    decision: Land only as an open draft PR with separate owner acceptance
+    rationale: The real draft PR exists after successful canonical independent REVIEW, LAND receive, configured local checks and validation. Record its actual URL through the canonical CLI. The final automatic pull-request checks must succeed on the final own head before declaring the checked-draft handoff complete. The human PR-review gate remains unapproved; ready status, owner acceptance, merge, compound, release/tag operations and downstream work are outside this assignment. The canonical lane and private final receipt replace upstream requests for unrelated session-note files.
+    by: baton-a7-independent-review
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -124,8 +122,15 @@ history:
     x-worktree: f683e064bb29f95518588cf2cde3f00a3cf44c6114af3490b59f4eaf09102a98
     commit: 60064bf
     x-action: write
-updated_at: 2026-10-09T14:29:28.370Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-10-09T14:39:15.779Z
+    by: baton-a7-independent-review
+    writer: f61b23f0190eb1858f50279bf3ef15b4821673ed684d4150f734c7728973e903
+    x-worktree: f683e064bb29f95518588cf2cde3f00a3cf44c6114af3490b59f4eaf09102a98
+    commit: b18fd0b
+    x-action: write
+updated_at: 2026-10-09T14:39:15.767Z
+updated_by: baton-land
 do_not_read:
   - path: specs/001-baton-template/roadmap.md
     why: Future feature scope is not authorized by this docs-only lane
@@ -135,6 +140,9 @@ x-implementation-cycle: 3848db0c1944357c0ddcdc89f9c97fa47671755de9ad0e280b1b8c00
 review:
   findings_path: .baton/quick/release-records-docs-a7.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/46
+  number: 46
 ---
 ## Goal
 Keep the work in scope.
