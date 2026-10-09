@@ -69,3 +69,87 @@ jobs. An owner cuts a release only **after** review and land:
    `SHA256SUMS`, and attestations.
 4. Create and push the version tag. The tag-triggered workflow publishes
    the GitHub release; it never publishes to npm.
+
+### v0.1.0 release evidence
+
+[Baton v0.1.0](https://github.com/dermonaco-labs/baton/releases/tag/v0.1.0)
+(release ID `407861289`) was published at `2026-10-09T11:46:36Z`, neither
+draft nor prerelease. Its immutable tag targets
+`60064bfb1cde27b792603b78c3b36a22d28b9918`.
+The actual tag is **lightweight**, created as a Git ref through the REST API;
+the publication plan expected an annotated tag. This is a procedural
+deviation, not evidence of an approved exception. The tag was not replaced
+or moved.
+
+All runs below completed successfully at that exact source commit, on attempt 1.
+
+| Evidence | Event and ref | Public run |
+|---|---|---|
+| A3 release rehearsal | `workflow_dispatch`, `main` | [37922294825](https://github.com/dermonaco-labs/baton/actions/runs/37922294825) |
+| A3 three-OS smoke | `workflow_dispatch`, `main` | [37922670598](https://github.com/dermonaco-labs/baton/actions/runs/37922670598) |
+| A5 release publication | `push`, `v0.1.0` | [37925519452](https://github.com/dermonaco-labs/baton/actions/runs/37925519452) |
+| A5 three-OS smoke | `push`, `v0.1.0` | [37925519366](https://github.com/dermonaco-labs/baton/actions/runs/37925519366) |
+| A5 CI | `push`, `v0.1.0` | [37925520176](https://github.com/dermonaco-labs/baton/actions/runs/37925520176) |
+
+Both smoke runs passed on Ubuntu, macOS and Windows: each job reported
+`adopt: OK`, passed F39, and completed 129 tests with 129 passes and zero
+failures, cancellations, skips or todos; no failed steps were observed.
+The rehearsal skipped publication; the tag-push release published
+successfully and skipped the dry-run upload as expected.
+
+The release has **four attached assets**. They match the frozen A3
+rehearsal bytes, and all three entries in `SHA256SUMS` were verified.
+
+| Asset | Bytes | SHA-256 |
+|---|---|---|
+| `baton.mjs` | 407251 | `cb35d7f1df19e526a28d2e116fd42168f48924f03f7f9f115a642f3d848f7f84` |
+| `baton-template-v0.1.0.tar.gz` | 844777 | `6cba481511e97943d698ac13854aca70eccef31452963e385251a026352b101c` |
+| `baton.lock.json` | 62078 | `b28f9f3d3f85e4f805fb0cd6fdcea2c1ac6f97ac74eb3c819386540a09d29392` |
+| `SHA256SUMS` | 253 | `bdad4261615b4baf94e3b11aaf113acc7316b5f551fb7097498080fd796290ab` |
+
+Release notes are the **release body**, not a fifth attached asset. The
+873-byte body matches the rehearsal notes, SHA-256
+`118af30fa93970b1e59381ffb97adfd200b10d6a9bbd4afca9329a992841ff83`.
+Both `baton.mjs` and the tarball have verified public tag-push provenance:
+source commit above, `refs/tags/v0.1.0`, event `push`, Release run
+`37925519452`, attempt 1, signer `release.yml@refs/tags/v0.1.0`.
+The A3 attestations instead name `refs/heads/main` and
+`workflow_dispatch`; they are distinct evidence, not tag-push provenance.
+The tarball contains 392 regular files matching 392 source blobs,
+version `0.1.0` and release date `2026-10-09`; all 16 quick/context
+support files in that release are covered by template cleanup.
+Pins remain Spec Kit `1.0.11@8147943512404afb9d99c6252cb9bf84369fd0b0`
+and ATV `ad996736b879be87c7755df5c5017d5336203bbc`.
+
+A6 exercised `npx --yes github:dermonaco-labs/baton#v0.1.0 init --dry-run`
+in a fresh empty workspace: exit 0 in 18 seconds, stdout `init: OK`,
+zero entries before and after. npm resolved the exact tag commit and the
+installed CLI hash matched the public `baton.mjs` asset. Two nonfatal
+`gitignore-fallback` warnings were retained. This proves the pinned
+consumer dry-run path on one workstation, not a timed human walkthrough
+or an adopter initialization.
+
+#### Release-task status
+
+T085 was already complete; A3 and A5 add exact-release evidence without
+rewriting its earlier dry-run record. For T088, the existing
+Linux/Windows budget and broken-frontmatter annotation evidence is
+supplemented by the successful full three-OS runs above. For T090,
+the community files are present and a read-only check of GitHub's
+private-vulnerability-reporting endpoint returned `enabled: true`
+on 2026-10-09; no settings were changed by this documentation work.
+
+**Task bookkeeping remains deferred.** T088 and T090 are still unchecked
+in the original `tasks.md`; these observations do not claim their
+repository records were updated or accepted. An initial quick WORK
+attempt including task-checkbox updates was refused with
+`E_TRANSITION` because `no-feature-tasks` forbids changes under `specs/`.
+That refused lane was not retried or treated as completed WORK.
+This separate documentation-only lane leaves all original task bytes
+and historical baton/review evidence unchanged; it records the later
+release observations without overriding phase authority.
+T093 remains pending: neither release smoke nor A6 proves the timed
+newcomer walkthrough (AC-US1-4), live README visual review (AC-US6-2),
+or every step of the human S1-S7 walkthrough.
+Other unperformed owner checks, upstream-watch, Dependabot, compound,
+adopter and downstream-project work are not closed by this record.

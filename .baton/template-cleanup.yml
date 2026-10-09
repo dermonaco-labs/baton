@@ -35,6 +35,10 @@ remove:
   - .baton/quick/release-date-20261009-portable.md
   - .baton/quick/release-date-20261009-portable.review.json
   - .context/compound-engineering/ce-review/release-date-20261009-portable-20261009/
+  - .baton/quick/release-records-docs-a7.md
+  - .baton/quick/release-records-docs-a7.work.json
+  - .baton/quick/release-records-docs-a7.review.json
+  - .context/compound-engineering/ce-review/release-records-docs-a7-20261009/
   - .baton/template-cleanup-pending
 replace:
   README.md: baton/templates/README.adopter.md

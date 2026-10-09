@@ -2,9 +2,9 @@
 
 ## Supported versions
 
-Until the first release, only the current `main` branch receives security
-fixes. After v0.1 is released, the latest release line and `main` are
-supported; earlier 0.x releases are not guaranteed fixes.
+Following the publication of v0.1.0, the latest release line (currently
+v0.1) and `main` receive security fixes. Earlier 0.x release lines are not
+guaranteed fixes.
 
 ## Project-check trust boundary
 
