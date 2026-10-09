@@ -2,24 +2,22 @@
 baton: 1
 lane: quick
 feature: release-date-20261009-portable
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: Genuine independent headless REVIEW completed with all six installed always-on personas and the triggered adversarial persona. No findings; full publication candidate is portable and quick scope holds. Checked draft PR preparation follows; owner acceptance, merge and publication remain separate.
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Genuine independent REVIEW passed and the required bounded LAND receive and pre-push check passed. A real draft PR now exists; record its URL without granting acceptance or merge authority. Final-head automatic CI remains pending until this canonical LAND receipt is committed and pushed.
 read_first:
   - path: .baton/quick/release-date-20261009-portable.md
-    why: Canonical relay scope, history and separate authority boundaries
+    why: Actual draft PR, preserved chronology and pending owner gate
   - path: .baton/quick/release-date-20261009-portable.review.json
-    why: Validated normalized findings from genuine independent review
+    why: Immutable normalized findings with no blockers
   - path: .context/compound-engineering/ce-review/release-date-20261009-portable-20261009/report.md
-    why: Immutable review narrative, persona outcomes and honest coverage limits
-  - path: .baton/template-cleanup.yml
-    why: Exactly three new source-only cleanup classifications
+    why: Immutable genuine seven-persona review narrative
   - path: CHANGELOG.md
-    why: Only product delta is the authorized October 9 heading
+    why: Authorized date-only product delta
 artifacts:
   - path: .baton/quick/release-date-20261009-portable.review.json
     role: evidence
@@ -29,15 +27,9 @@ artifacts:
     sha256: ef6d9b6582120d032b4d7a15d7792a3aaf4235f09ef1403840c6116d1500fda5
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/release-date-20261009-portable.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: The full frozen candidate changes only the v0.1.0 heading from October 8 to October 9 plus exactly three source-only cleanup classifications and truthful relay evidence. No new user-facing behavior, public contract, runtime, dependency or workflow change. Every installed always-on persona and the triggered adversarial persona inspected the entire publication candidate; no finding or portability blocker was reported. Reviewer actor and checkout identities both differ from WORK.
+    evidence: https://github.com/dermonaco-labs/baton/pull/45
 open_questions: []
 decisions:
   - id: D1
@@ -89,8 +81,20 @@ decisions:
     tag: diff-base
     x-base-commit: 8f665c6e842d1d23adcbb8f7d9bbf6e160a28c98
     by: baton
+  - id: D11
+    decision: Preserve the initial REVIEW input refusal and narrowly authorized recovery
+    rationale: The first canonical REVIEW write refused the authored input because two evidence artifacts lacked schema-required sha256 fields. No transition persisted and no WORK or report bytes changed. Freeze and retain that refusal; narrowly authorized recovery supplied actual normalized artifact hashes in the nonreserved input and retried once successfully. The CLI recomputed hashes and recorded its reviewed tree; no waiver, fabricated digest, metadata rewrite or persona rerun was used.
+    by: baton-land
+  - id: D12
+    decision: Retain actual independent LAND check failure and finite-check accounting
+    rationale: One configured npm run check definition retains timeout_ms 600000 and the installed combined-output cap. Independent canonical LAND receive first failed because markdownlint-cli2 was missing. One frozen-lock restoration through the approved internal package feed succeeded without manifest, lockfile or settings changes; the required receive retry passed. The separate required pre-push invocation through the same finite-check runner passed 316 tests with zero failures, cancellations, skips or todos. Canonical LAND write executes its own required check; every invocation and initial failure remains genuine private history, not invented extra definitions or reused historical proof.
+    by: baton-land
+  - id: D13
+    decision: Record only the real draft PR and freeze at the separate owner gate
+    rationale: The draft PR exists at the recorded URL on main. This append-only canonical receipt follows real PR creation; commit and push it without amending prior commits, then observe only this candidate final head's automatic pull_request CI within the bounded window. Do not dispatch, rerun, cancel or substitute old-head CI. Owner acceptance, normal merge, publication, rehearsal, tag, release, compound and settings remain unauthorized; leave owner approval null and the next human gate blocked.
+    by: baton-land
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -108,8 +112,15 @@ history:
     x-worktree: 3471c5a80e1a194ae46fc156d2690b4833d557612b81fd78871f10ccbbaf66f5
     commit: 8f665c6
     x-action: write
-updated_at: 2026-10-09T08:26:37.196Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-10-09T08:40:10.444Z
+    by: baton-land
+    writer: fd1f11fa13df05fcaab5d483bae187cfe35c4c5fc2e3e553a9985b31cdac025f
+    x-worktree: 3471c5a80e1a194ae46fc156d2690b4833d557612b81fd78871f10ccbbaf66f5
+    commit: c0a8f2e
+    x-action: write
+updated_at: 2026-10-09T08:40:10.430Z
+updated_by: baton-land
 risks:
   - id: R1
     text: October 9 is a dated candidate, not a publication promise. Stop if the local date or canonical main changes; never silently date-roll.
@@ -123,6 +134,9 @@ x-implementation-cycle: f9b2422dfa0eb9ab3c910e1f609f49fa814188e0426873330c8af7ca
 review:
   findings_path: .baton/quick/release-date-20261009-portable.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/45
+  number: 45
 ---
 ## Goal
 Prepare the authorized October 9 date-only v0.1.0 candidate, without
