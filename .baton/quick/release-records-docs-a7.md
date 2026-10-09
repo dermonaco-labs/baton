@@ -105,8 +105,8 @@ decisions:
     by: baton-a7-independent-review
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-10-09
 history:
   - phase: work
     at: 2026-10-09T14:15:01.488Z
@@ -129,8 +129,15 @@ history:
     x-worktree: f683e064bb29f95518588cf2cde3f00a3cf44c6114af3490b59f4eaf09102a98
     commit: b18fd0b
     x-action: write
-updated_at: 2026-10-09T14:39:15.767Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-10-09T14:56:09.324Z
+    by: human:repository-owner
+    writer: f61b23f0190eb1858f50279bf3ef15b4821673ed684d4150f734c7728973e903
+    x-worktree: f683e064bb29f95518588cf2cde3f00a3cf44c6114af3490b59f4eaf09102a98
+    commit: c5c3f71
+    x-action: approve
+updated_at: 2026-10-09T14:56:09.324Z
+updated_by: human:repository-owner
 do_not_read:
   - path: specs/001-baton-template/roadmap.md
     why: Future feature scope is not authorized by this docs-only lane
