@@ -95,8 +95,8 @@ decisions:
     by: baton-land
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-10-09
 history:
   - phase: work
     at: 2026-10-09T08:11:21.540Z
@@ -119,8 +119,15 @@ history:
     x-worktree: 3471c5a80e1a194ae46fc156d2690b4833d557612b81fd78871f10ccbbaf66f5
     commit: c0a8f2e
     x-action: write
-updated_at: 2026-10-09T08:40:10.430Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-10-09T08:54:44.374Z
+    by: human:repository-owner
+    writer: fd1f11fa13df05fcaab5d483bae187cfe35c4c5fc2e3e553a9985b31cdac025f
+    x-worktree: 3471c5a80e1a194ae46fc156d2690b4833d557612b81fd78871f10ccbbaf66f5
+    commit: 0b6a642
+    x-action: approve
+updated_at: 2026-10-09T08:54:44.374Z
+updated_by: human:repository-owner
 risks:
   - id: R1
     text: October 9 is a dated candidate, not a publication promise. Stop if the local date or canonical main changes; never silently date-roll.
