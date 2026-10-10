@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: review-land-fixes-012
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: Independent Sol medium review confirms both original P2 regression gaps fixed. Exact bf075310 base, seven installed persona review28/subjects20 and final parent staged review30/subjects22. Reports frozen before genuine proof. a7 checksum approval at baseline is not final patch acceptance; independent LAND and future owner PR gate remain separate.
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Independent LAND received the exact reviewed v0.1.2 candidate in a separate checkout. Local npm run check passes 381/381 with zero skips; global and scoped validate exit 0. Opened a DRAFT patch PR against main. Only predictable LAND bookkeeping is published; no subject or frozen report changes. Automatic pull_request CI only, no dispatch or rerun. Future exact-head acceptance and the land-to-compound repository owner gate remain unapproved; a7 checksum approval at bf075310 is not patch acceptance.
 read_first:
   - path: .baton/quick/review-land-fixes-012.md
     why: Canonical independent REVIEW history and exact proof
@@ -27,15 +27,9 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/review-land-fixes-012.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: Full exact-base review found only owner-authorized restoration of existing Baton-owned review/landing instructions, patch metadata, coupled regressions and predictable bookkeeping. No new command, flag, public contract, upstream/proof/schema or substantive path change. Original22 plus explicit init assertion23, a7/workJSON25, original report pair/reviewJSON28 and final report pair30 are reported, not unlimited approval. Cleanup and original history remain unchanged.
+    evidence: https://github.com/dermonaco-labs/baton/pull/48
 open_questions: []
 decisions:
   - id: D1
@@ -88,7 +82,7 @@ decisions:
     x-base-commit: 88d4cc3c9d94367f3a40fa35a997e7d431763d91
     by: baton
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -106,8 +100,15 @@ history:
     x-worktree: b700d1cd5500d6436b6c6a955be5ebd69ad2c49ecd8493ca646329a68d99baa5
     commit: 88d4cc3
     x-action: write
-updated_at: 2026-10-10T22:16:29.999Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-10-10T22:33:13.501Z
+    by: baton-012-independent-land
+    writer: 712e0933253d506d5c12fca5bfb3740d960cd743d7e12bd844388703f59de81c
+    x-worktree: d6bf36e00d80b2fda5dd8a4684e183baaded19e6492a55db4f358cf4d7a69a42
+    commit: "6107863"
+    x-action: write
+updated_at: 2026-10-10T22:33:13.493Z
+updated_by: baton-land
 risks:
   - id: R1
     text: "CE headless is prompt-driven: stop if exact base/file coverage cannot be proved; independent review must inspect both sets."
@@ -121,6 +122,9 @@ x-implementation-cycle: 2a1754d27502354bf8ebae149fab7f6419fc2ef214b77a5e57621484
 review:
   findings_path: .baton/quick/review-land-fixes-012.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/48
+  number: 48
 ---
 ## Goal
 Keep the work in scope.
