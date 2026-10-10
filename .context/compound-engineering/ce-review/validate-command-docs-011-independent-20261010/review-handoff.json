@@ -1,0 +1,29 @@
+{
+  "summary": "Independent REVIEW reissued under coordinator A1 authority for final19-file scope:16 unchanged reviewed code files plus3 inspected portable support reports staged before write. Genuine immutable WORK input verified against original patch, no phase/proof handedit. R1/R2 fixed, no new findings;3 fresh relevant personas and4 explicitly reused unchanged-surface results. Final cleanup/a7 unchanged and authorized; no reviewer approval or LAND execution. Parent final gates remain separate.",
+  "review": {
+    "findings_path": ".baton/quick/validate-command-docs-011.review.json",
+    "x-portable-metadata": {
+      "operation": "Portable provenance annotation only; payload already contained no absolute workstation locators.",
+      "private_original": "private-artifact:reviewer/original-review-handoff.json",
+      "private_original_sha256": "49d8827735d632333170f48034385e3c61e9fd6c199cdfd650726d04f8eeeb15",
+      "private_original_retained": true,
+      "reference_semantics": "Opaque private evidence label, not a repository path or committed evidence claim.",
+      "redacted_fields": []
+    }
+  },
+  "decisions": [
+    {
+      "id": "D9",
+      "decision": "Independent review holds bounded quick scope",
+      "tag": "quick-scope-held",
+      "rationale": "Frozen tree6f1e42785e9843704ba20721079f92e46405d9a2 restores canonical classification and previous parsed-frontmatter/body privacy validation; existing quickregex, fullroots, scanner rules, schemas and errorcode definitions retained. No new command/flag/publiccontract. Q1 authorizes unchanged components0.1.0 with CLI/package/generator0.1.1, and required metadata overage is explicitly authorized. Independent real Git-state/CLI regressions and fresh correctness/testing/adversarial review close R1/R2.",
+      "by": "baton-011-independent-review"
+    },
+    {
+      "id": "D10",
+      "decision": "Reissue genuine REVIEW for expanded delivery evidence scope",
+      "rationale": "Coordinator A1 authorizes receipt replay from byte-exact original WORK input whose SHA2560a1c5794748df7943ebbc0c468e54839d81d017e473bb75937e8a434d9726a6a independently matches original transfer patch and immutable candidate blob. Initial16file proof correctly became stale when delivery staged3context reports. All16 code bytes unchanged; all3 portable reports inspected and frozen before staging. Normal independent CLI receive/write now binds19subjects; no proof/phase handedit, new approval or selfoverride.",
+      "by": "baton-011-independent-review"
+    }
+  ]
+}

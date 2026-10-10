@@ -25,7 +25,7 @@ pack in a derived repo requires a pinned `npx` source payload because
 template cleanup removed `packs/`:
 
 ```sh
-npx --yes github:dermonaco-labs/baton#v0.1.0 init --packs core,learning
+npx --yes github:dermonaco-labs/baton#v0.1.1 init --packs core,learning
 ```
 
 Before a release tag exists, use a reviewed commit or branch ref.

@@ -303,7 +303,7 @@ test('update replaces only unmodified managed files and reports changed files wi
     assert.deepEqual(await readFile(join(root, `.baton/conflicts/${changed}.new`)),
       await readFile(join(sourceRoot, changed)));
     const manifest = JSON.parse(await readFile(join(root, '.baton/manifest.json'), 'utf8'));
-    assert.equal(manifest.baton_version, '0.1.0');
+    assert.equal(manifest.baton_version, '0.1.1');
     assert.equal(manifest.source, 'init');
     assert.equal(manifest.installed_at, '2026-01-01T00:00:00Z');
     assert.equal(manifest.files.find(file => file.path === changed).sha256,

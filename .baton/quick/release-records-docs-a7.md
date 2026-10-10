@@ -26,9 +26,10 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: .baton/template-cleanup.yml
     why: Source-only cleanup coverage for new docs lane and later canonical review artifacts
-    sha256: c4e34122b79f7776dbc8ceaf8dc6dea61097e72a1b9974a9531a572a7b2813fe
+    sha256: 5c7665fb92d76dfa38686f645edc26c30c34743ddb10c891ea9f88d6deeb453e
   - path: .baton/quick/release-records-docs-a7.work.json
     why: Actual judgment-only input to this new canonical WORK write
+    sha256: de632df430c6cae373d42517f38b3d1bde768ad2f66a7923bcb449813cc449f4
 artifacts:
   - path: CONTRIBUTING.md
     role: evidence
@@ -103,10 +104,18 @@ decisions:
     decision: Land only as an open draft PR with separate owner acceptance
     rationale: The real draft PR exists after successful canonical independent REVIEW, LAND receive, configured local checks and validation. Record its actual URL through the canonical CLI. The final automatic pull-request checks must succeed on the final own head before declaring the checked-draft handoff complete. The human PR-review gate remains unapproved; ready status, owner acceptance, merge, compound, release/tag operations and downstream work are outside this assignment. The canonical lane and private final receipt replace upstream requests for unrelated session-note files.
     by: baton-a7-independent-review
+  - id: D13
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: v0.1.1 cleanup remove entries for validate-command-docs-011; owner approval relayed by coordinator, verbatim approved at 2026-10-10T17:44:34.645+02:00; subsequent clarification returned user unavailable
+    by: implementation-session
+  - id: D14
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: cleanup checksum coverage for validate-command-docs-011 review directory; repository owner via coordinator delegation, verbatim approved 2026-10-10T19:48:34+02:00; one refresh and fresh approval, no semantic change
+    by: implementation-session
 gate:
   required: true
   approved_by: repository owner via control-plane delegation
-  approved_at: 2026-10-09
+  approved_at: 2026-10-10
 history:
   - phase: work
     at: 2026-10-09T14:15:01.488Z
@@ -136,7 +145,35 @@ history:
     x-worktree: f683e064bb29f95518588cf2cde3f00a3cf44c6114af3490b59f4eaf09102a98
     commit: c5c3f71
     x-action: approve
-updated_at: 2026-10-09T14:56:09.324Z
+  - phase: land
+    at: 2026-10-10T15:45:30.111Z
+    by: implementation-session
+    writer: e2999febfb8418465d933b0361c2a555ee45907022492510ddfc647cdc5c4175
+    x-worktree: 56eff5ab69b22e7c286c51e51340ed322a9c9875a122e714d062b721eb8e2b79
+    commit: be5525f
+    x-action: refresh
+  - phase: land
+    at: 2026-10-10T15:45:30.415Z
+    by: human:repository-owner
+    writer: e2999febfb8418465d933b0361c2a555ee45907022492510ddfc647cdc5c4175
+    x-worktree: 56eff5ab69b22e7c286c51e51340ed322a9c9875a122e714d062b721eb8e2b79
+    commit: be5525f
+    x-action: approve
+  - phase: land
+    at: 2026-10-10T17:50:29.122Z
+    by: implementation-session
+    writer: e2999febfb8418465d933b0361c2a555ee45907022492510ddfc647cdc5c4175
+    x-worktree: 56eff5ab69b22e7c286c51e51340ed322a9c9875a122e714d062b721eb8e2b79
+    commit: be5525f
+    x-action: refresh
+  - phase: land
+    at: 2026-10-10T17:50:29.498Z
+    by: human:repository-owner
+    writer: e2999febfb8418465d933b0361c2a555ee45907022492510ddfc647cdc5c4175
+    x-worktree: 56eff5ab69b22e7c286c51e51340ed322a9c9875a122e714d062b721eb8e2b79
+    commit: be5525f
+    x-action: approve
+updated_at: 2026-10-10T17:50:29.498Z
 updated_by: human:repository-owner
 do_not_read:
   - path: specs/001-baton-template/roadmap.md

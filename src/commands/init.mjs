@@ -139,7 +139,7 @@ export async function run(root, args) {
     if (error instanceof BatonError && error.code === 'E_PREREQUISITE' && !opts.archive &&
         opts.packs.some(pack => pack !== 'core')) {
       throw new BatonError('E_PREREQUISITE',
-        `This install has no optional-pack payload. Run npx --yes github:dermonaco-labs/baton#v0.1.0 init --packs ${opts.packs.join(',')}`, 5);
+        `This install has no optional-pack payload. Run npx --yes github:dermonaco-labs/baton#v0.1.1 init --packs ${opts.packs.join(',')}`, 5);
     }
     throw error;
   }
@@ -340,7 +340,7 @@ export async function run(root, args) {
       if (!opts.dryRun) await putBytes(root, attributes, mergedAttributes);
     }
     const manifest = {
-      schema: 1, baton_version: '0.1.0', installed_at: previous?.installed_at ?? new Date().toISOString(),
+      schema: 1, baton_version: '0.1.1', installed_at: previous?.installed_at ?? new Date().toISOString(),
       source: previous?.source ?? 'init',
       script,
       upstreams: { speckit: `${lock.upstreams.speckit.version}@${lock.upstreams.speckit.commit.slice(0, 7)}`,

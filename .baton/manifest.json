@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "baton_version": "0.1.0",
+  "baton_version": "0.1.1",
   "installed_at": "2026-09-24T12:24:47.193Z",
   "source": "template",
   "upstreams": {

@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/validate-command-docs-011-independent-20261010/review-round3.json"
+  },
+  "base": "be5525fb144dd2f5c9e9fc2933de0aa7117bff29",
+  "head": "be5525fb144dd2f5c9e9fc2933de0aa7117bff29",
+  "personas": [
+    "correctness-reviewer", "testing-reviewer", "maintainability-reviewer",
+    "project-standards-reviewer", "agent-native-reviewer",
+    "learnings-researcher", "adversarial-reviewer"
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "P2",
+      "title": "Noncanonical handoff privacy scanning, including decoded YAML",
+      "file": "src/commands/validate.mjs",
+      "line": 177,
+      "persona": "correctness-reviewer, adversarial-reviewer",
+      "confidence": 1.0,
+      "disposition": "fixed",
+      "reason": "Round3 uses existing parseFrontmatter/serializeFrontmatter before frontmatter:true scanning, preserving prior decoded-value and separate body semantics without baton schemas. Three fresh relevant reviews found no new findings. Independent real bundled base/revised comparison confirms all16 escaped-email/configured-term selector-state probes retain E_DENYLIST; original literal probes also retain E_DENYLIST.",
+      "x-autofix-class": "manual",
+      "x-owner": "downstream-resolver",
+      "x-requires-verification": true
+    },
+    {
+      "id": "R2",
+      "severity": "P3",
+      "title": "Cover the no-frontmatter privacy-scan fallback",
+      "file": "src/commands/validate.mjs",
+      "line": 176,
+      "persona": "testing-reviewer",
+      "confidence": 0.98,
+      "disposition": "fixed",
+      "reason": "New nofrontmatter body-negative and inline-example allowance regressions cover allthree paths, changed/untracked states and both selectors. Independent integration run68/68 passes zero skips; fresh testing review confirms coverage gap resolved.",
+      "x-autofix-class": "manual",
+      "x-owner": "downstream-resolver",
+      "x-requires-verification": true
+    }
+  ],
+  "x-round": 3,
+  "x-candidate-tree": "6f1e42785e9843704ba20721079f92e46405d9a2",
+  "x-verdict": "Code review passed; delivery held",
+  "x-model": "gpt-6.1-sol",
+  "x-reasoning-effort": "medium",
+  "x-applied-fixes": 0,
+  "x-history": [
+    {
+      "round": 1,
+      "candidate-tree": "cb15fd6f838eb79da5b88bdd50adbae6d478d6c0",
+      "finding": "R1",
+      "title": "Noncanonical handoff documents lose denylist enforcement",
+      "disposition": "open",
+      "round2-status": "Literal cases restored; full frontmatter semantics not preserved, remained open"
+    },
+    {
+      "round": 2,
+      "candidate-tree": "be8949179bf837b485fe817918df959d50b92730",
+      "findings": ["R1 decoded-YAML privacy gap", "R2 nofrontmatter fallback coverage"],
+      "disposition": "open",
+      "round3-status": "Independently verified fixed"
+    }
+  ],
+  "x-Q1": "Unchanged extension/preset0.1.0 and CLI/package/manifest-generator0.1.1 split is consistent. Upstream pins/hashes/registry unchanged; lock generated_by and package-lock two version fields only.",
+  "x-a7-refresh": "Original phase/history prefix preserved with existing CLI refresh/approve appended. Current cleanup hash matches. No further refresh performed.",
+  "x-reapproval-provenance": "Recorded approved at2026-10-10T17:44:34.645+02:00 then unavailable clarification, same configured repository-owner/control-plane delegation. External authority not independently authenticated; unavailable is not additional consent. Further a7 refresh/reapproval requires fresh explicit ownerdelegation.",
+  "x-scope-verdict": "Independent quick-scope-held verdict: exact subject restores existing classification/privacy checks, no new publiccontract, bounded release metadata authorized. Recorded in evidence only; successful CLI phase remains held.",
+  "x-fresh-personas": [
+    "correctness-reviewer", "testing-reviewer", "adversarial-reviewer"
+  ],
+  "x-reused-round2-personas-unchanged-surfaces-only": [
+    "maintainability-reviewer", "project-standards-reviewer",
+    "agent-native-reviewer", "learnings-researcher"
+  ],
+  "x-reused-source": ".context/compound-engineering/ce-review/validate-command-docs-011-independent-20261010/review-round2.json",
+  "x-cleanup-required": [
+    ".context/compound-engineering/ce-review/validate-command-docs-011-independent-20261010/"
+  ],
+  "x-author-code-gate": "Author-run npm run check exit0,378/378 zero failures/skips on exact round3tree; reviewer verified local-check-revised-final.txt SHA256 d79c049aabb6c2ecad6e50b105375e1e203453f9bf6b161efdd0c80d88bb8c6b and378-pass receipt tail, not independent fullgate execution.",
+  "x-receipt-status": "Fixed findings validated independently. Final cleanup/a7 metadata independently validated after fresh ownerdelegation at2026-10-10T19:48:34+02:00 for one author-executed refresh/approval. Canonical REVIEW handoff is separately recorded by CLI; no reviewer approval, LAND execution or shipping authorization.",
+  "x-final-cleanup-sha256": "5c7665fb92d76dfa38686f645edc26c30c34743ddb10c891ea9f88d6deeb453e",
+  "x-receipt-reissue": "Coordinator A1-authorized normal independent REVIEW replay from byte-exact immutable genuine WORK input, verified against original transfer patch. Scope expands to19 subjects by staging3 inspected portable support reports before proof write. Original16 code hashes unchanged; no phase/proof handedit or selfoverride. Reports and review JSON frozen before write; canonical receipt resides in .baton bookkeeping.",
+  "x-final-a7-provenance": "D14 records fresh owner approval timestamp and one authorized author CLI refresh/approve. Original phase/gate preserved and decisions/history append-only. Reviewer copied/validated metadata only; no approval action."
+}

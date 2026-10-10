@@ -38,6 +38,10 @@ remove:
   - .baton/quick/release-records-docs-a7.md
   - .baton/quick/release-records-docs-a7.work.json
   - .baton/quick/release-records-docs-a7.review.json
+  - .baton/quick/validate-command-docs-011.md
+  - .baton/quick/validate-command-docs-011.work.json
+  - .baton/quick/validate-command-docs-011.review.json
+  - .context/compound-engineering/ce-review/validate-command-docs-011-independent-20261010/
   - .context/compound-engineering/ce-review/release-records-docs-a7-20261009/
   - .baton/template-cleanup-pending
 replace:

@@ -3722,7 +3722,7 @@
       "format": "esm"
     },
     "src/lib/local-checks.mjs": {
-      "bytes": 4147,
+      "bytes": 4055,
       "imports": [
         {
           "path": "node:child_process",
@@ -3810,7 +3810,7 @@
       "format": "esm"
     },
     "src/commands/validate.mjs": {
-      "bytes": 14983,
+      "bytes": 15775,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -5515,7 +5515,7 @@
           "bytesInOutput": 515
         },
         "src/commands/validate.mjs": {
-          "bytesInOutput": 7741
+          "bytesInOutput": 8089
         },
         "src/lib/writer.mjs": {
           "bytesInOutput": 1499
@@ -5560,7 +5560,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 407251
+      "bytes": 407599
     }
   }
 }

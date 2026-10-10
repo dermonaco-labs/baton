@@ -1,0 +1,203 @@
+{
+  "engine": "ce-review",
+  "mode": "headless",
+  "round": 3,
+  "portable_metadata": {
+    "operation": "Workstation-locator redaction only; substantive findings, raw fresh persona outputs, reused-result provenance and coverage are unchanged.",
+    "private_original": "private-artifact:reviewer/original-review-round3.json",
+    "private_original_sha256": "14cb83ae4ba3fd4584ec5f28bdf3053535a1b1b86e805e58f16f6a9afd5ab005",
+    "private_original_retained": true,
+    "reference_semantics": "private-artifact references are opaque labels for privately retained evidence, not repository paths, URLs or claims that the evidence is committed. The portable command notation is not an exact runnable command; the exact original is retained privately.",
+    "redacted_fields": [
+      "history[0].report",
+      "independent_verification.integration_receipt",
+      "independent_verification.yaml_command",
+      "independent_verification.yaml_receipt",
+      "independent_verification.literal_receipt",
+      "author_gate_update_after_persona_results.receipt"
+    ]
+  },
+  "verdict": "Code review passed; delivery held",
+  "base": "be5525fb144dd2f5c9e9fc2933de0aa7117bff29",
+  "head": "be5525fb144dd2f5c9e9fc2933de0aa7117bff29",
+  "candidate_tree": "6f1e42785e9843704ba20721079f92e46405d9a2",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "medium",
+  "files": [
+    "CHANGELOG.md", "baton.lock.json", "docs/02-quickstart.md",
+    "docs/06-packs-and-customization.md", "package-lock.json", "package.json",
+    "src/cli.mjs", "src/commands/adopt.mjs", "src/commands/doctor.mjs",
+    "src/commands/init.mjs", "src/commands/sync.mjs", "src/commands/validate.mjs",
+    "src/lib/report.mjs", "test/integration/init.test.mjs",
+    "test/integration/update.test.mjs", "test/integration/validate.test.mjs"
+  ],
+  "delta_from_round2": [
+    ".baton/bin/baton.mjs", ".baton/bin/baton.mjs.metafile.json",
+    ".baton/bin/baton.mjs.sha256", "src/commands/validate.mjs",
+    "test/integration/validate.test.mjs"
+  ],
+  "review_coverage": {
+    "fresh": [
+      "correctness-reviewer", "testing-reviewer", "adversarial-reviewer"
+    ],
+    "reused_from_round2_only_for_unchanged_surfaces": [
+      "maintainability-reviewer", "project-standards-reviewer",
+      "agent-native-reviewer", "learnings-researcher"
+    ],
+    "reused_source": ".context/compound-engineering/ce-review/validate-command-docs-011-independent-20261010/review-round2.json",
+    "reason": "Same-task correction is confined to five parser/test/bundle files. The three relevant personas were freshly executed on the exact round3 candidate. Prior sync results exposed no retained agent IDs for followup, so new bounded tasks were used. Four previous assessments are retained solely for unchanged version metadata, historical a7 provenance, agent-parity baseline and institutional patterns; they are not represented as fresh round3 dispatches.",
+    "installed_only": true,
+    "failed_reviewers": [],
+    "new_findings": 0,
+    "confidence_suppressed": 0,
+    "malformed_dropped": 0,
+    "applied_fixes_by_reviewer": 0
+  },
+  "findings": [],
+  "resolved_findings": [
+    {
+      "id": "R1",
+      "severity": "P2",
+      "title": "Noncanonical handoff privacy scanning, including decoded YAML",
+      "disposition": "fixed",
+      "reason": "The existing parser and serializer now preserve prior decoded frontmatter scanning with frontmatter:true, while body scanning remains separate and canonical-schema validation is restricted to canonical handoffs. Fresh correctness/adversarial reviews found no remaining defect. Independent real bundled CLI comparison confirms all16 escaped-email/configured-term state/selector probes now retain E_DENYLIST, and all original literal probes remain rejected."
+    },
+    {
+      "id": "R2",
+      "severity": "P3",
+      "title": "No-frontmatter privacy-scan fallback coverage",
+      "disposition": "fixed",
+      "reason": "New regression matrix exercises no-frontmatter body negatives and permitted inline examples for allthree document paths, changed/untracked states, --changed and individual --path. Independent integration run passes68/68, zero skips. Fresh testing review found no remaining coverage finding."
+    }
+  ],
+  "history": [
+    {
+      "round": 1,
+      "tree": "cb15fd6f838eb79da5b88bdd50adbae6d478d6c0",
+      "verdict": "Not ready",
+      "finding": "R1 literal handoff-document denylist bypass",
+      "report": "private-artifact:reviewer/review-round1.json"
+    },
+    {
+      "round": 2,
+      "tree": "be8949179bf837b485fe817918df959d50b92730",
+      "verdict": "Not ready",
+      "findings": [
+        "R1 literal probes restored, but decoded YAML still bypassed privacy scan",
+        "R2 no-frontmatter fallback lacked regression coverage"
+      ],
+      "report": ".context/compound-engineering/ce-review/validate-command-docs-011-independent-20261010/review-round2.json"
+    }
+  ],
+  "fresh_reviewer_results": {
+    "correctness": {
+      "reviewer": "correctness",
+      "findings": [],
+      "residual_risks": [
+        "Scope/provenance: freshly reviewed round3 tree 6f1e42785e9843704ba20721079f92e46405d9a2 against round2 tree be8949179bf837b485fe817918df959d50b92730, with BASE/HEAD be5525fb144dd2f5c9e9fc2933de0aa7117bff29. Read the installed persona, diff-scope rules, findings schema, quick Markdown/work JSON intent, all canonical16 diffs and relevant surrounding validator/parser/scanner interactions. Verified canonical16 working files and bundle artifacts match the frozen subject tree. The prohibited roadmap was not read.",
+        "R1 closed: the new branch uses parseFrontmatter plus serializeFrontmatter and frontmatter:true scanning, matching the prior decoded representation used by validateHandoff when reading files. Fresh execution rejected escaped YAML email and configured-term values, ordinary frontmatter/body negatives and backtick-wrapped frontmatter email without baton-schema validation.",
+        "R2 closed: fresh execution rejected body email in documents without YAML frontmatter and allowed inline body email examples both with and without frontmatter. Syntax errors, nonmapping YAML and missing closing delimiters produced E_FRONTMATTER_MALFORMED rather than E_SCHEMA.",
+        "Checks performed: executed the frozen complete validator with virtual filesystem and changed-file providers for 88 cases; these simulate both state labels and do not exercise actual Git state discovery. Also ran real bundled --path validation successfully for all three command/template paths, read the changed/untracked selector and canonical-rejection integration coverage, passed read-only build --check, and reproduced the metafile with write:false. Bundle size was 407599 bytes; committed digest and license inventory matched the fresh build.",
+        "Q1: CLI/package/generator remain 0.1.1 while the authorized unchanged extension/preset component versions remain 0.1.0. Immutable lock pins and hashes are identical to BASE except generated_by; package-lock differs only in its two version fields. These metadata surfaces are unchanged from round2.",
+        "a7: inspected the existing append-only refresh/approve metadata and retained provenance: owner response approved at 2026-10-10T17:44:34.645+02:00, subsequent clarification unavailable, and the same repository-owner/control-plane delegation semantics. Further a7 refresh or reapproval is prohibited without fresh owner delegation. This reviewer made no cleanup, hash, gate, file or commit changes.",
+        "Coverage/authority: four other persona round2 results may be reused only for unchanged surfaces; they were not freshly executed against round3 by this reviewer. The parent's named support-cleanup directory is planned after final review and is outside this frozen subject. The serial full gate is reported running without its final receipt; this review makes no successful-phase, land, merge or release claim."
+      ],
+      "testing_gaps": [
+        "The actual integration suite was not executed because it creates and writes fixtures, contrary to the read-only constraint. Virtual-provider execution does not replace real changed/untracked Git discovery or the pending serial full-gate receipt.",
+        "Added integration tests cover malformed YAML syntax but not nonmapping YAML or missing closing delimiters. Both additional cases passed fresh read-only virtual-provider execution."
+      ]
+    },
+    "testing": {
+      "reviewer": "testing",
+      "findings": [],
+      "residual_risks": [
+        "Coverage/provenance: fresh read-only testing review of exact tree 6f1e42785e9843704ba20721079f92e46405d9a2 against base be5525fb144dd2f5c9e9fc2933de0aa7117bff29, focused on the five-file delta from round2 tree be8949179bf837b485fe817918df959d50b92730. Read-only handoff scope returned the canonical 16 subject files. Loaded the installed testing persona, diff-scope rules and findings schema; inspected quick/work context first and relevant existing coverage. No tests, edits, cleanup, hash updates or gate changes were performed.",
+        "R1 resolved for the reported decoded-YAML privacy regression: production code parses and serializes frontmatter before scanning with frontmatter:true. Tests use literal escaped email and configured-term inputs, then require exit 1 and file-specific E_DENYLIST without E_SCHEMA across changed/untracked states, all three command-document paths, --changed and individual --path selectors. These assert observable CLI behavior rather than parser mocks.",
+        "R2 resolved for the reported no-frontmatter coverage gap: negative fixtures require E_DENYLIST for an email in the entire body without frontmatter; positive fixtures require exit 0 for inline-code email examples both with and without frontmatter across the same selector/state/path matrix. Malformed YAML requires file-specific E_FRONTMATTER_MALFORMED, exercising the new catch path. No introduced vacuous or implementation-coupled test defect was identified.",
+        "Canonical non-weakening coverage remains intact: malformed feature and quick batons must retain E_SCHEMA, E_ACTOR_FORMAT and E_BODY_SECTIONS in full, --changed and individual --path modes for changed and untracked states. Default discovery does not include the three command-document locations, so their targeted selector matrix is appropriate.",
+        "Execution evidence is caller-reported, not independently reproduced here: targeted 103/103 with zero skips and decode RED 68 checks, 50 passing and 18 failing. Historical 53/53 and 328/328 records are not round3 gate evidence. The revised full gate was reported running; parent-owned integrations/reproduction remain separate verification. This fresh testing result does not refresh the four reused round2 personas for unchanged surfaces.",
+        "Q1 remains bounded: inspected lock diffs change only generator/version metadata, preserving upstream pins and hashes; CLI/package/generator remain 0.1.1 with unchanged components at 0.1.0. Supplemental a7 metadata retains its prior phase and appends refresh/approve history, recording the exact approved owner response at 2026-10-10T17:44:34.645+02:00 and subsequent unavailable clarification through the same owner/control-plane delegation. No further refresh or reapproval is authorized without fresh owner delegation. Named support-directory cleanup belongs to the parent after review. This result makes no successful-phase, release or Gate A authorization claim."
+      ],
+      "testing_gaps": []
+    },
+    "adversarial": {
+      "reviewer": "adversarial",
+      "findings": [],
+      "residual_risks": [
+        "Fresh bounded verification covered exact round3 tree 6f1e42785e9843704ba20721079f92e46405d9a2 against round2 be8949179bf837b485fe817918df959d50b92730. The read-only handoff scope command returned the canonical 16 files against base be5525fb144dd2f5c9e9fc2933de0aa7117bff29. Unchanged surfaces were not freshly re-reviewed by the other four personas.",
+        "R1 confirmed resolved for the reproduced failures: round2 accepted escaped email and configured-term values and malformed/nonmapping YAML; round3 returned E_DENYLIST or E_FRONTMATTER_MALFORMED as appropriate. All 48 in-memory branch probes passed, including CRLF, nested decoded values, closing delimiters at EOF, body scanning, and clean inline examples.",
+        "R2 coverage additions were inspected across all three exact fallback paths, changed/untracked states, and --changed/--path selectors. Separately, 32 probes executing the exact round3 validator with a virtual read-only filesystem passed across those three paths and both selector modes. Git discovery was mocked, not independently exercised.",
+        "Q1 remains consistent: CLI/package/manifest generator metadata is 0.1.1, with unchanged component surfaces retaining the authorized 0.1.0 boundary. Lock upstream pins and file hashes are unchanged. The bundle SHA-256 matches its recorded digest, and its 407599-byte size matches the metafile.",
+        "The a7 artifact is byte-identical to round2 and retains the prior approval provenance at 2026-10-10T17:44:34.645+02:00 followed by unavailable clarification. This review grants no new refresh, reapproval, cleanup, phase completion, landing, or release authority."
+      ],
+      "testing_gaps": [
+        "The author's 103-targeted/zero-skips and RED 68/50/18 claims were not independently verified as test receipts. No mutating integration tests or full serial gate were run; full-gate completion remains unconfirmed.",
+        "In-memory probes verify parser/scanner composition and validator selector flow, but do not constitute end-to-end bundled CLI or real tracked/untracked Git-state test receipts."
+      ]
+    }
+  },
+  "independent_verification": {
+    "integration_command": "node --test test\\integration\\validate.test.mjs",
+    "integration_result": "68/68 passed, zero failures/skips",
+    "integration_receipt": "private-artifact:reviewer/round3-validate-tests.txt",
+    "yaml_command": "node <private-artifact:reviewer/round2-yaml-repro.mjs> 0",
+    "yaml_result": "All16 bundled base/revised selector-state-specimen comparisons retain E_DENYLIST on round3; zero privacy-scan gaps.",
+    "yaml_receipt": "private-artifact:reviewer/round3-yaml-repro.txt",
+    "literal_result": "Original three individual --path and --changed literal probes all retain prior E_DENYLIST.",
+    "literal_receipt": "private-artifact:reviewer/round3-denylist-repro.txt",
+    "fixture_cleanup": "Disposable test/reproduction repositories cleaned; no implementation changes in reviewed checkout."
+  },
+  "author_gate_update_after_persona_results": {
+    "candidate_tree": "6f1e42785e9843704ba20721079f92e46405d9a2",
+    "execution_owner": "author, not independent reviewer",
+    "command": "npm run check",
+    "reported_exit": 0,
+    "reported_tests": "378/378 passed, zero failures/skips",
+    "reported_additional_commands": "sync --check, full validate and changed validate all exit0; targeted103/103",
+    "receipt": "private-artifact:author/local-check-revised-final.txt",
+    "sha256": "d79c049aabb6c2ecad6e50b105375e1e203453f9bf6b161efdd0c80d88bb8c6b",
+    "reviewer_receipt_check": "SHA256 independently matches provided value; inspected receipt tail confirms378 tests/pass378/fail0/skipped0. This verifies the author-run receipt, not independent execution of npm run check.",
+    "reported_decode_red": "68 tests/50pass/18fail, sha2566f38994876fe19a16fe1635238ffda5435d3d6aadbd570666b9fce56c3ac9a5a",
+    "reported_targeted_green": "103/103, sha2567dfae1a5638b56378f374828c6f32db316bc2e9037b60c80d78a738f6e5fb3f3",
+    "historical_persona_notes": "Fresh persona results above accurately record fullgate pending at their execution time; this later author update supersedes that pending code-only gate status, not approval/cleanup holds."
+  },
+  "Q1": "Unchanged extension/preset0.1.0 vs CLI/package/manifest-generator0.1.1 remains the authorized bounded split; lock generated_by and package-lock two version fields only, upstream pins/hashes/registry unchanged.",
+  "a7_refresh": "Existing original phase/history prefix retained with prior CLI refresh/approve appended. A7, cleanup and version metadata are byte-identical between round2 and round3. No reviewer cleanup/hash/gate edits.",
+  "reapproval_provenance": "Recorded approved at2026-10-10T17:44:34.645+02:00, subsequent unavailable clarification, same configured repository-owner/control-plane delegation. Recorded external authority not independently authenticated; unavailable grants no consent. Further a7 refresh/reapproval is explicitly held pending fresh ownerdelegation.",
+  "quick_scope_verdict": {
+    "tag": "quick-scope-held",
+    "held": true,
+    "reason": "This exact subject restores canonical handoff classification and the prior parsed-frontmatter/body privacy checks without adding commands, flags, schema fields, scanner rules, error-code definitions or public contracts. Existing quick regex/full roots and malformed canonical rejection remain intact. Version-only release metadata is bounded under Q1 and advisory overage authorization.",
+    "phase_decision_persisted": false,
+    "reason_not_persisted": "Successful REVIEW handoff is held; final named support cleanup and any resulting stale a7 approval require owner-authorized resolution. The independent verdict is recorded in review evidence, not represented as a completed CLI phase."
+  },
+  "delivery_holds": [
+    "Named support-directory cleanup must be added by parent after finalreview.",
+    "Any ensuing a7 E_STALE_ARTIFACT must be captured honestly; no refresh/reapproval without fresh explicit ownerdelegation.",
+    "Code-only serial full gate is author-run and its378-pass receipt verified above. Final post-cleanup validation/phase exit is not yet satisfied and is distinct from the frozen code-only gate.",
+    "No successful REVIEW handoff, LAND transition, PR, merge, release dispatch or tag creation is authorized here."
+  ],
+  "cleanup_required": [
+    ".context/compound-engineering/ce-review/validate-command-docs-011-independent-20261010/"
+  ],
+  "final_metadata_followup": {
+    "supersedes_historical_cleanup_and_a7_holds": true,
+    "owner_delegation": "Fresh explicit approval at 2026-10-10T19:48:34+02:00 authorized one CLI refresh and fresh approval of final a7 cleanup delta.",
+    "execution_owner": "Author executed refresh/approve; reviewer copied only cleanup and a7 metadata and performed no approval.",
+    "cleanup_sha256": "5c7665fb92d76dfa38686f645edc26c30c34743ddb10c891ea9f88d6deeb453e",
+    "verification": "Exact final cleanup hash matches a7 read_first; original phase, next phase/owner and gate preserved, original decisions/history exact prefixes, only D14 and one refresh/approve pair appended with configured repository-owner/control-plane delegation provenance.",
+    "validation": "Targeted final cleanup/a7 validation and full validation passed independently before canonical REVIEW receive. Scope still matches original base and exact16 subject files.",
+    "remaining_boundary": "Prepared canonical REVIEW payload may now execute in the genuine independent checkout. No LAND execution or shipping authorized; parent final serial gates remain separate."
+  },
+  "canonical_receipt_reissue": {
+    "authorization": "Coordinator authorized A1 genuine independent re-review receipt replay; no new owner gate, a7 approval or self-review override.",
+    "root_cause": "Initial proof covered16 code files because support reports were ignored. Delivery staged3 required portable reports, producing19 subjects. All16 common file hashes matched; stale review guard correctly rejected expanded scope.",
+    "original16Proof": "f5c59aa110b3497ac11dfcf6de6e024aa771a141e0164f0347badfc117591ee6",
+    "original_work_sha256": "0a1c5794748df7943ebbc0c468e54839d81d017e473bb75937e8a434d9726a6a",
+    "original_work_verification": "Byte-exact immutable cb15 candidate blob independently matched added-file bytes in original frozen transfer patch. Prior canonical REVIEW and reports retained privately.",
+    "coverage": "Actual supplemental inspection of all3 portable tracked reports, including persona findings, raw results, history, redactions, authority provenance and prepared handoff payload. Original16 code subjects remain byte-equivalent to reviewed round3 candidate.",
+    "final_subjects": "Original16 code files plus review-round2.json, review-round3.json and review-handoff.json under the named cleanup-covered support directory.",
+    "freeze_rule": "Reports and normalized review JSON finalized before staging and canonical receive/write. No report edits after proof generation; new CLI receipt and exact19-file proof reside only in excluded .baton bookkeeping.",
+    "boundary": "No source, cleanup, a7 gate, approval, commit, push or LAND action; final parent gates remain required."
+  }
+}

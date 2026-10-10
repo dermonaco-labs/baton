@@ -101,7 +101,7 @@ async function writeAdopterManifest(root) {
     files.push({ path, sha256: hashManaged(await readFile(withinRoot(root, path))), pack: 'core', owner: 'baton', managed: true });
   }
   const manifest = {
-    schema: 1, baton_version: '0.1.0', installed_at: new Date().toISOString(), source: 'template',
+    schema: 1, baton_version: '0.1.1', installed_at: new Date().toISOString(), source: 'template',
     upstreams: { speckit: '1.0.11@8147943', atv: 'main@ad99673' },
     packs: ['core'], recommended_packs: recommendedPacks(await loadPacks(root), ['core']),
     files, marker_sections: [],

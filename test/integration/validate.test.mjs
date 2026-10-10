@@ -8,6 +8,147 @@ import { runCli, sourceRoot } from '../helpers/index.mjs';
 import { run as validate } from '../../src/commands/validate.mjs';
 import { parseFrontmatter, serializeFrontmatter } from '../../src/lib/frontmatter.mjs';
 
+for (const state of ['untracked', 'changed']) {
+  test(`validate does not classify ${state} command docs or templates as handoffs`, async (context) => {
+    const root = await mkdtemp(join(tmpdir(), 'baton-command-docs-'));
+    try {
+      await cp(join(sourceRoot, 'baton/schemas'), join(root, 'baton/schemas'), { recursive: true });
+      execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: root });
+      const paths = [
+        '.specify/extensions/baton/commands/handoff.md',
+        'baton/templates/handoff.md',
+        'baton/speckit-extension/commands/handoff.md',
+      ];
+      for (const path of paths) {
+        await mkdir(dirname(join(root, path)), { recursive: true });
+        if (state === 'changed') await writeFile(join(root, path), '# Original\n');
+      }
+      execFileSync('git', ['add', '.'], { cwd: root });
+      execFileSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@invalid.example',
+        'commit', '-qm', 'base'], { cwd: root });
+      execFileSync('git', ['update-ref', 'refs/remotes/origin/main', 'HEAD'], { cwd: root });
+      execFileSync('git', ['symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main'], { cwd: root });
+      for (const path of paths) {
+        await writeFile(join(root, path), '---\ndescription: Persist the phase result\n---\n# Handoff command\n');
+      }
+      for (const args of [['--changed'], ...paths.map((path) => ['--path', path])]) {
+        await context.test(args.join(' '), async () => {
+          const result = await runCli(root, ['validate', ...args, '--json']);
+          assert.equal(result.code, 0, result.stdout);
+          assert.deepEqual(JSON.parse(result.stdout).errors, [], result.stdout);
+        });
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test(`validate still rejects ${state} malformed canonical handoffs in every mode`, async () => {
+    const root = await mkdtemp(join(tmpdir(), 'baton-canonical-handoffs-'));
+    try {
+      await cp(join(sourceRoot, 'baton/schemas'), join(root, 'baton/schemas'), { recursive: true });
+      execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: root });
+      const paths = ['specs/001-example/handoff.md', '.baton/quick/example-fix.md'];
+      for (const path of paths) {
+        await mkdir(dirname(join(root, path)), { recursive: true });
+        if (state === 'changed') await writeFile(join(root, path), '# Original\n');
+      }
+      execFileSync('git', ['add', '.'], { cwd: root });
+      execFileSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@invalid.example',
+        'commit', '-qm', 'base'], { cwd: root });
+      execFileSync('git', ['update-ref', 'refs/remotes/origin/main', 'HEAD'], { cwd: root });
+      execFileSync('git', ['symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main'], { cwd: root });
+      for (const path of paths) {
+        await writeFile(join(root, path), '---\ndescription: Not a valid phase baton\n---\n# Invalid\n');
+      }
+      for (const args of [[], ['--changed'], ...paths.map((path) => ['--path', path])]) {
+        const result = await runCli(root, ['validate', ...args, '--json']);
+        assert.equal(result.code, 1, result.stdout);
+        const errors = JSON.parse(result.stdout).errors;
+        const selected = args[0] === '--path' ? [args[1]] : paths;
+        for (const path of selected) {
+          for (const code of ['E_SCHEMA', 'E_ACTOR_FORMAT', 'E_BODY_SECTIONS']) {
+            assert.ok(errors.some((error) => error.file === path && error.code === code),
+              `${path}: missing ${code}: ${result.stdout}`);
+          }
+        }
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test(`validate retains personal-data checks for ${state} noncanonical handoff docs`, async (context) => {
+    const root = await mkdtemp(join(tmpdir(), 'baton-command-doc-denylist-'));
+    try {
+      await cp(join(sourceRoot, 'baton/schemas'), join(root, 'baton/schemas'), { recursive: true });
+      execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: root });
+      const paths = [
+        '.specify/extensions/baton/commands/handoff.md',
+        'baton/templates/handoff.md',
+        'baton/speckit-extension/commands/handoff.md',
+      ];
+      for (const path of paths) {
+        await mkdir(dirname(join(root, path)), { recursive: true });
+        if (state === 'changed') await writeFile(join(root, path), '# Original\n');
+      }
+      execFileSync('git', ['add', '.'], { cwd: root });
+      execFileSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@invalid.example',
+        'commit', '-qm', 'base'], { cwd: root });
+      execFileSync('git', ['update-ref', 'refs/remotes/origin/main', 'HEAD'], { cwd: root });
+      execFileSync('git', ['symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main'], { cwd: root });
+      const termsFile = join(root, 'private-terms.txt');
+      await writeFile(termsFile, 'private-owner-term\n');
+      const sources = [
+        ['frontmatter', '---\ndescription: "`person@private.example`"\n---\n# Command\n'],
+        ['decoded frontmatter', '---\ndescription: "person\\u0040private.example"\n---\n# Command\n'],
+        ['body', '---\ndescription: Command\n---\nContact person@private.example\n'],
+        ['configured term', '---\ndescription: Command\n---\nprivate-owner-term\n'],
+        ['decoded configured term', '---\ndescription: "private\\u002downer-term"\n---\n# Command\n'],
+        ['no-frontmatter body', '# Command\nContact person@private.example\n'],
+      ];
+      for (const [label, source] of sources) {
+        for (const path of paths) await writeFile(join(root, path), source);
+        for (const args of [['--changed'], ...paths.map((path) => ['--path', path])]) {
+          await context.test(`${label}: ${args.join(' ')}`, async () => {
+            const result = await runCli(root, ['validate', ...args, '--json'], { BATON_DENYLIST_FILE: termsFile });
+            assert.equal(result.code, 1, result.stdout);
+            const errors = JSON.parse(result.stdout).errors;
+            for (const path of args[0] === '--path' ? [args[1]] : paths) {
+              assert.ok(errors.some((error) => error.code === 'E_DENYLIST' && error.file === path), result.stdout);
+            }
+            assert.ok(!errors.some((error) => error.code === 'E_SCHEMA'), result.stdout);
+          });
+        }
+      }
+      for (const source of [
+        '---\ndescription: Command\n---\nExample: `person@private.example`\n',
+        '# Command\nExample: `person@private.example`\n',
+      ]) {
+        for (const path of paths) await writeFile(join(root, path), source);
+        for (const args of [['--changed'], ...paths.map((path) => ['--path', path])]) {
+          const result = await runCli(root, ['validate', ...args, '--json'], { BATON_DENYLIST_FILE: termsFile });
+          assert.equal(result.code, 0, result.stdout);
+        }
+      }
+      for (const path of paths) {
+        await writeFile(join(root, path), '---\ndescription: [broken\n---\n# Command\n');
+      }
+      for (const args of [['--changed'], ...paths.map((path) => ['--path', path])]) {
+        const result = await runCli(root, ['validate', ...args, '--json']);
+        assert.equal(result.code, 1, result.stdout);
+        const errors = JSON.parse(result.stdout).errors;
+        for (const path of args[0] === '--path' ? [args[1]] : paths) {
+          assert.ok(errors.some((error) => error.code === 'E_FRONTMATTER_MALFORMED' && error.file === path), result.stdout);
+        }
+        assert.ok(!errors.some((error) => error.code === 'E_SCHEMA'), result.stdout);
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+}
+
 test('validate warns when a feature spec has no baton', async () => {
   const root = await mkdtemp(join(sourceRoot, 'test/fixtures/validate-no-baton-'));
   try {

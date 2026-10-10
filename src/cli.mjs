@@ -2,7 +2,7 @@
 import { resolve } from 'node:path';
 import { formatResult, BatonError } from './lib/report.mjs';
 
-const version = '0.1.0';
+const version = '0.1.1';
 const usage = 'baton [--cwd DIR] [--json|--github] [--quiet] <init|update|doctor|validate|status|handoff|models|adopt|uninstall|sync|lock|build|manifest> [options]';
 const commands = {
   build: () => import('./commands/build.mjs'),
