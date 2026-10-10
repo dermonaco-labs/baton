@@ -83,8 +83,8 @@ decisions:
     by: baton
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-10-10
 history:
   - phase: work
     at: 2026-10-10T21:54:54.876Z
@@ -107,8 +107,15 @@ history:
     x-worktree: d6bf36e00d80b2fda5dd8a4684e183baaded19e6492a55db4f358cf4d7a69a42
     commit: "6107863"
     x-action: write
-updated_at: 2026-10-10T22:33:13.493Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-10-10T23:06:01.865Z
+    by: human:repository-owner
+    writer: 712e0933253d506d5c12fca5bfb3740d960cd743d7e12bd844388703f59de81c
+    x-worktree: d6bf36e00d80b2fda5dd8a4684e183baaded19e6492a55db4f358cf4d7a69a42
+    commit: c5005fa
+    x-action: approve
+updated_at: 2026-10-10T23:06:01.865Z
+updated_by: human:repository-owner
 risks:
   - id: R1
     text: "CE headless is prompt-driven: stop if exact base/file coverage cannot be proved; independent review must inspect both sets."
