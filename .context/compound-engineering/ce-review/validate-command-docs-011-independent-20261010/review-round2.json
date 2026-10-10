@@ -1,0 +1,304 @@
+{
+  "engine": "ce-review",
+  "mode": "headless",
+  "round": 2,
+  "portable_metadata": {
+    "operation": "Workstation-locator redaction only; substantive findings, raw structured persona outputs and coverage are unchanged.",
+    "private_original": "private-artifact:reviewer/original-review-round2.json",
+    "private_original_sha256": "ac9430c1ab25635c99de2b44cb2a5556a8426a3f2e4728f1ef64e0090e4be39e",
+    "private_original_retained": true,
+    "reference_semantics": "private-artifact references are opaque labels for privately retained evidence, not repository paths, URLs or claims that the evidence is committed.",
+    "redacted_fields": [
+      "history[0].private_report",
+      "independent_verification.receipt",
+      "independent_verification.literal_receipt",
+      "independent_verification.yaml_reproduction_script",
+      "independent_verification.yaml_receipt"
+    ]
+  },
+  "verdict": "Not ready",
+  "base": "be5525fb144dd2f5c9e9fc2933de0aa7117bff29",
+  "head": "be5525fb144dd2f5c9e9fc2933de0aa7117bff29",
+  "candidate_tree": "be8949179bf837b485fe817918df959d50b92730",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "medium",
+  "files": [
+    "CHANGELOG.md", "baton.lock.json", "docs/02-quickstart.md",
+    "docs/06-packs-and-customization.md", "package-lock.json", "package.json",
+    "src/cli.mjs", "src/commands/adopt.mjs", "src/commands/doctor.mjs",
+    "src/commands/init.mjs", "src/commands/sync.mjs", "src/commands/validate.mjs",
+    "src/lib/report.mjs", "test/integration/init.test.mjs",
+    "test/integration/update.test.mjs", "test/integration/validate.test.mjs"
+  ],
+  "supplemental_files": [
+    ".baton/bin/baton.mjs", ".baton/bin/baton.mjs.metafile.json",
+    ".baton/bin/baton.mjs.sha256", ".baton/manifest.json",
+    ".baton/template-cleanup.yml", ".baton/quick/release-records-docs-a7.md",
+    ".baton/quick/validate-command-docs-011.md",
+    ".baton/quick/validate-command-docs-011.work.json"
+  ],
+  "personas": [
+    "correctness-reviewer", "testing-reviewer", "maintainability-reviewer",
+    "project-standards-reviewer", "agent-native-reviewer",
+    "learnings-researcher", "adversarial-reviewer"
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "P2",
+      "title": "Decoded YAML values bypass restored privacy scanning",
+      "file": "src/commands/validate.mjs",
+      "line": 177,
+      "confidence": 1.0,
+      "autofix_class": "manual",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "evidence": [
+        "Correctness and adversarial independently reported the same defect at confidence 0.99. Agreement adds 0.10, capped at 1.0.",
+        "Previous validateHandoff parsed YAML and scanned serializeFrontmatter(data, '') with frontmatter:true. The revised branch scans the raw delimiter block.",
+        "Valid YAML description: \"person\\u0040example.invalid\" decodes to a synthetic email; description: \"private\\u002downer-term\" decodes to configured private-owner-term.",
+        "Independent bundled CLI reproduction covers changed/untracked states, both specimens, all three individual --path selectors and --changed. Base reports E_DENYLIST; round2 candidate reports ok:true/errors:[] in all 16 selector probes.",
+        "Raw ordinary changed-file scanning cannot recover decoded-value checks; --path skips handoff.md and --changed excludes .specify or scans raw text.",
+        "Literal R1 reproduction now passes preservation checks, but the full prior frontmatter semantics remain unpreserved. R1 remains open rather than being falsely closed."
+      ],
+      "suggested_fix": "Preserve existing parsed/reserialized frontmatter privacy checks for valid mapping YAML without baton-schema validation, retaining safe raw fallback and separate body scanning. Add escaped-email and escaped-configured-term regressions in all three document paths, both file states and selectors."
+    },
+    {
+      "id": "R2",
+      "severity": "P3",
+      "title": "Cover the no-frontmatter privacy-scan fallback",
+      "file": "src/commands/validate.mjs",
+      "line": 176,
+      "confidence": 0.98,
+      "autofix_class": "manual",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "evidence": [
+        "Testing reviewer reports that all new specimens have matched YAML delimiters.",
+        "The new delimiter-match fallback determines whether a plain noncanonical handoff document is entirely scanned as body text.",
+        "A future regression dropping content for absent delimiters would escape the current new matrix.",
+        "Persona proposed safe_auto; synthesis conservatively routes manual to the author because this independent review forbids source and test edits."
+      ],
+      "suggested_fix": "Add noncanonical handoff documents without frontmatter through --changed and --path, requiring file-specific E_DENYLIST for prose email/configured term and successful validation for an inline-code email example."
+    }
+  ],
+  "history": [
+    {
+      "round": 1,
+      "candidate_tree": "cb15fd6f838eb79da5b88bdd50adbae6d478d6c0",
+      "finding": "R1",
+      "original_title": "Noncanonical handoff documents lose denylist enforcement",
+      "original_line": 143,
+      "original_disposition": "open",
+      "round2_status": "partially resolved, still open",
+      "reason": "Original literal probes now reject correctly, independently verified. Escaped valid YAML still bypasses the prior decoded-value scan; full privacy preservation is not verified.",
+      "private_report": "private-artifact:reviewer/review-round1.json"
+    }
+  ],
+  "merge": {
+    "raw_findings": 3,
+    "merged_findings": 2,
+    "malformed_dropped": 0,
+    "confidence_suppressed": 0,
+    "pre_existing_findings": 0,
+    "failed_reviewers": [],
+    "applied_fixes": 0,
+    "disagreements": [
+      "Maintainability, standards, agent-native and learnings considered literal R1 restored. Correctness/adversarial identified decoded-value semantics not preserved; independent CLI reproduction confirms the narrower failure. Synthesis does not close R1."
+    ]
+  },
+  "reviewer_results": {
+    "correctness": {
+      "reviewer": "correctness",
+      "findings": [
+        {
+          "title": "Raw frontmatter scanning misses decoded YAML personal data",
+          "severity": "P2",
+          "file": "src/commands/validate.mjs",
+          "line": 177,
+          "why_it_matters": "The replacement scan does not fully preserve the previous frontmatter semantics. Valid YAML such as description: \"person\\u0040private.example\" decodes to an email address, but the new branch scans its raw spelling and reports no E_DENYLIST. This affects noncanonical handoff documents selected through --path or --changed, including .specify command documentation that receives no subsequent generic changed-file scan. YAML-escaped configured private terms can likewise evade detection.",
+          "autofix_class": "gated_auto",
+          "owner": "downstream-resolver",
+          "requires_verification": true,
+          "suggested_fix": "For valid mapping frontmatter, preserve the previous parsed-and-serialized scan representation without applying baton-schema validation. Retain raw scanning as a fallback for documents without parseable mapping frontmatter, and preserve body scanning separately.",
+          "confidence": 0.99,
+          "evidence": [
+            "Previously, validateHandoff parsed frontmatter and, when called without an explicit source, scanned serializeFrontmatter(data, '') with frontmatter:true.",
+            "The revised noncanonical branch extracts the raw delimiter block at line 175 and scans it directly at line 177.",
+            "A read-only Node reproduction using the installed parseFrontmatter, serializeFrontmatter and scanPersonalData functions decoded description: \"person\\u0040private.example\" to person@private.example. The previous representation produced E_DENYLIST; the revised raw frontmatter and body scans both returned empty arrays.",
+            "The --path generic scan explicitly skips every handoff.md, while the --changed generic scan excludes ordinary .specify files."
+          ],
+          "pre_existing": false
+        }
+      ],
+      "residual_risks": [
+        "R1 assessment: literal frontmatter emails, body emails and configured terms are restored by the revised branch; inline body examples remain exempt. R1 is not fully resolved because parsed YAML frontmatter semantics are not preserved, as detailed in the finding.",
+        "Q1 assessment: unchanged extension and preset descriptors legitimately remain at 0.1.0 while CLI/package/manifest generators report 0.1.1. Both descriptors are byte-identical to BASE. baton.lock.json differs only in generated_by; upstream pins and remaining lock content are unchanged. package-lock.json changes only its two release-version fields.",
+        "Bounded provenance assessment: HEAD matches the supplied BASE, and the working tree matches revised tree be8949179bf837b485fe817918df959d50b92730. The installed bundle SHA-256 matches its checksum file. Manifest changes only baton_version; cleanup adds three lane-specific removal entries.",
+        "A7 assessment: the original history remains an exact prefix, followed by refresh and approve actions. The recorded cleanup checksum matches current bytes, and repository owner via control-plane delegation remains the approval role/channel. The supplied owner approval timestamp and subsequent unavailable clarification are recorded intent, not independently authenticated by this review. No new refresh, reapproval, support-artifact mutation or roadmap read was performed; further refresh/reapproval requires fresh explicit owner delegation.",
+        "Coordinator Gate A and final full checks remain pending. Historical passing check receipts do not establish success on the revised tree."
+      ],
+      "testing_gaps": [
+        "Add changed/untracked selector regressions for YAML-escaped frontmatter emails and configured private terms across all three noncanonical handoff documents.",
+        "The new regression cases cover literal frontmatter/body values and inline body exemptions, but do not compare parsed YAML scanning semantics with the previous implementation. This review used read-only inspection and an in-memory reproduction; it did not rerun the integration or full suites."
+      ]
+    },
+    "testing": {
+      "reviewer": "testing",
+      "findings": [
+        {
+          "title": "Exercise the no-frontmatter scanning fallback",
+          "severity": "P3",
+          "file": "src/commands/validate.mjs",
+          "line": 176,
+          "why_it_matters": "The new delimiter-match fallback determines whether a plain noncanonical handoff document is scanned entirely as body text. Every new document specimen has matched frontmatter, so a regression that drops content when delimiters are absent would escape the new denylist matrix.",
+          "autofix_class": "safe_auto",
+          "owner": "review-fixer",
+          "requires_verification": true,
+          "suggested_fix": "Add noncanonical handoff specimens without frontmatter through --changed and --path: assert file-specific E_DENYLIST for a prose email and configured term, and successful validation for an inline-code email example.",
+          "confidence": 0.98,
+          "evidence": [
+            "src/commands/validate.mjs:176 uses a delimiter regex followed by ?? ''; line 179 scans source.slice(frontmatter.length).",
+            "test/integration/validate.test.mjs:103-107 supplies matched YAML delimiters for all three negative specimens; the allowed inline example at line 122 also has matched delimiters."
+          ],
+          "pre_existing": false
+        }
+      ],
+      "residual_risks": [
+        "Scope verified: read-only handoff scope returned the specified base and canonical 16 files. The index matches staged tree be8949179bf837b485fe817918df959d50b92730; no unstaged changes or untracked files were reported. Supplemental inspection remained within the allowed support artifacts; the prohibited a7 roadmap was not read.",
+        "R1 correction is substantively covered for the reported selectors: both changed and untracked states exercise all three noncanonical documents through --changed and individual --path selections. Each frontmatter-email, body-email and configured-term case requires file-specific E_DENYLIST and excludes E_SCHEMA. The backtick-wrapped frontmatter email distinguishes frontmatter:true from body scanning; successful inline-body examples protect the existing Markdown exemption. Scanner rules and schemas are unchanged.",
+        "Canonical non-weakening coverage checks both feature and quick handoffs in full, changed and individual-path modes for both file states, requiring E_SCHEMA, E_ACTOR_FORMAT and E_BODY_SECTIONS for each selected file. These are behavioral assertions against the bundled CLI, not mocked scanner calls.",
+        "Q1 assessment: package and CLI metadata move to 0.1.1; baton.lock.json changes only generated_by, and package-lock.json changes only its two version fields. Component files are absent from the subject diff, consistent with retaining unchanged components at 0.1.0 and preserving upstream pins and hashes.",
+        "a7 assessment: the diff preserves prior history and phase, appending refresh/approve events and D13 provenance containing the exact owner-response timestamp 2026-10-10T17:44:34.645+02:00 and subsequent unavailable clarification. The configured repository-owner/control-plane approval vocabulary is retained. This review does not independently authenticate the external approval; the latest prohibition on further refresh/reapproval without new owner delegation remains controlling.",
+        "Provenance assessment: the bundle SHA256 matches its recorded digest, and the nonmutating build --check passes against current source. The cleanup SHA256 matches the refreshed a7 reference. No regression tests were executed in this review; targeted 79/79 and RED 38 claims are not independently verified execution receipts.",
+        "The quick md/work.json still contain historical 53/53 and full 328/328 summaries. The caller identifies that full run as predating the revised candidate. Final support cleanup and the revised full gate remain pending; neither this review nor the read-only bundle check establishes a final passing receipt."
+      ],
+      "testing_gaps": [
+        "The new no-frontmatter fallback lacks coverage, as detailed in the P3 finding.",
+        "The exact feature-depth boundary lacks a noncanonical specs/<feature>/<nested>/handoff.md regression. Such a case would distinguish the intended single-segment classifier from an accidentally broadened specs regex."
+      ]
+    },
+    "maintainability": {
+      "reviewer": "maintainability",
+      "findings": [],
+      "residual_risks": [
+        "Reviewed the canonical 16-file subject scope against BASE/HEAD be5525fb144dd2f5c9e9fc2933de0aa7117bff29. The working tree matches staged tree be8949179bf837b485fe817918df959d50b92730; allowed supplemental generated and cleanup evidence was inspected.",
+        "R1 is fixed: the noncanonical handoff.md branch retains frontmatter:true scanning and separate body scanning through the existing scanPersonalData implementation, without baton-schema validation. Changed/untracked tests cover all three document paths, frontmatter personal data, body personal data, configured terms and permitted inline body examples. No new actionable maintainability defect was identified.",
+        "The feature classifier is restricted to ^specs/[^/]+/handoff.md$. The quick classifier, schemas, error definitions, full-validation roots and scanner rules remain unchanged. Existing version-literal scatter is not a new refactor target.",
+        "Q1 remains bounded: CLI/package and generator metadata move to 0.1.1 while unchanged components remain 0.1.0. Lock and manifest contents are unchanged apart from their version metadata; upstream pins, lock hashes and registry data are preserved. The generated bundle contains the scanner correction and matches its SHA-256 sidecar.",
+        "The a7 changes preserve its phase, original history and repository-owner/control-plane approval identity while appending refresh/approval history. Recorded provenance retains the owner approval at 2026-10-10T17:44:34.645+02:00 and subsequent unavailable clarification. Latest control-plane instructions prohibit another a7 refresh or reapproval without new owner delegation; this review changed no cleanup records or gates.",
+        "Final support cleanup and the full gate remain pending. Earlier passing-check summaries do not establish completion for this round; coordinator Gate A remains required before merge, release dispatch or tag creation. No tests were executed because this invocation forbids writes."
+      ],
+      "testing_gaps": []
+    },
+    "project-standards": {
+      "reviewer": "project-standards",
+      "findings": [],
+      "residual_risks": [
+        "Reviewed the canonical 16-file scope against base be5525fb144dd2f5c9e9fc2933de0aa7117bff29 and allowed supporting artifacts. The working tree matches staged tree be8949179bf837b485fe817918df959d50b92730. CONTRIBUTING.md and .specify/memory/constitution.md govern this review; no unrelated AGENTS.md rules were applied, and the forbidden roadmap was not read.",
+        "R1 is addressed by inspection: noncanonical handoff.md documents retain separate frontmatter and body scanPersonalData calls with configured terms, without baton-schema validation. Regression tests cover all three command/template paths in changed and untracked states through --changed and --path, including negative frontmatter/body/configured-term cases and positive inline examples. The quick classifier, canonical validation, schemas, denylist implementation and full-scan roots remain unchanged.",
+        "Q1 introduces no confirmed standards violation: unchanged extension/preset components retain 0.1.0 while CLI/package/manifest and generator metadata report 0.1.1. baton.lock.json differs only in generated_by; upstream pins, provenance and file hashes remain unchanged. package-lock.json changes only its two version fields. The bundle hash matches its recorded SHA-256.",
+        "The a7 diff preserves original history and appends refresh/approve events following the recorded owner approval at 2026-10-10T17:44:34.645+02:00. The subsequent unavailable clarification and same repository-owner/control-plane delegation are explicitly recorded. Current cleanup and work-input hashes match the a7 references. This assessment does not authorize any further cleanup, hash or gate changes; another a7 refresh/reapproval requires fresh owner delegation.",
+        "Support-artifact cleanup and final full checks remain pending and are not waived by this clean standards review. Earlier work receipts are historical evidence, not independent verification of the corrected round2 snapshot. Coordinator Gate A, human land approval and release safeguards remain required."
+      ],
+      "testing_gaps": [
+        "No tests, build, sync or full gate were executed during this strictly read-only review; the final corrected snapshot still requires the pending full checks."
+      ]
+    },
+    "adversarial": {
+      "reviewer": "adversarial",
+      "findings": [
+        {
+          "title": "Escaped YAML values evade restored handoff privacy checks",
+          "severity": "P2",
+          "file": "src/commands/validate.mjs",
+          "line": 177,
+          "why_it_matters": "The restored scan checks raw YAML rather than its decoded values. Valid noncanonical handoff frontmatter can therefore contain an email or configured private term that the previous validation path rejected, while both --path and --changed now accept it. R1 is fixed for literal values, but the previous frontmatter privacy protection is not fully preserved.",
+          "autofix_class": "manual",
+          "owner": "downstream-resolver",
+          "requires_verification": true,
+          "suggested_fix": "Retain the raw scan and additionally scan decoded/reserialized frontmatter when it parses successfully, using the existing scanPersonalData rules. Do not introduce baton-schema validation for noncanonical documents. Verify escaped emails and configured terms across all three documentation paths and both selectors, retaining allowed inline body examples.",
+          "confidence": 0.99,
+          "evidence": [
+            "Trigger: write valid frontmatter containing description: \"person\\u0040private.example\" to .specify/extensions/baton/commands/handoff.md, baton/templates/handoff.md, or baton/speckit-extension/commands/handoff.md.",
+            "Previously, validate called validateHandoff(root, path) without a source argument. src/lib/handoff.mjs parsed YAML and scanned serializeFrontmatter(data, '') with frontmatter: true. The decoded description is person@private.example, which produces E_DENYLIST.",
+            "The new branch at lines 173–179 extracts and scans the original YAML bytes. The raw value contains no literal @, so scanPersonalData returns no privacy error. Neither the selected-path follow-up scan nor the changed-file follow-up scan restores decoded-value inspection; selected-path scanning skips handoff.md, and changed-file scanning either excludes .specify or scans raw text.",
+            "A read-only, in-memory execution of the exact new branch returned [] for this input, while the previous parsed/reserialized scan returned E_DENYLIST.",
+            "The same verification used description: \"private\\u002downer-term\" with configured term private-owner-term: YAML decoding produced that private term, the previous scan rejected it, and the new branch returned []."
+          ],
+          "pre_existing": false
+        }
+      ],
+      "residual_risks": [
+        "Reviewed the canonical 16-file subject scope against base be5525fb144dd2f5c9e9fc2933de0aa7117bff29 and staged tree be8949179bf837b485fe817918df959d50b92730. The working files matched that tree; no untracked files were reported.",
+        "R1 literal frontmatter emails, body emails, and configured terms are restored through the dedicated branch, including changed .specify documents. In-memory checks also confirmed CRLF handling and permitted inline/fenced body examples. The decoded-YAML composition failure remains actionable.",
+        "Canonical feature handoffs and quick batons still enter validateHandoff. The quick classifier, scan rules, schemas, error codes, and full-scan roots are unchanged; malformed-canonical full/changed/path regressions were inspected, not rerun.",
+        "Q1 remains bounded: extension/preset components retain 0.1.0; CLI/package/manifest and lock generator metadata report 0.1.1. Package-lock changes are limited to its two version fields. Read-only lock verification passed for 114 files; build --check and the bundle SHA-256 comparison passed.",
+        "The a7 phase, original history prefix, and configured repository-owner/control-plane approver are preserved, with refresh/approve entries appended. Recorded provenance includes the approval at 2026-10-10T17:44:34.645+02:00 and subsequent unavailable clarification. This review grants no new delegation; further a7 refresh/reapproval requires fresh owner authorization.",
+        "Final full-check, support-cleanup verification, and coordinator Gate A remain pending and are not waived. No cleanup, hash, gate, source, or repository modifications were performed, and the prohibited roadmap was not read."
+      ],
+      "testing_gaps": [
+        "The added privacy regressions cover literal frontmatter values but not valid YAML escape decoding. Add negative cases for escaped emails and escaped configured terms across all three noncanonical handoff paths, changed/untracked states, and --changed/--path selectors.",
+        "No mutating integration tests or full suite were run during this independent read-only review; verification used source tracing, in-memory scan probes, actual documentation-path validation, build --check, and lock verification."
+      ]
+    },
+    "agent-native": {
+      "format": "unstructured result summarized without changing its verdict",
+      "verdict": "PASS for bounded agent-native scope, not release approval",
+      "findings": [],
+      "scope": "Loaded installed persona and diff-scope. Exact canonical16, BASE/HEAD and supplied stagedtree verified. No untracked files, edits or forbidden roadmap reads.",
+      "assessment": "Existing installed skills, Spec Kit hooks and shared CLI preserve all4 scoped agent-accessible capabilities: canonical validation, selected/changed docs validation, scope/provenance reads and owner-authorized refresh/approval. No new UI/tool/agent contract.",
+      "R1": "Persona considered literal R1 resolved by separate configured-term frontmatter/body scans and all3paths/bothstates/bothselectors tests plus canonical rejection. Synthesis retains decoded-YAML defect reported by other reviewers.",
+      "Q1": "No parity inconsistency in unchanged component0.1.0 vs CLI/package/manifest/generator0.1.1.",
+      "a7": "Original history and land-to-compound phase preserved; refresh/approve/provenance appended. Approved timestamp2026-10-10T17:44:34.645+02:00, later unavailable clarification, same configured owner/control-plane. Does not authorize another refresh/reapproval.",
+      "limits": "No tests/finalfullchecks executed by persona. Finalfullchecks/supportcleanup/ownergate pending. No cleanup/hash/gate modifications. Bundle contains correction and matches digest."
+    },
+    "learnings": {
+      "format": "unstructured result summarized without changing conclusions",
+      "findings": [],
+      "scope": "Fresh search of all4solutiondocs, current quick/work and subjectdiff against exact BASE/HEAD/tree. Canonical16 separated from support. No writes/edits/approvalactions/forbiddenroadmap. critical-patterns.md absent.",
+      "known_patterns": [
+        {
+          "file": "docs/solutions/quick-lane-scope-and-stranded-land-2026-09-29.md",
+          "insight": "Restore promised behavior without new publiccontracts; bind review to exact subjecttree and classify source-only artifacts in cleanup before tag."
+        },
+        {
+          "file": "docs/solutions/per-checkout-identity-self-review-2026-09-29.md",
+          "insight": "Independent review needs separate genuine checkout/writer identity, not labels/pathspellings/tokendeletion."
+        },
+        {
+          "file": "docs/solutions/crlf-normalized-ownership-hashing-2026-09-29.md",
+          "insight": "Normalize appropriate text artifact/ownership hashes but preserve raw-byte lock/bundle integrity."
+        },
+        {
+          "file": "docs/solutions/restricted-mirror-env-only-2026-09-29.md",
+          "insight": "Keep approved registry overrides process-scoped and private infrastructure out of tracked evidence; retain failed/unavailable outcomes honestly, never repin for green."
+        }
+      ],
+      "no_direct_precedent": "No direct documented precedent for B-A, precise R1 scan regression, component/CLI divergence or renewed a7 ownerdelegation.",
+      "R1": "Literal scanning correction and all3path/bothstate/selector negative/inline/canonical assertions inspected, not executed by persona. Synthesis retains decoded-YAML defect.",
+      "Q1": "Unchanged descriptors0.1.0 CLI/package/manifest/generator0.1.1, bounded package-lock/lock generator delta, no past version parity rule.",
+      "a7": "Original phase/history preserved and D13 refresh/approve appended; same configured owner/control-plane, approved timestamp then unavailable clarification. Unavailability is not consent, historical delegation is not continuing authority.",
+      "limits": "No further a7 refresh/reapproval without fresh ownerdelegation. Finalfullchecks/supportcleanup/GateA pending, no merge/release/tag authority."
+    }
+  },
+  "independent_verification": {
+    "command": "node --test test\\integration\\validate.test.mjs",
+    "result": "44/44 passed, zero failures/skips",
+    "receipt": "private-artifact:reviewer/round2-validate-tests.txt",
+    "literal_reproduction": "Original literal base/candidate probes now report E_DENYLIST on candidate in all affected selectors, including .specify changed.",
+    "literal_receipt": "private-artifact:reviewer/round2-denylist-repro.txt",
+    "yaml_reproduction_script": "private-artifact:reviewer/round2-yaml-repro.mjs",
+    "yaml_receipt": "private-artifact:reviewer/round2-yaml-repro.txt",
+    "yaml_result": "16/16 selector/state/specimen probes reproduce missing E_DENYLIST on candidate. Base rejects each affected doc. All3 individualpaths and changed aggregate, both states and escaped-email/configuredterm tested.",
+    "fixture_cleanup": "Disposable reproduction repositories removed in finally; source/index unchanged."
+  },
+  "scope_verdict": "The classifier correction and preservation fix remain quick-eligible in principle; this exact tree still violates promised privacy preservation. No passing scope-held decision or LAND transition.",
+  "cleanup_required": [
+    ".context/compound-engineering/ce-review/validate-command-docs-011-independent-20261010/"
+  ],
+  "authority": "No cleanup/hash/gate/approval edits performed. Additional final cleanup requires author/coordinator action; subsequent a7 refresh/reapproval requires fresh explicit owner delegation. Existing a7 approval does not grant continuing authority.",
+  "canonical_receipt": "Normalized review JSON may contain open findings, but no successful REVIEW handoff or passing receipt is claimed."
+}

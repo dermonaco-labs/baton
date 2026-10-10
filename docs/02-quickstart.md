@@ -29,15 +29,15 @@ options](08-troubleshooting.md).
 From the target repository, install the pinned Baton snapshot:
 
 ```sh
-npx --yes github:dermonaco-labs/baton#v0.1.0 init --dry-run
-npx --yes github:dermonaco-labs/baton#v0.1.0 init
+npx --yes github:dermonaco-labs/baton#v0.1.1 init --dry-run
+npx --yes github:dermonaco-labs/baton#v0.1.1 init
 node .baton/bin/baton.mjs doctor
 node .baton/bin/baton.mjs validate
 ```
 
 The versioned `npx` command needs a network connection for bootstrap; the
 installed CLI is offline for ordinary validation and handoffs. Before a
-release tag exists, use a reviewed commit or branch ref instead of `v0.1.0`.
+release tag exists, use a reviewed commit or branch ref instead of `v0.1.1`.
 The dry run lists changes without writing. `init` installs `core`, merges
 only Baton-owned marker sections, preserves unmanaged and changed files, and
 writes `.baton/manifest.json`. Exit 4 means unresolved conflicts; see

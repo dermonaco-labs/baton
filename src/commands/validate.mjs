@@ -5,7 +5,7 @@ import { BatonError } from '../lib/report.mjs';
 import { loadSchemas, validateSchema } from '../lib/schema.mjs';
 import { validateHandoff } from '../lib/handoff.mjs';
 import { loadModelSettings, modelPolicyIssue, configuredModelIssues } from '../lib/models.mjs';
-import { parseFrontmatter } from '../lib/frontmatter.mjs';
+import { parseFrontmatter, serializeFrontmatter } from '../lib/frontmatter.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
 import { scanPersonalData, denylistTerms, isLicenseNotice } from '../lib/denylist.mjs';
 import { loadPhases } from '../lib/phases.mjs';
@@ -140,7 +140,7 @@ export async function run(root, args) {
       }
       continue;
     }
-    if (/(?:^|\/)handoff\.md$/.test(path) || /^\.baton\/quick\/[^/]+\.md$/.test(path)) {
+    if (/^specs\/[^/]+\/handoff\.md$/.test(path) || /^\.baton\/quick\/[^/]+\.md$/.test(path)) {
       const issues = await validateHandoff(root, path);
       errors.push(...issues);
       if (!issues.some((issue) => issue.code === 'E_FRONTMATTER_MALFORMED')) {
@@ -170,6 +170,25 @@ export async function run(root, args) {
           }
         }
       }
+    } else if (/(?:^|\/)handoff\.md$/.test(path)) {
+      const source = await readFile(absolute, 'utf8');
+      let frontmatter = '';
+      let body = source;
+      if (/^---\r?\n/.test(source)) {
+        try {
+          const parsed = parseFrontmatter(source);
+          frontmatter = serializeFrontmatter(parsed.data, '');
+          body = parsed.body;
+        } catch (error) {
+          errors.push({ code: 'E_FRONTMATTER_MALFORMED', file: path,
+            message: error instanceof Error ? error.message : String(error) });
+          continue;
+        }
+      }
+      errors.push(...[
+        ...scanPersonalData(frontmatter, { frontmatter: true, terms }),
+        ...scanPersonalData(body, { terms }),
+      ].map((issue) => ({ ...issue, file: path })));
     } else if (/^\.github\/skills\/[^/]+\/SKILL\.md$/.test(path) || /^\.github\/agents\/[^/]+\.agent\.md$/.test(path)) {
       const type = path.endsWith('/SKILL.md') ? 'skill-frontmatter' : 'agent-frontmatter';
       try {
