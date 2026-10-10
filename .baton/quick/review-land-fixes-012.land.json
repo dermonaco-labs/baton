@@ -1,0 +1,7 @@
+{
+  "summary": "Independent LAND received the exact reviewed v0.1.2 candidate in a separate checkout. Local npm run check passes 381/381 with zero skips; global and scoped validate exit 0. Opened a DRAFT patch PR against main. Only predictable LAND bookkeeping is published; no subject or frozen report changes. Automatic pull_request CI only, no dispatch or rerun. Future exact-head acceptance and the land-to-compound repository owner gate remain unapproved; a7 checksum approval at bf075310 is not patch acceptance.",
+  "pr": {
+    "url": "https://github.com/dermonaco-labs/baton/pull/48",
+    "number": 48
+  }
+}

@@ -17,6 +17,25 @@ All notable changes to Baton are documented here. This follows
 - Install the same pinned `uv` prerequisite in all three OS smoke jobs,
   preserving the unconditional live PowerShell-script installation check.
 
+## [0.1.2] - 2026-10-10
+
+### Fixed
+
+- Compare headless CE review coverage with the exact pinned tracked diff,
+  while requiring coverage of every CLI subject file. Changed feature
+  artifacts and Baton bookkeeping no longer cause false scope mismatches;
+  untracked subjects must be staged before review.
+- Redirect mandatory upstream landing session notes outside the repository.
+  Publish the CLI land receipt before a final clean-tree and exact remote-head
+  check, instead of leaving late notes or receipts dirty or unpushed.
+
+### Upstream
+
+- Baton extension and preset component versions remain `0.1.0`; the CLI and
+  package patch version is `0.1.2`. Vendored upstream bytes are unchanged.
+- Spec Kit `specify-cli` 1.0.11 at commit `8147943512404afb9d99c6252cb9bf84369fd0b0` (unchanged).
+- ATV Starter Kit `main` at commit `ad996736b879be87c7755df5c5017d5336203bbc` (unchanged).
+
 ## [0.1.1] - 2026-10-10
 
 ### Fixed
@@ -49,6 +68,7 @@ All notable changes to Baton are documented here. This follows
 - Spec Kit `specify-cli` 1.0.11, installed from hash-locked requirements.
 - ATV Starter Kit pinned to commit `ad996736b879be87c7755df5c5017d5336203bbc`.
 
-[Unreleased]: https://github.com/dermonaco-labs/baton/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/dermonaco-labs/baton/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/dermonaco-labs/baton/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/dermonaco-labs/baton/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/dermonaco-labs/baton/releases/tag/v0.1.0

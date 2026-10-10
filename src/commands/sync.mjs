@@ -272,7 +272,7 @@ export function prepareEntries(root, generated, atv, packs, repairs, oldLock, bu
 /** @param {VendoredEntry[]} entries @param {string} requirementsHash @param {string} atvCommit @param {string} atvTree @param {string} version @param {string} speckitCommit */
 function lockFile(entries, requirementsHash, atvCommit, atvTree, version, speckitCommit) {
   return {
-    schema: 1, generated_by: 'baton sync 0.1.1',
+    schema: 1, generated_by: 'baton sync 0.1.2',
     'x-bump-summary': /** @type {string|undefined} */ (undefined),
     upstreams: {
       speckit: {
