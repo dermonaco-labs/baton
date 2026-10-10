@@ -69,8 +69,19 @@ for (const lane of ['feature', 'quick']) {
       assert.match(wrapper, /reported base\s+must equal.*CLI base/is);
       await writeFile(join(root, 'src', 'untracked.mjs'), 'export const pending = true;\n');
       const untracked = JSON.parse((await runCli(root, ['handoff', 'scope', ...target, '--json'])).stdout).data;
+      const beforeStaging = lines(git(root, 'diff', '--name-only', untracked.base));
       assert.ok(untracked.files.includes('src/untracked.mjs'));
-      assert.ok(!ceFiles.includes('src/untracked.mjs'), 'CE tracked diff cannot prove untracked subject coverage');
+      assert.ok(!beforeStaging.includes('src/untracked.mjs'), 'Fresh CE tracked diff cannot prove untracked subject coverage');
+      assert.ok(!untracked.files.every(file => beforeStaging.includes(file)));
+      git(root, 'add', 'src/untracked.mjs');
+      const stagedResult = await runCli(root, ['handoff', 'scope', ...target, '--json']);
+      assert.equal(stagedResult.code, 0, stagedResult.stdout + stagedResult.stderr);
+      const staged = JSON.parse(stagedResult.stdout).data;
+      const afterStaging = lines(git(root, 'diff', '--name-only', staged.base));
+      assert.equal(staged.base, base);
+      assert.ok(staged.files.includes('src/untracked.mjs'));
+      assert.ok(afterStaging.includes('src/untracked.mjs'));
+      assert.ok(staged.files.every(file => afterStaging.includes(file)), 'Explicit staging restores complete subject coverage');
     } finally { await cleanup(); }
   });
 }
@@ -111,12 +122,27 @@ test('landing captures outside the repo and verifies again after the land receip
     git(root, 'push', '-q', 'origin', branch);
     assert.equal(git(root, 'status', '--porcelain'), '');
     assert.equal(git(root, 'rev-parse', 'HEAD'), git(root, 'rev-parse', `origin/${branch}`));
+    const localHead = git(root, 'rev-parse', 'HEAD');
+    const remoteRef = `refs/heads/${branch}`;
+    assert.equal(git(root, 'ls-remote', '--heads', 'origin', remoteRef).split(/\s+/)[0], localHead);
+    const remoteAdvance = git(root, 'commit-tree', 'HEAD^{tree}', '-p', localHead, '-m', 'Remote-only advance');
+    git(root, 'push', '-q', remote.root, `${remoteAdvance}:${remoteRef}`);
+    assert.equal(git(root, 'status', '--porcelain'), '');
+    assert.equal(git(root, 'rev-parse', `origin/${branch}`), localHead, 'URL push leaves local tracking stale');
+    assert.notEqual(git(root, 'ls-remote', '--heads', 'origin', remoteRef).split(/\s+/)[0], localHead,
+      'Clean status and local/tracking equality do not prove actual remote publication');
+    git(root, 'fetch', '-q', 'origin', branch);
+    git(root, 'merge', '--ff-only', '-q', `origin/${branch}`);
+    assert.equal(git(root, 'status', '--porcelain'), '');
+    assert.equal(git(root, 'rev-parse', 'HEAD'), git(root, 'rev-parse', `origin/${branch}`));
+    assert.equal(git(root, 'ls-remote', '--heads', 'origin', remoteRef).split(/\s+/)[0], git(root, 'rev-parse', 'HEAD'));
     const write = wrapper.indexOf('handoff write --phase land');
     const publish = wrapper.indexOf('Publish the land receipt');
     const verify = wrapper.indexOf('Final verification');
     assert.ok(write >= 0 && publish > write && verify > publish);
     assert.match(wrapper.slice(verify), /git status --porcelain/);
     assert.match(wrapper.slice(verify), /unpushed/);
+    assert.match(wrapper.slice(verify), /actual remote\s+branch head/);
     assert.match(wrapper.slice(verify), /Do not.*completion.*fail/is);
   } finally {
     await cleanup();
