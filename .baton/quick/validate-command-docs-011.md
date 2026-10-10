@@ -95,8 +95,8 @@ decisions:
     by: baton-011-landing
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-10-10
 history:
   - phase: work
     at: 2026-10-10T15:53:20.525Z
@@ -119,8 +119,15 @@ history:
     x-worktree: 2819f8ef0f71bd04760b0435f18c8b2d4e1c0c1cfd9c81b12c4db45897595e1e
     commit: 5da81f9
     x-action: write
-updated_at: 2026-10-10T18:27:23.276Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-10-10T18:51:18.844Z
+    by: human:repository-owner
+    writer: 344ce0a2c796c2bf14a304513ba5b0f95f793e2961dc70fb72515d077ab89430
+    x-worktree: 2819f8ef0f71bd04760b0435f18c8b2d4e1c0c1cfd9c81b12c4db45897595e1e
+    commit: 1c9a9e5
+    x-action: approve
+updated_at: 2026-10-10T18:51:18.844Z
+updated_by: human:repository-owner
 x-implementation-writer: e2999febfb8418465d933b0361c2a555ee45907022492510ddfc647cdc5c4175
 x-implementation-worktree: 56eff5ab69b22e7c286c51e51340ed322a9c9875a122e714d062b721eb8e2b79
 x-implementation-cycle: da383716d8911862757ef3b34a29afd62a913cc00257fe09d6e8ea2f159ffe61
