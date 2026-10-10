@@ -1,0 +1,262 @@
+{
+  "engine": "ce-review",
+  "mode": "headless",
+  "timestamp": "2026-10-10T22:02:46.111Z",
+  "base": "bf0753104b2c6c673dddc3e11dc04a567226bfc8",
+  "head": "39f2e3370e2562a734896758355f131fefe1d66c",
+  "tree": "5fc7997658bd15509cac1741446b429788389806",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "medium",
+  "verdict": "Not ready",
+  "canonical_review_written": false,
+  "autofixes_applied": 0,
+  "installed_personas": [
+    "adversarial-reviewer", "agent-native-reviewer", "correctness-reviewer",
+    "learnings-researcher", "maintainability-reviewer", "project-standards-reviewer",
+    "repo-research-analyst", "security-reviewer", "testing-reviewer"
+  ],
+  "selected_and_dispatched_personas": [
+    "correctness-reviewer", "testing-reviewer", "maintainability-reviewer",
+    "project-standards-reviewer", "agent-native-reviewer", "learnings-researcher",
+    "adversarial-reviewer"
+  ],
+  "reviewed_files": [
+    ".baton/bin/baton.mjs",
+    ".baton/bin/baton.mjs.sha256",
+    ".baton/manifest.json",
+    ".baton/quick/release-records-docs-a7.md",
+    ".baton/quick/review-land-fixes-012.md",
+    ".baton/quick/review-land-fixes-012.work.json",
+    ".baton/template-cleanup.yml",
+    ".github/skills/baton-land/SKILL.md",
+    ".github/skills/baton-review/SKILL.md",
+    "CHANGELOG.md",
+    "baton.lock.json",
+    "baton/skills/baton-land/SKILL.md",
+    "baton/skills/baton-review/SKILL.md",
+    "docs/03-workflow.md",
+    "package-lock.json",
+    "package.json",
+    "src/cli.mjs",
+    "src/commands/adopt.mjs",
+    "src/commands/doctor.mjs",
+    "src/commands/init.mjs",
+    "src/commands/sync.mjs",
+    "src/lib/report.mjs",
+    "test/integration/init.test.mjs",
+    "test/integration/review-land-wrappers.test.mjs",
+    "test/integration/update.test.mjs"
+  ],
+  "cli_subject_files": [
+    ".github/skills/baton-land/SKILL.md",
+    ".github/skills/baton-review/SKILL.md",
+    "CHANGELOG.md",
+    "baton.lock.json",
+    "baton/skills/baton-land/SKILL.md",
+    "baton/skills/baton-review/SKILL.md",
+    "docs/03-workflow.md",
+    "package-lock.json",
+    "package.json",
+    "src/cli.mjs",
+    "src/commands/adopt.mjs",
+    "src/commands/doctor.mjs",
+    "src/commands/init.mjs",
+    "src/commands/sync.mjs",
+    "src/lib/report.mjs",
+    "test/integration/init.test.mjs",
+    "test/integration/review-land-wrappers.test.mjs",
+    "test/integration/update.test.mjs"
+  ],
+  "coverage": {
+    "base_equals_cli_base": true,
+    "all_seven_returned_file_sets_equal_pinned_tracked_diff": true,
+    "cli_subject_subset": true,
+    "tracked_count": 25,
+    "subject_count": 18,
+    "untracked_excluded_before_reports": [],
+    "report_paths_added": 3,
+    "predicted_count_if_all_reports_staged": 28,
+    "post_report_final_coverage_claimed": false,
+    "failed_reviewers": [],
+    "malformed_findings": 0,
+    "suppressed_findings": 0,
+    "deduplicated_findings": 0
+  },
+  "persona_results": [
+    {
+      "reviewer": "correctness",
+      "findings": [],
+      "residual_risks": [
+        "Review and landing corrections are prompt-driven instructions, not executable enforcement. Their operational success depends on CE honoring the exact-base and coverage overrides and ATV honoring the external capture destination and delayed completion check.",
+        "The recorded full-suite results and private RED/GREEN log hashes were inspected as supplied evidence, not independently reproduced. No tests or mutating workflow commands were run."
+      ],
+      "testing_gaps": [
+        "The new landing regression test checks local/tracking agreement but not actual bare-remote divergence.",
+        "Wrapper assertions and manual Git scenarios do not execute CE/ATV prompts, destination failures, incomplete-coverage refusal or early-banner suppression.",
+        "The untracked-subject regression does not stage the subject and re-enumerate restored coverage."
+      ]
+    },
+    {
+      "reviewer": "testing",
+      "findings": [
+        {
+          "id": "R1",
+          "title": "Landing regression omits actual remote-head verification",
+          "severity": "P2",
+          "file": "test/integration/review-land-wrappers.test.mjs",
+          "line": 113,
+          "why_it_matters": "The test verifies local HEAD against origin/<branch>, but never queries the actual remote. It cannot catch the newly specified failure where local HEAD and a stale tracking ref agree while the published branch differs. Removing the actual-remote requirement from the wrapper would leave this test green.",
+          "autofix_class": "manual",
+          "owner": "downstream-resolver",
+          "requires_verification": true,
+          "suggested_fix": "Query the bare remote with git ls-remote, assert local/tracking/remote agreement, and advance the remote through a second checkout without refreshing the first tracking ref to prove matching local/tracking heads are insufficient. Retain a focused actual-remote wrapper-contract assertion.",
+          "confidence": 0.99,
+          "evidence": [
+            "Lines 110-113 compare only HEAD with origin/<branch> after pushing.",
+            "Lines 118-120 assert porcelain, unpushed and failure-banner wording, not actual-remote verification.",
+            "The changed source land wrapper requires actual remote verification because a stale tracking ref is not publication evidence."
+          ],
+          "pre_existing": false
+        },
+        {
+          "id": "R2",
+          "title": "Untracked-subject test never proves staging restores coverage",
+          "severity": "P2",
+          "file": "test/integration/review-land-wrappers.test.mjs",
+          "line": 73,
+          "why_it_matters": "The asserted CE file list was captured before the untracked file existed, so absence from that cached list is guaranteed. The test discovers the CLI subject but does not verify staging and re-enumeration restores coverage for either lane.",
+          "autofix_class": "manual",
+          "owner": "downstream-resolver",
+          "requires_verification": true,
+          "suggested_fix": "Check the CLI exit code, recompute pinned Git diff after creating the subject, assert missing subset coverage, deliberately stage it, rerun both enumerations, and assert unchanged base and restored subset coverage in both lanes.",
+          "confidence": 0.98,
+          "evidence": [
+            "Line 57 captures ceFiles before src/untracked.mjs is created at line 70.",
+            "Lines 71-73 compare the updated CLI scope with the old ceFiles snapshot.",
+            "Neither lane stages the new subject or re-enumerates the tracked diff."
+          ],
+          "pre_existing": false
+        }
+      ],
+      "residual_risks": [
+        "Real Git/CLI fixtures plus wrapper-text assertions do not execute CE/ATV prompts.",
+        "The placeholder land receipt does not prove a genuine CLI land transition.",
+        "Author test chronology/results were supplied evidence, not independently executed by this persona.",
+        "Destination failure, missing tracking ref and failed publication remain operational gaps.",
+        "Existing E_SELF_REVIEW and E_STALE_REVIEW tests were unchanged."
+      ],
+      "testing_gaps": [
+        "Actual-remote divergence with matching stale tracking is untested.",
+        "Untracked staging/re-enumeration recovery is untested.",
+        "Actual CE exact-coverage refusal and scope-change restart are not exercised."
+      ]
+    },
+    {
+      "reviewer": "maintainability",
+      "findings": [],
+      "residual_risks": [
+        "Safeguards are prompt-driven; operational compliance was not demonstrated.",
+        "This persona inspected but did not execute tests."
+      ],
+      "testing_gaps": [
+        "Actual remote mismatch and wrapper actual-remote wording are not tested.",
+        "Staging and restarted scope enumeration are not tested."
+      ]
+    },
+    {
+      "reviewer": "project-standards",
+      "findings": [],
+      "residual_risks": [
+        "No applicable AGENTS.md; supplied constitution governed this review with no confirmed violation.",
+        "The original 25-path pinned review is not a final multi-persona canonical proof.",
+        "Byte checks support upstream/bundle integrity but do not prove which author commands generated outputs.",
+        "Frozen cleanup and a7 checksum matched; this grants no approval.",
+        "Recorded author checks are not independent execution; 18 is CLI subjects, not full review coverage.",
+        "Actual landing/publication remains unexecuted.",
+        "Pre-existing upstream Step9 follows Step8; changed Baton wrapper addresses this without upstream edits."
+      ],
+      "testing_gaps": [
+        "Actual remote divergence, untracked stage/re-enumeration, genuine land transition, destination failure and completion-banner suppression were not tested by this persona."
+      ]
+    },
+    {
+      "reviewer": "agent-native",
+      "findings": [],
+      "verdict": "PASS within this diff; no scope or landing authorization",
+      "capabilities": [
+        "Pinned CLI subject discovery and full tracked diff inspection are accessible.",
+        "Deliberate staging and restarted enumeration are explicit.",
+        "External capture and receipt/final publication verification are accessible."
+      ],
+      "residual_risks": [
+        "Upstream explicit-base fast path still contains merge-base computation; Baton explicitly overrides it. This invocation used exact BASE.",
+        "Prompt compliance and control-plane provenance are not fabricated as proof.",
+        "18 changed files is subject count; full tracked review covers 25."
+      ],
+      "testing_gaps": [
+        "Prompt execution, actual remote divergence and external write failure remain operational limits."
+      ]
+    },
+    {
+      "reviewer": "learnings",
+      "findings": [],
+      "solutions": [
+        "docs/solutions/quick-lane-scope-and-stranded-land-2026-09-29.md",
+        "docs/solutions/per-checkout-identity-self-review-2026-09-29.md",
+        "docs/solutions/crlf-normalized-ownership-hashing-2026-09-29.md",
+        "docs/solutions/restricted-mirror-env-only-2026-09-29.md"
+      ],
+      "results": [
+        "No new code-grounded contradiction with past solutions.",
+        "Changed subjects invalidate review; source-only artifacts need cleanup coverage.",
+        "Identity is checkout-local random identity, not session label or path spelling.",
+        "Normalized artifact ownership hashes differ from raw supply-chain hashes.",
+        "Private mirror settings belong only in process environment.",
+        "Historical MemPalace recall verified against current fixtures; not treated as current proof.",
+        "Critical-patterns document absent."
+      ],
+      "residual_risks": [
+        "Author full381 results were supplied evidence; this persona did not execute tests."
+      ],
+      "testing_gaps": [
+        "Git/CLI fixtures do not execute the complete agent landing workflow."
+      ]
+    },
+    {
+      "reviewer": "adversarial",
+      "findings": [],
+      "residual_risks": [
+        "Upstream land completion banner requires caller enforcement of Baton override; no new reproducible failure established.",
+        "Genuine landing capture/receipt/live remote publication not executed."
+      ],
+      "testing_gaps": [
+        "Placeholder receipt is not genuine land transition.",
+        "Matching stale tracking versus diverged actual remote untested.",
+        "Untracked staging and restarted enumeration untested."
+      ]
+    }
+  ],
+  "pre_existing_findings": [],
+  "evidence": {
+    "independent_test_command": "node --test test\\integration\\review-land-wrappers.test.mjs",
+    "initial_exit": 1,
+    "initial_reason": "Missing yaml in fresh checkout",
+    "initial_log_sha256": "46daf6aec42015179dbf34557074949fe46ab0fbbb82d9acbd90d2baa8555ce5",
+    "dependency_restore": "npm ci --ignore-scripts --no-audit --no-fund --loglevel=error; approved process-scoped registry",
+    "targeted_exit": 0,
+    "targeted_tests": 3,
+    "targeted_pass": 3,
+    "targeted_skipped": 0,
+    "targeted_green_log_sha256": "e5b94820502a311173fadcc4b68aca9f8b0a143c9bdff2f62bffa41eb1cc79d3",
+    "validation_command": "node .baton/bin/baton.mjs validate --json",
+    "validation_exit": 0,
+    "validation_log_sha256": "3713bd4abcacc304cf41e850c05c38a047b9587a198d0ce7c06d6e830ffb1c32",
+    "validation_warnings": ["W_PACK_RECOMMENDED", "W_QUICK_LARGE"],
+    "full_suite_independently_rerun": false,
+    "author_work_receipt_verified_sha256": "e903631be7dcda0b01b17aa724fbafe6758e5f943a5fd5dbafc007f22a171733",
+    "author_red_verified_sha256": "5aa27d5c1ef5a7de63ff2b2fc4be51a61b0e29c2c23fa016f8e6142d1a6fecf1",
+    "author_green_verified_sha256": "9faeb6e91906abf54fe8194ead548178b647c42e7ef2d3ef2bdfbcf057c16471",
+    "author_full_green_verified_sha256": "da05b16c02ab029280b739660d3170527ca436b682f380331760d2e864ab0584",
+    "cleanup_sha256": "eb375087dc59b79749b669cb62bc7b09b5d20f88a664c63601db77ea77402e5b"
+  }
+}
