@@ -18,11 +18,24 @@ intent), not the PR description alone. Load only `read_first`, honor
 
 Run `node .baton/bin/baton.mjs handoff scope --json` (add `--quick <slug>`
 for a quick baton). It reports the reachable recorded `diff-base` and the
-exact changed-file scope. Pass that base as `base:<sha>` to
-`/ce-review mode:headless`, and verify its reported base and reviewed file
-set match the CLI scope. Stop if the CLI cannot resolve the base or ce-review
-cannot honor it; never silently review against `origin/HEAD` or an unrelated
-merge-base.
+CLI subject set, not CE's full review set: the CLI excludes `.baton/`,
+canonical feature handoffs and, in the feature lane, the current feature
+directory. Unstaged untracked root/scratch/tmp files are also excluded.
+Compute the pinned tracked diff set with `git diff --name-only <sha>`.
+The CLI subject set must be a subset of that set; if an untracked subject
+is missing, stage it deliberately and restart scope enumeration before
+review. Do not silently drop a subject file.
+
+Pass the CLI base as `base:<sha>` to `/ce-review mode:headless` and explicitly
+require that exact base, without recomputing a merge-base. Its reported base
+must equal the CLI base and its reviewed file set must equal the pinned
+tracked diff set. This includes changed feature artifacts and bookkeeping;
+do not require equality with the smaller CLI subject set. Preserve the
+base, both file sets and the coverage comparison in the run evidence.
+Re-enumerate after any headless auto-fix; if the base or either file set
+changes, restart review rather than claiming coverage of the old scope.
+Stop if the CLI cannot resolve the base or CE cannot prove this coverage;
+never silently review against `origin/HEAD` or an unrelated merge-base.
 
 Enumerate installed `.github/agents/*.agent.md` persona files; pass
 **only that installed list** to `/ce-review mode:headless`, with an

@@ -127,5 +127,5 @@ export async function run(root, args) {
   const advisory = recommendationWarnings(await missingRecommendations(root, manifest));
   return { errors: args.includes('--strict') ? [...errors, ...warnings] : errors,
     warnings: args.includes('--strict') ? advisory : [...warnings, ...advisory],
-    data: { version: '0.1.1', pins: manifest?.upstreams, packs: manifest?.packs } };
+    data: { version: '0.1.2', pins: manifest?.upstreams, packs: manifest?.packs } };
 }

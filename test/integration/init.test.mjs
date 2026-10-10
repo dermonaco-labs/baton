@@ -282,7 +282,7 @@ test('derived install explains how to fetch optional packs with pinned npx', asy
       child.on('close', code => resolve({ code, text }));
     });
     assert.equal(result.code, 5, result.text);
-    assert.match(result.text, /npx --yes github:dermonaco-labs\/baton#v0\.1\.1 init --packs learning/);
+    assert.match(result.text, /npx --yes github:dermonaco-labs\/baton#v0\.1\.2 init --packs learning/);
   } finally { await cleanup(); }
 });
 
