@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: validate-command-docs-011
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: Independent REVIEW reissued under coordinator A1 authority for final19-file scope:16 unchanged reviewed code files plus3 inspected portable support reports staged before write. Genuine immutable WORK input verified against original patch, no phase/proof handedit. R1/R2 fixed, no new findings;3 fresh relevant personas and4 explicitly reused unchanged-surface results. Final cleanup/a7 unchanged and authorized; no reviewer approval or LAND execution. Parent final gates remain separate.
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Independent LAND received the corrected frozen 19-subject proof and exact delivery tree771c8a12da1ce1ad7d48117980b9dd74bf533c1d. Own serial npm run check378/378 zero skips, sync/full/changed validation all exit0; actual PR opened. Final automatic CI must pass on the final receipt head. Stop at coordinator Gate A and unapproved PR-review gate; no merge, release dispatch, tag, publication, reruns or compound performed.
 read_first:
   - path: .baton/quick/validate-command-docs-011.md
     why: Authorized bounded patch scope, decisions and release stop gate
@@ -27,15 +27,9 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/validate-command-docs-011.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: Frozen tree6f1e42785e9843704ba20721079f92e46405d9a2 restores canonical classification and previous parsed-frontmatter/body privacy validation; existing quickregex, fullroots, scanner rules, schemas and errorcode definitions retained. No new command/flag/publiccontract. Q1 authorizes unchanged components0.1.0 with CLI/package/generator0.1.1, and required metadata overage is explicitly authorized. Independent real Git-state/CLI regressions and fresh correctness/testing/adversarial review close R1/R2.
+    evidence: https://github.com/dermonaco-labs/baton/pull/47
 open_questions: []
 decisions:
   - id: D1
@@ -95,8 +89,12 @@ decisions:
     tag: diff-base
     x-base-commit: be5525fb144dd2f5c9e9fc2933de0aa7117bff29
     by: baton
+  - id: D13
+    decision: Land only to a checked open PR with separate human review
+    rationale: Canonical independent REVIEW reissue covers19 frozen subjects including3 portable support reports. Genuine LAND writer/checkout differs from author and reviewer. Initial stale16proof correctly blocked landing; corrected delta was coordinator-authorized and exact staged delivery tree verified. Own configured check and explicit serial npm run check378/378, sync --check, validate and validate --changed passed exit0 before push. Preserve historical WORK/review reports unchanged. Actual PR is open; observe first automatic CI on final receipt head, without rerun. Coordinator Gate A, human PR approval, merge, release dispatch, tag, publication and compound remain separate and unauthorized.
+    by: baton-011-landing
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -114,8 +112,15 @@ history:
     x-worktree: c058ed65042d2e31fafe168e979f087d14d9ce89f9c7b76dec9237653b702995
     commit: be5525f
     x-action: write
-updated_at: 2026-10-10T18:02:42.115Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-10-10T18:27:23.285Z
+    by: baton-011-landing
+    writer: 344ce0a2c796c2bf14a304513ba5b0f95f793e2961dc70fb72515d077ab89430
+    x-worktree: 2819f8ef0f71bd04760b0435f18c8b2d4e1c0c1cfd9c81b12c4db45897595e1e
+    commit: 5da81f9
+    x-action: write
+updated_at: 2026-10-10T18:27:23.276Z
+updated_by: baton-land
 x-implementation-writer: e2999febfb8418465d933b0361c2a555ee45907022492510ddfc647cdc5c4175
 x-implementation-worktree: 56eff5ab69b22e7c286c51e51340ed322a9c9875a122e714d062b721eb8e2b79
 x-implementation-cycle: da383716d8911862757ef3b34a29afd62a913cc00257fe09d6e8ea2f159ffe61
@@ -129,6 +134,9 @@ review:
     reference_semantics: Opaque private evidence label, not a repository path or committed evidence claim.
     redacted_fields: []
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/47
+  number: 47
 ---
 ## Goal
 Fix B-A command-document misclassification and prepare the immutable v0.1.1 patch release.
