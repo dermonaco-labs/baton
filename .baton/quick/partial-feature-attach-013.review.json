@@ -3,10 +3,10 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/attach-013-rereview/"
+    "run_artifact": ".context/compound-engineering/ce-review/attach-013-f3-review/"
   },
-  "base": "96e4aa04bdbec06c88ee4469837e1a9c14730a7a",
-  "head": "4022803a392f9ca1392296e3e4a11c586abfcc74",
+  "base": "4022803a392f9ca1392296e3e4a11c586abfcc74",
+  "head": "5a02749b0f19735251792d1ff168ce521cdb9881",
   "personas": [
     "adversarial-reviewer",
     "agent-native-reviewer",
@@ -28,17 +28,8 @@
       "persona": "correctness-reviewer",
       "confidence": 1,
       "disposition": "fixed",
-      "reason": "Resolved within the accepted declarative trust model: all attached diff-base decisions must equal x-delivery-base; receive/scope verify imported commit existence, ancestry and its origin/HEAD merge-base. Replayed bundled probes now reject paired-base and later-shadowing edits and nonexistent imported HEAD. Targeted tests also reject unrelated HEAD/missing origin/HEAD, preserve delivery scope across supported implement/review and ordinary main advances. Removing only attached while retaining attach-approved is rejected. Consistently removing both markers and changing plaintext checked counts are accepted Baton-wide declarative residuals, not a stronger authenticity claim.",
-      "x-autofix-class": "manual",
-      "x-owner": "downstream-resolver",
-      "x-requires-verification": true,
-      "x-evidence": [
-        "node .context\\compound-engineering\\ce-review\\attach-013\\probe.mjs: paired-base mutation -> validation [], bundled receive code 0, scope files [].",
-        "Same probe: later-shadowing diff-base -> validation [], bundled receive code 0, scope files [].",
-        "Same probe: x-imported-head = 40 hexadecimal a characters -> validation [], bundled receive code 0.",
-        "The added tamper test only uses malformed SHA strings or a mismatched single decision; it does not cover coordinated valid-SHA mutations.",
-        "The claimed permanent provenance can also be removed after phase_completed becomes implement: the attachment validation branch no longer runs and validation succeeds."
-      ]
+      "reason": "Carry forward independently verified resolution from review commit 5ac63a7; product code is unchanged. All attached diff-base decisions must equal x-delivery-base; receive/scope verify imported commit existence, ancestry and its origin/HEAD merge-base. Prior bundled probes reject paired-base, shadowing and nonexistent imported HEAD. Consistent deletion of both markers and changed plaintext checked counts remain accepted declarative residuals, not cryptographic authenticity. This review independently reran all 38 attachment integration tests successfully.",
+      "x-evidence-source": "5ac63a7:.baton/quick/partial-feature-attach-013.review.json"
     },
     {
       "id": "F2",
@@ -49,16 +40,8 @@
       "persona": "correctness-reviewer",
       "confidence": 1,
       "disposition": "fixed",
-      "reason": "Resolved: hand-setting only gate role/date on never-approved output now fails E_TRANSITION in validate, bundled receive and scope. approve records one source/imported-head-bound attach-approved human-role decision; validator requires matching updated_by, hashes and date. Targeted stale/hash/actor/backdate/duplicate tests and supported refresh/reapproval pass. No invented phase-none receipt or cryptographic authenticity claim.",
-      "x-autofix-class": "manual",
-      "x-owner": "downstream-resolver",
-      "x-requires-verification": true,
-      "x-evidence": [
-        "Probe first verifies never-approved receive exits 3 with E_GATE_PENDING.",
-        "Probe restores the never-approved snapshot and writes only the configured role and old date; validation [], bundled receive code 0.",
-        "No prior human approval, approve CLI call for that snapshot, imported receipt, or human updated_by was present.",
-        "Existing role vocabulary validation is correct syntactically, but cannot establish the fresh action required by this newly introduced attachment path."
-      ]
+      "reason": "Carry forward independently verified resolution from review commit 5ac63a7; product code is unchanged. Hand-setting gate role/date alone fails E_TRANSITION. approve records source/imported-head-bound attach-approved evidence matching updated_by, hashes and date. Prior stale/hash/actor/backdate/duplicate probes passed; all 38 attachment integration tests passed again here, including supported refresh/reapproval. No phase-none receipt or cryptographic authenticity claim.",
+      "x-evidence-source": "5ac63a7:.baton/quick/partial-feature-attach-013.review.json"
     },
     {
       "id": "F3",
@@ -68,297 +51,69 @@
       "line": 35,
       "persona": "project-standards-reviewer",
       "confidence": 1,
-      "disposition": "open",
-      "reason": "Lines 34-37 still say feature histories shorter than 20 entries must start at specify (or have attachment provenance). Commit 4022803 deliberately removes that rule; src/lib/handoff.mjs imposes no start requirement, the restored legacy implement-only fixture validates, and both new compatibility tests pass. This contradicts docs/04-handoffs.md and the accepted compatibility/trust boundary. Remove the reverted start/retention claims and state that only initial phase-none or presence of attached/attach-approved requires attachment provenance. No product change is requested.",
-      "x-autofix-class": "manual",
-      "x-owner": "downstream-resolver",
-      "x-requires-verification": false,
+      "disposition": "fixed",
+      "reason": "Independently verified at 5a02749: removed shorter-than-20 history-start and full-history origin claims. Lines 34-39 now preserve existing unattached validation, require valid provenance when attached/attach-approved is present, and disclose consistent provenance deletion as an offline-undetectable plaintext rewrite relying on git/PR review. This matches docs/04-handoffs.md:123-140 and the prior accepted compatibility/trust boundary. Searches found no remaining reverted history-start invariant in current product documentation or source/installed Baton skill copies. Integration compatibility test for normal starts, cross-source seeds and legacy retained histories passed.",
       "x-evidence": [
-        "docs/reference/schemas.md:35-37 still claims the removed history-start invariant.",
-        "test/unit/validate-handoff.test.mjs:54 regression passes for existing implement-only history with no attachment.",
-        "test/integration/handoff-attach.test.mjs final compatibility test passes for 19- and 20-entry histories without origin markers."
+        "git diff 5ac63a7 5a02749 -- docs/reference/schemas.md: only documentation correction, no product change.",
+        "Current schema reference and handoffs guide both explicitly say existing unattached feature batons need not begin history at specify.",
+        "node --test test\\integration\\handoff-attach.test.mjs: 38/38 passed, zero skipped."
       ]
     }
   ],
-  "x-verdict": "Ready with fixes; unresolved P2 must be fixed or reasonedly dismissed before quick-lane landing",
+  "x-verdict": "Ready to land; no open P0/P1/P2 or other new findings",
   "x-model": "gpt-6.1-sol",
   "x-reasoning": "medium",
-  "x-execution": "One cohesive independent headless review, installed lenses applied directly. Explicit user override: no persona swarm, auto-fix, product edits or shipping.",
+  "x-execution": "Single cohesive independent headless review in separate detached checkout. User-required model/reasoning overrides configured claude-opus-5.5 suggestion. Installed persona lenses applied directly; no nested dispatch, auto-fix, product edits or shipping.",
   "x-selected-personas": [
     "correctness-reviewer",
     "testing-reviewer",
     "maintainability-reviewer",
     "project-standards-reviewer",
     "agent-native-reviewer",
-    "learnings-researcher",
-    "security-reviewer",
-    "adversarial-reviewer"
+    "learnings-researcher"
   ],
   "x-dispatched-personas": [],
   "x-coverage": {
-    "cli-base": "96e4aa04bdbec06c88ee4469837e1a9c14730a7a",
-    "ce-base": "96e4aa04bdbec06c88ee4469837e1a9c14730a7a",
-    "cli-subjects": [
-      ".github/skills/baton/SKILL.md",
-      "CHANGELOG.md",
-      "baton/skills/baton/SKILL.md",
-      "docs/04-handoffs.md",
-      "docs/reference/cli.md",
-      "docs/reference/commands.md",
-      "docs/reference/schemas.md",
-      "src/commands/handoff.mjs",
-      "src/lib/handoff.mjs",
-      "test/integration/handoff-attach.test.mjs",
-      "test/unit/validate-handoff.test.mjs"
-    ],
+    "cli-base": "4022803a392f9ca1392296e3e4a11c586abfcc74",
+    "ce-base": "4022803a392f9ca1392296e3e4a11c586abfcc74",
+    "cli-subjects": ["docs/reference/schemas.md"],
     "pinned-tracked-diff": [
-      ".baton/bin/baton.mjs",
-      ".baton/bin/baton.mjs.metafile.json",
-      ".baton/bin/baton.mjs.sha256",
+      ".baton/quick/partial-feature-attach-013.f3-work.json",
       ".baton/quick/partial-feature-attach-013.md",
       ".baton/quick/partial-feature-attach-013.review.json",
-      ".baton/quick/partial-feature-attach-013.work.json",
-      ".github/skills/baton/SKILL.md",
-      "CHANGELOG.md",
-      "baton/skills/baton/SKILL.md",
-      "docs/04-handoffs.md",
-      "docs/reference/cli.md",
-      "docs/reference/commands.md",
-      "docs/reference/schemas.md",
-      "src/commands/handoff.mjs",
-      "src/lib/handoff.mjs",
-      "test/integration/handoff-attach.test.mjs",
-      "test/unit/validate-handoff.test.mjs"
+      "docs/reference/schemas.md"
     ],
     "reviewed-files": [
-      ".baton/bin/baton.mjs",
-      ".baton/bin/baton.mjs.metafile.json",
-      ".baton/bin/baton.mjs.sha256",
+      ".baton/quick/partial-feature-attach-013.f3-work.json",
       ".baton/quick/partial-feature-attach-013.md",
       ".baton/quick/partial-feature-attach-013.review.json",
-      ".baton/quick/partial-feature-attach-013.work.json",
-      ".github/skills/baton/SKILL.md",
-      "CHANGELOG.md",
-      "baton/skills/baton/SKILL.md",
-      "docs/04-handoffs.md",
-      "docs/reference/cli.md",
-      "docs/reference/commands.md",
-      "docs/reference/schemas.md",
-      "src/commands/handoff.mjs",
-      "src/lib/handoff.mjs",
-      "test/integration/handoff-attach.test.mjs",
-      "test/unit/validate-handoff.test.mjs"
+      "docs/reference/schemas.md"
     ],
     "reviewed-files-equal-pinned-tracked-diff": true,
     "cli-subjects-subset-of-pinned-tracked-diff": true,
-    "full-delivery-base": "35347c559994e884b66fff69267954f1e9f83f5b",
-    "full-delivery-reviewed-files": [
-      ".baton/bin/baton.mjs",
-      ".baton/bin/baton.mjs.metafile.json",
-      ".baton/bin/baton.mjs.sha256",
+    "focused-delta": "5ac63a7..5a02749",
+    "focused-delta-files": [
+      ".baton/quick/partial-feature-attach-013.f3-work.json",
       ".baton/quick/partial-feature-attach-013.md",
-      ".baton/quick/partial-feature-attach-013.review.json",
-      ".baton/quick/partial-feature-attach-013.work.json",
-      ".github/skills/baton/SKILL.md",
-      "CHANGELOG.md",
-      "baton/schemas/handoff.schema.json",
-      "baton/skills/baton/SKILL.md",
-      "docs/04-handoffs.md",
-      "docs/reference/cli.md",
-      "docs/reference/commands.md",
-      "docs/reference/schemas.md",
-      "src/commands/handoff.mjs",
-      "src/lib/handoff.mjs",
-      "test/integration/handoff-attach.test.mjs",
-      "test/unit/validate-handoff.test.mjs"
+      "docs/reference/schemas.md"
     ],
-    "full-delivery-reviewed-files-equal-main-diff": true,
-    "note": "CLI base advances after the previous review by normal quick-lane semantics. Reviewed all 17 current pinned files and supplemented to all 18 main-to-HEAD files, including the earlier schema delta. Exact CLI base retained; never replaced by origin/HEAD. Generated bundle reviewed through all source deltas plus deterministic build equivalence, SHA and metafile. Outgoing review bookkeeping emitted after enumeration; no auto-fix changed the product tree.",
+    "carry-forward-review": "5ac63a7:.baton/quick/partial-feature-attach-013.review.json",
+    "note": "Exact CLI base retained, never recomputed. Reviewed all four pinned tracked files, focusing on the three-file F3 delta. Unchanged code and settled F1/F2 results carried forward from prior independent review. Historical baton risks R2/R4 and older work receipts are superseded by prior review and latest work evidence, not final product claims. Outgoing review JSON, handoff payload and supported CLI bookkeeping are review-owned evidence emitted after product enumeration. No auto-fix.",
     "untracked-excluded": [],
-    "ignored-excluded": [
-      ".context/compound-engineering/ce-review/attach-013/",
-      ".context/compound-engineering/ce-review/attach-013-rereview/"
-    ],
     "suppressed-findings": 0,
     "failed-reviewers": []
   },
   "x-validation": [
-    {
-      "command": "node --test --test-concurrency=2 test\\integration\\handoff-attach.test.mjs test\\integration\\handoff-management.test.mjs test\\integration\\relay.test.mjs test\\unit\\validate-handoff.test.mjs test\\unit\\checks.test.mjs",
-      "result": "207 tests, 207 pass, zero fail or skipped; independently executed at 4022803."
-    },
-    {
-      "command": "node .context\\compound-engineering\\ce-review\\attach-013\\probe.mjs",
-      "result": "Replayed prior scenarios against current bundled CLI; first attempt stopped because newly throwing scope rejection needed harness catch. Changed only ignored harness to call exception-aware bundled scope; final run completed, fixture removed. F1/F2 counterexamples now reject. False checked count and consistent removal of both provenance markers remain accepted disclosed declarative residuals; product review coverage is not narrowed by checked-count mutation."
-    },
-    {
-      "command": "node src\\commands\\build.mjs --check",
-      "result": "Passed; 409433 bytes < 409600, SHA/metafile match 654d399376d583c52cb81eb7750da2796b275081ee6685a87ac5ac9a752dec22."
-    },
-    {
-      "command": "git diff --check",
-      "result": "Passed."
-    },
-    {
-      "command": "git ls-tree -r 35347c5 -- test/fixtures/handoffs compared with HEAD; exact original decision/rationale literals",
-      "result": "Every existing fixture blob/mode/path byte-identical to main; all five original diff-base texts unchanged."
-    },
-    {
-      "command": "npm run check; npm test",
-      "result": "Not rerun as requested. Coordinator-supplied author evidence at 4022803: check exit 0; suite 420/420 pass, zero skipped. Historical work receipt at 287a8b1 is not relabelled as current independently executed full-gate evidence."
-    }
+    {"command": "npm run lint:md", "result": "Passed; 47 files, zero errors."},
+    {"command": "node .baton\\bin\\baton.mjs validate", "result": "Passed; only existing recommended-pack and quick-size warnings."},
+    {"command": "node --test test\\integration\\handoff-attach.test.mjs", "result": "Passed; 38/38 tests, zero failures or skips."},
+    {"command": "git diff --check", "result": "Passed."},
+    {"command": "npm run check", "result": "Not independently rerun for docs-only delta. Latest work receipt at 5a02749 records configured full check passing with 420/420 tests. Prior 207-test independent review evidence retained, not relabelled as this run."}
   ],
-  "x-probe-results": {
-    "base": "a3ab772383710d1dbba6a833de5b888e40d42e6b",
-    "imported": "1574b9f0b9f94774a8e0302759fd083d4e686864",
-    "results": [
-      {
-        "name": "delivery-base moved to imported HEAD (paired diff-base)",
-        "validation": [],
-        "receive": {
-          "code": 1,
-          "output": "",
-          "stderr": "{\"ok\":false,\"command\":\"handoff\",\"version\":\"0.1.2\",\"errors\":[{\"code\":\"E_CHECK_FAILED\",\"message\":\"Unverifiable attachment ancestry or origin/HEAD base\",\"file\":\"\"}],\"warnings\":[],\"data\":null}\n"
-        },
-        "scope": {
-          "code": 1,
-          "output": "",
-          "stderr": "{\"ok\":false,\"command\":\"handoff\",\"version\":\"0.1.2\",\"errors\":[{\"code\":\"E_CHECK_FAILED\",\"message\":\"Unverifiable attachment ancestry or origin/HEAD base\",\"file\":\"\"}],\"warnings\":[],\"data\":null}\n"
-        }
-      },
-      {
-        "name": "nonexistent full imported-head",
-        "validation": [
-          {
-            "code": "E_TRANSITION",
-            "file": "specs/011-existing/handoff.md",
-            "message": "Invalid or stale attachment approval evidence"
-          }
-        ],
-        "receive": {
-          "code": 1,
-          "output": "{\"ok\":false,\"command\":\"handoff\",\"version\":\"0.1.2\",\"errors\":[{\"code\":\"E_TRANSITION\",\"file\":\"specs/011-existing/handoff.md\",\"message\":\"Invalid or stale attachment approval evidence\"}],\"warnings\":[],\"data\":null}\n",
-          "stderr": ""
-        },
-        "scope": {
-          "code": 1,
-          "output": "{\"ok\":false,\"command\":\"handoff\",\"version\":\"0.1.2\",\"errors\":[{\"code\":\"E_TRANSITION\",\"file\":\"specs/011-existing/handoff.md\",\"message\":\"Invalid or stale attachment approval evidence\"}],\"warnings\":[],\"data\":null}\n",
-          "stderr": ""
-        }
-      },
-      {
-        "name": "later diff-base shadows delivery base",
-        "validation": [
-          {
-            "code": "E_TRANSITION",
-            "file": "specs/011-existing/handoff.md",
-            "message": "Invalid Baton implement attachment provenance or initial gate/history"
-          }
-        ],
-        "receive": {
-          "code": 1,
-          "output": "{\"ok\":false,\"command\":\"handoff\",\"version\":\"0.1.2\",\"errors\":[{\"code\":\"E_TRANSITION\",\"file\":\"specs/011-existing/handoff.md\",\"message\":\"Invalid Baton implement attachment provenance or initial gate/history\"}],\"warnings\":[],\"data\":null}\n",
-          "stderr": ""
-        },
-        "scope": {
-          "code": 1,
-          "output": "{\"ok\":false,\"command\":\"handoff\",\"version\":\"0.1.2\",\"errors\":[{\"code\":\"E_TRANSITION\",\"file\":\"specs/011-existing/handoff.md\",\"message\":\"Invalid Baton implement attachment provenance or initial gate/history\"}],\"warnings\":[],\"data\":null}\n",
-          "stderr": ""
-        }
-      },
-      {
-        "name": "forged approval on never-approved data",
-        "validation": [
-          {
-            "code": "E_TRANSITION",
-            "file": "specs/011-existing/handoff.md",
-            "message": "Invalid or stale attachment approval evidence"
-          }
-        ],
-        "receive": {
-          "code": 1,
-          "output": "{\"ok\":false,\"command\":\"handoff\",\"version\":\"0.1.2\",\"errors\":[{\"code\":\"E_TRANSITION\",\"file\":\"specs/011-existing/handoff.md\",\"message\":\"Invalid or stale attachment approval evidence\"}],\"warnings\":[],\"data\":null}\n",
-          "stderr": ""
-        },
-        "scope": {
-          "code": 1,
-          "output": "{\"ok\":false,\"command\":\"handoff\",\"version\":\"0.1.2\",\"errors\":[{\"code\":\"E_TRANSITION\",\"file\":\"specs/011-existing/handoff.md\",\"message\":\"Invalid or stale attachment approval evidence\"}],\"warnings\":[],\"data\":null}\n",
-          "stderr": ""
-        }
-      },
-      {
-        "name": "false checked-task count",
-        "validation": [],
-        "receive": {
-          "code": 0,
-          "output": {
-            "ok": true,
-            "command": "handoff",
-            "version": "0.1.2",
-            "errors": [],
-            "warnings": [],
-            "data": {
-              "read_first": [
-                {
-                  "path": "specs/011-existing/spec.md",
-                  "why": "Imported source of truth",
-                  "sha256": "603c828a03383f98b82bf9c6787deeb5c40c02871a1b8d6ba14b0d538020a02b"
-                },
-                {
-                  "path": "specs/011-existing/plan.md",
-                  "why": "Imported source of truth",
-                  "sha256": "c3964bb3b70a957ec9b233c7dd3653f6ba17701ab00facf88ae1393dc6155577"
-                },
-                {
-                  "path": "specs/011-existing/tasks.md",
-                  "why": "Imported source of truth",
-                  "sha256": "8856cf4ae79ee1f3d5a63716dfff34ec0688a2bef651aa2544cd2f4efcf93eab"
-                }
-              ],
-              "do_not_read": []
-            }
-          }
-        },
-        "scope": {
-          "code": 0,
-          "output": {
-            "ok": true,
-            "command": "handoff",
-            "version": "0.1.2",
-            "errors": [],
-            "warnings": [],
-            "data": {
-              "base": "a3ab772383710d1dbba6a833de5b888e40d42e6b",
-              "files": [
-                "product/imported.mjs"
-              ]
-            }
-          }
-        }
-      },
-      {
-        "name": "remove permanent attachment after implement",
-        "validation": [
-          {
-            "code": "E_TRANSITION",
-            "file": "specs/011-existing/handoff.md",
-            "message": "Invalid Baton implement attachment provenance or initial gate/history"
-          }
-        ]
-      },
-      {
-        "name": "remove both attachment and approval after implement (accepted declarative residual)",
-        "validation": []
-      }
-    ]
-  },
-  "x-default-behavior": "Normal feature creation, inference, bounded and shorter legacy histories, normal relay and all existing validation fixtures preserved. No default product regression identified.",
-  "x-docs": "Imported baseline is clearly context only, not prior approval; full delivery is covered and plaintext authenticity boundary disclosed. One stale history-start statement in schema reference remains F3.",
-  "x-provenance": "Quick baton D3 contains explicit owner eligibility exception. Latest read_first work.json correctly supersedes history-start invariant and discloses residuals, 409433-byte bundle and historical versus correction evidence. Older summary/D15/D19/R4 and 419-test receipt refer to earlier work and are superseded by D20/D21 plus latest work artifact; do not present them as final proof. No fake human approval recorded.",
-  "x-memory": "MemPalace search found no attachment-specific solution. Related returned text: ce-review interactive/autofix only; baton-review always uses mode:headless.",
-  "x-lane": "No expansion beyond explicit D3 owner exception. F3 is documentation correction only. Return to work explicitly with --next work for unresolved P2 (automatic blocker routing handles P0/P1 only). No landing until resolved.",
+  "x-memory": "MemPalace attachment/history-start/provenance recall returned no matching results.",
   "x-residual-risks": [
-    "167-byte bundle headroom.",
-    "Authenticity of consistent plaintext rewriting relies on git/PR review, just as normal relay. Accepted scope decision retained; not re-raised as P1."
-  ]
+    "Accepted declarative plaintext authenticity boundary relies on git/PR review.",
+    "Prior independently verified bundle remains unchanged at 409433 bytes, 167-byte headroom."
+  ],
+  "x-lane": "F3 correction adds no user-facing behavior or public contract. Existing D3 owner exception remains unchanged; no scope expansion. All prior findings fixed; supported review write may route to land, but no shipping is authorized here."
 }

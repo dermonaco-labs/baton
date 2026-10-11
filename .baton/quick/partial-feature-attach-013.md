@@ -2,100 +2,30 @@
 baton: 1
 lane: quick
 feature: partial-feature-attach-013
-phase_completed: work
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: land
+next_owner: baton-land
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Addressed P2 F3: corrected the schema reference's reverted history-start invariant. Existing unattached feature-baton validation is unchanged; attached/attach-approved markers require valid provenance, while consistent removal of all provenance is a plaintext rewrite whose authenticity relies on git/PR review. Documentation-only correction; return to independent review, not land. No push, PR, merge or release."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Independent docs-only rereview at 5a02749: F3 fixed, no new findings, F1/F2 resolutions carried forward for unchanged code. Markdown lint and Baton validation passed; attachment integration tests 38/38 passed. Ready for land handoff only; no push, PR, merge or release."
 read_first:
   - path: .baton/quick/partial-feature-attach-013.md
-    why: Quick intent and relay state
-  - path: .baton/quick/partial-feature-attach-013.f3-work.json
-    why: F3 documentation correction and task-specific model override
+    why: Quick intent and current relay
+  - path: .baton/quick/partial-feature-attach-013.review.json
+    why: Normalized findings, exact-base coverage and independent test evidence
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: diff-nonempty
+  - id: findings-json-valid
     met: true
-    evidence: 1 changed files
-  - id: local-checks-pass
+    evidence: .baton/quick/partial-feature-attach-013.review.json
+  - id: findings-fixed-or-dismissed
     met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      e shipped phase template (17.9667ms)
-      ✔ every feature phase has entry and exit checks (1.0116ms)
-      ✔ removing a built-in exit criterion warns (0.4443ms)
-      ✔ check groups evaluate every member and preserve evidence (1.0953ms)
-      ✔ check validation rejects unknown checks, malformed groups and duplicate keys (0.1964ms)
-      ✔ weakened contract detects moving mandatory exit into a disjunction (0.1998ms)
-      ✔ weakened contracts report removed entry checks, including quick-lane entry overrides (1.1037ms)
-      ✔ weakened contracts report disabled human gates without flagging unchanged defaults (0.2655ms)
-      ✔ shipped phase template is valid and never weakens its built-in contracts (16.6761ms)
-      ✔ tracked Baton documentation contains no private feed hostnames (63.2095ms)
-      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.6064ms)
-      ✔ adopter command table remains contiguous (0.4335ms)
-      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.5927ms)
-      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (1.5241ms)
-      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (24.5064ms)
-      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (2.2947ms)
-      ✔ compiles all draft 2020-12 schemas once (109.3441ms)
-      ✔ findings fixture validates and invalid fixture reports a JSON pointer (2.612ms)
-      ✔ pack schema requires a classified reason for every optional reference (0.6904ms)
-      ✔ sync bump explains pin and file changes for a PR body (1.0525ms)
-      ✔ sync rejects unpinned bump values and check/bump combination (22.0272ms)
-      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (168.965ms)
-      ✔ generated registry preserves verified bytes when only installation time changes (8.1254ms)
-      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (4.8257ms)
-      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (498.4785ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (209.2771ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (95.625ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (65.2131ms)
-        ✔ E_ANALYSIS_CRITICAL (3.9276ms)
-        ✔ E_ANALYSIS_MISSING (3.565ms)
-        ✔ E_APPROVER_FORMAT (2.802ms)
-        ✔ E_BLOCKING_OPEN (4.7686ms)
-        ✔ E_BODY_SECTIONS (2.4505ms)
-        ✔ E_BUDGET (5.0651ms)
-        ✔ E_DENYLIST (2.5665ms)
-        ✔ E_EXIT_UNMET (2.4753ms)
-        ✔ E_GATE_PENDING (70.3054ms)
-        ✔ E_LANE_ESCALATE (819.9511ms)
-        ✔ E_LANE_MISMATCH (2.275ms)
-        ✔ E_MISSING_ARTIFACT (5.0161ms)
-        ✔ E_MODEL_NOT_ALLOWED (4.7244ms)
-        ✔ E_MULTIPLE_BATONS (4.2036ms)
-        ✔ E_NO_PREREG (3.6171ms)
-        ✔ E_OWNER (2.9286ms)
-        ✔ E_PR_MISSING (2.9128ms)
-        ✔ E_REVIEW_BLOCKING (165.5863ms)
-        ✔ E_REVIEW_MISSING (4.4891ms)
-        ✔ E_SCHEMA (3.2343ms)
-        ✔ E_STALE_ARTIFACT (6.2611ms)
-        ✔ E_TRANSITION (2.4983ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1220.0099ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (70.299ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (25.7462ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (61.9711ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (7.2791ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (89.8294ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (78.0552ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (1.6084ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (18.9333ms)
-      ✔ ready with a blocking question is rejected (70.499ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (103.4871ms)
-      ℹ tests 420
-      ℹ suites 0
-      ℹ pass 420
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 0
-      ℹ todo 0
-      ℹ duration_ms 204847.648
+    evidence: 0 findings unresolved
+  - id: quick-scope-held
+    met: true
+    evidence: Inspected all 16 pinned tracked files at 35347c559994e884b66fff69267954f1e9f83f5b..96e4aa04bdbec06c88ee4469837e1a9c14730a7a, including all 11 CLI subjects, generated bundle and bookkeeping. Changes are limited to the requested pre-Baton attachment recovery, supporting validation, tests and documentation. The new attachment flag/fields are not eligible under the unmodified constitution rule; current baton D3 expressly records the repository-owner exception for this bug fix. Honor that exception, not a general permission to expand quick lanes. No additional unapproved scope was found. Two P1 blockers remain open and route to work.
 open_questions: []
 decisions:
   - id: D1
@@ -225,6 +155,28 @@ decisions:
     decision: Honor the user-required implementation routing for the F3 correction
     rationale: The user explicitly requires gpt-6.1-sol with medium reasoning for this same-worktree implementer, overriding the configured gpt-6-sol suggestion for this task only. Documentation-only correction under the existing quick scope; no code, release, gate approval or shipping action.
     by: baton-013-work
+  - id: D29
+    decision: Use user-required independent F3 review model
+    rationale: gpt-6.1-sol with medium reasoning explicitly overrides the configured review-role suggestion claude-opus-5.5 for this review only. One cohesive headless review in a separate detached checkout; only installed persona lenses selected, none dispatched. No product edits or shipping.
+    by: baton-013-review
+  - id: D30
+    decision: Keep F3 correction within existing quick scope
+    tag: quick-scope-held
+    rationale: Exact CLI base 4022803 retained; CLI subject docs/reference/schemas.md is a subset of all four reviewed pinned tracked files. Focused 5ac63a7..5a02749 delta changes only docs and work bookkeeping, adding no user-facing behavior or public contract. No expansion beyond D3 owner exception. F3 resolved; F1/F2 remain fixed under prior independent review. Current lint/validate pass and 38/38 attachment integration tests pass. Latest author full-check 420/420 is carried evidence, not a newly executed reviewer full gate. Land remains responsible for shipping checks and human PR gate.
+    by: baton-013-review
+  - id: D31
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 3a3a9d27356f8a0c79f3407b48db7b0260c2cc12a839a0c466e73873369b269b
+    x-base-commit: 4022803a392f9ca1392296e3e4a11c586abfcc74
+    by: baton
+  - id: D32
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 5a02749b0f19735251792d1ff168ce521cdb9881
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -279,8 +231,15 @@ history:
     x-worktree: 6812f2b57cde56efd67cf02d2fe93b35fa1394f470368658688efd81a813c29b
     commit: 5ac63a7
     x-action: write
-updated_at: 2026-10-11T19:32:07.807Z
-updated_by: ce-work
+  - phase: review
+    at: 2026-10-11T19:39:47.186Z
+    by: baton-013-review
+    writer: 2f72ece7e88d9a138fc04bb143285ceb5553afd84017436d3e9f0b2628a989bd
+    x-worktree: cc50c11fe81968589b9acf45ffbbf4c5c26c585f041237b3860f9a71e738a165
+    commit: 5a02749
+    x-action: write
+updated_at: 2026-10-11T19:39:47.181Z
+updated_by: baton-review
 risks:
   - id: R1
     text: Imported work is not prior review approval. A fresh configured-role implement gate and independent review of the full delivery remain required.
