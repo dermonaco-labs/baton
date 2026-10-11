@@ -181,8 +181,8 @@ decisions:
     by: baton-013-land
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via direct approval
+  approved_at: 2026-10-11
 history:
   - phase: work
     at: 2026-10-11T18:39:05.810Z
@@ -247,8 +247,15 @@ history:
     x-worktree: cc50c11fe81968589b9acf45ffbbf4c5c26c585f041237b3860f9a71e738a165
     commit: "3336942"
     x-action: write
-updated_at: 2026-10-11T20:01:04.451Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-10-11T20:44:13.101Z
+    by: human:repository-owner
+    writer: 97ada5a563007864a957541059b8020b8b4b4660b36cb8bf67485d7ce465c414
+    x-worktree: 6812f2b57cde56efd67cf02d2fe93b35fa1394f470368658688efd81a813c29b
+    commit: 18adc96
+    x-action: approve
+updated_at: 2026-10-11T20:44:13.101Z
+updated_by: human:repository-owner
 risks:
   - id: R1
     text: Imported work is not prior review approval. A fresh configured-role implement gate and independent review of the full delivery remain required.
