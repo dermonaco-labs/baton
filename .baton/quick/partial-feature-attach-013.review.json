@@ -1,0 +1,152 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/attach-013/"
+  },
+  "base": "35347c559994e884b66fff69267954f1e9f83f5b",
+  "head": "96e4aa04bdbec06c88ee4469837e1a9c14730a7a",
+  "personas": [
+    "adversarial-reviewer",
+    "agent-native-reviewer",
+    "correctness-reviewer",
+    "learnings-researcher",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "repo-research-analyst",
+    "security-reviewer",
+    "testing-reviewer"
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "P1",
+      "title": "Edited attachment provenance can exclude imported product work from review",
+      "file": "src/lib/handoff.mjs",
+      "line": 126,
+      "persona": "correctness-reviewer",
+      "confidence": 1,
+      "disposition": "open",
+      "reason": "The new validator accepts SHA-shaped strings and any matching diff-base decision, not verified attachment provenance or the effective last diff-base. In a valid approved attachment, setting both x-delivery-base and x-base-commit to the imported HEAD passes validate and bundled implement receive (exit 0); scope then returns that HEAD and an empty product file set, dropping product/imported.mjs. Alternatively append a later diff-base at imported HEAD while retaining the original matching decision: validate/receive still pass and scope again loses imported work. An unrelated/nonexistent full x-imported-head also passes. Validate commit existence/ancestry and attachment delivery provenance, enforce that the effective review base remains the pinned delivery base across transitions, and add coordinated valid-SHA tampering and later-shadowing CLI regressions. Preserve the historical pinned base when remote refs advance rather than blindly recomputing it. Do not treat matching attacker-edited fields as proof.",
+      "x-autofix-class": "manual",
+      "x-owner": "downstream-resolver",
+      "x-requires-verification": true,
+      "x-evidence": [
+        "node .context\\compound-engineering\\ce-review\\attach-013\\probe.mjs: paired-base mutation -> validation [], bundled receive code 0, scope files [].",
+        "Same probe: later-shadowing diff-base -> validation [], bundled receive code 0, scope files [].",
+        "Same probe: x-imported-head = 40 hexadecimal a characters -> validation [], bundled receive code 0.",
+        "The added tamper test only uses malformed SHA strings or a mismatched single decision; it does not cover coordinated valid-SHA mutations.",
+        "The claimed permanent provenance can also be removed after phase_completed becomes implement: the attachment validation branch no longer runs and validation succeeds."
+      ]
+    },
+    {
+      "id": "F2",
+      "severity": "P1",
+      "title": "Initial attachment accepts a hand-forged approval without a fresh human action",
+      "file": "src/lib/handoff.mjs",
+      "line": 129,
+      "persona": "correctness-reviewer",
+      "confidence": 1,
+      "disposition": "open",
+      "reason": "The new initial-attachment invariant only requires gate.required=true and empty history. Starting from the never-approved init output, set gate.approved_by='repository owner' and gate.approved_at='2000-01-01'; leave updated_by='baton' and every other field unchanged. validate returns [] and bundled implement receive exits 0. The existing declarative role/date gate is newly used by this path without any attachment-specific fresh-approval evidence; record() deliberately omits all receipts for phase none, so even supported approval produces no independent receipt. This fails the requested forged-state rejection and fresh-approval requirement, rather than representing a cryptographic vulnerability claim. Add attachment-specific approval evidence bound to the attachment/source snapshot (without inventing completed phase history), validate it on receive, and test forged/stale approval as well as the supported approve path. If declarative role/date approval is intentionally the whole trust model, obtain an explicit scope decision narrowing the promised fail-closed contract instead of claiming forged approval is rejected.",
+      "x-autofix-class": "manual",
+      "x-owner": "downstream-resolver",
+      "x-requires-verification": true,
+      "x-evidence": [
+        "Probe first verifies never-approved receive exits 3 with E_GATE_PENDING.",
+        "Probe restores the never-approved snapshot and writes only the configured role and old date; validation [], bundled receive code 0.",
+        "No prior human approval, approve CLI call for that snapshot, imported receipt, or human updated_by was present.",
+        "Existing role vocabulary validation is correct syntactically, but cannot establish the fresh action required by this newly introduced attachment path."
+      ]
+    }
+  ],
+  "x-verdict": "Not ready",
+  "x-model": "gpt-6.1-sol",
+  "x-reasoning": "medium",
+  "x-execution": "One cohesive independent reviewer, applying installed persona lenses directly as explicitly requested. No persona agents dispatched, no auto-fixes, no product-code edits.",
+  "x-selected-personas": [
+    "correctness-reviewer",
+    "testing-reviewer",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "agent-native-reviewer",
+    "learnings-researcher",
+    "security-reviewer",
+    "adversarial-reviewer"
+  ],
+  "x-dispatched-personas": [],
+  "x-coverage": {
+    "cli-base": "35347c559994e884b66fff69267954f1e9f83f5b",
+    "ce-base": "35347c559994e884b66fff69267954f1e9f83f5b",
+    "cli-subjects": [
+      ".github/skills/baton/SKILL.md",
+      "CHANGELOG.md",
+      "baton/schemas/handoff.schema.json",
+      "baton/skills/baton/SKILL.md",
+      "docs/04-handoffs.md",
+      "docs/reference/cli.md",
+      "docs/reference/commands.md",
+      "docs/reference/schemas.md",
+      "src/commands/handoff.mjs",
+      "src/lib/handoff.mjs",
+      "test/integration/handoff-attach.test.mjs"
+    ],
+    "pinned-tracked-diff": [
+      ".baton/bin/baton.mjs",
+      ".baton/bin/baton.mjs.metafile.json",
+      ".baton/bin/baton.mjs.sha256",
+      ".baton/quick/partial-feature-attach-013.md",
+      ".baton/quick/partial-feature-attach-013.work.json",
+      ".github/skills/baton/SKILL.md",
+      "CHANGELOG.md",
+      "baton/schemas/handoff.schema.json",
+      "baton/skills/baton/SKILL.md",
+      "docs/04-handoffs.md",
+      "docs/reference/cli.md",
+      "docs/reference/commands.md",
+      "docs/reference/schemas.md",
+      "src/commands/handoff.mjs",
+      "src/lib/handoff.mjs",
+      "test/integration/handoff-attach.test.mjs"
+    ],
+    "reviewed-files-equal-pinned-tracked-diff": true,
+    "cli-subjects-subset-of-pinned-tracked-diff": true,
+    "generated-review": "Generated bundle/metafile reviewed through complete source delta and deterministic build --check equivalence; SHA sidecar independently matches bundle bytes.",
+    "untracked-excluded": [],
+    "suppressed-findings": 0,
+    "failed-reviewers": [],
+    "bookkeeping-note": "This findings file and the outgoing review receipt are emitted after scope review; no auto-fix changes the reviewed product tree."
+  },
+  "x-validation": [
+    {
+      "command": "node --test test\\integration\\handoff-attach.test.mjs test\\integration\\handoff-management.test.mjs test\\unit\\validate-handoff.test.mjs",
+      "result": "Passed 61/61, zero skips. Initial attempt failed because the fresh checkout lacked yaml; npm ci --ignore-scripts --no-audit --no-fund --quiet restored locked dependencies, then this exact targeted command passed."
+    },
+    {
+      "command": "node .context\\compound-engineering\\ce-review\\attach-013\\probe.mjs",
+      "result": "Completed twice. Five edited-state probes were unexpectedly accepted by bundled receive (exit 0): paired delivery-base, nonexistent imported-head, later-shadowing diff-base, forged approval and false imported checked count. Removing provenance after an implement transition also passed validation. Fixture had checked tasks, remaining tasks and no handoff.md before init; it was cleaned afterward."
+    },
+    {
+      "command": "node src\\commands\\build.mjs --check",
+      "result": "Passed; deterministic bundle is 409557 bytes, unchanged ceiling 409600."
+    },
+    {
+      "command": "Get-FileHash .baton\\bin\\baton.mjs -Algorithm SHA256 compared with .baton\\bin\\baton.mjs.sha256",
+      "result": "Passed; 130a7e7faec0e7264ab77b2c80d032be7feb6badaada503b31b9db068bdc98f6."
+    },
+    {
+      "command": "git diff --check",
+      "result": "Passed."
+    }
+  ],
+  "x-default-behavior": "Existing creation/inference integration tests pass; read every source refactor hunk and verified preserved quick/analyze/review decision text. Default semantics show no identified regression. Full check not rerun; author's 404/404 evidence is not relabelled as independent review validation.",
+  "x-docs-and-schema": "Docs correctly disclaim imported work as prior review, and the new schema permits feature none -> implement. However claims of CLI-written/permanent provenance and a fresh gate exceed what edited-state validation proves (F1/F2).",
+  "x-known-pattern": "docs/solutions/per-checkout-identity-self-review-2026-09-29.md says: It is a process guard, not a security boundary. Review findings concern the explicit fail-closed attachment contract, not a claim of secure protection from a repository owner. MemPalace search returned no specific attachment solution.",
+  "x-lane": "Honor current baton D3: explicit repository-owner override of constitution quick-lane restriction for this recovery bug fix only. This does add attachment flags/fields; no assertion that the unmodified quick-lane eligibility rule independently permits them.",
+  "x-residual-risks": [
+    "Only 43 bytes remain under the unchanged bundle ceiling.",
+    "False imported checked-task count and removal of permanent provenance are further manifestations of F1, not extra duplicate findings.",
+    "Existing general approval metadata is declarative; F2 requires either a scoped attachment-specific proof or an explicit narrowing of the requested contract."
+  ]
+}
