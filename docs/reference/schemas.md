@@ -31,11 +31,12 @@ The latter requires exactly one reserved `attached` decision by `baton`,
 Every Baton `diff-base` decision must have `x-base-commit` equal to
 `x-delivery-base`; initial history is empty and `gate.required: true`.
 Duplicate or non-feature attachments are invalid. Provenance remains
-permanent through supported implement → review transitions. Feature histories
-shorter than the 20-entry limit must start at `specify`, optionally after one
-`brainstorm`/quick `work`/quick `review` seed, or require attachment provenance.
-Full histories may be truncated; their normal start is not provable offline.
+permanent through supported implement → review transitions. Existing unattached
+feature batons need not begin history at `specify`; their validation is unchanged.
 Presence of `attached` or `attach-approved` always requires valid provenance.
+Consistently deleting all attachment and approval provenance after implement is
+a plaintext rewrite not detectable offline. Authenticity relies on git history
+and PR review, as in Baton's declarative trust model for the normal relay.
 
 `x-delivery-base` is the merge-base of imported HEAD with `origin/HEAD`: review covers
 the full main → feature delivery and retains this base across later reviews.
