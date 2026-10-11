@@ -71,3 +71,42 @@ escalation, or use `handoff init --infer` for a pre-Baton feature
 (it requires human review). `handoff migrate --dry-run` inspects schema
 migration; schema 1 currently needs no change. For non-baton codes, see
 [troubleshooting](08-troubleshooting.md).
+
+### Attach a pre-Baton feature at implement
+
+For an existing feature with `spec.md`, `plan.md` and `tasks.md`, explicitly
+attach it at implementation rather than claiming earlier Baton phases ran:
+
+```sh
+node .baton/bin/baton.mjs handoff init --feature 011-existing --infer --phase implement --reason "Resume pre-Baton work" --from-json attach.json
+node .baton/bin/baton.mjs handoff approve --feature 011-existing --by "repository owner"
+node .baton/bin/baton.mjs handoff receive --feature 011-existing --phase implement
+```
+
+`attach.json` may contain only `acceptance_checks`, `summary`, `read_first`,
+`assumptions` and `risks`. Register acceptance checks for every story in
+`tasks.md` and its `## Acceptance Registry`; receive checks registry IDs.
+Missing sources or invalid checks prevent creation. Keep all three sources
+fresh: attachment hashes them without changing their bytes.
+
+The attached baton has `phase_completed: none`, empty history and a pending
+human gate. Prior checked tasks are counted as imported provenance, not
+Baton-executed work; earlier approvals and phase receipts are not imported.
+A fresh configured-role approval is required before implement receive.
+Review covers the full main → feature delivery, including pre-Baton product
+work and post-attachment changes. The `diff-base` decision records
+`git merge-base HEAD origin/HEAD`; an unresolved base fails closed with
+`E_CHECK_FAILED` and no baton is written. Ensure `origin/HEAD` resolves before
+attaching. The `attached` decision records that merge-base as
+`x-delivery-base`, the full attachment HEAD as `x-imported-head`, and the
+imported checked-task count as `x-checked-tasks`.
+
+`x-imported-head` is context only: reviewers can distinguish the imported
+baseline from Baton-executed work, but Baton does not attest that imported
+work was previously reviewed. Settled history is never relabelled or
+re-receipted. Normal implement → review relay resumes after the first write;
+later review writes retain the attachment's delivery base, including when
+findings send the feature back to implement. Normal unattached features keep
+their existing analyze/review base semantics.
+Without `--phase`, `init --infer` still requests human confirmation before
+clarification. Only `--phase implement` is supported, with a required reason.

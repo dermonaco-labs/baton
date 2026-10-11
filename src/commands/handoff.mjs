@@ -15,6 +15,8 @@ import { serializeFrontmatter } from '../lib/frontmatter.mjs';
 import { loadModelSettings, resolveModel, modelPolicyIssue } from '../lib/models.mjs';
 
 const execFileAsync = promisify(execFile);
+/** @param {string} message */
+const usage = (message) => new BatonError('E_USAGE', message, 2);
 /** @param {string} root @param {string|undefined} base */
 async function reviewedTree(root, base) {
   const files = await changedFiles(root, { subject: true, base });
@@ -34,17 +36,12 @@ async function reviewedTree(root, base) {
 const headingBody = (next) => `## Goal\nKeep the work in scope.\n\n## What changed\nPending phase work.\n\n## Next steps\n1. \`/${next}\`\n\n## Watch out for\n- Escalate decisions that change behaviour or public contracts.\n`;
 /** @param {string} root */
 async function commitId(root) {
-  try {
-    return (await execFileAsync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, windowsHide: true })).stdout.trim();
-  } catch (error) {
-    if ([128, 'ENOENT'].includes(/** @type {{code?:number|string}} */ (error).code ?? '')) return null;
-    throw error;
-  }
+  return fullCommitId(root, ['rev-parse', '--short', 'HEAD']);
 }
-/** @param {string} root */
-async function fullCommitId(root) {
+/** @param {string} root @param {string[]} [args] */
+async function fullCommitId(root, args = ['rev-parse', 'HEAD']) {
   try {
-    return (await execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: root, windowsHide: true })).stdout.trim();
+    return (await execFileAsync('git', args, { cwd: root, windowsHide: true })).stdout.trim();
   } catch (error) {
     if ([128, 'ENOENT'].includes(/** @type {{code?:number|string}} */ (error).code ?? '')) return null;
     throw error;
@@ -76,6 +73,36 @@ function nextId(entries, prefix) {
   return `${prefix}${Math.max(0, ...entries.map((item) => Number(new RegExp(`^${prefix}(\\d+)$`).exec(item.id)?.[1] ?? 0))) + 1}`;
 }
 
+/** @param {string} root @param {string} path */
+async function readAgentJson(root, path) {
+  try {
+    return JSON.parse(await readFile(withinRoot(root, path), 'utf8'));
+  } catch (error) {
+    if (error instanceof SyntaxError) throw usage(`Invalid JSON in ${path}: ${error.message}`);
+    if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT' || /Path escapes repository:/.test(String(error))) {
+      throw usage(`Cannot read --from-json ${path}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    throw error;
+  }
+}
+
+/** @param {unknown} data @param {string[]} fields */
+function unexpectedFields(data, fields) {
+  return !data || typeof data !== 'object' || Array.isArray(data) ||
+    Object.keys(data).some((key) => !fields.includes(key));
+}
+
+/** @param {string} root @param {Record<string,any>} data @param {string} decision @param {string} rationale @param {string|null} [base] */
+async function recordDiffBase(root, data, decision, rationale, base = null) {
+  base ??= data.decisions?.find((/** @type {{tag?:string}} */ item) => item.tag === 'attached')?.['x-delivery-base'] ?? await fullCommitId(root);
+  if (!base) throw new BatonError('E_CHECK_FAILED', 'Cannot record diff base without a Git HEAD', 1);
+  data.decisions ??= [];
+  data.decisions.push({
+    id: nextId(data.decisions, 'D'), decision,
+    rationale, tag: 'diff-base', 'x-base-commit': base, by: 'baton',
+  });
+}
+
 /** @param {string[]} args */
 function parseOptions(args) {
   /** @type {Record<string,string|boolean>} */
@@ -84,23 +111,23 @@ function parseOptions(args) {
   const switches = new Set(['--infer', '--dry-run']);
   for (let i = 0; i < args.length; i++) {
     if (values.has(args[i])) {
-      if (!args[i + 1] || args[i + 1].startsWith('--')) throw new BatonError('E_USAGE', `${args[i]} needs a value`, 2);
+      if (!args[i + 1] || args[i + 1].startsWith('--')) throw usage(`${args[i]} needs a value`);
       options[args[i].slice(2)] = args[++i];
     } else if (switches.has(args[i])) options[args[i].slice(2)] = true;
-    else throw new BatonError('E_USAGE', `Unknown handoff flag: ${args[i]}`, 2);
+    else throw usage(`Unknown handoff flag: ${args[i]}`);
   }
   return options;
 }
 
 /** @param {string} root @param {Record<string, string|boolean>} options */
 async function locate(root, options) {
-  if (options.quick && options.feature) throw new BatonError('E_USAGE', 'Use --quick or --feature, not both', 2);
+  if (options.quick && options.feature) throw usage('Use --quick or --feature, not both');
   if (typeof options.quick === 'string') {
-    if (!/^[a-z0-9][a-z0-9-]{0,47}[a-z0-9]$/.test(options.quick)) throw new BatonError('E_USAGE', 'Quick slug must be kebab-case (2-49 characters)', 2);
+    if (!/^[a-z0-9][a-z0-9-]{0,47}[a-z0-9]$/.test(options.quick)) throw usage('Quick slug must be kebab-case (2-49 characters)');
     return `.baton/quick/${options.quick}.md`;
   }
   if (typeof options.feature === 'string') {
-    if (!/^\d{3}-[a-z0-9-]+$/.test(options.feature)) throw new BatonError('E_USAGE', 'Feature name must be NNN-slug', 2);
+    if (!/^\d{3}-[a-z0-9-]+$/.test(options.feature)) throw usage('Feature name must be NNN-slug');
     return `specs/${options.feature}/handoff.md`;
   }
   const entries = (await readdir(withinRoot(root, 'specs'), { withFileTypes: true }).catch((error) => {
@@ -123,28 +150,28 @@ async function locate(root, options) {
     } catch (error) {
       if (!(error instanceof SyntaxError) && /** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
     }
-    throw new BatonError('E_USAGE', `Specify --feature NNN-slug; candidates: ${names.join(', ') || '(none)'}`, 2);
+    throw usage(`Specify --feature NNN-slug; candidates: ${names.join(', ') || '(none)'}`);
   }
   return `specs/${entries[0].name}/handoff.md`;
 }
 
 /** @param {Record<string,any>} data @param {string} field @param {Array<Record<string,any>>} incoming */
 function appendOnly(data, field, incoming) {
-  if (!Array.isArray(incoming)) throw new BatonError('E_USAGE', `${field} must be an array`, 2);
+  if (!Array.isArray(incoming)) throw usage(`${field} must be an array`);
   const existing = data[field] ?? [];
   const byId = new Map(/** @type {Array<{id:string}>} */ (existing).map((item) => [item.id, item]));
   /** @type {Array<Record<string,any>>} */
   const additions = [];
   for (const item of incoming) {
-    if (typeof item?.id !== 'string') throw new BatonError('E_USAGE', `${field} entries need an id`, 2);
+    if (typeof item?.id !== 'string') throw usage(`${field} entries need an id`);
     if (byId.has(item.id)) {
-      if (!isDeepStrictEqual(byId.get(item.id), item)) throw new BatonError('E_USAGE', `${field} ${item.id} cannot be changed by write`, 2);
+      if (!isDeepStrictEqual(byId.get(item.id), item)) throw usage(`${field} ${item.id} cannot be changed by write`);
     } else {
       if (field === 'decisions' && (typeof item.by === 'string' && item.by.startsWith('human:') ||
-        ['diff-base', 'reviewed-tree', 'self-review-override', 'acceptance-waiver'].includes(item.tag))) {
-        throw new BatonError('E_USAGE', 'Reserved decisions can only be recorded by the CLI', 2);
+        ['attached', 'diff-base', 'reviewed-tree', 'self-review-override', 'acceptance-waiver'].includes(item.tag))) {
+        throw usage('Reserved decisions can only be recorded by the CLI');
       }
-      if (additions.some((other) => other.id === item.id)) throw new BatonError('E_USAGE', `Duplicate ${field} id ${item.id}`, 2);
+      if (additions.some((other) => other.id === item.id)) throw usage(`Duplicate ${field} id ${item.id}`);
       additions.push(item);
     }
   }
@@ -315,7 +342,10 @@ export async function run(root, args) {
   if (action === 'new' && typeof options.feature === 'string' || action === 'init') {
     if (typeof options.feature !== 'string' || options.quick ||
         (action === 'init' && !options.infer)) {
-      throw new BatonError('E_USAGE', 'Feature creation needs --feature; init also needs --infer', 2);
+      throw usage('Feature creation needs --feature; init also needs --infer');
+    }
+    if (options.phase && (action !== 'init' || options.phase !== 'implement' || typeof options.reason !== 'string')) {
+      throw usage('init requires --phase implement --reason R');
     }
     try {
       await readFile(withinRoot(root, path));
@@ -334,34 +364,69 @@ export async function run(root, args) {
     const { config: phases } = await loadPhases(root);
     const inferred = action === 'init';
     const now = new Date().toISOString();
+    const next = options.phase === 'implement' ? 'implement' : 'clarify';
+    const routing = resolveModel(await loadModelSettings(root), next, phases.phases[next].model_role);
     const data = {
-      baton: 1, lane: 'feature', feature: options.feature, phase_completed: 'specify',
-      next_phase: 'clarify', next_owner: phases.phases.clarify.owner,
-      status: inferred ? 'needs-human' : 'ready',
-      model_role: resolveModel(await loadModelSettings(root), 'clarify', phases.phases.clarify.model_role).role,
-      suggested_model: resolveModel(await loadModelSettings(root), 'clarify', phases.phases.clarify.model_role).model,
+      baton: 1, lane: 'feature', feature: options.feature, phase_completed: next === 'implement' ? 'none' : 'specify',
+      next_phase: next, next_owner: phases.phases[next].owner,
+      status: inferred && next === 'clarify' ? 'needs-human' : 'ready',
+      model_role: routing.role, suggested_model: routing.model,
       summary: inferred ? 'Confirm the inferred phase of the existing feature' : 'Specification ready for clarification',
       read_first: [{ path: spec, why: 'Specification and scope', sha256: digest }],
       artifacts: [{ path: spec, role: 'source-of-truth', sha256: digest }],
       entry_checked: [], exit_criteria: /** @type {Awaited<ReturnType<typeof evaluateChecks>>} */ ([]),
-      open_questions: inferred ? [{
+      open_questions: inferred && next === 'clarify' ? [{
         id: 'Q1', question: 'Is the existing specification complete and ready for clarification?',
         blocking: true, options: ['Continue with clarification', 'Revise specification first'],
       }] : [],
-      decisions: [], gate: { required: false, approved_by: null, approved_at: null },
-      history: [{ phase: 'specify', at: now, by: 'baton', writer, commit: await commitId(root) }],
+      decisions: /** @type {Array<Record<string,any>>} */ ([]), gate: { required: next === 'implement', approved_by: null, approved_at: null },
+      history: /** @type {Array<Record<string,any>>} */ (next === 'implement' ? [] : [{ phase: 'specify', at: now, by: 'baton', writer, commit: await commitId(root) }]),
       updated_at: now, updated_by: 'baton',
     };
-    data.exit_criteria = await evaluateChecks(phaseForLane(phases.phases.specify, 'feature').exit,
-      (check) => evaluateBuiltIn(root, path, data, check));
-    const body = headingBody('speckit-clarify');
+    if (options.phase === 'implement') {
+      const supplied = typeof options['from-json'] === 'string' ? await readAgentJson(root, options['from-json']) : {};
+      if (unexpectedFields(supplied, ['acceptance_checks', 'summary', 'read_first', 'assumptions', 'risks'])) {
+        throw usage('Unexpected attachment fields');
+      }
+      if (supplied.read_first !== undefined && !Array.isArray(supplied.read_first)) throw usage('read_first must be an array');
+      const artifacts = data.artifacts;
+      for (const name of ['plan', 'tasks']) {
+        const source = `${dirname(path).replaceAll('\\', '/')}/${name}.md`;
+        try {
+          artifacts.push({ path: source, role: 'source-of-truth', sha256: await hashFile(withinRoot(root, source)) });
+        } catch (error) {
+          if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
+          return { errors: [{ code: 'E_MISSING_ARTIFACT', file: source, message: 'Attachment source is missing' }], exitCode: 1 };
+        }
+      }
+      const base = await fullCommitId(root, ['merge-base', 'HEAD', 'origin/HEAD']);
+      if (!base) throw new BatonError('E_CHECK_FAILED', 'Cannot resolve delivery base with origin/HEAD', 1);
+      const tasks = await readFile(withinRoot(root, artifacts[2].path), 'utf8');
+      Object.assign(data, supplied, {
+        summary: supplied.summary ?? options.reason,
+        read_first: [
+          ...artifacts.map((item) => ({ path: item.path, why: 'Imported source of truth', sha256: item.sha256 })),
+          ...(supplied.read_first ?? []),
+        ],
+        decisions: [
+          { id: 'D1', decision: 'Attach pre-Baton feature', rationale: options.reason, tag: 'attached', by: 'baton',
+            'x-attached-phase': 'implement', 'x-imported-head': await fullCommitId(root), 'x-delivery-base': base,
+            'x-checked-tasks': [...tasks.matchAll(/^\s*-\s+\[[xX]\]\s+T\d{3}\b/gm)].length },
+        ],
+      });
+      await recordDiffBase(root, data, 'Record delivery review base', 'Full delivery requires review', base);
+    } else {
+      data.exit_criteria = await evaluateChecks(phaseForLane(phases.phases.specify, 'feature').exit,
+        (check) => evaluateBuiltIn(root, path, data, check));
+    }
+    const body = headingBody(data.next_owner);
     const errors = await validateHandoff(root, path, serializeFrontmatter(data, body));
     if (errors.length) return { errors, exitCode: 1 };
     await writeHandoff(root, path, data, body);
-    return { data: { path, next_phase: 'clarify', status: data.status } };
+    return { data: { path, next_phase: data.next_phase, status: data.status } };
   }
   if (action === 'new') {
-    if (typeof options.quick !== 'string' || typeof options.reason !== 'string' || options.feature) throw new BatonError('E_USAGE', 'new requires --quick <slug> --reason <why>', 2);
+    if (typeof options.quick !== 'string' || typeof options.reason !== 'string' || options.feature) throw usage('new requires --quick <slug> --reason <why>');
     try {
       await readFile(withinRoot(root, path));
       throw new BatonError('E_CONFLICT', 'Quick baton already exists', 4);
@@ -369,11 +434,11 @@ export async function run(root, args) {
       if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
     }
     const contract = (await loadPhases(root)).config.phases.work;
+    const routing = resolveModel(await loadModelSettings(root), 'work', contract.model_role);
     const data = {
       baton: 1, lane: 'quick', feature: options.quick, phase_completed: 'none',
       next_phase: 'work', next_owner: contract.owner, status: 'ready',
-      model_role: resolveModel(await loadModelSettings(root), 'work', contract.model_role).role,
-      suggested_model: resolveModel(await loadModelSettings(root), 'work', contract.model_role).model,
+      model_role: routing.role, suggested_model: routing.model,
       summary: `Quick-lane change: ${options.reason}`, read_first: [{ path, why: 'Quick-lane scope and reason' }],
       artifacts: [], entry_checked: [], exit_criteria: [], open_questions: [],
       decisions: [{ id: 'D1', decision: 'Start a quick lane', tag: 'quick-eligible', rationale: options.reason, by: 'baton' }],
@@ -382,10 +447,7 @@ export async function run(root, args) {
     };
     const base = await fullCommitId(root);
     if (!base) throw new BatonError('E_CHECK_FAILED', 'Quick-lane review needs a git HEAD for its diff base', 1);
-    /** @type {Array<Record<string,any>>} */ (data.decisions).push({
-      id: 'D2', decision: 'Record quick-lane review base', rationale: 'Work starts at this commit',
-      tag: 'diff-base', 'x-base-commit': base, by: 'baton',
-    });
+    await recordDiffBase(root, data, 'Record quick-lane review base', 'Work starts at this commit', base);
     await mkdir(dirname(withinRoot(root, path)), { recursive: true });
     await writeHandoff(root, path, data, headingBody('ce-work'));
     return { data: { path, next_phase: 'work' } };
@@ -602,18 +664,8 @@ export async function run(root, args) {
     if (preflight.length) {
       return { errors: preflight, exitCode: preflight.some((issue) => ['E_GATE_PENDING', 'E_BLOCKING_OPEN'].includes(issue.code)) ? 3 : 1 };
     }
-    let supplied;
-    try {
-      supplied = JSON.parse(await readFile(withinRoot(root, options['from-json']), 'utf8'));
-    } catch (error) {
-      if (error instanceof SyntaxError) throw new BatonError('E_USAGE', `Invalid JSON in ${options['from-json']}: ${error.message}`, 2);
-      if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT' || /Path escapes repository:/.test(String(error))) {
-        throw new BatonError('E_USAGE', `Cannot read --from-json ${options['from-json']}: ${error instanceof Error ? error.message : String(error)}`, 2);
-      }
-      throw error;
-    }
-    const allowed = new Set(['summary', 'read_first', 'do_not_read', 'artifacts', 'decisions', 'open_questions', 'assumptions', 'risks', 'acceptance_checks', 'review', 'analysis', 'pr']);
-    if (!supplied || typeof supplied !== 'object' || Array.isArray(supplied) || Object.keys(supplied).some((key) => !allowed.has(key))) throw new BatonError('E_USAGE', 'Agent data contains unexpected or deterministic fields', 2);
+    const supplied = await readAgentJson(root, options['from-json']);
+    if (unexpectedFields(supplied, ['summary', 'read_first', 'do_not_read', 'artifacts', 'decisions', 'open_questions', 'assumptions', 'risks', 'acceptance_checks', 'review', 'analysis', 'pr'])) throw usage('Agent data contains unexpected or deterministic fields');
     if (options.phase !== 'review' && Object.hasOwn(supplied, 'review')) throw new BatonError('E_USAGE', 'Review findings can only be supplied during review', 2);
     if (Array.isArray(supplied.artifacts)) {
       for (const item of supplied.artifacts) {
@@ -694,14 +746,8 @@ export async function run(root, args) {
     data.gate = { required: contract.human_gate || (options.phase === 'specify' && next === 'plan'), approved_by: null, approved_at: null };
     data.status = next === 'done' ? 'done' : /** @type {Array<{blocking:boolean}>} */ (data.open_questions ?? []).some((item) => item.blocking) ? 'needs-human' : 'ready';
     if (options.phase === 'analyze' && next === 'implement' || options.phase === 'review') {
-      const base = await fullCommitId(root);
-      if (!base) throw new BatonError('E_CHECK_FAILED', 'Cannot record diff base without a Git HEAD', 1);
-      data.decisions ??= [];
-      data.decisions.push({
-        id: nextId(data.decisions, 'D'), decision: 'Record reviewed implementation base',
-        rationale: options.phase === 'analyze' ? 'Implementation starts at this commit' : 'Review completed at this commit',
-        tag: 'diff-base', 'x-base-commit': base, by: 'baton',
-      });
+      await recordDiffBase(root, data, 'Record reviewed implementation base',
+        options.phase === 'analyze' ? 'Implementation starts at this commit' : 'Review completed at this commit');
     }
     await updateMetadata(root, data, contract.owner, next, path);
     const policy = modelPolicyIssue(await loadModelSettings(root), data.suggested_model, path);

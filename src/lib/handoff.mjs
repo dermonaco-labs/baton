@@ -113,6 +113,22 @@ export async function validateHandoff(root, path, source) {
   if (data.history?.length && data.history.at(-1).phase !== data.phase_completed) {
     errors.push({ code: 'E_TRANSITION', file: path, message: 'Latest history phase does not match the completed phase' });
   }
+  const attached = /** @type {Array<Record<string,any>>} */ (data.decisions ?? []).filter((decision) => decision.tag === 'attached');
+  const provenance = attached[0];
+  const initialAttachment = data.lane === 'feature' && data.phase_completed === 'none';
+  if ((initialAttachment || attached.length > 0) &&
+      (attached.length !== 1 || data.lane !== 'feature' || provenance.by !== 'baton' ||
+        provenance['x-attached-phase'] !== 'implement' ||
+        !['x-imported-head', 'x-delivery-base'].every((key) =>
+          typeof provenance[key] === 'string' && /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/i.test(provenance[key])) ||
+        !Number.isInteger(provenance['x-checked-tasks']) || provenance['x-checked-tasks'] < 0 ||
+        !/** @type {Array<Record<string,any>>} */ (data.decisions ?? []).some((decision) =>
+          decision.tag === 'diff-base' && decision.by === 'baton' &&
+          decision['x-base-commit'] === provenance['x-delivery-base']) ||
+        (initialAttachment && (data.next_phase !== 'implement' ||
+          !Array.isArray(data.history) || data.history.length !== 0 || data.gate?.required !== true)))) {
+    errors.push({ code: 'E_TRANSITION', file: path, message: 'Invalid Baton implement attachment provenance or initial gate/history' });
+  }
   const modelIssue = modelPolicyIssue(await loadModelSettings(root), data.suggested_model, path);
   if (modelIssue?.code === 'E_MODEL_NOT_ALLOWED') errors.push(modelIssue);
   const completed = phases.phases[data.phase_completed];
@@ -177,7 +193,7 @@ export async function validateHandoff(root, path, source) {
     errors.push({ code: 'E_PR_MISSING', file: path, message: 'Landing must record a PR URL' });
   }
   if (data.next_phase === 'implement') {
-    const stories = new Set(/** @type {Array<{story:string}>} */ (data.acceptance_checks ?? []).map((check) => check.story));
+    const stories = new Set(/** @type {Array<{story:string}|null>} */ (Array.isArray(data.acceptance_checks) ? data.acceptance_checks : []).map((check) => check?.story));
     const tasksPath = withinRoot(root, `${dirname(path)}/tasks.md`);
     try {
       const tasks = await readFile(tasksPath, 'utf8');

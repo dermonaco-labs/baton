@@ -12,6 +12,14 @@ Feature batons live in `specs/<feature>/handoff.md`; quick batons live in
 `.baton/quick/<slug>.md`. Do not substitute chat context for a missing or
 stale baton: use `handoff init --infer` or `handoff refresh --reason`
 with evidence.
+For a pre-Baton feature already at implement, explicitly use
+`handoff init --feature F --infer --phase implement --reason R --from-json file`
+with registered acceptance checks, then obtain fresh role approval before
+receive. Review covers the full main → feature delivery using the merge-base
+with `origin/HEAD` (missing base fails closed). `x-imported-head` marks the
+imported baseline for context only, not prior review approval. Imported work
+is not a completed Baton phase; never relabel or re-receipt settled history.
+See the handoff recovery guide.
 
 For a new user-facing behavior or public contract, start the feature lane
 at `/speckit-specify` (optionally `/ce-brainstorm` first). For a small

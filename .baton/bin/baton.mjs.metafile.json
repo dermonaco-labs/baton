@@ -3666,7 +3666,7 @@
       "format": "esm"
     },
     "src/lib/handoff.mjs": {
-      "bytes": 12385,
+      "bytes": 13702,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3932,7 +3932,7 @@
       "format": "esm"
     },
     "src/commands/handoff.mjs": {
-      "bytes": 52114,
+      "bytes": 54502,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -5503,7 +5503,7 @@
           "bytesInOutput": 949
         },
         "src/lib/handoff.mjs": {
-          "bytesInOutput": 6945
+          "bytesInOutput": 7710
         },
         "src/lib/local-checks.mjs": {
           "bytesInOutput": 1967
@@ -5521,7 +5521,7 @@
           "bytesInOutput": 1499
         },
         "src/commands/handoff.mjs": {
-          "bytesInOutput": 31213
+          "bytesInOutput": 32406
         },
         "src/commands/status.mjs": {
           "bytesInOutput": 937
@@ -5560,7 +5560,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 407599
+      "bytes": 409557
     }
   }
 }

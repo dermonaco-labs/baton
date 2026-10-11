@@ -8,6 +8,11 @@ All notable changes to Baton are documented here. This follows
 
 ### Fixed
 
+- Explicitly attach pre-Baton features at implement with hashed existing
+  sources, acceptance registration, honest imported-work provenance and a
+  fresh human gate; review covers the full main → feature delivery.
+  `x-imported-head` marks imported context, not prior review approval;
+  settled history is never relabelled or re-receipted.
 - Keep formal local checks bounded with a per-check timeout, retaining the
   five-minute default and using ten minutes for the source suite on Windows;
   report timeout output and terminate the timed-out foreground process tree.

@@ -23,3 +23,17 @@ checksum is validated (task checkbox progress is ignored when hashing
 `tasks.md`). A ready baton cannot carry blocking questions or unmet exit
 checks. Use [handoffs](../04-handoffs.md) for an annotated example and
 [error codes](error-codes.md) for recovery.
+
+`phase_completed: none` permits quick → work, or feature → implement only.
+The latter requires exactly one CLI-written `attached` decision by `baton`,
+`x-attached-phase: implement`, full hexadecimal `x-imported-head` and
+`x-delivery-base` commits, and a nonnegative integer `x-checked-tasks`.
+A Baton `diff-base` decision must have `x-base-commit` equal to
+`x-delivery-base`; initial history is empty and `gate.required: true`.
+Duplicate or non-feature attachments are invalid. Provenance remains
+permanent after normal implement → review transitions.
+
+`x-delivery-base` is the merge-base of HEAD with `origin/HEAD`: review covers
+the full main → feature delivery and retains this base across later reviews.
+`x-imported-head` marks imported pre-Baton work for context only, not prior
+review approval. No settled history is relabelled or re-receipted.

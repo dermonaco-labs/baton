@@ -1,0 +1,68 @@
+{
+  "summary": "Explicit pre-Baton implement attachment is complete with truthful imported context, fresh human approval, hashed sources and full main-to-feature delivery review scope. Default inference, quick none and original quick/analyze/review decision text are preserved. The one mandatory configured npm run check passed 404/404 with zero skips during work write; explicit validate passed. Local-only; independent review and shipping remain pending.",
+  "read_first": [
+    {
+      "path": ".baton/quick/partial-feature-attach-013.md",
+      "why": "Quick intent and relay state"
+    },
+    {
+      "path": ".baton/quick/partial-feature-attach-013.work.json",
+      "why": "Direct owner override, coordinator corrections and verification evidence"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D3",
+      "decision": "Record directly approved owner quick-lane constitution override",
+      "rationale": "The user answered directly in this session through ask_user; no timestamp is available. The question cited constitution lines 105-106: The quick lane (ce-work → baton-review → baton-land) is allowed only for changes that add no new user-facing behaviour or contract. In any other case, escalate to the feature lane. Choices were feature lane (recommended) versus quick lane. Exact answer: User selected: Quick lane, framed as a bug fix to the existing FR/edge case that promises init --infer works for pre-Baton features (requires recording an owner override of the constitution rule). This records the repository owner override for this bug fix only, not a control-plane approval. In the same session, exit_plan_mode returned: Plan approved! Exited plan mode.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D4",
+      "decision": "Apply the coordinator's full-delivery design correction and revert unrelated decision-text drift",
+      "rationale": "Attachment records x-imported-head as the full HEAD at import for context only, x-delivery-base as git merge-base HEAD origin/HEAD and x-checked-tasks. The initial diff-base and later attached-feature review writes retain that delivery base, so scope and reviewed-tree cover both pre-Baton product work and Baton-executed changes. An unresolved origin/HEAD base fails E_CHECK_FAILED before handoff.md is written. Baton does not attest that imported work was previously reviewed; settled history is neither relabelled nor re-receipted. Restored original quick decision Record quick-lane review base / Work starts at this commit and analyze/review decision Record reviewed implementation base with original rationales. Normal unattached features retain their existing HEAD-based analyze/review semantics.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D5",
+      "decision": "Record the user-required implementation model and same-worktree execution",
+      "rationale": "Implementation ran on gpt-6.1-sol with medium reasoning in a same-worktree subagent. The session model is Claude Opus 5.5 for planning and coordination only. This user-required routing overrides the configured implementation suggestion for this task only; no configured model, personal identity or downstream repository was changed.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D6",
+      "decision": "Record correction-specific test-first RED and targeted GREEN",
+      "rationale": "Before source corrections, node --test test\\integration\\handoff-attach.test.mjs failed 7/23 with 16 passing and zero skips. Failing tests: attach preserves imported bytes and requires fresh approval, including the bundled hook CLI; no-origin-head (and its parent attach rejects invalid inputs without writing a baton); attached review scope includes pre-Baton product work and post-attachment changes; quick initialization retains original review-base decision text; attached implement write resumes normal relay with one genuine phase receipt and the attach diff base; attachment provenance is fail-closed and remains permanent after implementation. An earlier RED run had accidentally nested new tests; fixed placement and reran before implementation to obtain these clean counts. After corrections and supported build, node --test test\\integration\\handoff-attach.test.mjs test\\integration\\handoff-management.test.mjs test\\unit\\validate-handoff.test.mjs test\\unit\\temp-roots.test.mjs passed 62/62, zero skips. Synthetic local bare remote and a fresh synthetic reviewer clone verify full delivery scope before and after actual review write, valid approved receive, unapproved/invalid rejection, tamper/forge rejection, quick/feature mismatch and unchanged default inference. Logs are local ignored evidence, not imported approvals.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D8",
+      "decision": "Verify unchanged normal relay and exact original decision texts",
+      "rationale": "node --test test\\integration\\relay.test.mjs test\\unit\\checks.test.mjs passes 130/130 with zero skips. Compared all five original decision and rationale strings directly against git show 35347c5:src/commands/handoff.mjs: byte-identical Record quick-lane review base, Work starts at this commit, Record reviewed implementation base, Implementation starts at this commit and Review completed at this commit. Preflight node .baton\\bin\\baton.mjs --json validate passes with no errors; recommended-pack and advisory W_QUICK_LARGE warnings remain. Independent review is intentionally not performed by this sole implementer; no review approval is imported or fabricated.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D7",
+      "decision": "Preserve the strict bundle ceiling through behavior-neutral reuse",
+      "rationale": "The first corrected build failed E_BUNDLE_SIZE at 410135 bytes versus the unchanged 409600-byte ceiling. Shared Git commit lookup, JSON field-shape validation, usage-error construction and initialization/routing remove duplication without changing existing messages, error codes, decision text or default feature semantics. Final npm run build reports 409557 bytes. No build ceiling, dependency manifest, lock pin, version, tag or release changed. npm run typecheck, npm run lint:md and git diff --check pass. Initial supported sync failed a PyPI TLS fetch; retrying the pinned, hash-verified sync with process-scoped UV_INDEX_URL and PIP_INDEX_URL set to the approved PyPI proxy succeeded, then supported build regenerated the bundle. README and historical batons remain unchanged.",
+      "by": "baton-013-work"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R1",
+      "text": "Imported work is not prior review approval. A fresh configured-role implement gate and independent review of the full delivery remain required.",
+      "severity": "medium"
+    },
+    {
+      "id": "R2",
+      "text": "The unchanged strict bundle ceiling has 43 bytes of headroom; future CLI additions need behavior-neutral savings or separately authorized design changes.",
+      "severity": "medium"
+    },
+    {
+      "id": "R3",
+      "text": "This task is a local upstream correction only; no push, pull request, merge, downstream adoption, tag, release or version bump is authorized.",
+      "severity": "medium"
+    }
+  ]
+}
