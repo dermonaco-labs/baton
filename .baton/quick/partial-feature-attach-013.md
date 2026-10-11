@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: partial-feature-attach-013
-phase_completed: work
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: work
+next_owner: ce-work
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: Address F1 and F2 with verified imported-commit ancestry/delivery base, all-diff-base consistency, retained attachment provenance and source-bound human approval evidence. Targeted attachment/normal validation tests pass 76/76 and relay/check tests 130/130. The single configured npm run check is executed and persisted by this work write. Bundle is 409595 bytes under the unchanged 409600 ceiling. Local-only; fresh independent review remains required. No shipping authorized.
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Independent rereview at 4022803 resolves prior P1 F1/F2 within the accepted declarative trust boundary. 207/207 targeted tests and replayed bundled counterexamples pass; normal fixtures/texts unchanged; bundle 409433 bytes, SHA/metafile verified. New open P2 F3: schema reference still claims the reverted history-start invariant. Explicit return to work for documentation correction; do not land. Full author gate 420/420 supplied by coordinator, not rerun independently."
 read_first:
   - path: .baton/quick/partial-feature-attach-013.md
     why: Quick intent and relay state
@@ -18,85 +18,12 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: diff-nonempty
+  - id: findings-json-valid
     met: true
-    evidence: 24 changed files
-  - id: local-checks-pass
+    evidence: .baton/quick/partial-feature-attach-013.review.json
+  - id: quick-scope-held
     met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      s exact bytes for nested gitignore files (14.3694ms)
-      ✔ built-in phase defaults deeply match the shipped phase template (16.8432ms)
-      ✔ every feature phase has entry and exit checks (1.0002ms)
-      ✔ removing a built-in exit criterion warns (0.4597ms)
-      ✔ check groups evaluate every member and preserve evidence (1.5864ms)
-      ✔ check validation rejects unknown checks, malformed groups and duplicate keys (0.2431ms)
-      ✔ weakened contract detects moving mandatory exit into a disjunction (0.2141ms)
-      ✔ weakened contracts report removed entry checks, including quick-lane entry overrides (0.7773ms)
-      ✔ weakened contracts report disabled human gates without flagging unchanged defaults (0.2367ms)
-      ✔ shipped phase template is valid and never weakens its built-in contracts (17.7361ms)
-      ✔ tracked Baton documentation contains no private feed hostnames (83.3996ms)
-      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.8248ms)
-      ✔ adopter command table remains contiguous (0.5734ms)
-      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.5709ms)
-      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.5121ms)
-      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (28.749ms)
-      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (2.6156ms)
-      ✔ compiles all draft 2020-12 schemas once (125.3394ms)
-      ✔ findings fixture validates and invalid fixture reports a JSON pointer (2.9843ms)
-      ✔ pack schema requires a classified reason for every optional reference (0.7234ms)
-      ✔ sync bump explains pin and file changes for a PR body (1.1808ms)
-      ✔ sync rejects unpinned bump values and check/bump combination (22.8193ms)
-      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (163.9675ms)
-      ✔ generated registry preserves verified bytes when only installation time changes (8.5819ms)
-      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (5.2241ms)
-      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (553.5696ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (217.492ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (79.2725ms)
-        ✔ E_ANALYSIS_CRITICAL (4.5116ms)
-        ✔ E_ANALYSIS_MISSING (3.5003ms)
-        ✔ E_APPROVER_FORMAT (4.4098ms)
-        ✔ E_BLOCKING_OPEN (3.0876ms)
-        ✔ E_BODY_SECTIONS (3.6321ms)
-        ✔ E_BUDGET (6.7318ms)
-        ✔ E_DENYLIST (3.069ms)
-        ✔ E_EXIT_UNMET (3.183ms)
-        ✔ E_GATE_PENDING (72.9143ms)
-        ✔ E_LANE_ESCALATE (793.9255ms)
-        ✔ E_LANE_MISMATCH (4.4688ms)
-        ✔ E_MISSING_ARTIFACT (2.5386ms)
-        ✔ E_MODEL_NOT_ALLOWED (5.0142ms)
-        ✔ E_MULTIPLE_BATONS (5.1182ms)
-        ✔ E_NO_PREREG (4.089ms)
-        ✔ E_OWNER (2.8862ms)
-        ✔ E_PR_MISSING (2.9006ms)
-        ✔ E_REVIEW_BLOCKING (169.3647ms)
-        ✔ E_REVIEW_MISSING (4.9645ms)
-        ✔ E_SCHEMA (5.706ms)
-        ✔ E_STALE_ARTIFACT (3.6848ms)
-        ✔ E_TRANSITION (2.9282ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1220.2854ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (71.624ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (24.5976ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (63.9415ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (7.4776ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (94.5607ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (73.0319ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (2.1725ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (19.8351ms)
-      ✔ ready with a blocking question is rejected (71.7247ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (96.8109ms)
-      ℹ tests 419
-      ℹ suites 0
-      ℹ pass 419
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 0
-      ℹ todo 0
-      ℹ duration_ms 205321.3848
+    evidence: Inspected all 16 pinned tracked files at 35347c559994e884b66fff69267954f1e9f83f5b..96e4aa04bdbec06c88ee4469837e1a9c14730a7a, including all 11 CLI subjects, generated bundle and bookkeeping. Changes are limited to the requested pre-Baton attachment recovery, supporting validation, tests and documentation. The new attachment flag/fields are not eligible under the unmodified constitution rule; current baton D3 expressly records the repository-owner exception for this bug fix. Honor that exception, not a general permission to expand quick lanes. No additional unapproved scope was found. Two P1 blockers remain open and route to work.
 open_questions: []
 decisions:
   - id: D1
@@ -192,6 +119,32 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: "Coordinator correction — reverted history-start invariant to preserve existing-baton validation; residual disclosed. Work evidence D19/D20 records restored fixtures, 207/207 targeted tests, 409433-byte bundle and the single npm run check blocked by pinned PyPI TLS download. Separate full suite 419/420; only live installer F39 lacks pinned dependencies. Refresh only: no supported work re-entry from next_phase review, no new work or approval receipt claimed."
     by: implementation-session
+  - id: D22
+    decision: Use user-required independent rereview model
+    rationale: gpt-6.1-sol with medium reasoning overrides configured claude-opus-5.5 suggestion for this review only. Single cohesive headless reviewer in separate detached checkout; installed persona lenses only, none dispatched. No product edits or shipping.
+    by: baton-013-review
+  - id: D23
+    decision: Retain explicitly owner-overridden quick scope
+    tag: quick-scope-held
+    rationale: Reviewed exact CLI base 96e4aa0 and all 17 pinned files, supplemented to all 18 main-to-4022803 files. Scope remains the attachment recovery fix under D3 owner exception; no new expansion. F3 is a stale documentation statement. Return to work explicitly for this unresolved P2 before landing.
+    by: baton-013-review
+  - id: D24
+    decision: Resolve F1/F2 without overstating plaintext authenticity
+    rationale: Bundled paired-base, shadowing, missing-head and gate-only forgery probes now reject. Independent targeted selection passes 207/207; old fixtures and five diff-base texts byte-identical to main; deterministic build/SHA/metafile pass at 409433 bytes. Consistent provenance removal and checked-count rewriting remain accepted declarative residuals, no weaker authenticity than normal relay. Full gate supplied by coordinator (check exit 0, suite 420/420), not independently rerun. F3 remains open at docs/reference/schemas.md:35; explicit --next work preserves honest unresolved state.
+    by: baton-013-review
+  - id: D25
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: ada32b2e818b7503df1e49db74bd3f04080b02bfb6dd4e76f7f8a603ed63b11c
+    x-base-commit: 96e4aa04bdbec06c88ee4469837e1a9c14730a7a
+    by: baton
+  - id: D26
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 4022803a392f9ca1392296e3e4a11c586abfcc74
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -232,8 +185,15 @@ history:
     x-worktree: 6812f2b57cde56efd67cf02d2fe93b35fa1394f470368658688efd81a813c29b
     commit: 287a8b1
     x-action: refresh
-updated_at: 2026-10-11T19:17:34.198Z
-updated_by: implementation-session
+  - phase: review
+    at: 2026-10-11T19:30:06.497Z
+    by: baton-013-review
+    writer: 2f72ece7e88d9a138fc04bb143285ceb5553afd84017436d3e9f0b2628a989bd
+    x-worktree: cc50c11fe81968589b9acf45ffbbf4c5c26c585f041237b3860f9a71e738a165
+    commit: "4022803"
+    x-action: write
+updated_at: 2026-10-11T19:30:06.491Z
+updated_by: baton-review
 risks:
   - id: R1
     text: Imported work is not prior review approval. A fresh configured-role implement gate and independent review of the full delivery remain required.
@@ -252,7 +212,7 @@ x-implementation-worktree: 6812f2b57cde56efd67cf02d2fe93b35fa1394f470368658688ef
 x-implementation-cycle: 1809e9cc86481b2b01935ebde8e59b4046697ecbed23693c5e5bce839f88e7d3
 review:
   findings_path: .baton/quick/partial-feature-attach-013.review.json
-  blocking_findings: 2
+  blocking_findings: 0
 ---
 ## Goal
 Keep the work in scope.
