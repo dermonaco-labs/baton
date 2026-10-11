@@ -1,0 +1,44 @@
+{
+  "summary": "Restore pinned headless review coverage and clean published landing using Baton-owned wrappers only. Real Git/CLI RED and GREEN preserved. Full npm run check passes 381/381 with zero skips; explicit validate passes. Stop after a checked DRAFT patch PR at the unapproved owner gate; no merge, release, tag or compound authority.",
+  "read_first": [
+    {"path": ".baton/quick/review-land-fixes-012.md", "why": "Authorized quick intent, exact base and relay identity"},
+    {"path": ".baton/quick/review-land-fixes-012.work.json", "why": "Test-first acceptance, evidence and owner decisions"},
+    {"path": "baton/skills/baton-review/SKILL.md", "why": "Pinned tracked diff equality and subject subset coverage"},
+    {"path": "baton/skills/baton-land/SKILL.md", "why": "External session capture and post-receipt publication check"},
+    {"path": "test/integration/review-land-wrappers.test.mjs", "why": "Actual CLI feature/quick scopes and real Git publication regressions"},
+    {"path": "docs/03-workflow.md", "why": "Related workflow contract explanation"},
+    {"path": ".baton/template-cleanup.yml", "why": "Frozen source-only cleanup coverage; do not edit"},
+    {"path": ".baton/quick/release-records-docs-a7.md", "why": "Exactly once authorized checksum refresh and fresh approval"},
+    {"path": "CHANGELOG.md", "why": "Patch metadata and unchanged upstream pins/components"}
+  ],
+  "decisions": [
+    {
+      "id": "D3",
+      "decision": "Honor exact owner-authorized D1 and D2",
+      "rationale": "User decision verbatim: D1 and D2 approved at 2026-10-10T23:39:24.666+02:00, relayed through the control plane, at HEAD bf0753104b2c6c673dddc3e11dc04a567226bfc8. D1 permits one checksum-only a7 refresh for frozen cleanup 5c7665fb92d76dfa38686f645edc26c30c34743ddb10c891ea9f88d6deeb453e -> eb375087dc59b79749b669cb62bc7b09b5d20f88a664c63601db77ea77402e5b and one fresh repository owner/control-plane delegation approval; both succeeded. D2 accepts the sealed receipt b9325658b90434da48aa6ccc5cd04152e5023709d7548982b1817550b0db5446 original 22-path advisory overage only. No patch acceptance, ready status, merge, release, dry-run, tag, compound or downstream authorization.",
+      "by": "baton-012-work"
+    },
+    {
+      "id": "D4",
+      "decision": "Register and preserve actual CLI/Git test-first evidence",
+      "rationale": "test/integration/review-land-wrappers.test.mjs verifies actual bundled CLI feature/quick scopes against pinned CE Git commands, feature artifact and bookkeeping exclusions, untracked subject coverage, real bare-remote late-note behavior, external session capture and post-receipt publication ordering. Original RED preceded wrapper edits. Corrected fixture RED replay against pinned bf075310 wrappers fails 3/3, private log SHA256 5aa27d5c1ef5a7de63ff2b2fc4be51a61b0e29c2c23fa016f8e6142d1a6fecf1. Current GREEN passes 3/3 zero skips, private log SHA256 9faeb6e91906abf54fe8194ead548178b647c42e7ef2d3ef2bdfbcf057c16471. Initial feature-fixture and whitespace assertion failures remain immutable private evidence, not suppressed.",
+      "by": "baton-012-work"
+    },
+    {
+      "id": "D5",
+      "decision": "Preserve supported ownership and genuine proof",
+      "rationale": "No CLI scope/proof/schema changes; E_STALE_REVIEW, E_SELF_REVIEW and exact diff-base requirements remain. Vendored ATV and all pinned upstream bytes remain immutable. Build, sync, manifest and build regenerate managed outputs through supported commands only. Extension/preset remain 0.1.0; CLI/package/generator are 0.1.2. Internal feeds were process-scoped only. Independent review must use gpt-6.1-sol medium in another checkout with its own identity; landing must also use a separate checkout. Freeze and stage reports before writing review proof, using the six frozen cleanup paths and actual timestamps inside lane-identifier directories.",
+      "by": "baton-012-work"
+    },
+    {
+      "id": "D6",
+      "decision": "Report directly coupled assertion correction and final inventory",
+      "rationale": "First resumed full gate reached 381 tests with one failure: test/integration/init.test.mjs expected the old v0.1.1 optional-pack command. One assertion changed to exact v0.1.2; coordinator expressly authorized it as path 23 beyond D2, with no substantive behavior increase. Failed full-gate log SHA256 c6edfa35b0f30c21964c2a547dc2233826192ecbefc1f2b965c042737f2490f9. Original 22 paths, path 23, a7 refresh and predictable phase/report receipts must be reported individually; do not disable quick-size validation or expand substantive scope. Second full gate passes 381/381 zero skips, log SHA256 da05b16c02ab029280b739660d3170527ca436b682f380331760d2e864ab0584; explicit validate exits 0, log SHA256 b154fbc7803f13e6e3fc3a288a8ed3d3fdd1b0921474e8cdf19a2967294f479b. No review report is force-staged after proof.",
+      "by": "baton-012-work"
+    }
+  ],
+  "risks": [
+    {"id": "R1", "text": "CE headless is prompt-driven: stop if exact base/file coverage cannot be proved; independent review must inspect both sets.", "severity": "medium"},
+    {"id": "R2", "text": "Post-review report staging invalidates subject proof: use fixed directories and stage/freeze reports before review write; preserve all genuine errors.", "severity": "medium"}
+  ]
+}

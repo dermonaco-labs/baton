@@ -26,6 +26,20 @@ phases. The review wrapper calls `ce-review mode:headless` and stores
 normalized findings in `review.json`; landing delegates to `/land` but
 never merges the PR.
 
+Review pins the recorded CLI base exactly. CE covers the full tracked diff
+against that base, including changed feature artifacts and bookkeeping;
+the CLI subject set must be a subset, not an equal set. Stage an untracked
+subject deliberately before review so it is present in the tracked diff.
+Keep both scopes and their coverage comparison in the review evidence.
+The reviewed-tree proof and independent-checkout requirements still apply.
+
+The land wrapper redirects ATV's mandatory session capture to an explicit
+artifact path outside the repository. Tracked notes belong before review,
+not after push. Publish the CLI land receipt to the same PR branch, then
+verify an empty porcelain status and exact local/tracking/remote head
+agreement. Never declare landing complete before that final check; a PR
+remains subject to the human review gate.
+
 The quick lane is for a change with **no new user-facing behavior or public
 contract**. Start with
 `node .baton/bin/baton.mjs handoff new --quick fix-typo --reason "docs typo, no behavior change"`;

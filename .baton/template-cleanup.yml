@@ -41,6 +41,12 @@ remove:
   - .baton/quick/validate-command-docs-011.md
   - .baton/quick/validate-command-docs-011.work.json
   - .baton/quick/validate-command-docs-011.review.json
+  - .baton/quick/review-land-fixes-012.md
+  - .baton/quick/review-land-fixes-012.work.json
+  - .baton/quick/review-land-fixes-012.review.json
+  - .baton/quick/review-land-fixes-012.land.json
+  - .context/compound-engineering/ce-review/review-land-fixes-012-independent-20261010/
+  - .context/compound-engineering/ce-review/review-land-fixes-012-independent-r1-20261010/
   - .context/compound-engineering/ce-review/validate-command-docs-011-independent-20261010/
   - .context/compound-engineering/ce-review/release-records-docs-a7-20261009/
   - .baton/template-cleanup-pending

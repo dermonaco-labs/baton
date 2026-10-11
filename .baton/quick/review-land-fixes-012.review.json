@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/review-land-fixes-012-independent-r1-20261010/"
+  },
+  "base": "bf0753104b2c6c673dddc3e11dc04a567226bfc8",
+  "head": "88d4cc3c9d94367f3a40fa35a997e7d431763d91",
+  "personas": [
+    "correctness-reviewer",
+    "testing-reviewer",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "agent-native-reviewer",
+    "learnings-researcher",
+    "adversarial-reviewer"
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "P2",
+      "title": "Landing regression omits actual remote-head verification",
+      "file": "test/integration/review-land-wrappers.test.mjs",
+      "line": 113,
+      "persona": "testing-reviewer",
+      "confidence": 0.99,
+      "disposition": "fixed",
+      "reason": "Original R1 evidence remains frozen in independent-20261010/report.md and review-results.json. Authorized candidate85a90e7 cherry-picked as88d4cc3 (same tree6b583cff) adds actual ls-remote three-way equality, a remote-only commit pushed by URL while origin tracking remains stale, negative actual-remote mismatch, fetch/fast-forward recovery, and wrapper actual-remote assertion. Independently executed corrected regressions pass3/3 zero skips; log SHA256fb1f3299b6ebf3567c46b201a83c0257ca6af44eec35c1e823cd818628a2a8f6. This proves Git/CLI fixture recovery, not execution of CE/ATV prompts."
+    },
+    {
+      "id": "R2",
+      "severity": "P2",
+      "title": "Untracked-subject test never proves staging restores coverage",
+      "file": "test/integration/review-land-wrappers.test.mjs",
+      "line": 73,
+      "persona": "testing-reviewer",
+      "confidence": 0.98,
+      "disposition": "fixed",
+      "reason": "Original R2 evidence remains frozen in independent-20261010/report.md and review-results.json. Authorized candidate85a90e7 cherry-picked as88d4cc3 recomputes fresh pinned CE list after subject creation, asserts missing subset coverage, stages the subject, checks restarted CLI exit, and re-enumerates CLI/Git sets to prove inclusion, unchanged base, and restored subset in both lanes. Independent corrected regressions pass3/3 zero skips; log SHA256fb1f3299b6ebf3567c46b201a83c0257ca6af44eec35c1e823cd818628a2a8f6."
+    }
+  ]
+}

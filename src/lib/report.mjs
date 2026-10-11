@@ -20,7 +20,7 @@ function annotation(issue) {
 export function formatResult(result, flags = {}) {
   const errors = result.errors ?? [];
   const warnings = result.warnings ?? [];
-  const output = { ok: errors.length === 0, command: result.command, version: '0.1.1', errors, warnings, data: result.data ?? null };
+  const output = { ok: errors.length === 0, command: result.command, version: '0.1.2', errors, warnings, data: result.data ?? null };
   if (flags.json) return JSON.stringify(output);
   if (flags.github) return errors.map(annotation).join('\n');
   if (flags.quiet) return '';

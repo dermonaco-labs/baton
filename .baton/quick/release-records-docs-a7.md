@@ -26,7 +26,7 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: .baton/template-cleanup.yml
     why: Source-only cleanup coverage for new docs lane and later canonical review artifacts
-    sha256: 5c7665fb92d76dfa38686f645edc26c30c34743ddb10c891ea9f88d6deeb453e
+    sha256: eb375087dc59b79749b669cb62bc7b09b5d20f88a664c63601db77ea77402e5b
   - path: .baton/quick/release-records-docs-a7.work.json
     why: Actual judgment-only input to this new canonical WORK write
     sha256: de632df430c6cae373d42517f38b3d1bde768ad2f66a7923bcb449813cc449f4
@@ -112,6 +112,10 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: cleanup checksum coverage for validate-command-docs-011 review directory; repository owner via coordinator delegation, verbatim approved 2026-10-10T19:48:34+02:00; one refresh and fresh approval, no semantic change
     by: implementation-session
+  - id: D15
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "User decision verbatim: D1 and D2 approved at 2026-10-10T23:39:24.666+02:00, relayed by control plane. D1 authorizes one checksum-only refresh for frozen cleanup 5c7665fb92d76dfa38686f645edc26c30c34743ddb10c891ea9f88d6deeb453e -> eb375087dc59b79749b669cb62bc7b09b5d20f88a664c63601db77ea77402e5b at HEAD bf0753104b2c6c673dddc3e11dc04a567226bfc8, followed by one fresh owner gate approval. No semantic or sealed receipt changes."
+    by: implementation-session
 gate:
   required: true
   approved_by: repository owner via control-plane delegation
@@ -173,7 +177,21 @@ history:
     x-worktree: 56eff5ab69b22e7c286c51e51340ed322a9c9875a122e714d062b721eb8e2b79
     commit: be5525f
     x-action: approve
-updated_at: 2026-10-10T17:50:29.498Z
+  - phase: land
+    at: 2026-10-10T21:41:52.423Z
+    by: implementation-session
+    writer: b5a82393a0bb580295ad171e52df41be426c99f1ea6588cdb38e1e3f4706c9ec
+    x-worktree: ea27aaadedaa3658e0445b1bad9ab10f00b04bbbc54eec622cf8a4598436d1c8
+    commit: bf07531
+    x-action: refresh
+  - phase: land
+    at: 2026-10-10T21:41:58.843Z
+    by: human:repository-owner
+    writer: b5a82393a0bb580295ad171e52df41be426c99f1ea6588cdb38e1e3f4706c9ec
+    x-worktree: ea27aaadedaa3658e0445b1bad9ab10f00b04bbbc54eec622cf8a4598436d1c8
+    commit: bf07531
+    x-action: approve
+updated_at: 2026-10-10T21:41:58.843Z
 updated_by: human:repository-owner
 do_not_read:
   - path: specs/001-baton-template/roadmap.md
