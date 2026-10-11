@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: partial-feature-attach-013
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Independent docs-only rereview at 5a02749: F3 fixed, no new findings, F1/F2 resolutions carried forward for unchanged code. Markdown lint and Baton validation passed; attachment integration tests 38/38 passed. Ready for land handoff only; no push, PR, merge or release."
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Independent LAND received reviewed HEAD 333694292462a9f7513907c14a410f4cba35af87 in the separate landing checkout. Coordinator-provided exact-HEAD npm run check passed 420/420 with exit 0; validate and land receive exited 0. Independent targeted attachment tests passed 38/38. Published the reviewed delivery and opened a draft PR to main; only Baton land bookkeeping follows. F1/F2 P1 and F3 P2 findings are fixed. No merge, auto-merge, approval, version bump, tag, release or downstream adoption.
 read_first:
   - path: .baton/quick/partial-feature-attach-013.md
     why: Quick intent and current relay
@@ -17,15 +17,9 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/partial-feature-attach-013.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: Inspected all 16 pinned tracked files at 35347c559994e884b66fff69267954f1e9f83f5b..96e4aa04bdbec06c88ee4469837e1a9c14730a7a, including all 11 CLI subjects, generated bundle and bookkeeping. Changes are limited to the requested pre-Baton attachment recovery, supporting validation, tests and documentation. The new attachment flag/fields are not eligible under the unmodified constitution rule; current baton D3 expressly records the repository-owner exception for this bug fix. Honor that exception, not a general permission to expand quick lanes. No additional unapproved scope was found. Two P1 blockers remain open and route to work.
+    evidence: https://github.com/dermonaco-labs/baton/pull/50
 open_questions: []
 decisions:
   - id: D1
@@ -177,8 +171,16 @@ decisions:
     tag: diff-base
     x-base-commit: 5a02749b0f19735251792d1ff168ce521cdb9881
     by: baton
+  - id: D33
+    decision: Honor the user-required independent land model
+    rationale: The user explicitly requires gpt-6.1-sol with medium reasoning for land, overriding the configured gpt-6-sol land-role suggestion for this task only. Land is performed in D:\privat\copilot-worktrees\baton\review-attach-013, separate from the author checkout, after successful exact-reviewed-HEAD receive, npm run check (420/420), and validate. Planning used Claude Opus 5.5; implementation and independent review used gpt-6.1-sol medium. No human approval is asserted.
+    by: baton-013-land
+  - id: D34
+    decision: Publish a draft review artifact without merging or releasing
+    rationale: The current user request authorizes push and draft PR publication, superseding the earlier no-push/no-PR work-phase restriction only for landing. Publish only the land receipt as Baton bookkeeping. Human PR review remains required. Do not merge, enable auto-merge, approve, bump a version, tag, release or adopt downstream. Downstream Acceptance Registry, fresh configured-role approval and separate historical validator gates remain unchanged.
+    by: baton-013-land
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -238,8 +240,15 @@ history:
     x-worktree: cc50c11fe81968589b9acf45ffbbf4c5c26c585f041237b3860f9a71e738a165
     commit: 5a02749
     x-action: write
-updated_at: 2026-10-11T19:39:47.181Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-10-11T20:01:04.458Z
+    by: baton
+    writer: 2f72ece7e88d9a138fc04bb143285ceb5553afd84017436d3e9f0b2628a989bd
+    x-worktree: cc50c11fe81968589b9acf45ffbbf4c5c26c585f041237b3860f9a71e738a165
+    commit: "3336942"
+    x-action: write
+updated_at: 2026-10-11T20:01:04.451Z
+updated_by: baton-land
 risks:
   - id: R1
     text: Imported work is not prior review approval. A fresh configured-role implement gate and independent review of the full delivery remain required.
@@ -259,6 +268,9 @@ x-implementation-cycle: f13532769c4da7f53497bcd514b225ffdadd7b68f86e02f94f469a65
 review:
   findings_path: .baton/quick/partial-feature-attach-013.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/50
+  number: 50
 ---
 ## Goal
 Keep the work in scope.

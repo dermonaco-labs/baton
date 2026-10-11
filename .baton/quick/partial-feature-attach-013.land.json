@@ -1,0 +1,21 @@
+{
+  "summary": "Independent LAND received reviewed HEAD 333694292462a9f7513907c14a410f4cba35af87 in the separate landing checkout. Coordinator-provided exact-HEAD npm run check passed 420/420 with exit 0; validate and land receive exited 0. Independent targeted attachment tests passed 38/38. Published the reviewed delivery and opened a draft PR to main; only Baton land bookkeeping follows. F1/F2 P1 and F3 P2 findings are fixed. No merge, auto-merge, approval, version bump, tag, release or downstream adoption.",
+  "pr": {
+    "url": "https://github.com/dermonaco-labs/baton/pull/50",
+    "number": 50
+  },
+  "decisions": [
+    {
+      "id": "D33",
+      "decision": "Honor the user-required independent land model",
+      "rationale": "The user explicitly requires gpt-6.1-sol with medium reasoning for land, overriding the configured gpt-6-sol land-role suggestion for this task only. Land is performed in D:\\privat\\copilot-worktrees\\baton\\review-attach-013, separate from the author checkout, after successful exact-reviewed-HEAD receive, npm run check (420/420), and validate. Planning used Claude Opus 5.5; implementation and independent review used gpt-6.1-sol medium. No human approval is asserted.",
+      "by": "baton-013-land"
+    },
+    {
+      "id": "D34",
+      "decision": "Publish a draft review artifact without merging or releasing",
+      "rationale": "The current user request authorizes push and draft PR publication, superseding the earlier no-push/no-PR work-phase restriction only for landing. Publish only the land receipt as Baton bookkeeping. Human PR review remains required. Do not merge, enable auto-merge, approve, bump a version, tag, release or adopt downstream. Downstream Acceptance Registry, fresh configured-role approval and separate historical validator gates remain unchanged.",
+      "by": "baton-013-land"
+    }
+  ]
+}
