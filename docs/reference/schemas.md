@@ -25,15 +25,31 @@ checks. Use [handoffs](../04-handoffs.md) for an annotated example and
 [error codes](error-codes.md) for recovery.
 
 `phase_completed: none` permits quick → work, or feature → implement only.
-The latter requires exactly one CLI-written `attached` decision by `baton`,
+The latter requires exactly one reserved `attached` decision by `baton`,
 `x-attached-phase: implement`, full hexadecimal `x-imported-head` and
 `x-delivery-base` commits, and a nonnegative integer `x-checked-tasks`.
-A Baton `diff-base` decision must have `x-base-commit` equal to
+Every Baton `diff-base` decision must have `x-base-commit` equal to
 `x-delivery-base`; initial history is empty and `gate.required: true`.
 Duplicate or non-feature attachments are invalid. Provenance remains
-permanent after normal implement → review transitions.
+permanent through supported implement → review transitions. Feature histories
+shorter than the 20-entry limit must start at `specify`, optionally after one
+`brainstorm`/quick `work`/quick `review` seed, or require attachment provenance.
+Full histories may be truncated; their normal start is not provable offline.
+Presence of `attached` or `attach-approved` always requires valid provenance.
 
-`x-delivery-base` is the merge-base of HEAD with `origin/HEAD`: review covers
+`x-delivery-base` is the merge-base of imported HEAD with `origin/HEAD`: review covers
 the full main → feature delivery and retains this base across later reviews.
 `x-imported-head` marks imported pre-Baton work for context only, not prior
 review approval. No settled history is relabelled or re-receipted.
+Receive and scope require the full imported commit to be reachable from HEAD
+and recompute its merge-base with `origin/HEAD`, failing `E_CHECK_FAILED` when
+unverifiable. `validate` remains offline, including after merge.
+
+At phase `none`, an approved attachment needs exactly one `attach-approved`
+decision by the configured human actor, matching `updated_by`, gate role,
+the current source-of-truth snapshot (`x-sources`: path/sha256 pairs) and
+`x-imported-head`. `approved_at` cannot precede `x-attached-at` when present.
+Refresh clears initial approval evidence; reapproval is required. Approval
+decisions persist after implement without inventing phase-`none` receipts.
+This is declarative consistency checking of plaintext, not cryptographic
+proof that an approval is authentic. Git history and PR review supply trust.

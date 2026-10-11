@@ -37,6 +37,13 @@ Explicit implement attachment requires a resolvable merge-base with
 the full main → feature delivery, not just post-attachment changes.
 `x-imported-head` is imported-baseline context, not prior review approval;
 no settled history is relabelled or re-receipted.
+Receive and scope verify imported-commit ancestry and recompute the pinned
+merge-base from `x-imported-head` and `origin/HEAD` (`E_CHECK_FAILED` if
+unverifiable). Offline validation rejects any shadowing `diff-base`.
+Initial `approve` binds source hashes and imported HEAD in an `attach-approved`
+human-role decision; refresh clears it and requires reapproval. Batons and
+gates are declarative plaintext, not cryptographic proof of authenticity:
+git history and PR review remain the trust boundary.
 
 `handoff write --phase analyze --analysis-from <file>` persists the analysis
 report; `--from-brainstorm <path>` and `--from-quick <path>` apply when

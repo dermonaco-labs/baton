@@ -1,5 +1,5 @@
 {
-  "summary": "Explicit pre-Baton implement attachment is complete with truthful imported context, fresh human approval, hashed sources and full main-to-feature delivery review scope. Default inference, quick none and original quick/analyze/review decision text are preserved. The one mandatory configured npm run check passed 404/404 with zero skips during work write; explicit validate passed. Local-only; independent review and shipping remain pending.",
+  "summary": "Address F1 and F2 with verified imported-commit ancestry/delivery base, all-diff-base consistency, retained attachment provenance and source-bound human approval evidence. Targeted attachment/normal validation tests pass 76/76 and relay/check tests 130/130. The single configured npm run check is executed and persisted by this work write. Bundle is 409595 bytes under the unchanged 409600 ceiling. Local-only; fresh independent review remains required. No shipping authorized.",
   "read_first": [
     {
       "path": ".baton/quick/partial-feature-attach-013.md",
@@ -46,6 +46,42 @@
       "decision": "Preserve the strict bundle ceiling through behavior-neutral reuse",
       "rationale": "The first corrected build failed E_BUNDLE_SIZE at 410135 bytes versus the unchanged 409600-byte ceiling. Shared Git commit lookup, JSON field-shape validation, usage-error construction and initialization/routing remove duplication without changing existing messages, error codes, decision text or default feature semantics. Final npm run build reports 409557 bytes. No build ceiling, dependency manifest, lock pin, version, tag or release changed. npm run typecheck, npm run lint:md and git diff --check pass. Initial supported sync failed a PyPI TLS fetch; retrying the pinned, hash-verified sync with process-scoped UV_INDEX_URL and PIP_INDEX_URL set to the approved PyPI proxy succeeded, then supported build regenerated the bundle. README and historical batons remain unchanged.",
       "by": "baton-013-work"
+    },
+    {
+      "id": "D14",
+      "decision": "Record the coordinator's honest declarative trust-model boundary",
+      "rationale": "Baton batons are plaintext. Existing approvals are declarative role/date gates; authenticity relies on git history and PR review. Cryptographic unforgeability is out of scope Baton-wide. Attachment validation now rejects inconsistent or Git-unverifiable states at least as strictly as the normal relay; it does not claim a consistently rewritten baton is cryptographically impossible. No fake human action was taken on this work baton. The user-required gpt-6.1-sol medium implementation routing remains the task-specific override recorded in D5.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D15",
+      "decision": "Address F1 provenance tampering and diff-base shadowing",
+      "rationale": "Offline validation requires exactly one valid attached decision when attachment or attach-approved evidence exists, or when a feature's non-full history lacks its normal start. Every attached diff-base must be written by baton and equal x-delivery-base; no later narrowing/shadowing is allowed. Receive, scope and initial approve verify that the full imported commit exists, is an ancestor of or equal to HEAD, and its merge-base with origin/HEAD equals the delivery base; all unresolved/missing/unrelated Git states fail E_CHECK_FAILED. Existing recordDiffBase producers already retain the delivery base for attached review/analyze paths and their original normal-feature decision/rationale strings remain unchanged. Regressions exercise paired valid-SHA base tampering, shadowing, nonexistent/unrelated imported commits, missing origin/HEAD, removed provenance after implement, actual supported implement/review writes, advancing main, and offline validation after Git removal.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D16",
+      "decision": "Address F2 forged and stale attachment approval evidence",
+      "rationale": "Initial approve validates fresh artifacts/Git provenance, records one reserved attach-approved decision by the configured human role with source-of-truth path/hash pairs and imported HEAD, and validates its actor/date consistency before writing. At phase none, gate approval requires matching human updated_by, exactly one source/imported-head-bound approval decision and approved_at not earlier than x-attached-at when recorded. Refresh of the initial attachment clears approval evidence and gate for reapproval, including bookkeeping refresh that changes updated_by. No none history receipt is invented; the decision persists after implement. Regressions reject gate-field-only forgery, actor mismatch, stale or mismatched hashes, backdated approval and duplicate decisions; supported role/channel approve and refresh/reapprove receive pass.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D17",
+      "decision": "Record reviewer-scenario RED and final targeted GREEN",
+      "rationale": "Before source changes node --test test\\integration\\handoff-attach.test.mjs reported 37 tests: 24 passed, 13 failed, zero skips. Exact RED failures: receive rejects paired delivery base; receive rejects nonexistent imported head; receive rejects unrelated imported head; receive rejects missing origin HEAD; validate and receive reject shadowing diff base; validate and receive reject deleted provenance after implement; validate and receive reject hand-set approval; validate and receive reject mismatched approval hashes; validate and receive reject stale approval hashes; validate and receive reject mismatched approval actor; validate and receive reject backdated approval; validate and receive reject duplicate approval; supported attachment approval binds sources and refresh requires reapproval without none receipts. Final node --test test\\integration\\handoff-attach.test.mjs test\\integration\\handoff-management.test.mjs test\\unit\\validate-handoff.test.mjs passed 76/76, zero skips. node --test test\\integration\\relay.test.mjs test\\unit\\checks.test.mjs passed 130/130, zero skips. A newly added compatibility fixture initially had an incomplete spec; repaired it using the existing synthetic sample spec, then reran the full targeted selection green. This work write runs the one required configured npm run check and persists its exact output/counts under local-checks-pass. Standalone bundled validate passed; recommended-pack and W_QUICK_LARGE warnings are advisory.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D18",
+      "decision": "Preserve the fixed bundle ceiling with behavior-neutral source reuse",
+      "rationale": "The initial corrected build measured 411812 bytes and failed the unchanged strict 409600-byte ceiling. Shared usage-error construction, issue emission, initial feature fields, append-decision machinery, last-decision lookup, attachment lookup and normalized directory/human actor reuse remove duplication while preserving normal decision strings, error codes/messages, property ordering and phase behavior. Final supported build reports 409595 bytes, five bytes below the limit. Supported sync regenerates the source skill's installed copy. The first pinned sync hit a PyPI TLS metadata failure; retry with process-scoped UV_INDEX_URL and PIP_INDEX_URL pointing to the approved PyPI proxy succeeded. No dependency manifests, lock pins, bundle limit, release/version or downstream files changed.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D19",
+      "decision": "Choose the provenance-required invariant compatible with bounded historical relays",
+      "rationale": "Normal new, old init --infer and plain first specify writes begin history at specify. Cross-source first writes may prepend exactly one brainstorm or quick work/review seed before specify. For feature histories shorter than the existing 20-entry retention bound, a missing such normal start requires exactly one valid attached decision; phase none always requires it. Full 20-entry histories may be truncated and retain legacy compatibility. Presence of attached or attach-approved always requires valid attached provenance even at the bound. This cannot prove origin after an attacker consistently replaces/removes all plaintext evidence or fabricates a saturated history; git/PR review remains authoritative. Fourteen synthetic feature-phase fixtures previously recorded only their terminal phase; they now include a normal specify start so their named positive/negative semantics remain independently tested. The real completed specs/001-baton-template baton is untouched and validates. No scope expansion or normal phase producer behavior is changed.",
+      "by": "baton-013-work"
     }
   ],
   "risks": [
@@ -62,6 +98,11 @@
     {
       "id": "R3",
       "text": "This task is a local upstream correction only; no push, pull request, merge, downstream adoption, tag, release or version bump is authorized.",
+      "severity": "medium"
+    },
+    {
+      "id": "R4",
+      "text": "Current corrected bundle is 409595 bytes with five bytes of headroom; plaintext consistency guards are not cryptographic authenticity, and saturated legacy histories cannot prove their origin offline.",
       "severity": "medium"
     }
   ]

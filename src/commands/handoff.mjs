@@ -3,7 +3,7 @@ import { basename, dirname } from 'node:path';
 import { execFile } from 'node:child_process';
 import { isDeepStrictEqual, promisify } from 'node:util';
 import { BatonError } from '../lib/report.mjs';
-import { readHandoff, writeHandoff, validateHandoff, gateVocabulary, approvedRole, actorRole } from '../lib/handoff.mjs';
+import { readHandoff, writeHandoff, validateHandoff, gateVocabulary, approvedRole, actorRole, attachmentSources } from '../lib/handoff.mjs';
 import { writerHash, checkoutHash } from '../lib/writer.mjs';
 import { withinRoot } from '../lib/manifest.mjs';
 import { hashFile } from '../lib/hash.mjs';
@@ -17,6 +17,10 @@ import { loadModelSettings, resolveModel, modelPolicyIssue } from '../lib/models
 const execFileAsync = promisify(execFile);
 /** @param {string} message */
 const usage = (message) => new BatonError('E_USAGE', message, 2);
+/** @param {Record<string,any>} data */
+const attachment = (data) => data.decisions?.find((/** @type {{tag?:string}} */ d) => d.tag === 'attached');
+/** @param {Record<string,any>} data @param {string} tag */
+const lastDecision = (data, tag) => data.decisions?.filter((/** @type {{tag?:string}} */ d) => d.tag === tag).at(-1);
 /** @param {string} root @param {string|undefined} base */
 async function reviewedTree(root, base) {
   const files = await changedFiles(root, { subject: true, base });
@@ -47,6 +51,22 @@ async function fullCommitId(root, args = ['rev-parse', 'HEAD']) {
     throw error;
   }
 }
+/** @param {string} root @param {Record<string,any>} data */
+async function verifyAttachment(root, data) {
+  const attached = attachment(data);
+  if (!attached) return;
+  const head = attached['x-imported-head'];
+  try {
+    const git = async (/** @type {string[]} */ args) =>
+      (await execFileAsync('git', args, { cwd: root, windowsHide: true })).stdout.trim();
+    if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/i.test(head) ||
+        await git(['rev-parse', '--verify', `${head}^{commit}`]) !== head ||
+        await git(['merge-base', head, 'origin/HEAD']) !== attached['x-delivery-base']) throw Error();
+    await git(['merge-base', '--is-ancestor', head, 'HEAD']);
+  } catch {
+    throw new BatonError('E_CHECK_FAILED', 'Unverifiable attachment ancestry or origin/HEAD base', 1);
+  }
+}
 /** @param {string} root @param {Record<string,any>} data @param {string} actor @param {string} phase @param {string} [batonPath] */
 async function updateMetadata(root, data, actor, phase, batonPath) {
   data.updated_at = new Date().toISOString();
@@ -73,6 +93,29 @@ function nextId(entries, prefix) {
   return `${prefix}${Math.max(0, ...entries.map((item) => Number(new RegExp(`^${prefix}(\\d+)$`).exec(item.id)?.[1] ?? 0))) + 1}`;
 }
 
+/** @param {Record<string,any>} data @param {Record<string,any>} fields */
+function addDecision(data, fields) {
+  data.decisions ??= [];
+  const id = nextId(data.decisions, 'D');
+  data.decisions.push({ id, ...fields });
+  return id;
+}
+
+/** @param {string} feature @param {string} completed @param {string} next @param {string} owner @param {string} now */
+function featureData(feature, completed, next, owner, now) {
+  return {
+    baton: 1, lane: 'feature', feature, phase_completed: completed, next_phase: next, next_owner: owner,
+    status: 'ready', model_role: 'planning', suggested_model: /** @type {string|null} */ (null),
+    summary: 'First feature handoff', read_first: /** @type {Array<Record<string,any>>} */ ([]),
+    artifacts: /** @type {Array<Record<string,any>>} */ ([]), entry_checked: [],
+    exit_criteria: /** @type {Awaited<ReturnType<typeof evaluateChecks>>} */ ([]),
+    open_questions: /** @type {Array<Record<string,any>>} */ ([]),
+    decisions: /** @type {Array<Record<string,any>>} */ ([]),
+    gate: { required: false, approved_by: /** @type {string|null} */ (null), approved_at: /** @type {string|null} */ (null) },
+    history: /** @type {Array<Record<string,any>>} */ ([]), updated_at: now, updated_by: 'baton',
+  };
+}
+
 /** @param {string} root @param {string} path */
 async function readAgentJson(root, path) {
   try {
@@ -94,11 +137,10 @@ function unexpectedFields(data, fields) {
 
 /** @param {string} root @param {Record<string,any>} data @param {string} decision @param {string} rationale @param {string|null} [base] */
 async function recordDiffBase(root, data, decision, rationale, base = null) {
-  base ??= data.decisions?.find((/** @type {{tag?:string}} */ item) => item.tag === 'attached')?.['x-delivery-base'] ?? await fullCommitId(root);
+  base ??= attachment(data)?.['x-delivery-base'] ?? await fullCommitId(root);
   if (!base) throw new BatonError('E_CHECK_FAILED', 'Cannot record diff base without a Git HEAD', 1);
-  data.decisions ??= [];
-  data.decisions.push({
-    id: nextId(data.decisions, 'D'), decision,
+  addDecision(data, {
+    decision,
     rationale, tag: 'diff-base', 'x-base-commit': base, by: 'baton',
   });
 }
@@ -168,7 +210,7 @@ function appendOnly(data, field, incoming) {
       if (!isDeepStrictEqual(byId.get(item.id), item)) throw usage(`${field} ${item.id} cannot be changed by write`);
     } else {
       if (field === 'decisions' && (typeof item.by === 'string' && item.by.startsWith('human:') ||
-        ['attached', 'diff-base', 'reviewed-tree', 'self-review-override', 'acceptance-waiver'].includes(item.tag))) {
+        ['attached', 'attach-approved', 'diff-base', 'reviewed-tree', 'self-review-override', 'acceptance-waiver'].includes(item.tag))) {
         throw usage('Reserved decisions can only be recorded by the CLI');
       }
       if (additions.some((other) => other.id === item.id)) throw usage(`Duplicate ${field} id ${item.id}`);
@@ -213,16 +255,16 @@ async function entryErrors(root, path, data, contract, phase, writing = false) {
 /** @param {string} root @param {string[]} args */
 export async function run(root, args) {
   const [action, ...raw] = args;
-  if (!action) throw new BatonError('E_USAGE', 'handoff requires an action', 2);
+  if (!action) throw usage('handoff requires an action');
   let rest = raw;
   let answer;
   if (action === 'answer') {
-    if (raw.length < 2 || raw[0].startsWith('--') || raw[1].startsWith('--')) throw new BatonError('E_USAGE', 'answer needs a question ID and choice', 2);
+    if (raw.length < 2 || raw[0].startsWith('--') || raw[1].startsWith('--')) throw usage('answer needs a question ID and choice');
     answer = { id: raw[0], choice: raw[1] };
     rest = raw.slice(2);
   }
   const options = parseOptions(rest);
-  if (options['dry-run'] && action !== 'migrate') throw new BatonError('E_USAGE', 'handoff --dry-run is not supported for this action', 2);
+  if (options['dry-run'] && action !== 'migrate') throw usage('handoff --dry-run is not supported for this action');
   const writer = await writerHash(root);
   const worktree = await checkoutHash(root);
   /** @param {Record<string,any>} data @param {string} by @param {string} phase @param {string} [actionName] */
@@ -268,27 +310,28 @@ export async function run(root, args) {
     }
   }
   const path = await locate(root, options);
+  const featureDir = dirname(path).replaceAll('\\', '/');
+  const humanActor = typeof options.by === 'string' ? `human:${options.by.replaceAll(' ', '-')}` : '';
   if (typeof options.quick === 'string' && action !== 'new') {
     try {
       await readFile(withinRoot(root, path));
     } catch (error) {
       if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
-      throw new BatonError('E_USAGE', `Quick baton ${path} does not exist; use handoff new --quick ${options.quick} --reason <why>`, 2);
+      throw usage(`Quick baton ${path} does not exist; use handoff new --quick ${options.quick} --reason <why>`);
     }
   }
   if (action === 'redact') {
     if (typeof options.reason !== 'string' || typeof options.find !== 'string' ||
       typeof options.replace !== 'string' || options.find === options.replace) {
-      throw new BatonError('E_USAGE', 'redact requires --find, --replace and --reason', 2);
+      throw usage('redact requires --find, --replace and --reason');
     }
     const { data, body } = await readHandoff(root, path);
-    if (!body.includes(options.find)) throw new BatonError('E_USAGE', 'Text to redact was not found in the baton body', 2);
+    if (!body.includes(options.find)) throw usage('Text to redact was not found in the baton body');
     const replacement = body.replaceAll(options.find, options.replace);
     const errors = await validateHandoff(root, path, serializeFrontmatter(data, replacement))
       .then((issues) => issues.filter((issue) => !['E_STALE_ARTIFACT', 'E_EXIT_UNMET'].includes(issue.code)));
     if (errors.length) return { errors, exitCode: 1 };
-    data.decisions ??= [];
-    data.decisions.push({ id: nextId(data.decisions, 'D'), decision: 'Handoff body redacted',
+    addDecision(data, { decision: 'Handoff body redacted',
       rationale: options.reason, by: 'baton' });
     data.updated_at = new Date().toISOString();
     data.updated_by = 'baton';
@@ -297,15 +340,15 @@ export async function run(root, args) {
     return { data: { path, redacted: true } };
   }
   if (action === 'revoke-waivers') {
-    if (typeof options.reason !== 'string' || !options.reason.trim()) throw new BatonError('E_USAGE', 'revoke-waivers requires --reason', 2);
+    if (typeof options.reason !== 'string' || !options.reason.trim()) throw usage('revoke-waivers requires --reason');
     const { data, body } = await readHandoff(root, path);
-    if (data.lane !== 'feature') throw new BatonError('E_USAGE', 'Only feature batons have acceptance waivers', 2);
+    if (data.lane !== 'feature') throw usage('Only feature batons have acceptance waivers');
     const hash = await hashFile(withinRoot(root, `${dirname(path)}/tasks.md`));
     const invalid = /** @type {Array<{id:string,tag?:string,'x-evidence-sha256'?:string}>} */ (data.decisions ?? [])
       .filter((item) => item.tag === 'acceptance-waiver' && item['x-evidence-sha256'] !== hash);
-    if (!invalid.length) throw new BatonError('E_USAGE', 'No invalid acceptance waivers to revoke', 2);
+    if (!invalid.length) throw usage('No invalid acceptance waivers to revoke');
     data.decisions = data.decisions.filter((/** @type {{id:string}} */ item) => !invalid.some((removed) => removed.id === item.id));
-    data.decisions.push({ id: nextId(data.decisions, 'D'), decision: 'Invalid acceptance waivers revoked',
+    addDecision(data, { decision: 'Invalid acceptance waivers revoked',
       rationale: options.reason, by: 'baton', 'x-revoked': invalid.map((item) => item.id) });
     data.updated_at = new Date().toISOString();
     data.updated_by = 'baton';
@@ -315,15 +358,15 @@ export async function run(root, args) {
   }
   if (action === 'question') {
     const { data, body } = await readHandoff(root, path);
-    if (typeof options.reason !== 'string' || !options.reason.trim()) throw new BatonError('E_USAGE', 'question requires --reason', 2);
+    if (typeof options.reason !== 'string' || !options.reason.trim()) throw usage('question requires --reason');
     const check = options.check;
     const override = options.tag === 'self-review-override';
     if (check && (typeof check !== 'string' || !data.acceptance_checks?.some((/** @type {{id:string}} */ item) => item.id === check) ||
       data.lane !== 'feature' || data.next_phase !== 'implement')) {
-      throw new BatonError('E_USAGE', 'Question check must be registered on an implement handoff', 2);
+      throw usage('Question check must be registered on an implement handoff');
     }
     if (!check && !override || check && options.tag || override && !['review', 'land'].includes(data.next_phase)) {
-      throw new BatonError('E_USAGE', 'question requires --check on implement or --tag self-review-override on review/land', 2);
+      throw usage('question requires --check on implement or --tag self-review-override on review/land');
     }
     const id = nextId(data.open_questions ?? [], 'Q');
     data.open_questions ??= [];
@@ -353,7 +396,7 @@ export async function run(root, args) {
     } catch (error) {
       if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
     }
-    const spec = `${dirname(path).replaceAll('\\', '/')}/spec.md`;
+    const spec = `${featureDir}/spec.md`;
     let digest;
     try {
       digest = await hashFile(withinRoot(root, spec));
@@ -367,21 +410,18 @@ export async function run(root, args) {
     const next = options.phase === 'implement' ? 'implement' : 'clarify';
     const routing = resolveModel(await loadModelSettings(root), next, phases.phases[next].model_role);
     const data = {
-      baton: 1, lane: 'feature', feature: options.feature, phase_completed: next === 'implement' ? 'none' : 'specify',
-      next_phase: next, next_owner: phases.phases[next].owner,
+      ...featureData(options.feature, next === 'implement' ? 'none' : 'specify', next, phases.phases[next].owner, now),
       status: inferred && next === 'clarify' ? 'needs-human' : 'ready',
       model_role: routing.role, suggested_model: routing.model,
       summary: inferred ? 'Confirm the inferred phase of the existing feature' : 'Specification ready for clarification',
       read_first: [{ path: spec, why: 'Specification and scope', sha256: digest }],
       artifacts: [{ path: spec, role: 'source-of-truth', sha256: digest }],
-      entry_checked: [], exit_criteria: /** @type {Awaited<ReturnType<typeof evaluateChecks>>} */ ([]),
       open_questions: inferred && next === 'clarify' ? [{
         id: 'Q1', question: 'Is the existing specification complete and ready for clarification?',
         blocking: true, options: ['Continue with clarification', 'Revise specification first'],
       }] : [],
-      decisions: /** @type {Array<Record<string,any>>} */ ([]), gate: { required: next === 'implement', approved_by: null, approved_at: null },
+      gate: { required: next === 'implement', approved_by: null, approved_at: null },
       history: /** @type {Array<Record<string,any>>} */ (next === 'implement' ? [] : [{ phase: 'specify', at: now, by: 'baton', writer, commit: await commitId(root) }]),
-      updated_at: now, updated_by: 'baton',
     };
     if (options.phase === 'implement') {
       const supplied = typeof options['from-json'] === 'string' ? await readAgentJson(root, options['from-json']) : {};
@@ -391,7 +431,7 @@ export async function run(root, args) {
       if (supplied.read_first !== undefined && !Array.isArray(supplied.read_first)) throw usage('read_first must be an array');
       const artifacts = data.artifacts;
       for (const name of ['plan', 'tasks']) {
-        const source = `${dirname(path).replaceAll('\\', '/')}/${name}.md`;
+        const source = `${featureDir}/${name}.md`;
         try {
           artifacts.push({ path: source, role: 'source-of-truth', sha256: await hashFile(withinRoot(root, source)) });
         } catch (error) {
@@ -411,6 +451,7 @@ export async function run(root, args) {
         decisions: [
           { id: 'D1', decision: 'Attach pre-Baton feature', rationale: options.reason, tag: 'attached', by: 'baton',
             'x-attached-phase': 'implement', 'x-imported-head': await fullCommitId(root), 'x-delivery-base': base,
+            'x-attached-at': now.slice(0, 10),
             'x-checked-tasks': [...tasks.matchAll(/^\s*-\s+\[[xX]\]\s+T\d{3}\b/gm)].length },
         ],
       });
@@ -458,7 +499,7 @@ export async function run(root, args) {
     return { data: { path, migrated: false, schema: 1 } };
   }
   if (action === 'receive') {
-    if (typeof options.phase !== 'string') throw new BatonError('E_USAGE', 'receive requires --phase', 2);
+    if (typeof options.phase !== 'string') throw usage('receive requires --phase');
     if (options.phase === 'specify' && typeof options.quick === 'string') {
       const { data } = await readHandoff(root, path);
       const errors = await validateHandoff(root, path);
@@ -490,18 +531,19 @@ export async function run(root, args) {
     }
     const { data } = handoff;
     const errors = await validateHandoff(root, path);
+    if (!errors.length) await verifyAttachment(root, data);
     if (selfReview(data, options.phase)) {
       errors.push({ code: 'E_SELF_REVIEW', file: path, message: 'End this session; start a fresh review session, or ask the repository owner to answer a self-review-override question' });
     }
     if (options.phase === 'land') {
-      const reviewed = data.decisions?.filter((/** @type {{tag?:string}} */ item) => item.tag === 'reviewed-tree').at(-1);
+      const reviewed = lastDecision(data, 'reviewed-tree');
       if (reviewed && reviewed['x-tree-sha256'] !== await reviewedTree(root, reviewed['x-base-commit'])) {
         errors.push({ code: 'E_STALE_REVIEW', file: path, message: 'Code changed after review; return to review before landing' });
       }
     }
     const { config: phases } = await loadPhases(root);
     const contract = phases.phases[options.phase];
-    if (!contract) throw new BatonError('E_USAGE', `Unknown phase ${options.phase}`, 2);
+    if (!contract) throw usage(`Unknown phase ${options.phase}`);
     if (!contract.lane.includes(data.lane)) errors.push({ code: 'E_LANE_MISMATCH', file: path, message: `${options.phase} does not accept ${data.lane} batons` });
     if (data.next_phase !== options.phase && !(options.phase === 'implement' && options.mode === 'converge' && data.phase_completed === 'implement')) {
       errors.push({ code: 'E_TRANSITION', file: path, message: `Expected ${data.next_phase}, received ${options.phase}` });
@@ -514,7 +556,7 @@ export async function run(root, args) {
     };
   }
   if (action === 'escalate') {
-    if (typeof options.quick !== 'string' || typeof options.reason !== 'string') throw new BatonError('E_USAGE', 'escalate requires --quick <slug> --reason', 2);
+    if (typeof options.quick !== 'string' || typeof options.reason !== 'string') throw usage('escalate requires --quick <slug> --reason');
     const { data, body } = await readHandoff(root, path);
     await requireApprovedSourcesFresh(root, path, data);
     if (data.lane !== 'quick' || !['work', 'review'].includes(data.phase_completed)) throw new BatonError('E_TRANSITION', 'Only a quick work or review can escalate', 1);
@@ -522,33 +564,31 @@ export async function run(root, args) {
     data.next_owner = 'speckit-specify';
     data.model_role = 'planning';
     data.status = /** @type {Array<{blocking:boolean}>} */ (data.open_questions ?? []).some((item) => item.blocking) ? 'needs-human' : 'ready';
-    data.decisions ??= [];
-    data.decisions.push({ id: nextId(data.decisions, 'D'), decision: 'Escalate to feature lane', rationale: options.reason, tag: 'escalated', by: 'baton' });
+    addDecision(data, { decision: 'Escalate to feature lane', rationale: options.reason, tag: 'escalated', by: 'baton' });
     await record(data, 'baton', data.phase_completed, 'escalate');
     await updateMetadata(root, data, 'baton', 'specify');
     await writeHandoff(root, path, data, body);
     return { data: { command: '/speckit-specify', from_quick: path } };
   }
   if (action === 'answer') {
-    if (typeof options.by !== 'string' || !answer) throw new BatonError('E_USAGE', 'answer requires --by <role>', 2);
+    if (typeof options.by !== 'string' || !answer) throw usage('answer requires --by <role>');
     const vocabulary = await gateVocabulary(root);
     if (!vocabulary.roles.includes(options.by)) throw new BatonError('E_APPROVER_FORMAT', 'Choose a configured role, not a personal identity', 2);
     const { data, body } = await readHandoff(root, path);
     await requireApprovedSourcesFresh(root, path, data);
     const index = /** @type {Array<{id:string,question:string,blocking:boolean,options?:string[]}>} */ (data.open_questions ?? []).findIndex((item) => item.id === answer.id);
-    if (index < 0) throw new BatonError('E_USAGE', `Unknown question ${answer.id}`, 2);
+    if (index < 0) throw usage(`Unknown question ${answer.id}`);
     const question = data.open_questions[index];
-    if (question.options?.length && !question.options.includes(answer.choice)) throw new BatonError('E_USAGE', 'Choice must be one of the recorded options', 2);
+    if (question.options?.length && !question.options.includes(answer.choice)) throw usage('Choice must be one of the recorded options');
     const check = question['x-check'];
     if (check !== undefined && (!/** @type {Array<{id:string}>|undefined} */ (data.acceptance_checks)?.some((item) => item.id === check) ||
       typeof check !== 'string' || !/^AC-US[1-9]\d*-[1-9]\d*$/.test(check))) {
-      throw new BatonError('E_USAGE', 'Waiver question must identify a registered acceptance check', 2);
+      throw usage('Waiver question must identify a registered acceptance check');
     }
     data.open_questions.splice(index, 1);
-    data.decisions ??= [];
-    data.decisions.push({
-      id: nextId(data.decisions, 'D'), decision: answer.choice, rationale: question.question,
-      by: `human:${options.by.replaceAll(' ', '-')}`,
+    addDecision(data, {
+      decision: answer.choice, rationale: question.question,
+      by: humanActor,
       ...(check && /^Waive\b/i.test(answer.choice) ? {
         tag: 'acceptance-waiver', 'x-check': check,
         'x-evidence-sha256': await hashFile(withinRoot(root, `${dirname(path)}/tasks.md`)),
@@ -559,18 +599,18 @@ export async function run(root, args) {
             (!item['x-action'] || item['x-action'] === 'write')).at(-1)?.at } : {}),
     });
     data.status = /** @type {Array<{blocking:boolean}>} */ (data.open_questions).some((item) => item.blocking) ? 'needs-human' : 'ready';
-    await updateMetadata(root, data, `human:${options.by.replaceAll(' ', '-')}`, data.next_phase);
-    await record(data, `human:${options.by.replaceAll(' ', '-')}`, data.phase_completed, 'answer');
+    await updateMetadata(root, data, humanActor, data.next_phase);
+    await record(data, humanActor, data.phase_completed, 'answer');
     await writeHandoff(root, path, data, body);
     return { data: { question: answer.id, status: data.status } };
   }
   if (action === 'write') {
-    if (typeof options.phase !== 'string' || typeof options['from-json'] !== 'string') throw new BatonError('E_USAGE', 'write requires --phase and --from-json', 2);
+    if (typeof options.phase !== 'string' || typeof options['from-json'] !== 'string') throw usage('write requires --phase and --from-json');
     const brainstorm = options['from-brainstorm'];
     const quick = options['from-quick'];
-    if (brainstorm && quick) throw new BatonError('E_USAGE', 'Choose one source for the first feature handoff', 2);
+    if (brainstorm && quick) throw usage('Choose one source for the first feature handoff');
     if ((brainstorm || quick) && options.phase !== 'specify') {
-      throw new BatonError('E_USAGE', 'Cross-source evidence requires specify', 2);
+      throw usage('Cross-source evidence requires specify');
     }
     let data;
     let body;
@@ -584,10 +624,10 @@ export async function run(root, args) {
       }
       const source = /** @type {string} */ (brainstorm ?? quick);
       if (brainstorm && !/^docs\/brainstorms\/[^/]+\.md$/.test(source)) {
-        throw new BatonError('E_USAGE', 'Brainstorm source must be a document under docs/brainstorms', 2);
+        throw usage('Brainstorm source must be a document under docs/brainstorms');
       }
       if (quick && !/^\.baton\/quick\/[a-z0-9][a-z0-9-]{1,48}\.md$/.test(source)) {
-        throw new BatonError('E_USAGE', 'Quick source must be a baton under .baton/quick', 2);
+        throw usage('Quick source must be a baton under .baton/quick');
       }
       if (quick) {
         const original = await readFile(withinRoot(root, source), 'utf8');
@@ -603,17 +643,12 @@ export async function run(root, args) {
       const now = new Date().toISOString();
       const origin = sourceQuick?.data.phase_completed ?? 'brainstorm';
       data = {
-        baton: 1, lane: 'feature', feature: basename(dirname(path)), phase_completed: origin,
-        next_phase: 'specify', next_owner: 'speckit-specify', status: 'ready',
-        model_role: 'planning', suggested_model: null, summary: 'First feature handoff',
+        ...featureData(basename(dirname(path)), origin, 'specify', 'speckit-specify', now),
         read_first: [{ path: source, why: 'Source of the feature handoff' }],
         artifacts: [{ path: source, role: 'evidence', sha256: digest }],
-        entry_checked: [], exit_criteria: [], open_questions: [], decisions: [],
-        gate: { required: false, approved_by: null, approved_at: null },
         history: sourceQuick?.data.history?.length
           ? [structuredClone(sourceQuick.data.history.at(-1))]
           : [{ phase: 'brainstorm', at: now, by: 'ce-brainstorm', commit: null }],
-        updated_at: now, updated_by: 'baton',
       };
       body = headingBody('speckit-specify');
     } else {
@@ -622,7 +657,7 @@ export async function run(root, args) {
       } catch (error) {
         if (options.phase !== 'specify' ||
             /** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
-        const spec = `${dirname(path).replaceAll('\\', '/')}/spec.md`;
+        const spec = `${featureDir}/spec.md`;
         let digest;
         try {
           digest = await hashFile(withinRoot(root, spec));
@@ -631,14 +666,9 @@ export async function run(root, args) {
           return { errors: [{ code: 'E_MISSING_ARTIFACT', file: spec, message: 'Specification must exist before the first handoff' }], exitCode: 1 };
         }
         data = {
-          baton: 1, lane: 'feature', feature: basename(dirname(path)), phase_completed: 'none',
-          next_phase: 'specify', next_owner: 'speckit-specify', status: 'ready',
-          model_role: 'planning', suggested_model: null, summary: 'First feature handoff',
+          ...featureData(basename(dirname(path)), 'none', 'specify', 'speckit-specify', new Date().toISOString()),
           read_first: [{ path: spec, why: 'Specification and scope', sha256: digest }],
           artifacts: [{ path: spec, role: 'source-of-truth', sha256: digest }],
-          entry_checked: [], exit_criteria: [], open_questions: [], decisions: [],
-          gate: { required: false, approved_by: null, approved_at: null },
-          history: [], updated_at: new Date().toISOString(), updated_by: 'baton',
         };
         body = headingBody('speckit-specify');
       }
@@ -655,7 +685,7 @@ export async function run(root, args) {
       return { errors: [{ code: 'E_SELF_REVIEW', file: path, message: 'End this session; start a fresh review session or request a human self-review-override' }], exitCode: 3 };
     }
     if (options.phase === 'land') {
-      const reviewed = data.decisions?.filter((/** @type {{tag?:string}} */ item) => item.tag === 'reviewed-tree').at(-1);
+      const reviewed = lastDecision(data, 'reviewed-tree');
       if (reviewed && reviewed['x-tree-sha256'] !== await reviewedTree(root, reviewed['x-base-commit'])) {
         return { errors: [{ code: 'E_STALE_REVIEW', file: path, message: 'Code changed after review; return to review before landing' }], exitCode: 1 };
       }
@@ -666,11 +696,11 @@ export async function run(root, args) {
     }
     const supplied = await readAgentJson(root, options['from-json']);
     if (unexpectedFields(supplied, ['summary', 'read_first', 'do_not_read', 'artifacts', 'decisions', 'open_questions', 'assumptions', 'risks', 'acceptance_checks', 'review', 'analysis', 'pr'])) throw usage('Agent data contains unexpected or deterministic fields');
-    if (options.phase !== 'review' && Object.hasOwn(supplied, 'review')) throw new BatonError('E_USAGE', 'Review findings can only be supplied during review', 2);
+    if (options.phase !== 'review' && Object.hasOwn(supplied, 'review')) throw usage('Review findings can only be supplied during review');
     if (Array.isArray(supplied.artifacts)) {
       for (const item of supplied.artifacts) {
         const existing = data.artifacts?.find((/** @type {{path:string,role:string}} */ artifact) => artifact.path === item.path);
-        if (existing && existing.role !== item.role) throw new BatonError('E_USAGE', `Artifact role cannot change: ${item.path}`, 2);
+        if (existing && existing.role !== item.role) throw usage(`Artifact role cannot change: ${item.path}`);
       }
     }
     if (Object.hasOwn(supplied, 'acceptance_checks') && !['specify', 'clarify', 'plan', 'tasks'].includes(options.phase)) {
@@ -692,11 +722,11 @@ export async function run(root, args) {
       if (!data.read_first?.length) data.read_first = [{ path: source, why: 'Source of the feature handoff' }];
     }
     if (typeof options['analysis-from'] === 'string') {
-      if (options.phase !== 'analyze' || data.lane !== 'feature') throw new BatonError('E_USAGE', '--analysis-from requires feature analyze', 2);
+      if (options.phase !== 'analyze' || data.lane !== 'feature') throw usage('--analysis-from requires feature analyze');
       if (!data.analysis || !Number.isInteger(data.analysis.critical) || !Number.isInteger(data.analysis.high)) {
-        throw new BatonError('E_USAGE', 'Agent data must provide explicit analysis critical/high counts', 2);
+        throw usage('Agent data must provide explicit analysis critical/high counts');
       }
-      const destination = `${dirname(path).replaceAll('\\', '/')}/analysis.md`;
+      const destination = `${featureDir}/analysis.md`;
       await copyFile(withinRoot(root, options['analysis-from']), withinRoot(root, destination));
       data.analysis.report_path = destination;
     }
@@ -706,9 +736,9 @@ export async function run(root, args) {
         return { errors: [{ code: 'E_REVIEW_MISSING', file: path, message: 'Review findings path is required' }], exitCode: 1 };
       }
       const canonical = data.lane === 'quick'
-        ? `.baton/quick/${data.feature}.review.json` : `${dirname(path).replaceAll('\\', '/')}/review.json`;
+        ? `.baton/quick/${data.feature}.review.json` : `${featureDir}/review.json`;
       if (findingsPath !== canonical) {
-        throw new BatonError('E_USAGE', `Review findings_path must be ${canonical}`, 2);
+        throw usage(`Review findings_path must be ${canonical}`);
       }
       let findings;
       try {
@@ -723,10 +753,9 @@ export async function run(root, args) {
       if (!valid.met) return { errors: [{ code: 'E_REVIEW_MISSING', file: findingsPath, message: valid.evidence }], exitCode: 1 };
       data.review.blocking_findings = findings.findings.filter((/** @type {{severity:string,disposition:string}} */ item) =>
         ['P0', 'P1'].includes(item.severity) && item.disposition === 'open').length;
-      const previousBase = data.decisions?.filter((/** @type {{tag?:string}} */ item) => item.tag === 'diff-base').at(-1)?.['x-base-commit'];
-      data.decisions ??= [];
-      data.decisions.push({
-        id: nextId(data.decisions, 'D'), decision: 'Record reviewed code tree',
+      const previousBase = lastDecision(data, 'diff-base')?.['x-base-commit'];
+      addDecision(data, {
+        decision: 'Record reviewed code tree',
         rationale: 'Land must use the exact code inspected by review', tag: 'reviewed-tree',
         'x-tree-sha256': await reviewedTree(root, previousBase), ...(previousBase ? { 'x-base-commit': previousBase } : {}),
         by: 'baton',
@@ -778,7 +807,7 @@ export async function run(root, args) {
       closed.next_phase = 'done';
       closed.next_owner = 'none';
       closed.decisions.push({
-        id: nextId(closed.decisions, 'D'), decision: `Escalated into ${dirname(path).replaceAll('\\', '/')}`,
+        id: nextId(closed.decisions, 'D'), decision: `Escalated into ${featureDir}`,
         rationale: 'The first feature handoff recorded the quick-lane evidence',
         tag: 'escalated', by: 'baton',
       });
@@ -806,28 +835,44 @@ export async function run(root, args) {
     return { errors: unmet, warnings: policy ? [policy] : [], data: { path, next_phase: next, exit_criteria: results } };
   }
   if (action === 'approve') {
-    if (typeof options.by !== 'string') throw new BatonError('E_USAGE', 'approve requires --by <role>', 2);
+    if (typeof options.by !== 'string') throw usage('approve requires --by <role>');
     const vocabulary = await gateVocabulary(root);
     const approvedBy = `${options.by}${options.via ? ` via ${options.via}` : ''}`;
     if (!approvedRole(approvedBy, vocabulary)) throw new BatonError('E_APPROVER_FORMAT', 'Choose a configured role and channel, never a personal handle', 2);
     const date = typeof options.at === 'string' ? options.at : new Date().toISOString().slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`)) ||
       new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date) {
-      throw new BatonError('E_USAGE', '--at must be a valid YYYY-MM-DD date', 2);
+      throw usage('--at must be a valid YYYY-MM-DD date');
     }
     const { data, body } = await readHandoff(root, path);
     if (!data.gate?.required) throw new BatonError('E_GATE_PENDING', 'This transition does not require approval');
     if (data.gate.approved_by) throw new BatonError('E_GATE_PENDING', 'This gate has already been approved');
+    const initialAttachment = data.phase_completed === 'none' && attachment(data);
+    if (initialAttachment) {
+      const errors = await validateHandoff(root, path);
+      if (errors.length) return { errors, exitCode: 1 };
+      await verifyAttachment(root, data);
+    }
     data.gate.approved_by = approvedBy;
     data.gate.approved_at = date;
     data.updated_at = new Date().toISOString();
-    data.updated_by = `human:${options.by.replaceAll(' ', '-')}`;
+    data.updated_by = humanActor;
+    if (initialAttachment) {
+      addDecision(data, {
+        tag: 'attach-approved', decision: 'Approve source snapshot',
+        rationale: 'Fresh implement gate', by: data.updated_by,
+        'x-sources': attachmentSources(data),
+        'x-imported-head': initialAttachment['x-imported-head'],
+      });
+      const errors = await validateHandoff(root, path, serializeFrontmatter(data, body));
+      if (errors.length) throw new BatonError('E_TRANSITION', 'Invalid attachment approval', 1);
+    }
     await record(data, data.updated_by, data.phase_completed, 'approve');
     await writeHandoff(root, path, data, body);
     return { data: { gate: data.gate } };
   }
   if (action === 'refresh') {
-    if (typeof options.reason !== 'string') throw new BatonError('E_USAGE', 'refresh requires --reason', 2);
+    if (typeof options.reason !== 'string') throw usage('refresh requires --reason');
     const { data, body } = await readHandoff(root, path);
     let sourceChanged = false;
     for (const item of [...(data.read_first ?? []), ...(data.artifacts ?? [])]) {
@@ -839,13 +884,13 @@ export async function run(root, args) {
       if (!item.sha256 || item.sha256 !== current) sourceChanged = true;
       item.sha256 = current;
     }
-    if (sourceChanged && data.gate?.required) {
+    const initialAttachment = data.phase_completed === 'none' && attachment(data);
+    if ((sourceChanged || initialAttachment) && data.gate?.required) {
       data.gate.approved_by = null;
       data.gate.approved_at = null;
+      if (initialAttachment) data.decisions = data.decisions.filter((/** @type {{tag?:string}} */ d) => d.tag !== 'attach-approved');
     }
-    data.decisions ??= [];
-    const id = nextId(data.decisions, 'D');
-    data.decisions.push({ id, decision: 'Artifact hashes refreshed after intentional edit', rationale: options.reason, by: 'implementation-session' });
+    const id = addDecision(data, { decision: 'Artifact hashes refreshed after intentional edit', rationale: options.reason, by: 'implementation-session' });
     data.updated_at = new Date().toISOString();
     data.updated_by = 'implementation-session';
     await record(data, 'implementation-session', data.phase_completed, 'refresh');
@@ -871,13 +916,17 @@ export async function run(root, args) {
   }
   if (action === 'scope') {
     const { data } = await readHandoff(root, path);
-    const recorded = data.decisions?.filter((/** @type {{tag?:string}} */ item) => item.tag === 'diff-base').at(-1)?.['x-base-commit'];
+    if (attachment(data)) {
+      const errors = await validateHandoff(root, path);
+      if (errors.length) return { errors, exitCode: 1 };
+      await verifyAttachment(root, data);
+    }
+    const recorded = lastDecision(data, 'diff-base')?.['x-base-commit'];
     const { base } = await reviewBase(root, data);
     if (!recorded || base !== recorded) throw new BatonError('E_CHECK_FAILED', 'Review requires a reachable recorded diff base', 1);
     const files = await changedFiles(root, { base, subject: true });
     if (!files) throw new BatonError('E_CHECK_FAILED', 'Cannot enumerate review scope', 1);
-    const featureDir = dirname(path).replaceAll('\\', '/');
     return { data: { base, files: files.filter((file) => !(data.lane === 'feature' && file.startsWith(`${featureDir}/`))).sort() } };
   }
-  throw new BatonError('E_USAGE', `Unsupported handoff action: ${action}`, 2);
+  throw usage(`Unsupported handoff action: ${action}`);
 }

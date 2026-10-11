@@ -59,6 +59,11 @@ Review covers the full main → feature delivery from the merge-base with
 `origin/HEAD` (missing base: `E_CHECK_FAILED`, no baton written).
 `x-imported-head` marks imported work for context, not an attestation of
 prior review; no settled history is relabelled or re-receipted.
+Receive and scope verify imported HEAD ancestry and its merge-base with
+`origin/HEAD`; offline validation requires every attached `diff-base` to
+match. Initial `approve` records source hashes/imported HEAD in reserved
+`attach-approved` evidence, which refresh clears for reapproval. Gates remain
+declarative plaintext: authenticity relies on git/PR review, not cryptography.
 
 ### `models`
 

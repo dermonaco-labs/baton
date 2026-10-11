@@ -99,14 +99,45 @@ work and post-attachment changes. The `diff-base` decision records
 `E_CHECK_FAILED` and no baton is written. Ensure `origin/HEAD` resolves before
 attaching. The `attached` decision records that merge-base as
 `x-delivery-base`, the full attachment HEAD as `x-imported-head`, and the
-imported checked-task count as `x-checked-tasks`.
+imported checked-task count as `x-checked-tasks`, plus the attachment date as
+`x-attached-at`.
 
-`x-imported-head` is context only: reviewers can distinguish the imported
+Receive and scope verify that `x-imported-head` resolves to a full commit
+which is an ancestor of (or equal to) the current HEAD, and that
+`x-delivery-base` equals `git merge-base <x-imported-head> origin/HEAD`.
+Missing commits, unrelated history or an unresolved remote HEAD fail closed
+with `E_CHECK_FAILED`. This uses the imported commit, not today's HEAD, so
+ordinary main advances do not narrow the pinned delivery scope.
+Offline validation checks that **every** `diff-base` decision equals the
+delivery base, preventing later shadowing. Validation does not need Git and
+continues to work after merge.
+
+`approve` also records one reserved `attach-approved` human-role decision
+binding the current source-of-truth paths/hashes (`x-sources`) and imported
+HEAD. At phase `none`, approval must match this evidence and the human
+`updated_by` actor; its date cannot precede the recorded attachment date.
+Refresh of an initial attachment clears this evidence and the gate, requiring
+reapproval. Source edits without refresh are stale. No phase-`none` history
+receipt is invented; the decision remains provenance after implementation.
+
+Batons are plaintext and gates are declarative process guards, not
+cryptographic attestations. These checks reject inconsistent or unverifiable
+states, including hand-set gate fields without matching approval evidence;
+they cannot establish the authenticity of a consistently rewritten baton.
+Authenticity relies on git history and PR review, as in the normal relay.
+
+`x-imported-head` distinguishes context only: reviewers can identify the imported
 baseline from Baton-executed work, but Baton does not attest that imported
 work was previously reviewed. Settled history is never relabelled or
 re-receipted. Normal implement → review relay resumes after the first write;
 later review writes retain the attachment's delivery base, including when
 findings send the feature back to implement. Normal unattached features keep
 their existing analyze/review base semantics.
+For a feature history shorter than the 20-entry retention limit, it must
+begin with `specify` (optionally preceded by one `brainstorm`, quick `work`
+or quick `review` seed) or carry exactly one valid `attached` decision.
+An attachment or its approval decision always requires valid provenance.
+Full 20-entry histories may have lost their normal start and remain accepted
+for compatibility; this is not proof of origin.
 Without `--phase`, `init --infer` still requests human confirmation before
 clarification. Only `--phase implement` is supported, with a required reason.

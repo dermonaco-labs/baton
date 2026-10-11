@@ -19,6 +19,14 @@ const checks = [1, 2, 3].map((n) => ({
 }));
 const attach = ['init', '--feature', feature, '--infer', '--phase', 'implement', '--reason', 'Recover existing work', '--from-json', 'attach.json'];
 
+async function cli(root, args) {
+  try {
+    return { code: 0, ...(await exec(process.execPath, [join(sourceRoot, '.baton', 'bin', 'baton.mjs'), 'handoff', ...args], { cwd: root })) };
+  } catch (error) {
+    return { code: error.code, stderr: error.stderr, stdout: error.stdout };
+  }
+}
+
 async function workspace() {
   const root = await mkdtemp(join(sourceRoot, 'test', 'fixtures', 'handoffs', '.unit-'));
   await cp(join(sourceRoot, 'baton', 'schemas'), join(root, 'baton', 'schemas'), { recursive: true });
@@ -188,6 +196,8 @@ test('attached implement write resumes normal relay with one genuine phase recei
     await exec('git', ['-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'Baton implementation'], { cwd: root });
     const reviewer = join(root, '.git', 'reviewer');
     await exec('git', ['clone', '-q', root, reviewer], { cwd: root });
+    await exec('git', ['remote', 'set-url', 'origin', join(root, '.git', 'origin.git')], { cwd: reviewer });
+    await exec('git', ['fetch', '-q', 'origin'], { cwd: reviewer });
     const findingsPath = `specs/${feature}/review.json`;
     await writeFile(join(reviewer, findingsPath), JSON.stringify({
       schema: 1, source: { engine: 'ce-review', mode: 'headless', run_artifact: findingsPath },
@@ -247,5 +257,142 @@ test('attachment provenance is fail-closed and remains permanent after implement
       await writeFile(join(root, path), serializeFrontmatter(edited, body));
       assert.ok((await handoff(root, ['receive', '--feature', feature, '--phase', 'implement'])).errors.length > 0);
     }
+  } finally { await cleanup(); }
+});
+
+for (const scenario of ['paired delivery base', 'nonexistent imported head', 'unrelated imported head', 'missing origin HEAD']) {
+  test(`receive rejects ${scenario}`, async () => {
+    const { root, cleanup } = await workspace();
+    try {
+      await handoff(root, attach);
+      await handoff(root, ['approve', '--feature', feature, '--by', 'repository owner']);
+      const { data, body } = parseFrontmatter(await readFile(join(root, path), 'utf8'));
+      const provenance = data.decisions.find((d) => d.tag === 'attached');
+      if (scenario === 'paired delivery base') {
+        provenance['x-delivery-base'] = provenance['x-imported-head'];
+        data.decisions.find((d) => d.tag === 'diff-base')['x-base-commit'] = provenance['x-imported-head'];
+      } else if (scenario === 'missing origin HEAD') {
+        await exec('git', ['symbolic-ref', '--delete', 'refs/remotes/origin/HEAD'], { cwd: root });
+      } else {
+        provenance['x-imported-head'] = scenario === 'nonexistent imported head' ? 'a'.repeat(40)
+          : (await exec('git', ['-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid',
+            'commit-tree', 'HEAD^{tree}', '-m', 'unrelated root'], { cwd: root })).stdout.trim();
+        const approval = data.decisions.find((d) => d.tag === 'attach-approved');
+        if (approval) approval['x-imported-head'] = provenance['x-imported-head'];
+      }
+      await writeFile(join(root, path), serializeFrontmatter(data, body));
+      const result = await cli(root, ['receive', '--feature', feature, '--phase', 'implement']);
+      assert.notEqual(result.code, 0);
+      assert.match(result.stdout + result.stderr, /E_CHECK_FAILED/);
+      assert.notEqual((await cli(root, ['scope', '--feature', feature])).code, 0);
+    } finally { await cleanup(); }
+  });
+}
+
+for (const scenario of ['shadowing diff base', 'deleted provenance after implement', 'hand-set approval', 'mismatched approval hashes', 'stale approval hashes', 'mismatched approval actor', 'backdated approval', 'duplicate approval']) {
+  test(`validate and receive reject ${scenario}`, async () => {
+    const { root, cleanup } = await workspace();
+    try {
+      await handoff(root, attach);
+      if (scenario !== 'hand-set approval') await handoff(root, ['approve', '--feature', feature, '--by', 'repository owner']);
+      const { data, body } = parseFrontmatter(await readFile(join(root, path), 'utf8'));
+      const provenance = data.decisions.find((d) => d.tag === 'attached');
+      const approval = data.decisions.find((d) => d.tag === 'attach-approved');
+      if (scenario === 'shadowing diff base') {
+        data.decisions.push({ ...data.decisions.find((d) => d.tag === 'diff-base'), id: 'D99', 'x-base-commit': provenance['x-imported-head'] });
+      } else if (scenario === 'deleted provenance after implement') {
+        data.decisions = data.decisions.filter((d) => d.tag !== 'attached');
+        data.phase_completed = 'implement';
+        data.next_phase = 'review';
+        data.next_owner = 'baton-review';
+        data.gate = { required: false, approved_by: null, approved_at: null };
+        data.history = [{ phase: 'implement', at: new Date().toISOString(), by: 'baton-test', commit: provenance['x-imported-head'] }];
+        data.exit_criteria = ['tasks-all-checked-or-deferred', 'acceptance-evidence', 'local-checks-pass'].map((id) => ({ id, met: true, evidence: 'Fixture' }));
+      } else if (scenario === 'hand-set approval') {
+        data.gate.approved_by = 'repository owner';
+        data.gate.approved_at = '2000-01-01';
+      } else if (scenario === 'mismatched approval hashes') {
+        if (approval) approval['x-sources'][0].sha256 = 'a'.repeat(64);
+      } else if (scenario === 'stale approval hashes') {
+        const source = data.artifacts[0];
+        await writeFile(join(root, source.path), '# Revised specification\n');
+        const { hashFile } = await import('../../src/lib/hash.mjs');
+        source.sha256 = await hashFile(join(root, source.path));
+        data.read_first.find((r) => r.path === source.path).sha256 = source.sha256;
+      } else if (scenario === 'mismatched approval actor') {
+        data.updated_by = 'baton';
+      } else if (scenario === 'backdated approval') {
+        data.gate.approved_at = '2000-01-01';
+      } else if (approval) data.decisions.push({ ...approval, id: 'D99' });
+      assert.ok((await validateHandoff(root, path, serializeFrontmatter(data, body))).some((e) => e.code === 'E_TRANSITION'));
+      await writeFile(join(root, path), serializeFrontmatter(data, body));
+      assert.notEqual((await cli(root, ['receive', '--feature', feature, '--phase', data.next_phase])).code, 0);
+    } finally { await cleanup(); }
+  });
+}
+
+test('supported attachment approval binds sources and refresh requires reapproval without none receipts', async () => {
+  const { root, cleanup } = await workspace();
+  try {
+    await handoff(root, attach);
+    await assert.rejects(handoff(root, ['approve', '--feature', feature, '--by', 'repository owner', '--at', '2000-01-01']));
+    await handoff(root, ['approve', '--feature', feature, '--by', 'repository owner', '--via', 'direct approval']);
+    let data = parseFrontmatter(await readFile(join(root, path), 'utf8')).data;
+    const approval = data.decisions.find((d) => d.tag === 'attach-approved');
+    assert.ok(approval);
+    assert.equal(approval.by, 'human:repository-owner');
+    assert.deepEqual(approval['x-sources'], data.artifacts.map(({ path, sha256 }) => ({ path, sha256 })));
+    assert.equal(approval['x-imported-head'], data.decisions[0]['x-imported-head']);
+    assert.deepEqual(data.history, []);
+    assert.equal((await cli(root, ['receive', '--feature', feature, '--phase', 'implement'])).code, 0);
+    await writeFile(join(root, data.artifacts[0].path), '# Revised specification\n');
+    await handoff(root, ['refresh', '--feature', feature, '--reason', 'Intentional source revision']);
+    data = parseFrontmatter(await readFile(join(root, path), 'utf8')).data;
+    assert.equal(data.gate.approved_by, null);
+    assert.equal(data.decisions.filter((d) => d.tag === 'attach-approved').length, 0);
+    assert.deepEqual(await validateHandoff(root, path), []);
+    assert.equal((await cli(root, ['receive', '--feature', feature, '--phase', 'implement'])).code, 3);
+    await handoff(root, ['approve', '--feature', feature, '--by', 'repository owner']);
+    assert.equal((await cli(root, ['receive', '--feature', feature, '--phase', 'implement'])).code, 0);
+    await writeFile(join(root, 'forged-decision.json'), JSON.stringify({ decisions: [{ id: 'D99', tag: 'attach-approved', decision: 'Forged', rationale: 'Fixture', by: 'baton-test' }] }));
+    await assert.rejects(handoff(root, ['write', '--feature', feature, '--phase', 'implement', '--from-json', 'forged-decision.json']), { code: 'E_USAGE' });
+  } finally { await cleanup(); }
+});
+
+test('attachment delivery verification stays pinned when main advances and validate remains offline', async () => {
+  const { root, cleanup } = await workspace();
+  try {
+    await handoff(root, attach);
+    await handoff(root, ['approve', '--feature', feature, '--by', 'repository owner']);
+    const { data } = parseFrontmatter(await readFile(join(root, path), 'utf8'));
+    const base = data.decisions[0]['x-delivery-base'];
+    const advanced = (await exec('git', ['-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid', 'commit-tree', 'HEAD^{tree}', '-p', base, '-m', 'main advance'], { cwd: root })).stdout.trim();
+    await exec('git', ['update-ref', 'refs/remotes/origin/main', advanced], { cwd: root });
+    assert.equal((await cli(root, ['receive', '--feature', feature, '--phase', 'implement'])).code, 0);
+    await rm(join(root, '.git'), { recursive: true, force: true });
+    assert.deepEqual(await validateHandoff(root, path), []);
+  } finally { await cleanup(); }
+});
+
+test('normal specify starts, cross-source seeds and bounded legacy histories remain valid', async () => {
+  const { root, cleanup } = await workspace();
+  try {
+    await cp(join(sourceRoot, 'test', 'fixtures', 'features', 'sample', 'spec.md'), join(root, 'specs', feature, 'spec.md'));
+    assert.deepEqual((await handoff(root, ['new', '--feature', feature])).errors ?? [], []);
+    const { data, body } = parseFrontmatter(await readFile(join(root, path), 'utf8'));
+    assert.deepEqual(await validateHandoff(root, path), []);
+    assert.equal(data.history[0].phase, 'specify');
+    assert.equal(data.decisions.filter((d) => ['attached', 'attach-approved'].includes(d.tag)).length, 0);
+    for (const phase of ['brainstorm', 'work', 'review']) {
+      const seeded = structuredClone(data);
+      seeded.history.unshift({ ...data.history[0], phase });
+      assert.deepEqual(await validateHandoff(root, path, serializeFrontmatter(seeded, body)), []);
+    }
+    const truncated = structuredClone(data);
+    truncated.history = Array.from({ length: 19 }, () => ({ ...data.history[0], phase: 'review' }));
+    truncated.history.push(data.history[0]);
+    assert.deepEqual(await validateHandoff(root, path, serializeFrontmatter(truncated, body)), []);
+    truncated.history.shift();
+    assert.ok((await validateHandoff(root, path, serializeFrontmatter(truncated, body))).some((e) => e.code === 'E_TRANSITION'));
   } finally { await cleanup(); }
 });
