@@ -126,13 +126,8 @@ export async function validateHandoff(root, path, source) {
   const provenance = attached[0];
   const approvals = /** @type {Array<Record<string,any>>} */ (data.decisions ?? []).filter((d) => d.tag === 'attach-approved');
   const initialAttachment = data.lane === 'feature' && data.phase_completed === 'none';
-  const history = data.history ?? [];
-  // Twenty entries may be a truncated normal relay; cross-source seeds precede specify.
-  const startsNormally = history[0]?.phase === 'specify' ||
-    (['brainstorm', 'work', 'review'].includes(history[0]?.phase) && history[1]?.phase === 'specify');
-  const missingStart = data.lane === 'feature' && history.length < 20 && !startsNormally;
   const bases = /** @type {Array<Record<string,any>>} */ (data.decisions ?? []).filter((decision) => decision.tag === 'diff-base');
-  if ((initialAttachment || missingStart || attached.length > 0 || approvals.length > 0) &&
+  if ((initialAttachment || attached.length > 0 || approvals.length > 0) &&
       (attached.length !== 1 || data.lane !== 'feature' || provenance.by !== 'baton' ||
         provenance['x-attached-phase'] !== 'implement' ||
         !['x-imported-head', 'x-delivery-base'].every((key) =>

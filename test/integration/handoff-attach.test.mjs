@@ -289,7 +289,7 @@ for (const scenario of ['paired delivery base', 'nonexistent imported head', 'un
   });
 }
 
-for (const scenario of ['shadowing diff base', 'deleted provenance after implement', 'hand-set approval', 'mismatched approval hashes', 'stale approval hashes', 'mismatched approval actor', 'backdated approval', 'duplicate approval']) {
+for (const scenario of ['shadowing diff base', 'missing provenance with approval after implement', 'hand-set approval', 'mismatched approval hashes', 'stale approval hashes', 'mismatched approval actor', 'backdated approval', 'duplicate approval']) {
   test(`validate and receive reject ${scenario}`, async () => {
     const { root, cleanup } = await workspace();
     try {
@@ -300,7 +300,7 @@ for (const scenario of ['shadowing diff base', 'deleted provenance after impleme
       const approval = data.decisions.find((d) => d.tag === 'attach-approved');
       if (scenario === 'shadowing diff base') {
         data.decisions.push({ ...data.decisions.find((d) => d.tag === 'diff-base'), id: 'D99', 'x-base-commit': provenance['x-imported-head'] });
-      } else if (scenario === 'deleted provenance after implement') {
+      } else if (scenario === 'missing provenance with approval after implement') {
         data.decisions = data.decisions.filter((d) => d.tag !== 'attached');
         data.phase_completed = 'implement';
         data.next_phase = 'review';
@@ -374,7 +374,7 @@ test('attachment delivery verification stays pinned when main advances and valid
   } finally { await cleanup(); }
 });
 
-test('normal specify starts, cross-source seeds and bounded legacy histories remain valid', async () => {
+test('normal specify starts, cross-source seeds and legacy histories of any retained length remain valid', async () => {
   const { root, cleanup } = await workspace();
   try {
     await cp(join(sourceRoot, 'test', 'fixtures', 'features', 'sample', 'spec.md'), join(root, 'specs', feature, 'spec.md'));
@@ -393,6 +393,6 @@ test('normal specify starts, cross-source seeds and bounded legacy histories rem
     truncated.history.push(data.history[0]);
     assert.deepEqual(await validateHandoff(root, path, serializeFrontmatter(truncated, body)), []);
     truncated.history.shift();
-    assert.ok((await validateHandoff(root, path, serializeFrontmatter(truncated, body))).some((e) => e.code === 'E_TRANSITION'));
+    assert.deepEqual(await validateHandoff(root, path, serializeFrontmatter(truncated, body)), []);
   } finally { await cleanup(); }
 });

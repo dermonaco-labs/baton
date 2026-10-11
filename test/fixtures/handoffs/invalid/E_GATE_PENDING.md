@@ -36,10 +36,6 @@ gate:
   approved_by: null
   approved_at: null
 history:
-  - phase: specify
-    at: 2026-09-24T09:00:00Z
-    by: baton
-    commit: null
   - phase: clarify
     at: 2026-09-24T10:00:00Z
     by: speckit-clarify

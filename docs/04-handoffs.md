@@ -133,11 +133,10 @@ re-receipted. Normal implement → review relay resumes after the first write;
 later review writes retain the attachment's delivery base, including when
 findings send the feature back to implement. Normal unattached features keep
 their existing analyze/review base semantics.
-For a feature history shorter than the 20-entry retention limit, it must
-begin with `specify` (optionally preceded by one `brainstorm`, quick `work`
-or quick `review` seed) or carry exactly one valid `attached` decision.
-An attachment or its approval decision always requires valid provenance.
-Full 20-entry histories may have lost their normal start and remain accepted
-for compatibility; this is not proof of origin.
+Existing unattached feature batons need not begin history at `specify`;
+their validation behavior is unchanged. An attachment or its approval
+decision always requires valid provenance. Consistently deleting all
+attachment and approval provenance after implement is a plaintext rewrite
+detectable only through git/PR review, not offline origin validation.
 Without `--phase`, `init --infer` still requests human confirmation before
 clarification. Only `--phase implement` is supported, with a required reason.

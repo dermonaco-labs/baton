@@ -3666,7 +3666,7 @@
       "format": "esm"
     },
     "src/lib/handoff.mjs": {
-      "bytes": 14845,
+      "bytes": 14449,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -5513,7 +5513,7 @@
           "bytesInOutput": 949
         },
         "src/lib/handoff.mjs": {
-          "bytesInOutput": 8021
+          "bytesInOutput": 7859
         },
         "src/lib/local-checks.mjs": {
           "bytesInOutput": 1967
@@ -5570,7 +5570,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 409595
+      "bytes": 409433
     }
   }
 }

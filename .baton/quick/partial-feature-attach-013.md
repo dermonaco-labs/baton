@@ -14,6 +14,7 @@ read_first:
     why: Quick intent and relay state
   - path: .baton/quick/partial-feature-attach-013.work.json
     why: Direct owner override, coordinator corrections and verification evidence
+    sha256: 2216712b9c92b8cbf6e190931e37b4c730374acd697f6f8fc89dc0a03da01895
 artifacts: []
 entry_checked: []
 exit_criteria:
@@ -183,6 +184,14 @@ decisions:
     decision: Choose the provenance-required invariant compatible with bounded historical relays
     rationale: Normal new, old init --infer and plain first specify writes begin history at specify. Cross-source first writes may prepend exactly one brainstorm or quick work/review seed before specify. For feature histories shorter than the existing 20-entry retention bound, a missing such normal start requires exactly one valid attached decision; phase none always requires it. Full 20-entry histories may be truncated and retain legacy compatibility. Presence of attached or attach-approved always requires valid attached provenance even at the bound. This cannot prove origin after an attacker consistently replaces/removes all plaintext evidence or fabricates a saturated history; git/PR review remains authoritative. Fourteen synthetic feature-phase fixtures previously recorded only their terminal phase; they now include a normal specify start so their named positive/negative semantics remain independently tested. The real completed specs/001-baton-template baton is untouched and validates. No scope expansion or normal phase producer behavior is changed.
     by: baton-013-work
+  - id: D20
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "Coordinator correction — reverted history-start invariant to preserve existing-baton validation; residual disclosed: consistent removal of attachment and approval provenance after implement is a plaintext rewrite detectable only via git/PR review. Restored 14 pre-existing fixtures to e1713a4. Receive/write cannot re-enter work while next_phase is review; this supported refresh records additional work without forging a work receipt."
+    by: implementation-session
+  - id: D21
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "Coordinator correction — reverted history-start invariant to preserve existing-baton validation; residual disclosed. Work evidence D19/D20 records restored fixtures, 207/207 targeted tests, 409433-byte bundle and the single npm run check blocked by pinned PyPI TLS download. Separate full suite 419/420; only live installer F39 lacks pinned dependencies. Refresh only: no supported work re-entry from next_phase review, no new work or approval receipt claimed."
+    by: implementation-session
 gate:
   required: false
   approved_by: null
@@ -209,8 +218,22 @@ history:
     x-worktree: 6812f2b57cde56efd67cf02d2fe93b35fa1394f470368658688efd81a813c29b
     commit: e1713a4
     x-action: write
-updated_at: 2026-10-11T19:00:21.801Z
-updated_by: ce-work
+  - phase: work
+    at: 2026-10-11T19:07:51.861Z
+    by: implementation-session
+    writer: 97ada5a563007864a957541059b8020b8b4b4660b36cb8bf67485d7ce465c414
+    x-worktree: 6812f2b57cde56efd67cf02d2fe93b35fa1394f470368658688efd81a813c29b
+    commit: 287a8b1
+    x-action: refresh
+  - phase: work
+    at: 2026-10-11T19:17:34.199Z
+    by: implementation-session
+    writer: 97ada5a563007864a957541059b8020b8b4b4660b36cb8bf67485d7ce465c414
+    x-worktree: 6812f2b57cde56efd67cf02d2fe93b35fa1394f470368658688efd81a813c29b
+    commit: 287a8b1
+    x-action: refresh
+updated_at: 2026-10-11T19:17:34.198Z
+updated_by: implementation-session
 risks:
   - id: R1
     text: Imported work is not prior review approval. A fresh configured-role implement gate and independent review of the full delivery remain required.

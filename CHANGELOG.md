@@ -19,6 +19,9 @@ All notable changes to Baton are documented here. This follows
   Initial approval binds source hashes/imported HEAD in a human-role decision
   and refresh requires reapproval. Plaintext gates remain declarative process
   guards; authenticity relies on git/PR review, not cryptographic proof.
+  Existing unattached feature histories retain their validation behavior;
+  consistently deleting attachment and approval provenance after implement
+  is detectable only through git/PR review.
 - Keep formal local checks bounded with a per-check timeout, retaining the
   five-minute default and using ten minutes for the source suite on Windows;
   report timeout output and terminate the timed-out foreground process tree.

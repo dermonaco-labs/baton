@@ -1,5 +1,5 @@
 {
-  "summary": "Address F1 and F2 with verified imported-commit ancestry/delivery base, all-diff-base consistency, retained attachment provenance and source-bound human approval evidence. Targeted attachment/normal validation tests pass 76/76 and relay/check tests 130/130. The single configured npm run check is executed and persisted by this work write. Bundle is 409595 bytes under the unchanged 409600 ceiling. Local-only; fresh independent review remains required. No shipping authorized.",
+  "summary": "Coordinator correction: remove the history-start invariant to preserve existing-baton validation and restore all 14 pre-existing fixtures. Attachment/approval markers still require valid provenance, all attached diff bases match the delivery base, receive/scope verify Git provenance, and approval remains source-bound. Consistent removal of all provenance after implement is detectable only via git/PR review. This evidence update does not claim a new work write: re-entry is unsupported while next phase is review; supported refresh records the correction. Local-only; fresh independent review remains required.",
   "read_first": [
     {
       "path": ".baton/quick/partial-feature-attach-013.md",
@@ -56,7 +56,7 @@
     {
       "id": "D15",
       "decision": "Address F1 provenance tampering and diff-base shadowing",
-      "rationale": "Offline validation requires exactly one valid attached decision when attachment or attach-approved evidence exists, or when a feature's non-full history lacks its normal start. Every attached diff-base must be written by baton and equal x-delivery-base; no later narrowing/shadowing is allowed. Receive, scope and initial approve verify that the full imported commit exists, is an ancestor of or equal to HEAD, and its merge-base with origin/HEAD equals the delivery base; all unresolved/missing/unrelated Git states fail E_CHECK_FAILED. Existing recordDiffBase producers already retain the delivery base for attached review/analyze paths and their original normal-feature decision/rationale strings remain unchanged. Regressions exercise paired valid-SHA base tampering, shadowing, nonexistent/unrelated imported commits, missing origin/HEAD, removed provenance after implement, actual supported implement/review writes, advancing main, and offline validation after Git removal.",
+      "rationale": "Offline validation requires exactly one valid attached decision when attachment or attach-approved evidence exists, or at the initial feature phase none. Every attached diff-base must be written by baton and equal x-delivery-base; no later narrowing/shadowing is allowed. Receive, scope and initial approve verify that the full imported commit exists, is an ancestor of or equal to HEAD, and its merge-base with origin/HEAD equals the delivery base; all unresolved/missing/unrelated Git states fail E_CHECK_FAILED. Existing recordDiffBase producers already retain the delivery base for attached review/analyze paths and their original normal-feature decision/rationale strings remain unchanged. Regressions exercise paired valid-SHA base tampering, shadowing, nonexistent/unrelated imported commits, missing origin/HEAD, missing provenance with approval after implement, actual supported implement/review writes, advancing main, and offline validation after Git removal. The coordinator correction removes the non-full-history origin requirement; consistent deletion of both attachment and approval evidence is a plaintext rewrite detectable only via git/PR review.",
       "by": "baton-013-work"
     },
     {
@@ -79,8 +79,14 @@
     },
     {
       "id": "D19",
-      "decision": "Choose the provenance-required invariant compatible with bounded historical relays",
-      "rationale": "Normal new, old init --infer and plain first specify writes begin history at specify. Cross-source first writes may prepend exactly one brainstorm or quick work/review seed before specify. For feature histories shorter than the existing 20-entry retention bound, a missing such normal start requires exactly one valid attached decision; phase none always requires it. Full 20-entry histories may be truncated and retain legacy compatibility. Presence of attached or attach-approved always requires valid attached provenance even at the bound. This cannot prove origin after an attacker consistently replaces/removes all plaintext evidence or fabricates a saturated history; git/PR review remains authoritative. Fourteen synthetic feature-phase fixtures previously recorded only their terminal phase; they now include a normal specify start so their named positive/negative semantics remain independently tested. The real completed specs/001-baton-template baton is untouched and validates. No scope expansion or normal phase producer behavior is changed.",
+      "decision": "Coordinator correction — reverted history-start invariant to preserve existing-baton validation; residual disclosed",
+      "rationale": "Supersedes the previous provenance-required history-start invariant, which tightened validation for existing adopter feature batons. Restored all 14 pre-existing fixtures byte-identical to e1713a4. Unattached feature histories are not required to begin at specify, regardless of retained length. Presence of attached or attach-approved still requires valid provenance; initial feature phase none still requires attachment. Consistently deleting all attachment and approval provenance after implement is a plaintext rewrite detectable only via git/PR review. The CLI rejects receive work from this work-written baton with E_TRANSITION Expected review, received work; write has the same transition guard. Refresh is supported and records this correction without re-entering work, inventing phase receipts or replacing the prior local-check evidence.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D20",
+      "decision": "Record correction validation without claiming the full check passed",
+      "rationale": "npm run build passed at 409433 bytes, below 409600. node --test test\\integration\\handoff-attach.test.mjs test\\integration\\handoff-management.test.mjs test\\unit\\validate-handoff.test.mjs test\\integration\\relay.test.mjs test\\unit\\checks.test.mjs passed 207/207 with zero skips. The initial three-file targeted run passed 76/77; the obsolete 19-entry history rejection was then adjusted and the final five-file selection passed. Exactly one npm run check was invoked: Markdown lint passed 47 files with zero errors, then pinned yamllint download failed with a PyPI TLS HandshakeFailure before later stages ran. Separate npm run typecheck, build --check, lock verify and bundled validate passed. Separate sync --check failed at pinned Python dependency download with the same TLS failure. Retry using configured pip index found none; offline cache fallback also lacked required pinned dependencies. Separate npm test was attempted online and again offline: the captured offline run passed 419/420, zero skips, with only F39 live init --script ps failing because annotated-doc==0.0.5 was unavailable in the cache (the online attempt also failed this live installer). Local ignored full log: .baton/.local/partial-feature-attach-013.correction-tests.log. git diff --exit-code 35347c5 -- test/fixtures/handoffs passed with no pre-existing fixture changes. The supported refresh retains phase_completed work and next_phase review; prior work-written local-check evidence is historical, not refreshed check evidence. No push, PR, merge, tag, release or downstream change.",
       "by": "baton-013-work"
     }
   ],
@@ -92,7 +98,7 @@
     },
     {
       "id": "R2",
-      "text": "The unchanged strict bundle ceiling has 43 bytes of headroom; future CLI additions need behavior-neutral savings or separately authorized design changes.",
+      "text": "The corrected 409433-byte bundle has 167 bytes of headroom under the unchanged 409600-byte ceiling; future CLI additions need behavior-neutral savings or separately authorized design changes.",
       "severity": "medium"
     },
     {
@@ -102,7 +108,7 @@
     },
     {
       "id": "R4",
-      "text": "Current corrected bundle is 409595 bytes with five bytes of headroom; plaintext consistency guards are not cryptographic authenticity, and saturated legacy histories cannot prove their origin offline.",
+      "text": "Plaintext consistency guards are not cryptographic authenticity; consistently removing attachment and approval provenance after implement is detectable only via git/PR review. No origin requirement is imposed on existing unattached feature histories.",
       "severity": "medium"
     }
   ]
