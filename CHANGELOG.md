@@ -6,6 +6,8 @@ All notable changes to Baton are documented here. This follows
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-12
+
 ### Fixed
 
 - Explicitly attach pre-Baton features at implement with hashed existing
@@ -30,6 +32,13 @@ All notable changes to Baton are documented here. This follows
   freshness in the normal local/PR gate.
 - Install the same pinned `uv` prerequisite in all three OS smoke jobs,
   preserving the unconditional live PowerShell-script installation check.
+
+### Upstream
+
+- Baton extension and preset component versions remain `0.1.0`; the CLI and
+  package patch version is `0.1.3`. Vendored upstream bytes are unchanged.
+- Spec Kit `specify-cli` 1.0.11 at commit `8147943512404afb9d99c6252cb9bf84369fd0b0` (unchanged).
+- ATV Starter Kit `main` at commit `ad996736b879be87c7755df5c5017d5336203bbc` (unchanged).
 
 ## [0.1.2] - 2026-10-10
 
@@ -82,7 +91,8 @@ All notable changes to Baton are documented here. This follows
 - Spec Kit `specify-cli` 1.0.11, installed from hash-locked requirements.
 - ATV Starter Kit pinned to commit `ad996736b879be87c7755df5c5017d5336203bbc`.
 
-[Unreleased]: https://github.com/dermonaco-labs/baton/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/dermonaco-labs/baton/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/dermonaco-labs/baton/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/dermonaco-labs/baton/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/dermonaco-labs/baton/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/dermonaco-labs/baton/releases/tag/v0.1.0

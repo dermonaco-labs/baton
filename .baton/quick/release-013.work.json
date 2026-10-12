@@ -1,0 +1,74 @@
+{
+  "summary": "Prepare v0.1.3 bookkeeping for merged PR #50: bump CLI/package/source manifest and generated lock metadata, regenerate the bundle, and date the unchanged Fixed entries with an Upstream subsection. No product behavior, governance, component versions or upstream bytes changed. Publication and approval/merge of the exact final PR candidate remain separate owner actions.",
+  "read_first": [
+    {
+      "path": ".baton/quick/release-013.md",
+      "why": "Release-preparation intent, pinned diff base and relay state"
+    },
+    {
+      "path": ".baton/quick/release-013.work.json",
+      "why": "Bookkeeping-only scope, validation evidence and publication boundary"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "why": "Dated v0.1.3 release notes and unchanged upstream pins"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D3",
+      "decision": "Record the relayed release-preparation authorization without approving the final PR",
+      "rationale": "At 2026-10-12T08:16:10+02:00 the repository owner authorized via coordinator relay, verbatim: authorized Baton release preparation and publication. This task prepares the v0.1.3 PR only. No PR-review approval, merge approval, tag creation or release workflow dispatch is inferred. The quick baton required no initial scope gate.",
+      "by": "release-013-work"
+    },
+    {
+      "id": "D4",
+      "decision": "Keep this mechanical patch bump in the supported quick lane",
+      "rationale": "The same version bump locations as v0.1.2 are updated to 0.1.3, including the pinned install hint and integration expectation. Extension/preset versions remain 0.1.0; existing Fixed entries are preserved verbatim. The quick lane has no spec/plan/tasks artifacts, so speckit-analyze was loaded but is not executable: its mandatory prerequisite is a complete feature tasks.md. The existing quick receive verified quick-eligible and no-feature-tasks; no feature phase or human approval is fabricated. The configured ten-file advisory maximum is exceeded only by mechanical version and generated bookkeeping files, not new behavior or contracts.",
+      "by": "release-013-work"
+    },
+    {
+      "id": "D5",
+      "decision": "Use supported generators and verify release guards locally",
+      "rationale": "Initial npm run build failed because esbuild was missing. npm ci --ignore-scripts --no-audit --no-fund --registry https://packagefeedproxy.microsoft.io/npm/ then passed (92 packages), without changing committed registry configuration. npm run build passed at 409433 bytes; node .baton\\bin\\baton.mjs sync and npm run manifest passed, with process-scoped UV_INDEX_URL/PIP_INDEX_URL using the approved PyPI proxy. Generator diffs are limited to the bundle/hash, baton_version and generated_by. git diff --check passed. npx --no-install markdownlint-cli2 CHANGELOG.md passed, one file, zero errors: the empty Unreleased heading requires no placeholder. A local node --input-type=module assertion reproduced release.yml tag/package equality and exact changelog-section/Upstream checks and verified lock pins: specify-cli 1.0.11 at 8147943512404afb9d99c6252cb9bf84369fd0b0, ATV main at ad996736b879be87c7755df5c5017d5336203bbc. git grep -lF 0.1.2 found only CHANGELOG history/comparison links, historical quick/review records and mdurl==0.1.2 in pinned requirements. The first formal work write ran npm run check: lint/typecheck/build-check/sync-check/lock/validate completed, but tests passed 419/420 with zero skips. Only test\\integration\\init.test.mjs:285 failed: its escaped v0\\.1\\.2 regex was not found by literal version grep. Updated that version-bound expectation to v0\\.1\\.3, an additional bookkeeping file also changed in v0.1.2. The failed write persisted no work receipt. A second formal work write is necessary to satisfy the mandatory local-check gate on the corrected complete candidate; no later bookkeeping-only broad check rerun is intended.",
+      "by": "release-013-work"
+    },
+    {
+      "id": "D7",
+      "decision": "Verify the corrected install-hint expectation before retrying the required gate",
+      "rationale": "node --test --test-name-pattern \"derived install explains\" test\\integration\\init.test.mjs passed 1/1, zero skips. git diff --check passed; git grep -nF '0\\.1\\.2' -- src test found no remaining escaped old-version expectations. The initial 419/420 full result remains disclosed in D5; it is not represented as a successful candidate check.",
+      "by": "release-013-work"
+    },
+    {
+      "id": "D6",
+      "decision": "Reuse merged PR #50 product evidence as historical context only",
+      "rationale": "Product code from PR #50 is unchanged. Coordinator-provided evidence: independently reviewed product head 333694292462a9f7513907c14a410f4cba35af87, clean final review, npm run check 420/420, focused attachment tests 38/38; accepted head 56f193a automatic checks green (Baton run 38173469009, CI 38173469143, Windows smoke 38173469055). This does not attest that the v0.1.3 candidate has been reviewed or owner-approved. Fresh release-bookkeeping review and automatic PR checks remain required.",
+      "by": "release-013-work"
+    },
+    {
+      "id": "D8",
+      "decision": "Record the completed candidate check and the rejected receipt honestly",
+      "rationale": "Attempt 2: the corrected-candidate work write executed npm run check successfully: 420 tests, 420 passed, zero failures/skips/cancellations; duration_ms 206252.2998. After that successful check, the CLI rejected the receipt with E_ACTOR_FORMAT because the supplied decision by fields used a MemPalace identity, which is not a Baton agent identifier. All decision by fields are now release-013-work, matching Baton's agent-identifier syntax. No work receipt was persisted by attempt 1 (419/420, corrected escaped install-hint expectation) or attempt 2. Attempt 2 is historical check evidence, not a persisted phase receipt. Attempt 3 is the final supported work write authorized in D9; only a successful write and its CLI-generated evidence attest that persisted run. No check is skipped, forged or configured away.",
+      "by": "release-013-work"
+    },
+    {
+      "id": "D9",
+      "decision": "Run the mandatory configured check once more to persist the final supported work receipt",
+      "rationale": "The coordinator relayed the repository owner's already-authorized release scope and approved, verbatim: Proceed with one final supported work-write and its mandatory configured npm run check. This is approval of necessary execution within the already-authorized release scope, not a new owner decision. Preserve the failed 419/420 and E_ACTOR_FORMAT history accurately; do not label the earlier green run as a persisted receipt. The proportional-validation instruction prohibits discretionary duplicate suites, not repository-required receipt validation. No check-config bypass. Attempt 3 will use the unchanged configured npm run check through handoff write exactly once; failure means stop, not bypass or retry. No independent review, PR creation, merge, tag or workflow dispatch is authorized by this execution instruction.",
+      "by": "release-013-work"
+    },
+    {
+      "id": "D10",
+      "decision": "Disclose attempt 3's environmental failure and use the authorized internal feed for attempt 4",
+      "rationale": "Attempt 3 failed E_EXIT_UNMET: the unchanged mandatory configured check could not resolve yamllint 1.37.1 through uvx --from yamllint==1.37.1 because fetching from files.pythonhosted.org failed with TLS HandshakeFailure. Tests were not reached and no work receipt was persisted. D8 and D9 describe the intent before that attempt, not its outcome. The coordinator verified UV_DEFAULT_INDEX=https://packagefeedproxy.microsoft.io/pypi/simple/ resolves yamllint 1.37.1, now cached, under the repository owner's instruction to use the laptop's internal feeds if packages are missing. Attempt 4 runs the supported handoff work write exactly once with that process environment variable set in the same PowerShell process. This changes package resolution only; .baton/config.yml, package.json scripts, .npmrc and all committed check/registry configuration remain unchanged. Failure means stop and report, not bypass or retry. Only a successful CLI-generated receipt attests the persisted check run.",
+      "by": "release-013-work"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R1",
+      "text": "Owner approval/merge must bind the exact final candidate. Only after merge may publication proceed through dry_run and an annotated v0.1.3 tag; neither action is performed by this release-preparation task.",
+      "severity": "low"
+    }
+  ]
+}
