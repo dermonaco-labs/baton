@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: release-013
-phase_completed: work
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: land
+next_owner: baton-land
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Resolve independent v0.1.3 review findings R013-1 and R013-2: replace adopter-specific feed addresses with approved-feed placeholders and refresh current-state narrative. Attempt 4 persisted a successful 420/420 work receipt in candidate 7e5eb2c; preserve all earlier failure records and the independent review findings unchanged. No product behavior, contracts, component versions or upstream bytes change. Fresh independent review of the corrected candidate is required; no PR, merge, tag or dispatch is performed."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: Independent re-review of exact candidate 65a2c12 verified R013-1/P2 and R013-2/P3 fixed, with no new findings. Exact correction scope covers 6 tracked files and 2 CLI subjects; full release scope against original bf0fc4b covers 21/14, preserving historical 17/12 evidence unchanged. Product remains version-only. Ready for land's separate human gate; no owner approval, merge or publication inferred.
 read_first:
   - path: .baton/quick/release-013.md
     why: Release-preparation intent, pinned diff base and relay state
@@ -19,85 +19,15 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: diff-nonempty
+  - id: findings-json-valid
     met: true
-    evidence: 2 changed files
-  - id: local-checks-pass
+    evidence: .baton/quick/release-013.review.json
+  - id: findings-fixed-or-dismissed
     met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      pped phase template (15.7697ms)
-      ✔ every feature phase has entry and exit checks (1.2233ms)
-      ✔ removing a built-in exit criterion warns (0.4676ms)
-      ✔ check groups evaluate every member and preserve evidence (1.1071ms)
-      ✔ check validation rejects unknown checks, malformed groups and duplicate keys (0.7423ms)
-      ✔ weakened contract detects moving mandatory exit into a disjunction (0.2225ms)
-      ✔ weakened contracts report removed entry checks, including quick-lane entry overrides (0.2234ms)
-      ✔ weakened contracts report disabled human gates without flagging unchanged defaults (0.2106ms)
-      ✔ shipped phase template is valid and never weakens its built-in contracts (15.9703ms)
-      ✔ tracked Baton documentation contains no private feed hostnames (86.9987ms)
-      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.5836ms)
-      ✔ adopter command table remains contiguous (0.4684ms)
-      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.4647ms)
-      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (1.4072ms)
-      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (23.6798ms)
-      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (2.1605ms)
-      ✔ compiles all draft 2020-12 schemas once (102.3282ms)
-      ✔ findings fixture validates and invalid fixture reports a JSON pointer (2.9393ms)
-      ✔ pack schema requires a classified reason for every optional reference (0.6886ms)
-      ✔ sync bump explains pin and file changes for a PR body (1.0805ms)
-      ✔ sync rejects unpinned bump values and check/bump combination (22.954ms)
-      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (139.8102ms)
-      ✔ generated registry preserves verified bytes when only installation time changes (7.4497ms)
-      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (5.0957ms)
-      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (519.5887ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (191.1166ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (90.5869ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (60.0087ms)
-        ✔ E_ANALYSIS_CRITICAL (3.2851ms)
-        ✔ E_ANALYSIS_MISSING (3.1525ms)
-        ✔ E_APPROVER_FORMAT (3.5298ms)
-        ✔ E_BLOCKING_OPEN (4.6124ms)
-        ✔ E_BODY_SECTIONS (2.6719ms)
-        ✔ E_BUDGET (5.4605ms)
-        ✔ E_DENYLIST (2.6342ms)
-        ✔ E_EXIT_UNMET (2.5056ms)
-        ✔ E_GATE_PENDING (69.1432ms)
-        ✔ E_LANE_ESCALATE (755.7507ms)
-        ✔ E_LANE_MISMATCH (2.1675ms)
-        ✔ E_MISSING_ARTIFACT (4.4708ms)
-        ✔ E_MODEL_NOT_ALLOWED (5.1125ms)
-        ✔ E_MULTIPLE_BATONS (4.4552ms)
-        ✔ E_NO_PREREG (3.4971ms)
-        ✔ E_OWNER (2.5367ms)
-        ✔ E_PR_MISSING (2.8722ms)
-        ✔ E_REVIEW_BLOCKING (167.798ms)
-        ✔ E_REVIEW_MISSING (4.8405ms)
-        ✔ E_SCHEMA (3.3608ms)
-        ✔ E_STALE_ARTIFACT (3.8171ms)
-        ✔ E_TRANSITION (3.0995ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1146.704ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (80.7246ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (23.9009ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (61.6567ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (9.5482ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (95.4993ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (84.3681ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (1.3625ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (17.2859ms)
-      ✔ ready with a blocking question is rejected (70.2484ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (93.7534ms)
-      ℹ tests 420
-      ℹ suites 0
-      ℹ pass 420
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 0
-      ℹ todo 0
-      ℹ duration_ms 200797.1169
+    evidence: 0 findings unresolved
+  - id: quick-scope-held
+    met: true
+    evidence: Exact pinned review covers all 17 files and includes all 12 CLI subjects. Source/tests change version identifiers only; the generated bundle equals base bytes with 0.1.2 replaced by 0.1.3. Manifest/lock metadata, changelog dating and process receipts change without adding user-facing behavior, public contracts, upstream bytes or component versions. The advisory file-count excess is mechanical bookkeeping, not expanded product scope.
 open_questions: []
 decisions:
   - id: D1
@@ -181,6 +111,32 @@ decisions:
     decision: Run this cycle's mandatory configured work check once
     rationale: The author was instructed to resolve only R013-1/R013-2 and perform one supported handoff write --phase work --quick release-013 --from-json .baton/quick/release-013.work.json with UV_DEFAULT_INDEX supplied in the same PowerShell process. The unchanged mandatory npm run check is required to persist this work cycle, not a discretionary duplicate suite. Failure means stop and report. No PR, merge, tag, workflow dispatch, registry/check configuration change or author-written review receipt is authorized.
     by: release-013-work
+  - id: D19
+    decision: Verify corrected candidate remains within quick scope
+    tag: quick-scope-held
+    rationale: "Both installed personas reviewed exact CLI base 7e5eb2c to candidate 65a2c12 (6 tracked/2 CLI) plus full release base bf0fc4b to candidate (21 tracked/14 subjects). Historical 17/12 coverage remains unchanged. Differences are release version metadata, generated version bytes, evidence redaction/narrative corrections and review records only: no new behavior, public contract, governance, upstream bytes or component-version changes."
+    by: release-013-review
+  - id: D20
+    decision: Independently verify prior findings fixed and route to land
+    rationale: Both personas verified approved-feed placeholders and absence of private-feed addresses throughout the full release diff, plus truthful persisted-work narrative and review routing while preserving historical failures. R013-1 and R013-2 are fixed, not dismissed; no new findings or auto-fixes. Candidate persisted check 420/420 reused without broad reruns. Land's configured human gate, final PR checks and publication remain separate; this receipt is not owner approval.
+    by: release-013-review
+  - id: D21
+    decision: Preserve exact correction and original release scopes separately
+    rationale: Supported prior review recorded next-cycle base 7e5eb2c. This review obeys that CLI base without merge-base recomputation and additionally checks original release base bf0fc4b. Full sets and comparisons are in the new CE artifact; prior run artifacts remain unchanged. Any receipt-written metadata after review is a review output, not a newly auto-fixed product candidate.
+    by: release-013-review
+  - id: D22
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 28f1c2123b619a6357998326fb9c4bc8872960bc2905c386ae73c2efd9df2ac9
+    x-base-commit: 7e5eb2c35664b086fa7d4795546a706ef06c8141
+    by: baton
+  - id: D23
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 65a2c12b6a04b10141b3769a768be7d85e2bae5f
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -207,8 +163,15 @@ history:
     x-worktree: 46b36b9f6e50ee03c442854234a616df7dcb9421de0a7bc290d33bebe1d45a1d
     commit: 264a78b
     x-action: write
-updated_at: 2026-10-12T06:54:29.373Z
-updated_by: ce-work
+  - phase: review
+    at: 2026-10-12T07:03:10.954Z
+    by: release-013-review
+    writer: 316909f95df3e27f8f953b60106be748c15f98576f2d662a3026c561ef645e27
+    x-worktree: 7403127df000ae46745c0d311c3242f2147db9b506965b1aa8bf8224623ede13
+    commit: 65a2c12
+    x-action: write
+updated_at: 2026-10-12T07:03:10.948Z
+updated_by: baton-review
 risks:
   - id: R1
     text: Owner approval/merge must bind the exact final candidate. Only after merge may publication proceed through dry_run and an annotated v0.1.3 tag; neither action is performed by this release-preparation task.
@@ -227,8 +190,11 @@ Keep the work in scope.
 Prepared the v0.1.3 release bookkeeping candidate. Attempt 4 persisted the supported
 work receipt with 420/420 tests at candidate 7e5eb2c. Independent review of that
 candidate returned R013-1 (internal-feed addresses) and R013-2 (stale current-state
-narrative) to work. This work cycle resolves both without changing product behavior,
-historical outcomes, or the independent review findings.
+narrative) to work. The author corrected both without changing product behavior or
+historical outcomes. Independent re-review at candidate 65a2c12 verified both fixed,
+found no new issues, and persisted the supported review-to-land receipt. Prior CE
+reports remain unchanged historical evidence; canonical findings now record the
+independently verified fixed dispositions.
 
 ## Validation history
 - Attempt 1: configured `npm run check` failed, 419/420 tests passed. The escaped
@@ -253,8 +219,8 @@ historical outcomes, or the independent review findings.
   No check-config bypass or discretionary duplicate suite is permitted.
 
 ## Next steps
-1. Independent `/baton-review` must inspect the corrected pushed candidate, verify
-   R013-1/R013-2 dispositions, and write a fresh review receipt before landing.
+1. `/baton-land` must enforce its configured human gate and final-candidate checks.
+   This technical review grants no owner approval, merge or publication authority.
 
 ## Watch out for
 - Escalate decisions that change behaviour or public contracts.

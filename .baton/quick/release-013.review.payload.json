@@ -1,26 +1,26 @@
 {
-  "summary": "Independent review of exact v0.1.3 candidate 7e5eb2c: all 17 tracked files covered against pinned bf0fc4b; 12 CLI subjects included. Product and bundle differences are version-only. P2 internal-feed addresses and P3 stale receipt narrative remain open. No auto-fixes or broad reruns; return to work before landing.",
+  "summary": "Independent re-review of exact candidate 65a2c12 verified R013-1/P2 and R013-2/P3 fixed, with no new findings. Exact correction scope covers 6 tracked files and 2 CLI subjects; full release scope against original bf0fc4b covers 21/14, preserving historical 17/12 evidence unchanged. Product remains version-only. Ready for land's separate human gate; no owner approval, merge or publication inferred.",
   "review": {
     "findings_path": ".baton/quick/release-013.review.json"
   },
   "decisions": [
     {
-      "id": "D11",
-      "decision": "Confirm the bounded release diff stays in the quick lane",
+      "id": "D19",
+      "decision": "Verify corrected candidate remains within quick scope",
       "tag": "quick-scope-held",
-      "rationale": "Exact pinned review covers all 17 files and includes all 12 CLI subjects. Source/tests change version identifiers only; the generated bundle equals base bytes with 0.1.2 replaced by 0.1.3. Manifest/lock metadata, changelog dating and process receipts change without adding user-facing behavior, public contracts, upstream bytes or component versions. The advisory file-count excess is mechanical bookkeeping, not expanded product scope.",
+      "rationale": "Both installed personas reviewed exact CLI base 7e5eb2c to candidate 65a2c12 (6 tracked/2 CLI) plus full release base bf0fc4b to candidate (21 tracked/14 subjects). Historical 17/12 coverage remains unchanged. Differences are release version metadata, generated version bytes, evidence redaction/narrative corrections and review records only: no new behavior, public contract, governance, upstream bytes or component-version changes.",
       "by": "release-013-review"
     },
     {
-      "id": "D12",
-      "decision": "Preserve open P2/P3 findings and request supported return to work",
-      "rationale": "The caller forbids applying fixes. Internal-feed addresses violate the constitution, and stale handoff prose conflicts with the successful persisted work receipt. Neither finding is fixed or dismissed. Use supported review --next work rather than land, since automatic blocking_findings counts only open P0/P1. Do not inflate severity, fabricate a disposition, bypass findings-fixed-or-dismissed or imply owner approval. The author must resolve both records and obtain review of the corrected candidate.",
+      "id": "D20",
+      "decision": "Independently verify prior findings fixed and route to land",
+      "rationale": "Both personas verified approved-feed placeholders and absence of private-feed addresses throughout the full release diff, plus truthful persisted-work narrative and review routing while preserving historical failures. R013-1 and R013-2 are fixed, not dismissed; no new findings or auto-fixes. Candidate persisted check 420/420 reused without broad reruns. Land's configured human gate, final PR checks and publication remain separate; this receipt is not owner approval.",
       "by": "release-013-review"
     },
     {
-      "id": "D13",
-      "decision": "Reuse unchanged product evidence without redundant broad checks",
-      "rationale": "The candidate frontmatter honestly records a successful persisted npm run check 420/420. PR #50 evidence supplied by the coordinator remains historical product evidence only: independent reviewed head 333694292462a9f7513907c14a410f4cba35af87, clean review, 420/420 checks, 38/38 attachment tests and accepted 56f193a green runs. This review performs bounded metadata/bundle/guard inspections and offline validation, not a new broad suite, final PR approval, tag or workflow dispatch.",
+      "id": "D21",
+      "decision": "Preserve exact correction and original release scopes separately",
+      "rationale": "Supported prior review recorded next-cycle base 7e5eb2c. This review obeys that CLI base without merge-base recomputation and additionally checks original release base bf0fc4b. Full sets and comparisons are in the new CE artifact; prior run artifacts remain unchanged. Any receipt-written metadata after review is a review output, not a newly auto-fixed product candidate.",
       "by": "release-013-review"
     }
   ]
