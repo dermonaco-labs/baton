@@ -1,5 +1,6 @@
 import { readFile, writeFile, readdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { parseFrontmatter, serializeFrontmatter } from './frontmatter.mjs';
 import { loadSchemas, validateSchema } from './schema.mjs';
 import { withinRoot } from './manifest.mjs';
@@ -53,10 +54,18 @@ export function actorRole(value, vocabulary) {
   return !value.startsWith('human:') || vocabulary.roles.some((role) => `human:${role.replaceAll(' ', '-')}` === value);
 }
 
+/** @param {Record<string,any>} data */
+export function attachmentSources(data) {
+  return (data.artifacts ?? []).filter((/** @type {{role:string}} */ item) => item.role === 'source-of-truth')
+    .map((/** @type {{path:string,sha256?:string}} */ item) => ({ path: item.path, sha256: item.sha256 }));
+}
+
 /** @param {string} root @param {string} path @param {string} [source] */
 export async function validateHandoff(root, path, source) {
   /** @type {Array<{code:string,file:string,message:string,pointer?:string,fix?:string}>} */
   const errors = [];
+  /** @param {string} code @param {string} message @param {string} [file] */
+  const issue = (code, message, file = path) => errors.push({ code, file, message });
   let parsed;
   try {
     parsed = parseFrontmatter(source ?? await readFile(withinRoot(root, path), 'utf8'));
@@ -75,14 +84,14 @@ export async function validateHandoff(root, path, source) {
   const vocabulary = await gateVocabulary(root);
   const approver = data.gate?.approved_by;
   if (approver !== null && approver !== undefined && (typeof approver !== 'string' || !approvedRole(approver, vocabulary))) {
-    errors.push({ code: 'E_APPROVER_FORMAT', file: path, message: 'Approval must use a configured role and channel' });
+    issue('E_APPROVER_FORMAT', 'Approval must use a configured role and channel');
   }
   if ((approver == null) !== (data.gate?.approved_at == null)) {
-    errors.push({ code: 'E_APPROVER_FORMAT', file: path, message: 'Approval role and date must be set together' });
+    issue('E_APPROVER_FORMAT', 'Approval role and date must be set together');
   }
   const actors = [data.updated_by, .../** @type {Array<{by:string}>} */ (data.decisions ?? []).map((entry) => entry.by), .../** @type {Array<{by:string}>} */ (data.history ?? []).map((entry) => entry.by)];
   if (actors.some((actor) => typeof actor !== 'string' || !actorRole(actor, vocabulary))) {
-    errors.push({ code: 'E_ACTOR_FORMAT', file: path, message: 'An actor is not a configured role or agent identifier' });
+    issue('E_ACTOR_FORMAT', 'An actor is not a configured role or agent identifier');
   }
   errors.push(...validateSchema(schemas, 'handoff', data)
     .filter((entry) => !(
@@ -99,19 +108,49 @@ export async function validateHandoff(root, path, source) {
 
   const positions = headings.map((heading) => body.indexOf(heading));
   if (positions.some((index) => index < 0) || positions.some((index, position) => position && index <= positions[position - 1])) {
-    errors.push({ code: 'E_BODY_SECTIONS', file: path, message: 'Body headings must appear in the required order' });
+    issue('E_BODY_SECTIONS', 'Body headings must appear in the required order');
   }
   if ((data.read_first?.length ?? 0) > phases.budgets.read_first_max || body.split(/\r?\n/).length > phases.budgets.body_max_lines) {
-    errors.push({ code: 'E_BUDGET', file: path, message: 'Handoff exceeds the context budget' });
+    issue('E_BUDGET', 'Handoff exceeds the context budget');
   }
   if (data.status === 'ready' && /** @type {Array<{blocking:boolean}>} */ (data.open_questions ?? []).some((question) => question.blocking)) {
-    errors.push({ code: 'E_BLOCKING_OPEN', file: path, message: 'Blocking questions require needs-human status' });
+    issue('E_BLOCKING_OPEN', 'Blocking questions require needs-human status');
   }
   if (data.status === 'ready' && /** @type {Array<{met:boolean}>} */ (data.exit_criteria ?? []).some((check) => !check.met)) {
-    errors.push({ code: 'E_EXIT_UNMET', file: path, message: 'Ready handoff has unmet exit criteria' });
+    issue('E_EXIT_UNMET', 'Ready handoff has unmet exit criteria');
   }
   if (data.history?.length && data.history.at(-1).phase !== data.phase_completed) {
-    errors.push({ code: 'E_TRANSITION', file: path, message: 'Latest history phase does not match the completed phase' });
+    issue('E_TRANSITION', 'Latest history phase does not match the completed phase');
+  }
+  const attached = /** @type {Array<Record<string,any>>} */ (data.decisions ?? []).filter((decision) => decision.tag === 'attached');
+  const provenance = attached[0];
+  const approvals = /** @type {Array<Record<string,any>>} */ (data.decisions ?? []).filter((d) => d.tag === 'attach-approved');
+  const initialAttachment = data.lane === 'feature' && data.phase_completed === 'none';
+  const bases = /** @type {Array<Record<string,any>>} */ (data.decisions ?? []).filter((decision) => decision.tag === 'diff-base');
+  if ((initialAttachment || attached.length > 0 || approvals.length > 0) &&
+      (attached.length !== 1 || data.lane !== 'feature' || provenance.by !== 'baton' ||
+        provenance['x-attached-phase'] !== 'implement' ||
+        !['x-imported-head', 'x-delivery-base'].every((key) =>
+          typeof provenance[key] === 'string' && /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/i.test(provenance[key])) ||
+        !Number.isInteger(provenance['x-checked-tasks']) || provenance['x-checked-tasks'] < 0 ||
+        (provenance['x-attached-at'] !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(provenance['x-attached-at'])) ||
+        bases.length === 0 || !bases.every((decision) =>
+          decision.by === 'baton' && decision['x-base-commit'] === provenance['x-delivery-base']) ||
+        (initialAttachment && (data.next_phase !== 'implement' ||
+          !Array.isArray(data.history) || data.history.length !== 0 || data.gate?.required !== true)))) {
+    issue('E_TRANSITION', 'Invalid Baton implement attachment provenance or initial gate/history');
+  }
+  if (initialAttachment && approver != null) {
+    const approval = approvals[0];
+    const actor = `human:${String(approver).split(' via ')[0].replaceAll(' ', '-')}`;
+    const sources = attachmentSources(data);
+    if (!provenance || data.updated_by !== actor || approvals.length !== 1 ||
+        approval.by !== actor || approval['x-imported-head'] !== provenance['x-imported-head'] ||
+        !isDeepStrictEqual(approval['x-sources'], sources) ||
+        sources.length !== 3 || sources.some((/** @type {{sha256?:string}} */ item) => !/^[a-f0-9]{64}$/i.test(item.sha256 ?? '')) ||
+        (provenance['x-attached-at'] && data.gate.approved_at < provenance['x-attached-at'])) {
+      issue('E_TRANSITION', 'Invalid or stale attachment approval evidence');
+    }
   }
   const modelIssue = modelPolicyIssue(await loadModelSettings(root), data.suggested_model, path);
   if (modelIssue?.code === 'E_MODEL_NOT_ALLOWED') errors.push(modelIssue);
@@ -120,14 +159,14 @@ export async function validateHandoff(root, path, source) {
   if (completed && !phaseForLane(completed, data.lane).next.includes(data.next_phase) &&
     !(data.lane === 'quick' && data.status === 'done' && data.next_phase === 'done' &&
       ['work', 'review'].includes(data.phase_completed) && decisionsHaveTag(data.decisions, 'escalated'))) {
-    errors.push({ code: 'E_TRANSITION', file: path, message: 'Next phase is not an allowed transition' });
+    issue('E_TRANSITION', 'Next phase is not an allowed transition');
   }
   if (target && !target.lane.includes(data.lane) && !(data.lane === 'quick' && data.next_phase === 'specify' &&
     decisionsHaveTag(data.decisions, 'quick-eligible'))) {
-    errors.push({ code: 'E_LANE_MISMATCH', file: path, message: `${data.next_phase} does not accept the ${data.lane} lane` });
+    issue('E_LANE_MISMATCH', `${data.next_phase} does not accept the ${data.lane} lane`);
   }
   if (data.next_phase !== 'done' && target?.owner !== data.next_owner) {
-    errors.push({ code: 'E_OWNER', file: path, message: 'Next owner does not match the phase contract' });
+    issue('E_OWNER', 'Next owner does not match the phase contract');
   }
   if (completed && data.status === 'ready') {
     const criteria = phaseForLane(completed, data.lane).exit.filter((check) =>
@@ -135,58 +174,58 @@ export async function validateHandoff(root, path, source) {
       !['findings-fixed-or-dismissed', 'findings-mapped-to-tasks-or-dismissed'].includes(check.id));
     for (const check of criteria) {
       if (!/** @type {Array<{id:string,met:boolean}>} */ (data.exit_criteria ?? []).some((item) => item.id === checkKey(check) && item.met)) {
-        errors.push({ code: 'E_EXIT_UNMET', file: path, message: `${checkKey(check)} lacks successful exit evidence` });
+        issue('E_EXIT_UNMET', `${checkKey(check)} lacks successful exit evidence`);
       }
     }
   }
   if (data.lane === 'feature') {
     const directory = dirname(withinRoot(root, path));
     const batons = (await readdir(directory)).filter((name) => /^handoff(?:[.-][^/]+)?\.md$/.test(name));
-    if (batons.length > 1) errors.push({ code: 'E_MULTIPLE_BATONS', file: path, message: `Found ${batons.length} feature handoffs` });
+    if (batons.length > 1) issue('E_MULTIPLE_BATONS', `Found ${batons.length} feature handoffs`);
   }
   const refs = [...(data.read_first ?? []), ...(data.artifacts ?? [])];
   for (const ref of refs) {
     try {
       const digest = await hashFile(withinRoot(root, ref.path));
       if (ref.sha256 && ref.sha256 !== digest) {
-        errors.push({ code: 'E_STALE_ARTIFACT', file: ref.path, message: 'Artifact checksum differs from the recorded hash' });
+        issue('E_STALE_ARTIFACT', 'Artifact checksum differs from the recorded hash', ref.path);
       }
     } catch (error) {
-      if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') errors.push({ code: 'E_MISSING_ARTIFACT', file: ref.path, message: 'Required handoff artifact is absent' });
+      if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT') issue('E_MISSING_ARTIFACT', 'Required handoff artifact is absent', ref.path);
       else throw error;
     }
   }
   if (data.phase_completed === 'analyze') {
-    if (!data.analysis?.report_path || !await artifactExists(root, data.analysis.report_path)) errors.push({ code: 'E_ANALYSIS_MISSING', file: path, message: 'Analysis report is required' });
-    if (data.analysis?.critical > 0) errors.push({ code: 'E_ANALYSIS_CRITICAL', file: path, message: 'Analysis has critical findings' });
+    if (!data.analysis?.report_path || !await artifactExists(root, data.analysis.report_path)) issue('E_ANALYSIS_MISSING', 'Analysis report is required');
+    if (data.analysis?.critical > 0) issue('E_ANALYSIS_CRITICAL', 'Analysis has critical findings');
   }
   if (data.phase_completed === 'review') {
     if (!data.review?.findings_path || !await artifactExists(root, data.review.findings_path)) {
-      errors.push({ code: 'E_REVIEW_MISSING', file: path, message: 'Review findings file is required' });
+      issue('E_REVIEW_MISSING', 'Review findings file is required');
     } else {
       try {
         const findings = JSON.parse(await readFile(withinRoot(root, data.review.findings_path), 'utf8'));
-        if (validateSchema(schemas, 'findings', findings).length) errors.push({ code: 'E_REVIEW_MISSING', file: data.review.findings_path, message: 'Review findings are invalid' });
+        if (validateSchema(schemas, 'findings', findings).length) issue('E_REVIEW_MISSING', 'Review findings are invalid', data.review.findings_path);
       } catch (error) {
-        if (error instanceof SyntaxError) errors.push({ code: 'E_REVIEW_MISSING', file: data.review.findings_path, message: error.message });
+        if (error instanceof SyntaxError) issue('E_REVIEW_MISSING', error.message, data.review.findings_path);
         else throw error;
       }
     }
   }
   if (data.phase_completed === 'land' && !data.pr?.url) {
-    errors.push({ code: 'E_PR_MISSING', file: path, message: 'Landing must record a PR URL' });
+    issue('E_PR_MISSING', 'Landing must record a PR URL');
   }
   if (data.next_phase === 'implement') {
-    const stories = new Set(/** @type {Array<{story:string}>} */ (data.acceptance_checks ?? []).map((check) => check.story));
+    const stories = new Set(/** @type {Array<{story:string}|null>} */ (Array.isArray(data.acceptance_checks) ? data.acceptance_checks : []).map((check) => check?.story));
     const tasksPath = withinRoot(root, `${dirname(path)}/tasks.md`);
     try {
       const tasks = await readFile(tasksPath, 'utf8');
       for (const story of new Set([...tasks.matchAll(/\[US(\d+)\]/g)].map((match) => `US${match[1]}`))) {
-        if (!stories.has(story)) errors.push({ code: 'E_NO_PREREG', file: path, message: `${story} lacks pre-registered acceptance checks` });
+        if (!stories.has(story)) issue('E_NO_PREREG', `${story} lacks pre-registered acceptance checks`);
       }
     } catch (error) {
       if (/** @type {NodeJS.ErrnoException} */ (error).code !== 'ENOENT') throw error;
-      errors.push({ code: 'E_MISSING_ARTIFACT', file: tasksPath, message: 'Tasks are required for implement' });
+      issue('E_MISSING_ARTIFACT', 'Tasks are required for implement', tasksPath);
     }
   }
   const covered = [

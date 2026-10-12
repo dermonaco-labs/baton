@@ -52,6 +52,18 @@ off to: `handoff next` or `/baton`.
 When to use: create, receive, inspect, update or resolve a phase baton. Hands
 off to: the phase owner shown by `handoff next`, or a human gate when status
 is `needs-human`. See [CLI](cli.md) for the actions.
+`init --feature F --infer --phase implement --reason R [--from-json file]`
+attaches pre-Baton sources with imported provenance and a fresh human gate;
+see [recovery](../04-handoffs.md#attach-a-pre-baton-feature-at-implement).
+Review covers the full main → feature delivery from the merge-base with
+`origin/HEAD` (missing base: `E_CHECK_FAILED`, no baton written).
+`x-imported-head` marks imported work for context, not an attestation of
+prior review; no settled history is relabelled or re-receipted.
+Receive and scope verify imported HEAD ancestry and its merge-base with
+`origin/HEAD`; offline validation requires every attached `diff-base` to
+match. Initial `approve` records source hashes/imported HEAD in reserved
+`attach-approved` evidence, which refresh clears for reapproval. Gates remain
+declarative plaintext: authenticity relies on git/PR review, not cryptography.
 
 ### `models`
 

@@ -3666,7 +3666,7 @@
       "format": "esm"
     },
     "src/lib/handoff.mjs": {
-      "bytes": 12385,
+      "bytes": 14449,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -3675,6 +3675,11 @@
         },
         {
           "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:util",
           "kind": "import-statement",
           "external": true
         },
@@ -3932,7 +3937,7 @@
       "format": "esm"
     },
     "src/commands/handoff.mjs": {
-      "bytes": 52114,
+      "bytes": 55522,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4728,6 +4733,11 @@
           "external": true
         },
         {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
           "path": "node:child_process",
           "kind": "import-statement",
           "external": true
@@ -5182,7 +5192,7 @@
           "bytesInOutput": 1712
         },
         "node_modules/yaml/dist/index.js": {
-          "bytesInOutput": 814
+          "bytesInOutput": 844
         },
         "src/lib/manifest.mjs": {
           "bytesInOutput": 934
@@ -5206,7 +5216,7 @@
           "bytesInOutput": 13773
         },
         "node_modules/ajv/dist/compile/codegen/code.js": {
-          "bytesInOutput": 2551
+          "bytesInOutput": 2584
         },
         "node_modules/ajv/dist/compile/codegen/scope.js": {
           "bytesInOutput": 2585
@@ -5503,13 +5513,13 @@
           "bytesInOutput": 949
         },
         "src/lib/handoff.mjs": {
-          "bytesInOutput": 6945
+          "bytesInOutput": 7859
         },
         "src/lib/local-checks.mjs": {
           "bytesInOutput": 1967
         },
         "src/lib/checks.mjs": {
-          "bytesInOutput": 11003
+          "bytesInOutput": 11000
         },
         "src/lib/maintainer-workflows.mjs": {
           "bytesInOutput": 515
@@ -5521,7 +5531,7 @@
           "bytesInOutput": 1499
         },
         "src/commands/handoff.mjs": {
-          "bytesInOutput": 31213
+          "bytesInOutput": 32092
         },
         "src/commands/status.mjs": {
           "bytesInOutput": 937
@@ -5545,7 +5555,7 @@
           "bytesInOutput": 740
         },
         "src/commands/init.mjs": {
-          "bytesInOutput": 10582
+          "bytesInOutput": 10563
         },
         "src/commands/update.mjs": {
           "bytesInOutput": 6053
@@ -5560,7 +5570,7 @@
           "bytesInOutput": 2403
         }
       },
-      "bytes": 407599
+      "bytes": 409433
     }
   }
 }

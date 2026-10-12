@@ -51,6 +51,19 @@ test('every feature phase and quick lane phase has a valid independent fixture',
   }
 });
 
+test('pre-existing feature baton without specify history or attachment still validates', async () => {
+  const { workspace, cleanup } = await fixtureRepo();
+  try {
+    const source = await readFile(join(fixtureRoot, 'valid/feature/implement.md'), 'utf8');
+    const { data } = parseFrontmatter(source);
+    assert.deepEqual(data.history.map((entry) => entry.phase), ['implement']);
+    assert.ok(!data.decisions.some((decision) => ['attached', 'attach-approved'].includes(decision.tag)));
+    assert.deepEqual(await validateHandoff(workspace, featurePath, source), []);
+  } finally {
+    await cleanup();
+  }
+});
+
 test('each invalid baton fixture reports its named stable error, without unrelated errors', async (context) => {
   const { workspace, cleanup } = await fixtureRepo();
   try {

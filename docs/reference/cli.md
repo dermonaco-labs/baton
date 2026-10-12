@@ -29,8 +29,21 @@ are global. JSON output contains `ok`, `command`, `version`, `errors`,
 | `handoff answer ID "choice" --by "role"` | Resolve an open question | `handoff receive` |
 | `handoff refresh --reason R` | Rehash intentional artifact changes | `validate` |
 | `handoff escalate --quick slug --reason R` | Exit quick lane when scope changes | `speckit-specify` |
-| `handoff init --feature F --infer` | Infer a pre-existing feature's baton | Human confirmation |
+| `handoff init --feature F --infer [--phase implement --reason R --from-json file]` | Infer a pre-existing feature, or explicitly attach existing sources at implement | Human confirmation, or fresh role approval then implement receive |
 | `handoff migrate [--dry-run]` | Upgrade older baton schemas | `validate` |
+
+Explicit implement attachment requires a resolvable merge-base with
+`origin/HEAD`, otherwise `E_CHECK_FAILED` prevents creation. Review covers
+the full main → feature delivery, not just post-attachment changes.
+`x-imported-head` is imported-baseline context, not prior review approval;
+no settled history is relabelled or re-receipted.
+Receive and scope verify imported-commit ancestry and recompute the pinned
+merge-base from `x-imported-head` and `origin/HEAD` (`E_CHECK_FAILED` if
+unverifiable). Offline validation rejects any shadowing `diff-base`.
+Initial `approve` binds source hashes and imported HEAD in an `attach-approved`
+human-role decision; refresh clears it and requires reapproval. Batons and
+gates are declarative plaintext, not cryptographic proof of authenticity:
+git history and PR review remain the trust boundary.
 
 `handoff write --phase analyze --analysis-from <file>` persists the analysis
 report; `--from-brainstorm <path>` and `--from-quick <path>` apply when

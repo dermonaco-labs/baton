@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/attach-013-f3-review/"
+  },
+  "base": "4022803a392f9ca1392296e3e4a11c586abfcc74",
+  "head": "5a02749b0f19735251792d1ff168ce521cdb9881",
+  "personas": [
+    "adversarial-reviewer",
+    "agent-native-reviewer",
+    "correctness-reviewer",
+    "learnings-researcher",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "repo-research-analyst",
+    "security-reviewer",
+    "testing-reviewer"
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "P1",
+      "title": "Edited attachment provenance can exclude imported product work from review",
+      "file": "src/lib/handoff.mjs",
+      "line": 126,
+      "persona": "correctness-reviewer",
+      "confidence": 1,
+      "disposition": "fixed",
+      "reason": "Carry forward independently verified resolution from review commit 5ac63a7; product code is unchanged. All attached diff-base decisions must equal x-delivery-base; receive/scope verify imported commit existence, ancestry and its origin/HEAD merge-base. Prior bundled probes reject paired-base, shadowing and nonexistent imported HEAD. Consistent deletion of both markers and changed plaintext checked counts remain accepted declarative residuals, not cryptographic authenticity. This review independently reran all 38 attachment integration tests successfully.",
+      "x-evidence-source": "5ac63a7:.baton/quick/partial-feature-attach-013.review.json"
+    },
+    {
+      "id": "F2",
+      "severity": "P1",
+      "title": "Initial attachment accepts a hand-forged approval without a fresh human action",
+      "file": "src/lib/handoff.mjs",
+      "line": 129,
+      "persona": "correctness-reviewer",
+      "confidence": 1,
+      "disposition": "fixed",
+      "reason": "Carry forward independently verified resolution from review commit 5ac63a7; product code is unchanged. Hand-setting gate role/date alone fails E_TRANSITION. approve records source/imported-head-bound attach-approved evidence matching updated_by, hashes and date. Prior stale/hash/actor/backdate/duplicate probes passed; all 38 attachment integration tests passed again here, including supported refresh/reapproval. No phase-none receipt or cryptographic authenticity claim.",
+      "x-evidence-source": "5ac63a7:.baton/quick/partial-feature-attach-013.review.json"
+    },
+    {
+      "id": "F3",
+      "severity": "P2",
+      "title": "Schema reference still documents the reverted history-start invariant",
+      "file": "docs/reference/schemas.md",
+      "line": 35,
+      "persona": "project-standards-reviewer",
+      "confidence": 1,
+      "disposition": "fixed",
+      "reason": "Independently verified at 5a02749: removed shorter-than-20 history-start and full-history origin claims. Lines 34-39 now preserve existing unattached validation, require valid provenance when attached/attach-approved is present, and disclose consistent provenance deletion as an offline-undetectable plaintext rewrite relying on git/PR review. This matches docs/04-handoffs.md:123-140 and the prior accepted compatibility/trust boundary. Searches found no remaining reverted history-start invariant in current product documentation or source/installed Baton skill copies. Integration compatibility test for normal starts, cross-source seeds and legacy retained histories passed.",
+      "x-evidence": [
+        "git diff 5ac63a7 5a02749 -- docs/reference/schemas.md: only documentation correction, no product change.",
+        "Current schema reference and handoffs guide both explicitly say existing unattached feature batons need not begin history at specify.",
+        "node --test test\\integration\\handoff-attach.test.mjs: 38/38 passed, zero skipped."
+      ]
+    }
+  ],
+  "x-verdict": "Ready to land; no open P0/P1/P2 or other new findings",
+  "x-model": "gpt-6.1-sol",
+  "x-reasoning": "medium",
+  "x-execution": "Single cohesive independent headless review in separate detached checkout. User-required model/reasoning overrides configured claude-opus-5.5 suggestion. Installed persona lenses applied directly; no nested dispatch, auto-fix, product edits or shipping.",
+  "x-selected-personas": [
+    "correctness-reviewer",
+    "testing-reviewer",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "agent-native-reviewer",
+    "learnings-researcher"
+  ],
+  "x-dispatched-personas": [],
+  "x-coverage": {
+    "cli-base": "4022803a392f9ca1392296e3e4a11c586abfcc74",
+    "ce-base": "4022803a392f9ca1392296e3e4a11c586abfcc74",
+    "cli-subjects": ["docs/reference/schemas.md"],
+    "pinned-tracked-diff": [
+      ".baton/quick/partial-feature-attach-013.f3-work.json",
+      ".baton/quick/partial-feature-attach-013.md",
+      ".baton/quick/partial-feature-attach-013.review.json",
+      "docs/reference/schemas.md"
+    ],
+    "reviewed-files": [
+      ".baton/quick/partial-feature-attach-013.f3-work.json",
+      ".baton/quick/partial-feature-attach-013.md",
+      ".baton/quick/partial-feature-attach-013.review.json",
+      "docs/reference/schemas.md"
+    ],
+    "reviewed-files-equal-pinned-tracked-diff": true,
+    "cli-subjects-subset-of-pinned-tracked-diff": true,
+    "focused-delta": "5ac63a7..5a02749",
+    "focused-delta-files": [
+      ".baton/quick/partial-feature-attach-013.f3-work.json",
+      ".baton/quick/partial-feature-attach-013.md",
+      "docs/reference/schemas.md"
+    ],
+    "carry-forward-review": "5ac63a7:.baton/quick/partial-feature-attach-013.review.json",
+    "note": "Exact CLI base retained, never recomputed. Reviewed all four pinned tracked files, focusing on the three-file F3 delta. Unchanged code and settled F1/F2 results carried forward from prior independent review. Historical baton risks R2/R4 and older work receipts are superseded by prior review and latest work evidence, not final product claims. Outgoing review JSON, handoff payload and supported CLI bookkeeping are review-owned evidence emitted after product enumeration. No auto-fix.",
+    "untracked-excluded": [],
+    "suppressed-findings": 0,
+    "failed-reviewers": []
+  },
+  "x-validation": [
+    {"command": "npm run lint:md", "result": "Passed; 47 files, zero errors."},
+    {"command": "node .baton\\bin\\baton.mjs validate", "result": "Passed; only existing recommended-pack and quick-size warnings."},
+    {"command": "node --test test\\integration\\handoff-attach.test.mjs", "result": "Passed; 38/38 tests, zero failures or skips."},
+    {"command": "git diff --check", "result": "Passed."},
+    {"command": "npm run check", "result": "Not independently rerun for docs-only delta. Latest work receipt at 5a02749 records configured full check passing with 420/420 tests. Prior 207-test independent review evidence retained, not relabelled as this run."}
+  ],
+  "x-memory": "MemPalace attachment/history-start/provenance recall returned no matching results.",
+  "x-residual-risks": [
+    "Accepted declarative plaintext authenticity boundary relies on git/PR review.",
+    "Prior independently verified bundle remains unchanged at 409433 bytes, 167-byte headroom."
+  ],
+  "x-lane": "F3 correction adds no user-facing behavior or public contract. Existing D3 owner exception remains unchanged; no scope expansion. All prior findings fixed; supported review write may route to land, but no shipping is authorized here."
+}

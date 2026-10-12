@@ -1,0 +1,23 @@
+{
+  "summary": "Independent docs-only rereview at 5a02749: F3 fixed, no new findings, F1/F2 resolutions carried forward for unchanged code. Markdown lint and Baton validation passed; attachment integration tests 38/38 passed. Ready for land handoff only; no push, PR, merge or release.",
+  "read_first": [
+    {"path": ".baton/quick/partial-feature-attach-013.md", "why": "Quick intent and current relay"},
+    {"path": ".baton/quick/partial-feature-attach-013.review.json", "why": "Normalized findings, exact-base coverage and independent test evidence"}
+  ],
+  "review": {"findings_path": ".baton/quick/partial-feature-attach-013.review.json"},
+  "decisions": [
+    {
+      "id": "D29",
+      "decision": "Use user-required independent F3 review model",
+      "rationale": "gpt-6.1-sol with medium reasoning explicitly overrides the configured review-role suggestion claude-opus-5.5 for this review only. One cohesive headless review in a separate detached checkout; only installed persona lenses selected, none dispatched. No product edits or shipping.",
+      "by": "baton-013-review"
+    },
+    {
+      "id": "D30",
+      "decision": "Keep F3 correction within existing quick scope",
+      "tag": "quick-scope-held",
+      "rationale": "Exact CLI base 4022803 retained; CLI subject docs/reference/schemas.md is a subset of all four reviewed pinned tracked files. Focused 5ac63a7..5a02749 delta changes only docs and work bookkeeping, adding no user-facing behavior or public contract. No expansion beyond D3 owner exception. F3 resolved; F1/F2 remain fixed under prior independent review. Current lint/validate pass and 38/38 attachment integration tests pass. Latest author full-check 420/420 is carried evidence, not a newly executed reviewer full gate. Land remains responsible for shipping checks and human PR gate.",
+      "by": "baton-013-review"
+    }
+  ]
+}

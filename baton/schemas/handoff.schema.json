@@ -193,10 +193,10 @@
     {
       "if": { "properties": { "phase_completed": { "const": "none" } }, "required": ["phase_completed"] },
       "then": {
-        "properties": {
-          "lane": { "const": "quick" },
-          "next_phase": { "const": "work" }
-        }
+        "anyOf": [
+          { "properties": { "lane": { "const": "quick" }, "next_phase": { "const": "work" } } },
+          { "properties": { "lane": { "const": "feature" }, "next_phase": { "const": "implement" } } }
+        ]
       }
     },
     {

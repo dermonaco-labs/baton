@@ -1,0 +1,27 @@
+{
+  "summary": "Addressed P2 F3: corrected the schema reference's reverted history-start invariant. Existing unattached feature-baton validation is unchanged; attached/attach-approved markers require valid provenance, while consistent removal of all provenance is a plaintext rewrite whose authenticity relies on git/PR review. Documentation-only correction; return to independent review, not land. No push, PR, merge or release.",
+  "read_first": [
+    {
+      "path": ".baton/quick/partial-feature-attach-013.md",
+      "why": "Quick intent and relay state"
+    },
+    {
+      "path": ".baton/quick/partial-feature-attach-013.f3-work.json",
+      "why": "F3 documentation correction and task-specific model override"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D27",
+      "decision": "Address review finding F3 without changing existing feature validation",
+      "rationale": "Removed the schema reference's shorter-than-20 history-start requirement and full-history origin claim. Documented unchanged validation for existing unattached batons, valid provenance whenever attached/attach-approved is present, and consistent removal of all attachment/approval evidence as an offline-undetectable plaintext rewrite relying on git/PR review. Searched docs, CHANGELOG, Baton source skills and installed/synced skill copies for history-start, normal-start, retention and truncation claims; only docs/reference/schemas.md retained the reverted invariant. No edited documentation is a hashed source in an existing baton, so no documentation-source refresh is required. This supported work write rehashes its own supplied evidence and returns to review; the reviewer retains responsibility for F3's final disposition.",
+      "by": "baton-013-work"
+    },
+    {
+      "id": "D28",
+      "decision": "Honor the user-required implementation routing for the F3 correction",
+      "rationale": "The user explicitly requires gpt-6.1-sol with medium reasoning for this same-worktree implementer, overriding the configured gpt-6-sol suggestion for this task only. Documentation-only correction under the existing quick scope; no code, release, gate approval or shipping action.",
+      "by": "baton-013-work"
+    }
+  ]
+}
