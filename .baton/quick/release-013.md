@@ -141,8 +141,8 @@ decisions:
     by: release-013-land
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-10-12
 history:
   - phase: work
     at: 2026-10-12T06:39:57.011Z
@@ -179,8 +179,15 @@ history:
     x-worktree: 7403127df000ae46745c0d311c3242f2147db9b506965b1aa8bf8224623ede13
     commit: 29f68f2
     x-action: write
-updated_at: 2026-10-12T07:30:41.356Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-10-12T09:25:00.482Z
+    by: human:repository-owner
+    writer: 988aa794721f8b77458b1181afcc0937d13735294aa75536a64ebb09185f7704
+    x-worktree: 46b36b9f6e50ee03c442854234a616df7dcb9421de0a7bc290d33bebe1d45a1d
+    commit: 311e96d
+    x-action: approve
+updated_at: 2026-10-12T09:25:00.482Z
+updated_by: human:repository-owner
 risks:
   - id: R1
     text: Owner approval/merge must bind the exact final candidate. Only after merge may publication proceed through dry_run and an annotated v0.1.3 tag; neither action is performed by this release-preparation task.
