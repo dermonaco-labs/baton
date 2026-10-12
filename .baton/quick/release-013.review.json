@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/release-013-65a2c12/report.json"
+  },
+  "base": "7e5eb2c35664b086fa7d4795546a706ef06c8141",
+  "head": "65a2c12b6a04b10141b3769a768be7d85e2bae5f",
+  "personas": ["correctness-reviewer", "project-standards-reviewer"],
+  "findings": [
+    {
+      "id": "R013-1",
+      "severity": "P2",
+      "title": "Replace internal feed URLs with placeholders",
+      "file": ".baton/quick/release-013.md",
+      "line": 124,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.99,
+      "disposition": "fixed",
+      "reason": "Independently verified by both personas at 65a2c12: approved-feed placeholders replace the concrete addresses in the baton/work JSON; prohibited hostname absent from all 21 full-release files. Historical outcomes preserved. Location refers to original finding."
+    },
+    {
+      "id": "R013-2",
+      "severity": "P3",
+      "title": "Refresh stale work-state narrative and next step",
+      "file": ".baton/quick/release-013.md",
+      "line": 172,
+      "persona": "correctness-reviewer",
+      "confidence": 0.99,
+      "disposition": "fixed",
+      "reason": "Independently verified by both personas at 65a2c12: current-state body acknowledges the successful persisted 420/420 work receipt and directs independent review. Historical failed/intermediate attempts preserved. Location refers to original finding."
+    }
+  ]
+}

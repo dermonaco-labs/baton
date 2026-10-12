@@ -1,0 +1,27 @@
+{
+  "summary": "Independent re-review of exact candidate 65a2c12 verified R013-1/P2 and R013-2/P3 fixed, with no new findings. Exact correction scope covers 6 tracked files and 2 CLI subjects; full release scope against original bf0fc4b covers 21/14, preserving historical 17/12 evidence unchanged. Product remains version-only. Ready for land's separate human gate; no owner approval, merge or publication inferred.",
+  "review": {
+    "findings_path": ".baton/quick/release-013.review.json"
+  },
+  "decisions": [
+    {
+      "id": "D19",
+      "decision": "Verify corrected candidate remains within quick scope",
+      "tag": "quick-scope-held",
+      "rationale": "Both installed personas reviewed exact CLI base 7e5eb2c to candidate 65a2c12 (6 tracked/2 CLI) plus full release base bf0fc4b to candidate (21 tracked/14 subjects). Historical 17/12 coverage remains unchanged. Differences are release version metadata, generated version bytes, evidence redaction/narrative corrections and review records only: no new behavior, public contract, governance, upstream bytes or component-version changes.",
+      "by": "release-013-review"
+    },
+    {
+      "id": "D20",
+      "decision": "Independently verify prior findings fixed and route to land",
+      "rationale": "Both personas verified approved-feed placeholders and absence of private-feed addresses throughout the full release diff, plus truthful persisted-work narrative and review routing while preserving historical failures. R013-1 and R013-2 are fixed, not dismissed; no new findings or auto-fixes. Candidate persisted check 420/420 reused without broad reruns. Land's configured human gate, final PR checks and publication remain separate; this receipt is not owner approval.",
+      "by": "release-013-review"
+    },
+    {
+      "id": "D21",
+      "decision": "Preserve exact correction and original release scopes separately",
+      "rationale": "Supported prior review recorded next-cycle base 7e5eb2c. This review obeys that CLI base without merge-base recomputation and additionally checks original release base bf0fc4b. Full sets and comparisons are in the new CE artifact; prior run artifacts remain unchanged. Any receipt-written metadata after review is a review output, not a newly auto-fixed product candidate.",
+      "by": "release-013-review"
+    }
+  ]
+}
