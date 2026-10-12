@@ -1,0 +1,27 @@
+{
+  "summary": "Independent review of exact v0.1.3 candidate 7e5eb2c: all 17 tracked files covered against pinned bf0fc4b; 12 CLI subjects included. Product and bundle differences are version-only. P2 internal-feed addresses and P3 stale receipt narrative remain open. No auto-fixes or broad reruns; return to work before landing.",
+  "review": {
+    "findings_path": ".baton/quick/release-013.review.json"
+  },
+  "decisions": [
+    {
+      "id": "D11",
+      "decision": "Confirm the bounded release diff stays in the quick lane",
+      "tag": "quick-scope-held",
+      "rationale": "Exact pinned review covers all 17 files and includes all 12 CLI subjects. Source/tests change version identifiers only; the generated bundle equals base bytes with 0.1.2 replaced by 0.1.3. Manifest/lock metadata, changelog dating and process receipts change without adding user-facing behavior, public contracts, upstream bytes or component versions. The advisory file-count excess is mechanical bookkeeping, not expanded product scope.",
+      "by": "release-013-review"
+    },
+    {
+      "id": "D12",
+      "decision": "Preserve open P2/P3 findings and request supported return to work",
+      "rationale": "The caller forbids applying fixes. Internal-feed addresses violate the constitution, and stale handoff prose conflicts with the successful persisted work receipt. Neither finding is fixed or dismissed. Use supported review --next work rather than land, since automatic blocking_findings counts only open P0/P1. Do not inflate severity, fabricate a disposition, bypass findings-fixed-or-dismissed or imply owner approval. The author must resolve both records and obtain review of the corrected candidate.",
+      "by": "release-013-review"
+    },
+    {
+      "id": "D13",
+      "decision": "Reuse unchanged product evidence without redundant broad checks",
+      "rationale": "The candidate frontmatter honestly records a successful persisted npm run check 420/420. PR #50 evidence supplied by the coordinator remains historical product evidence only: independent reviewed head 333694292462a9f7513907c14a410f4cba35af87, clean review, 420/420 checks, 38/38 attachment tests and accepted 56f193a green runs. This review performs bounded metadata/bundle/guard inspections and offline validation, not a new broad suite, final PR approval, tag or workflow dispatch.",
+      "by": "release-013-review"
+    }
+  ]
+}

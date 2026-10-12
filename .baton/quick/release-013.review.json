@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/release-013-7e5eb2c/report.json"
+  },
+  "base": "bf0fc4b4ff6bd4fca068e116e5f4a03014a76146",
+  "head": "7e5eb2c35664b086fa7d4795546a706ef06c8141",
+  "personas": ["correctness-reviewer", "project-standards-reviewer"],
+  "findings": [
+    {
+      "id": "R013-1",
+      "severity": "P2",
+      "title": "Replace internal feed URLs with placeholders",
+      "file": ".baton/quick/release-013.md",
+      "line": 124,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.99,
+      "disposition": "open",
+      "reason": "Concrete internal-feed addresses in this baton and its work JSON violate the constitution's adopter-specific-hostname prohibition. Caller forbids reviewer fixes; author must use placeholders while preserving evidence outcomes. Full evidence is in the CE run artifact."
+    },
+    {
+      "id": "R013-2",
+      "severity": "P3",
+      "title": "Refresh stale work-state narrative and next step",
+      "file": ".baton/quick/release-013.md",
+      "line": 172,
+      "persona": "correctness-reviewer",
+      "confidence": 0.99,
+      "disposition": "open",
+      "reason": "Current-state body contradicts the persisted successful 420/420 work receipt and directs an unnecessary ce-work step. Caller forbids reviewer fixes; author must refresh current-state prose while preserving historical attempts."
+    }
+  ]
+}

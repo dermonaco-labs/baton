@@ -1,0 +1,187 @@
+{
+  "engine": "ce-review",
+  "mode": "headless",
+  "run_id": "release-013-7e5eb2c",
+  "base": "bf0fc4b4ff6bd4fca068e116e5f4a03014a76146",
+  "head": "7e5eb2c35664b086fa7d4795546a706ef06c8141",
+  "tree": "9c6237e143a4e59a70d029fee8576f006857e950",
+  "intent": "Prepare v0.1.3 bookkeeping for merged PR #50 without changing product behavior, governance, component versions or upstream bytes.",
+  "installed_personas": [
+    "adversarial-reviewer",
+    "agent-native-reviewer",
+    "correctness-reviewer",
+    "learnings-researcher",
+    "maintainability-reviewer",
+    "project-standards-reviewer",
+    "repo-research-analyst",
+    "security-reviewer",
+    "testing-reviewer"
+  ],
+  "selected_personas": ["correctness-reviewer", "project-standards-reviewer"],
+  "dispatched_personas": ["correctness-reviewer", "project-standards-reviewer"],
+  "selection_reason": "Caller explicitly requested proportionate installed-only review of mechanical release bookkeeping. No new feature, API, permission, dependency, migration or behavioral change warrants additional personas. Exact base and no-fix caller instructions override upstream merge-base recomputation and headless auto-fixing.",
+  "tracked_diff_files": [
+    ".baton/bin/baton.mjs",
+    ".baton/bin/baton.mjs.sha256",
+    ".baton/manifest.json",
+    ".baton/quick/release-013.md",
+    ".baton/quick/release-013.work.json",
+    "CHANGELOG.md",
+    "baton.lock.json",
+    "package-lock.json",
+    "package.json",
+    "src/cli.mjs",
+    "src/commands/adopt.mjs",
+    "src/commands/doctor.mjs",
+    "src/commands/init.mjs",
+    "src/commands/sync.mjs",
+    "src/lib/report.mjs",
+    "test/integration/init.test.mjs",
+    "test/integration/update.test.mjs"
+  ],
+  "cli_subject_files": [
+    "CHANGELOG.md",
+    "baton.lock.json",
+    "package-lock.json",
+    "package.json",
+    "src/cli.mjs",
+    "src/commands/adopt.mjs",
+    "src/commands/doctor.mjs",
+    "src/commands/init.mjs",
+    "src/commands/sync.mjs",
+    "src/lib/report.mjs",
+    "test/integration/init.test.mjs",
+    "test/integration/update.test.mjs"
+  ],
+  "coverage": {
+    "exact_base_used": true,
+    "merge_base_recomputed": false,
+    "reviewed_file_set_equals_tracked_diff": true,
+    "tracked_diff_count": 17,
+    "reviewed_file_count": 17,
+    "cli_subject_count": 12,
+    "cli_subjects_subset_of_tracked_diff": true,
+    "tracked_files_outside_cli": [
+      ".baton/bin/baton.mjs",
+      ".baton/bin/baton.mjs.sha256",
+      ".baton/manifest.json",
+      ".baton/quick/release-013.md",
+      ".baton/quick/release-013.work.json"
+    ],
+    "untracked_files_excluded_at_scope_enumeration": [],
+    "failed_reviewers": [],
+    "malformed_findings_dropped": 0,
+    "suppressed_findings": 0,
+    "deduplicated_findings": 0,
+    "autofixes_applied": 0,
+    "scope_note": "Both reviewers explicitly confirmed complete 17-file coverage. Later review artifacts and the CLI-written review receipt are review outputs, not additional candidate product changes."
+  },
+  "findings": [
+    {
+      "id": "R013-1",
+      "reviewer": "project-standards",
+      "severity": "P2",
+      "title": "Replace internal feed URLs with placeholders",
+      "file": ".baton/quick/release-013.md",
+      "line": 124,
+      "why_it_matters": "New tracked release evidence embeds an organization-specific package-feed hostname in a public template. Authorization to use an internal feed locally does not authorize publishing its address.",
+      "autofix_class": "safe_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "confidence": 0.99,
+      "evidence": [
+        ".specify/memory/constitution.md, Supply-Chain & Licensing Constraints: Nothing specific to a single adopter, whether domain rules, hostnames, secrets, personal names or local paths, may appear in Baton.",
+        "docs/solutions/restricted-mirror-env-only-2026-09-29.md says docs, tests and batons should use placeholders such as <approved-package-index>.",
+        "Concrete organization-specific feed addresses occur in .baton/quick/release-013.md:124,144,187 and .baton/quick/release-013.work.json:33,63. Addresses are intentionally not repeated in this artifact.",
+        "The existing hostname test in test/unit/review-fix-docs.test.mjs scans docs, specs and baton, not these .baton additions."
+      ],
+      "suggested_fix": "Replace concrete internal-feed addresses in both records with approved-feed placeholders. Preserve environment-variable names, command outcomes, authorization and attempt history; verify no concrete internal hostname remains in these records.",
+      "pre_existing": false,
+      "disposition": "open",
+      "routing_reason": "Caller forbids applying fixes; return the deterministic correction to the author without weakening or dismissing it."
+    },
+    {
+      "id": "R013-2",
+      "reviewer": "correctness",
+      "severity": "P3",
+      "title": "Refresh stale work-state narrative and next step",
+      "file": ".baton/quick/release-013.md",
+      "line": 172,
+      "why_it_matters": "The read-first body says work is not persisted and directs ce-work despite authoritative frontmatter recording completed work and routing to review. Following the body risks an unnecessary work write and duplicate mandatory check.",
+      "autofix_class": "safe_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": false,
+      "confidence": 0.99,
+      "evidence": [
+        "Frontmatter records phase_completed: work, next_phase: review, next_owner: baton-review and status: ready.",
+        "local-checks-pass records 420 passed tests with zero failures/skips/cancellations; history records the successful work write at 2026-10-12T06:39:57.011Z.",
+        ".baton/quick/release-013.md:172 states phase work is not yet persisted; :195-196 prescribe /ce-work.",
+        "Historical failed attempts and prospective decisions do not invalidate the later successful receipt."
+      ],
+      "suggested_fix": "Refresh the current-state body to acknowledge the successful persisted work receipt and the actual next phase. Retain accurately labeled historical attempts and decisions.",
+      "pre_existing": false,
+      "disposition": "open",
+      "routing_reason": "Caller forbids applying fixes; preserve the original candidate narrative and report its discrepancy."
+    }
+  ],
+  "verification": [
+    "git rev-parse HEAD matched the pinned candidate; git rev-parse 'HEAD^{tree}' matched the pinned tree.",
+    "handoff receive --phase review --quick release-013 passed with fresh independent local identity; no .baton/.local data was copied.",
+    "handoff scope --quick release-013 --json returned the exact pinned base and 12 CLI subjects.",
+    "git diff --name-only against the exact base returned all 17 tracked files; both selected/dispatched personas are installed.",
+    "Both reviewers independently verified generated bundle bytes equal the base bundle after only replacing 0.1.2 with 0.1.3, and its tracked SHA-256 matches a4440254ca1dfec40798594d3ac91b239ec19b86d33ab17719279a1fd21704ff.",
+    "Version probes and metadata assertions agreed at 0.1.3; upstream pins and managed-file metadata are unchanged.",
+    "Existing Fixed changelog entries are unchanged. Local assertions reproduced the release.yml intended-tag, changelog-version-section and Upstream-subsection guards.",
+    "git diff --check passed. Candidate node .baton/bin/baton.mjs validate passed with existing recommended-pack and quick-size warnings."
+  ],
+  "reused_evidence": {
+    "source": "Coordinator-provided historical product evidence and candidate persisted work receipt; not independently rerun full suites.",
+    "product_review_head": "333694292462a9f7513907c14a410f4cba35af87",
+    "product_review": "Clean final review",
+    "product_check": "420/420",
+    "focused_attachment_tests": "38/38",
+    "accepted_product_head": "56f193a",
+    "green_runs": {
+      "Baton": "38173469009",
+      "CI": "38173469143",
+      "Windows_smoke": "38173469055"
+    },
+    "candidate_work_receipt": "Persisted local-checks-pass: npm run check 420/420; successful history write at 2026-10-12T06:39:57.011Z."
+  },
+  "residual_risks": [
+    "Both findings remain open; no final-candidate approval, merge approval or publication approval is implied.",
+    "Publication remains separate: automatic final PR checks, owner approval/merge, release dry-run asset verification and owner-controlled tagging are not performed by this review."
+  ],
+  "testing_gaps": [
+    "No broad suites or npm run check rerun. Fresh esbuild build-check was not run; bounded bundle byte/hash comparisons provide version-only evidence without dependency restoration.",
+    "Final-candidate automatic PR checks and actual release dry-run remain unverified here."
+  ],
+  "handoff_result": {
+    "findings_validation": "Passed, exit 0",
+    "review_write": "Passed, handoff: OK, exit 0; supported --next work requested explicitly",
+    "repository_validation": "Passed, exit 0; recommended-pack and advisory quick-size warnings only",
+    "phase_completed": "review",
+    "next_phase": "work",
+    "next_owner": "ce-work",
+    "blocking_findings": 0,
+    "open_findings": 2,
+    "post_write_scope_base": "7e5eb2c35664b086fa7d4795546a706ef06c8141",
+    "post_write_cli_subject_files": [],
+    "post_write_scope_note": "The supported review write records a new implementation-cycle diff base at reviewed HEAD for return-to-work. This is not a CE scope recomputation: original 17/12 coverage remains pinned above. No auto-fix occurred. The author must not treat this empty post-write CLI scope as proof that the original release candidate had no changes.",
+    "head_unchanged": true,
+    "product_edits": 0,
+    "commits_pushes_tags_workflow_dispatches": 0,
+    "git_status_porcelain": [
+      " M .baton/quick/release-013.md",
+      "?? .baton/quick/release-013.review.json",
+      "?? .baton/quick/release-013.review.payload.json"
+    ],
+    "ignored_created_artifacts": [
+      ".context/compound-engineering/ce-review/release-013-7e5eb2c/report.json",
+      ".context/compound-engineering/ce-review/release-013-7e5eb2c/report.md"
+    ]
+  },
+  "applied_fixes": [],
+  "verdict": "Not ready",
+  "verdict_reason": "Quick scope is held, but unresolved P2/P3 release-record defects must be corrected by the author before quick-lane landing."
+}
