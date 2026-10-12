@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: release-013
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: Independent re-review of exact candidate 65a2c12 verified R013-1/P2 and R013-2/P3 fixed, with no new findings. Exact correction scope covers 6 tracked files and 2 CLI subjects; full release scope against original bf0fc4b covers 21/14, preserving historical 17/12 evidence unchanged. Product remains version-only. Ready for land's separate human gate; no owner approval, merge or publication inferred.
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: "Independent checkout completed land receive and mandatory local checks for the reviewed v0.1.3 bookkeeping candidate. PR #51 targets main from dermonaco-baton-attachment-release. Both prior findings are fixed; persisted work and independent land checks passed 420/420. Owner approval/merge of the exact final PR head and subsequent publication remain separate; no merge, tag or workflow dispatch performed."
 read_first:
   - path: .baton/quick/release-013.md
     why: Release-preparation intent, pinned diff base and relay state
@@ -19,15 +19,9 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/release-013.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: Exact pinned review covers all 17 files and includes all 12 CLI subjects. Source/tests change version identifiers only; the generated bundle equals base bytes with 0.1.2 replaced by 0.1.3. Manifest/lock metadata, changelog dating and process receipts change without adding user-facing behavior, public contracts, upstream bytes or component versions. The advisory file-count excess is mechanical bookkeeping, not expanded product scope.
+    evidence: https://github.com/dermonaco-labs/baton/pull/51
 open_questions: []
 decisions:
   - id: D1
@@ -137,8 +131,16 @@ decisions:
     tag: diff-base
     x-base-commit: 65a2c12b6a04b10141b3769a768be7d85e2bae5f
     by: baton
+  - id: D24
+    decision: Record independent land validation and PR creation
+    rationale: Landing runs in the non-implementer review checkout with its own retained local identity. Initial receive failed because markdownlint-cli2 was missing; after the user's instruction to resolve errors, dependency restoration passed without committed registry settings. Fresh land receive passed exit 0. Explicit configured npm run check passed 420/420, zero failures/skips/cancellations, exit 0; explicit baton validate passed exit 0 with advisory warnings only. PR creation was performed by the coordinating app session solely to target its branch; this independent checkout owns the supported land receipt. Technical review and these checks do not approve the exact final PR head on behalf of the repository owner.
+    by: release-013-land
+  - id: D25
+    decision: Keep session capture outside the repository and publication separate
+    rationale: The mandatory landing session note and this write payload are session artifacts outside the repository. No ignored review reports or new subject files are staged after the review proof. Only the canonical quick baton land receipt is published to the same PR branch. Owner approval/merge, main release dry-run with asset verification, annotated v0.1.3 tag and compound remain separate actions; no merge, tag or workflow dispatch is performed here.
+    by: release-013-land
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -170,8 +172,15 @@ history:
     x-worktree: 7403127df000ae46745c0d311c3242f2147db9b506965b1aa8bf8224623ede13
     commit: 65a2c12
     x-action: write
-updated_at: 2026-10-12T07:03:10.948Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-10-12T07:30:41.362Z
+    by: release-013-land
+    writer: 316909f95df3e27f8f953b60106be748c15f98576f2d662a3026c561ef645e27
+    x-worktree: 7403127df000ae46745c0d311c3242f2147db9b506965b1aa8bf8224623ede13
+    commit: 29f68f2
+    x-action: write
+updated_at: 2026-10-12T07:30:41.356Z
+updated_by: baton-land
 risks:
   - id: R1
     text: Owner approval/merge must bind the exact final candidate. Only after merge may publication proceed through dry_run and an annotated v0.1.3 tag; neither action is performed by this release-preparation task.
@@ -182,6 +191,9 @@ x-implementation-cycle: 79ddc473dcea870fe2e30544ecf815219144eb8b31f6abe01a1eb9e8
 review:
   findings_path: .baton/quick/release-013.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/51
+  number: 51
 ---
 ## Goal
 Keep the work in scope.
