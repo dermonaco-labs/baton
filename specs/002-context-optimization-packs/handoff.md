@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 002-context-optimization-packs
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Complete T051-T053 convergence: pin unexcluded case-alias binding causes and preserve legitimate canonical tilde-number filenames. Extra 8.3-shape checks now verify filesystem identity rather than rejecting all ~digit names; unresolved/aliased spellings retain exact declaring-source diagnostics and trailing-dot/space protection remains. Focused acceptance groups pass 138 tests plus cleanup (139 total); F37/F38 have fixes. Preserve all approved scope, source pins, gates and public commands. Require fresh independent review before the single open unmerged PR."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Round-5 fresh independent review of e38faa4: F37 and F38 verified fixed; new P2 F39 (8.3 alias of tilde-containing long name bypasses do_not_read exclusion, reproduced write) and P3 F40 (absent short-shaped metadata blocks report-only commands) open against T052; F41 dismissed. Route to implement/converge."
 read_first:
   - path: specs/002-context-optimization-packs/spec.md
     why: Approved behavior and safety scope
@@ -55,87 +55,9 @@ artifacts:
     sha256: 823388dda12a6a7885e83e0b4628686e6ddcfb075e6d72d7f30b45f72540d819
 entry_checked: []
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
-    met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      0.4311ms)
-      ✔ shipped phase template is valid and never weakens its built-in contracts (33.9578ms)
-      ✔ tracked Baton documentation contains no private feed hostnames (217.6697ms)
-      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (1.101ms)
-      ✔ adopter command table remains contiguous (0.8375ms)
-      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.7628ms)
-      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.7191ms)
-      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (81.1206ms)
-      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (10.1757ms)
-      ✔ compiles all draft 2020-12 schemas once (245.5146ms)
-      ✔ findings fixture validates and invalid fixture reports a JSON pointer (4.1801ms)
-      ✔ pack schema requires a classified reason for every optional reference (1.6268ms)
-      ✔ pack, lock and manifest schemas accept named optional sources without relaxing old shapes (12.097ms)
-      ✔ sync bump explains pin and file changes for a PR body (2.8301ms)
-      ✔ sync rejects unpinned bump values and check/bump combination (54.7218ms)
-      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (408.1847ms)
-      ✔ generated registry preserves verified bytes when only installation time changes (18.0428ms)
-      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (11.3295ms)
-      ✔ named optional sources keep raw provenance and refuse modified or misplaced payloads (37.2489ms)
-      ✔ lock and snapshot document label optional provenance by its named source (1.0381ms)
-      ✔ optional pin fields are one immutable list matching the locked projection order (0.3184ms)
-      ✔ MIT license verifier keeps each source copyright requirement (0.4567ms)
-      ✔ pack definitions require every original pack and accept additional optional packs (188.8559ms)
-      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (893.4934ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (413.0163ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (185.3573ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (127.7936ms)
-        ✔ E_ANALYSIS_CRITICAL (11.0936ms)
-        ✔ E_ANALYSIS_MISSING (6.4936ms)
-        ✔ E_APPROVER_FORMAT (9.8278ms)
-        ✔ E_BLOCKING_OPEN (5.9072ms)
-        ✔ E_BODY_SECTIONS (8.7244ms)
-        ✔ E_BUDGET (8.3885ms)
-        ✔ E_DENYLIST (6.242ms)
-        ✔ E_EXIT_UNMET (3.8652ms)
-        ✔ E_GATE_PENDING (142.3727ms)
-        ✔ E_LANE_ESCALATE (1752.6529ms)
-        ✔ E_LANE_MISMATCH (5.5947ms)
-        ✔ E_MISSING_ARTIFACT (4.8181ms)
-        ✔ E_MODEL_NOT_ALLOWED (9.144ms)
-        ✔ E_MULTIPLE_BATONS (7.2104ms)
-        ✔ E_NO_PREREG (8.2789ms)
-        ✔ E_OWNER (6.1737ms)
-        ✔ E_PR_MISSING (11.8047ms)
-        ✔ E_REVIEW_BLOCKING (336.0851ms)
-        ✔ E_REVIEW_MISSING (8.5065ms)
-        ✔ E_SCHEMA (5.8972ms)
-        ✔ E_STALE_ARTIFACT (9.7986ms)
-        ✔ E_TRANSITION (5.4638ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (2556.7976ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (273.748ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (101.8375ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (179.1245ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (14.3618ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (245.8735ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (204.9439ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (7.3391ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (56.4449ms)
-      ✔ ready with a blocking question is rejected (203.9463ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (488.9948ms)
-      ℹ tests 574
-      ℹ suites 0
-      ℹ pass 574
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 0
-      ℹ todo 0
-      ℹ duration_ms 540418.4927
+    evidence: specs/002-context-optimization-packs/review.json
 open_questions: []
 x-final-check-attempt-1:
   command: npm run check
@@ -265,18 +187,24 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Bind T051-T053 unexcluded case-binding coverage and canonical filename support; retain approved scope and public contract
     by: implementation-session
+  - id: D24
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 8ef14b44b7b2da0b03578a7d74e774b90f5514aa878b454ba32dc20acb0bbd18
+    x-base-commit: 730ed087d3038fb572784c549121b88e47fe7a43
+    by: baton
+  - id: D25
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: e38faa4a2bfa1b99f3e48a4f8243f8c241e69d7a
+    by: baton
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: analyze
-    at: 2026-11-02T16:08:49.277Z
-    by: human:repository-owner
-    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
-    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
-    commit: 5e6de1b
-    x-action: approve
   - phase: analyze
     at: 2026-11-02T16:30:11.512Z
     by: human:repository-owner
@@ -410,8 +338,15 @@ history:
     x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
     commit: 6c9221c
     x-action: write
-updated_at: 2026-11-02T19:12:47.068Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-11-02T19:34:51.528Z
+    by: baton
+    writer: 948e86a6e5e4d08bdcad428ccbae562b312381687ebc1b16ae635e8608889fad
+    x-worktree: f161633938eb1237a91ef37792e081681bf544826c1b7845ac4df87394f8534b
+    commit: e38faa4
+    x-action: write
+updated_at: 2026-11-02T19:34:51.519Z
+updated_by: baton-review
 acceptance_checks:
   - id: AC-US1-1
     story: US1
