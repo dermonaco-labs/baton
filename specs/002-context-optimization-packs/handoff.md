@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 002-context-optimization-packs
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: Implement two optional pinned context packs with inert vendor inputs, guarded draft-only compact/restore, report-only optimize operations, preserved core defaults, documented safety boundaries and passing registered acceptance selectors. The configured final local suite runs as this exit check before independent review.
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Independent fresh-checkout ce-review of c7bd8d4: 2 open P1 (F01 template adoption leaks source feature 002, failing adopter validate; F02 restore deletes a protected .full.md backup), 5 P2, 13 P3 open, 1 dismissed. Return to implement/converge; then fresh re-review."
 read_first:
   - path: specs/002-context-optimization-packs/spec.md
     why: Approved behavior and safety scope
@@ -55,86 +55,9 @@ artifacts:
     sha256: 2f8f0b003a5348accca24d22fa42765aa1c46a5150cfc58b9a7eca5cf023f3ac
 entry_checked: []
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
-    met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      contracts report removed entry checks, including quick-lane entry overrides (0.3515ms)
-      ✔ weakened contracts report disabled human gates without flagging unchanged defaults (0.4492ms)
-      ✔ shipped phase template is valid and never weakens its built-in contracts (29.5853ms)
-      ✔ tracked Baton documentation contains no private feed hostnames (120.8023ms)
-      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (1.1146ms)
-      ✔ adopter command table remains contiguous (0.7811ms)
-      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (1.2045ms)
-      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.5419ms)
-      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (52.5658ms)
-      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (6.3303ms)
-      ✔ compiles all draft 2020-12 schemas once (202.2592ms)
-      ✔ findings fixture validates and invalid fixture reports a JSON pointer (4.1407ms)
-      ✔ pack schema requires a classified reason for every optional reference (1.705ms)
-      ✔ pack, lock and manifest schemas accept named optional sources without relaxing old shapes (12.8323ms)
-      ✔ sync bump explains pin and file changes for a PR body (2.9507ms)
-      ✔ sync rejects unpinned bump values and check/bump combination (50.5699ms)
-      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (304.0607ms)
-      ✔ generated registry preserves verified bytes when only installation time changes (13.1751ms)
-      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (9.8197ms)
-      ✔ named optional sources keep raw provenance and refuse modified or misplaced payloads (27.4434ms)
-      ✔ lock and snapshot document label optional provenance by its named source (0.9402ms)
-      ✔ pack definitions require every original pack and accept additional optional packs (172.4843ms)
-      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (852.4918ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (300.6711ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (124.1976ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (93.0808ms)
-        ✔ E_ANALYSIS_CRITICAL (4.8417ms)
-        ✔ E_ANALYSIS_MISSING (5.0508ms)
-        ✔ E_APPROVER_FORMAT (3.955ms)
-        ✔ E_BLOCKING_OPEN (3.9822ms)
-        ✔ E_BODY_SECTIONS (2.9821ms)
-        ✔ E_BUDGET (7.7248ms)
-        ✔ E_DENYLIST (3.2036ms)
-        ✔ E_EXIT_UNMET (2.7342ms)
-        ✔ E_GATE_PENDING (111.0261ms)
-        ✔ E_LANE_ESCALATE (1323.7463ms)
-        ✔ E_LANE_MISMATCH (3.5573ms)
-        ✔ E_MISSING_ARTIFACT (3.8587ms)
-        ✔ E_MODEL_NOT_ALLOWED (7.0927ms)
-        ✔ E_MULTIPLE_BATONS (7.0961ms)
-        ✔ E_NO_PREREG (5.4957ms)
-        ✔ E_OWNER (5.0993ms)
-        ✔ E_PR_MISSING (3.6219ms)
-        ✔ E_REVIEW_BLOCKING (299.159ms)
-        ✔ E_REVIEW_MISSING (6.1573ms)
-        ✔ E_SCHEMA (5.7802ms)
-        ✔ E_STALE_ARTIFACT (4.6105ms)
-        ✔ E_TRANSITION (4.3699ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1954.7864ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (105.3448ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (38.0498ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (101.5975ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (11.318ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (146.1457ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (152.0046ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (2.6987ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (39.293ms)
-      ✔ ready with a blocking question is rejected (124.1487ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (165.0711ms)
-      ℹ tests 464
-      ℹ suites 0
-      ℹ pass 464
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 0
-      ℹ todo 0
-      ℹ duration_ms 336882.8977
+    evidence: specs/002-context-optimization-packs/review.json
 open_questions: []
 x-final-check-attempt-1:
   command: npm run check
@@ -188,6 +111,19 @@ decisions:
     decision: Fix both test fixtures, preserve all assertions, and rerun required checks
     rationale: May implementation correct its temporary-root fixture and the pre-existing Git-dependent landing fixture without weakening assertions, then rerun the mandatory full check on the corrected candidate?
     by: human:repository-owner
+  - id: D10
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: e44be514f6a6e62f3336fc3c6ef8982bb419e8748ccf180914395e2a5af378e5
+    x-base-commit: 5e6de1be30c555f26669211b55194b5746611a8a
+    by: baton
+  - id: D11
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: c7bd8d4d2649d77b5930dac52d4312736767326f
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -277,8 +213,15 @@ history:
     x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
     commit: 5e6de1b
     x-action: write
-updated_at: 2026-11-02T16:43:48.904Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-11-02T17:06:07.477Z
+    by: baton
+    writer: 948e86a6e5e4d08bdcad428ccbae562b312381687ebc1b16ae635e8608889fad
+    x-worktree: f161633938eb1237a91ef37792e081681bf544826c1b7845ac4df87394f8534b
+    commit: c7bd8d4
+    x-action: write
+updated_at: 2026-11-02T17:06:07.469Z
+updated_by: baton-review
 acceptance_checks:
   - id: AC-US1-1
     story: US1
@@ -329,6 +272,9 @@ do_not_read: []
 x-implementation-writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
 x-implementation-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
 x-implementation-cycle: 98b4309ed581d22c7b83cfc49b5c58eb9768ec9aeb15817e67c884b4e48e0e0d
+review:
+  findings_path: specs/002-context-optimization-packs/review.json
+  blocking_findings: 2
 ---
 ## Goal
 
