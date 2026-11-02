@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 002-context-optimization-packs
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Complete T045-T050 convergence: reject Windows trailing-dot/space/short-name metadata aliases before reads, identify declaring protection sources, distinguish unsafe CLI candidates and document repository-relative inputs. Strengthen exact-cause matrix and root previews, reconcile T044's completed 520-test evidence and make source-feature cleanup coverage bidirectional. Focused acceptance groups pass 132 tests plus cleanup; all F32-F36 have fixes. Preserve approved scope, source pins, gates and public commands. Require fresh independent review before the single open unmerged PR."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Round 4 independent re-review of 730ed08 (cc0e683): F32-F36 verified fixed; two new P3 findings open (F37 test gap for case-alias read_first/artifact binding, T046; F38 over-broad ~digit rule refuses legitimate long names in usage/scope and schema-valid metadata, T045). No P0/P1. Routed to implement/converge for F37-F38 before another independent review."
 read_first:
   - path: specs/002-context-optimization-packs/spec.md
     why: Approved behavior and safety scope
@@ -55,87 +55,9 @@ artifacts:
     sha256: cd27fe1b41ff701f421bffa75758bb5d7791822a29fd8e2e78a494e451f5de4f
 entry_checked: []
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
-    met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      anged defaults (0.1572ms)
-      ✔ shipped phase template is valid and never weakens its built-in contracts (16.3518ms)
-      ✔ tracked Baton documentation contains no private feed hostnames (114.3735ms)
-      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.9697ms)
-      ✔ adopter command table remains contiguous (0.5683ms)
-      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.5952ms)
-      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.4548ms)
-      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (38.6174ms)
-      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (2.444ms)
-      ✔ compiles all draft 2020-12 schemas once (98.1386ms)
-      ✔ findings fixture validates and invalid fixture reports a JSON pointer (4.1235ms)
-      ✔ pack schema requires a classified reason for every optional reference (0.8161ms)
-      ✔ pack, lock and manifest schemas accept named optional sources without relaxing old shapes (5.5203ms)
-      ✔ sync bump explains pin and file changes for a PR body (0.976ms)
-      ✔ sync rejects unpinned bump values and check/bump combination (27.1227ms)
-      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (214.0149ms)
-      ✔ generated registry preserves verified bytes when only installation time changes (11.2747ms)
-      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (7.3761ms)
-      ✔ named optional sources keep raw provenance and refuse modified or misplaced payloads (40.6209ms)
-      ✔ lock and snapshot document label optional provenance by its named source (0.808ms)
-      ✔ optional pin fields are one immutable list matching the locked projection order (0.2055ms)
-      ✔ MIT license verifier keeps each source copyright requirement (0.3122ms)
-      ✔ pack definitions require every original pack and accept additional optional packs (86.3179ms)
-      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (556.814ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (205.538ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (86.5942ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (57.3834ms)
-        ✔ E_ANALYSIS_CRITICAL (5.2208ms)
-        ✔ E_ANALYSIS_MISSING (3.8247ms)
-        ✔ E_APPROVER_FORMAT (5.0116ms)
-        ✔ E_BLOCKING_OPEN (8.3318ms)
-        ✔ E_BODY_SECTIONS (8.55ms)
-        ✔ E_BUDGET (15.659ms)
-        ✔ E_DENYLIST (5.3711ms)
-        ✔ E_EXIT_UNMET (4.7554ms)
-        ✔ E_GATE_PENDING (100.8137ms)
-        ✔ E_LANE_ESCALATE (1118.5741ms)
-        ✔ E_LANE_MISMATCH (2.4713ms)
-        ✔ E_MISSING_ARTIFACT (2.7596ms)
-        ✔ E_MODEL_NOT_ALLOWED (5.8327ms)
-        ✔ E_MULTIPLE_BATONS (7.3779ms)
-        ✔ E_NO_PREREG (6.8304ms)
-        ✔ E_OWNER (7.1755ms)
-        ✔ E_PR_MISSING (4.317ms)
-        ✔ E_REVIEW_BLOCKING (212.5545ms)
-        ✔ E_REVIEW_MISSING (6.2794ms)
-        ✔ E_SCHEMA (4.393ms)
-        ✔ E_STALE_ARTIFACT (4.4245ms)
-        ✔ E_TRANSITION (3.9743ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1633.8316ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (110.7588ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (38.8113ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (78.799ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (10.8127ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (121.8522ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (128.6087ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (9.0191ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (61.5045ms)
-      ✔ ready with a blocking question is rejected (103.9807ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (168.4861ms)
-      ℹ tests 568
-      ℹ suites 0
-      ℹ pass 568
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 0
-      ℹ todo 0
-      ℹ duration_ms 402251.9381
+    evidence: specs/002-context-optimization-packs/review.json
 open_questions: []
 x-final-check-attempt-1:
   command: npm run check
@@ -244,18 +166,24 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Bind T045-T050 Windows-alias guard, exact diagnostics and corrected evidence; preserve approved scope and public commands
     by: implementation-session
+  - id: D20
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: ea51db7a2d441c81b28cab98d6b77e615fa4316f7d71dea94b69e0bf11e10ae4
+    x-base-commit: b228777c0e635a8d44e3601560b9fede70f5daca
+    by: baton
+  - id: D21
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 730ed087d3038fb572784c549121b88e47fe7a43
+    by: baton
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: plan
-    at: 2026-11-02T16:05:01.663Z
-    by: baton
-    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
-    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
-    commit: 5e6de1b
-    x-action: write
   - phase: tasks
     at: 2026-11-02T16:06:08.585Z
     by: baton
@@ -389,8 +317,15 @@ history:
     x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
     commit: 30dc65b
     x-action: write
-updated_at: 2026-11-02T18:41:36.340Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-11-02T19:01:51.504Z
+    by: baton
+    writer: 948e86a6e5e4d08bdcad428ccbae562b312381687ebc1b16ae635e8608889fad
+    x-worktree: f161633938eb1237a91ef37792e081681bf544826c1b7845ac4df87394f8534b
+    commit: 730ed08
+    x-action: write
+updated_at: 2026-11-02T19:01:51.491Z
+updated_by: baton-review
 acceptance_checks:
   - id: AC-US1-1
     story: US1

@@ -3,12 +3,12 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/002-context-optimization-packs-rereview3-20261102/report.md",
-    "x-scope": "Round 3 fresh independent re-review of corrected candidate 88c86d8 (cherry-picked here as b228777 onto round-2 receipt 3cc2660, tree-identical) against original feature base 5e6de1be. All eight personas reviewed the 15-file corrective delta a4e3277..b228777 (CLI diff-base a4e3277; 9 handoff-scope subjects are a subset) with rounds 1-2 full-feature coverage of 5e6de1be..a4e3277 carried forward. Implementer dispositions of F23/F24/F26/F27 were independently re-judged against contracts/context.md. No fixes applied: coordinator forbids coding during review. Full suite not rerun by instruction.",
-    "x-checks": "Focused tests (context integration, adopt integration, context-guards unit) 102/102 pass; lock verify OK; build --check OK (bundle 426142 bytes < 460800); tsc --noEmit OK; sync --check OK with env-only internal PyPI feed (first attempt failed: public PyPI TLS handshake, environmental). Independent temp probe: canonical, ./, /./, //, mixed-case and directory-prefix (specs/002-draft/, ./specs/./002-draft//) exclusions now refuse with unchanged target and preserved backup (F22 fixed); trailing-dot and trailing-space do_not_read spellings still let restore apply and delete the backup (F32). Testing persona ran the new alias matrix against the pre-fix a4e3277 bundle: 17 fail, 6 pass (F33)."
+    "run_artifact": ".context/compound-engineering/ce-review/002-context-optimization-packs-rereview4-20261102/report.md",
+    "x-scope": "Round 4 fresh independent re-review of corrected candidate cc0e683 (cherry-picked here as 730ed08 onto round-3 receipt e7e8cfc, tree-identical; parent import 30dc65b verified tree-equal to e7e8cfc) against original feature base 5e6de1be. The 12-file corrective delta e7e8cfc..730ed08 (T045-T050 for F32-F36) was reviewed directly by the orchestrator (correctness, security, maintainability, project standards, docs/tasks/receipt consistency) plus dispatched adversarial-reviewer and testing-reviewer personas; rounds 1-3 full-feature coverage of 5e6de1be..e7e8cfc by all eight personas is carried forward. No fixes applied: coordinator forbids coding during review. Full suite not rerun by instruction.",
+    "x-checks": "Focused tests (context integration, context-guards unit, adopt integration) 150/150 pass; lock verify OK; build --check OK (bundle 426314 bytes < 460800); tsc --noEmit OK; sync --check OK with env-only internal feeds; baton validate OK (pre-existing W_QUICK_LARGE advisories only). Independent temp probes on the 730ed08 bundle: CLI --target trailing-dot, trailing-space, ~1 short-name, uppercase+dot and dotted-directory spellings refuse compact and restore in preview and apply with no writes; own-feature do_not_read trailing-dot and SPEC~1.MD spellings refuse with exact metadata diagnostics naming the declaring handoff; benign v~a.md and ./ metadata still allow compaction; uppercase/mixed-case read_first and artifact aliases refuse as bound (code correct, untested: F37). NTFS on C: and D: does not fold U+017F/U+0131/ZWSP; ADS colon rejected; no tracked metadata path trips the new checks. Adversarial persona reproduced readdir ~digit over-refusal (F38)."
   },
   "base": "5e6de1be30c555f26669211b55194b5746611a8a",
-  "head": "b228777c0e635a8d44e3601560b9fede70f5daca",
+  "head": "730ed087d3038fb572784c549121b88e47fe7a43",
   "personas": [
     "correctness-reviewer",
     "security-reviewer",
@@ -476,7 +476,8 @@
       "reason": "key() is lexical only (POSIX normalize, trailing-slash strip, lowercase). The handoff/manifest/lock path patterns accept segments ending in \".\" or \" \" and 8.3 short names (e.g. 002-DR~1), which Win32 resolves to the canonical file, but key() maps them to different keys. Schema-valid do_not_read entries spelled this way are silently ignored: restore applied and deleted the excluded backup (orchestrator probe), compact applied on an excluded target and on a nested contracts/** target under a trailing-dot directory exclusion, and context usage still reported an excluded file (adversarial probe). Same class as F22 and the spec.md:150 edge case that Windows aliases must not evade protection.",
       "x-severity": "Reviewers disagreed: adversarial P1 (0.90), testing P2 (0.65), security P3 (0.62). Synthesized P2: the impact matches F22, but these spellings do not arise from normal authoring, Node fs returns ENOENT for them so Baton cannot be steered into reading an aliased file, and compaction keeps a recoverable backup. Agreement of three reviewers plus an independent probe raises the confidence.",
       "x-fix": "Fail closed in key() (and ideally the metadata path schema) for any segment ending in \".\" or \" \" or matching an 8.3 \"~<digit>\" form, or key existing metadata entries via realpath relative to the real root. Add refusal rows for these spellings to the alias matrix for do_not_read (file and directory prefix), manifest and lock entries, asserting no writes.",
-      "x-resolution": "T045/T046: key() rejects trailing-dot/trailing-space segments and ~digit spellings before protection lookup or reads; safePath shares this check. Exact dot segments remain canonicalized for F22. Metadata failures identify both the bad spelling and declaring source. The 60-row matrix covers six spellings across feature/quick exclusions, backup/candidate exclusions, excluded read_first/artifacts, managed files/markers, locks and nested contract directory prefixes. Unsafe directory cases also refuse usage reports. Every preview/apply asserts exact diagnostics and unchanged snapshots."
+      "x-resolution": "T045/T046: key() rejects trailing-dot/trailing-space segments and ~digit spellings before protection lookup or reads; safePath shares this check. Exact dot segments remain canonicalized for F22. Metadata failures identify both the bad spelling and declaring source. The 60-row matrix covers six spellings across feature/quick exclusions, backup/candidate exclusions, excluded read_first/artifacts, managed files/markers, locks and nested contract directory prefixes. Unsafe directory cases also refuse usage reports. Every preview/apply asserts exact diagnostics and unchanged snapshots.",
+      "x-rereview": "Round 4 verified: key() rejects trailing-dot, trailing-space and ~digit segments before lookup/read (context-guards.mjs:33-44) and safePath shares it (L71); every metadata caller passes its declaring source (L173/193/200/223). Independent probes refused CLI and metadata aliases with no writes. Over-broad ~digit matching of legitimate long names tracked separately as F38."
     },
     {
       "id": "F33",
@@ -490,7 +491,8 @@
       "disposition": "fixed",
       "reason": "Run against the a4e3277 bundle, 6 of the 18 rows (leading-dot, internal-dot and duplicate-separator x read_first/artifact) pass because requiredPath already refused aliases with the same E_CONTEXT_PROTECTED code, so they cannot detect a key() regression. Preview reasons are matched by /protected|excluded|managed/i (line 358). The root-alias test (line 370) checks only --apply, not preview or the \"Unsafe context metadata path\" message. Quick-lane, lock, marker_sections, directory-prefix and contracts/** alias rows are missing. Kind-driven branching inside one body makes failures hard to read.",
       "x-fix": "Assert the exact per-kind reason or message for preview and apply. Add an excluded read_first/artifact variant so only the protection key decides. Add preview plus message checks for root aliases and a smaller matrix for quick/lock/marker/directory-prefix aliases. Prefer table-driven per-kind descriptors.",
-      "x-resolution": "T046 replaces kind-driven expected-error branches with descriptors declaring source, field, target and exact refusal cause. read_first/artifact rows now exclude the canonical required source, so a failed unsafe read cannot satisfy the expected Target is excluded diagnostic. All preview/apply messages, error files and reason arrays are exact; root aliases have both preview and apply checks. Quick, lock, marker, directory-prefix and nested contract cases are included. Red run: 73 tests, 42 failures before correction; final focused run: 133/133."
+      "x-resolution": "T046 replaces kind-driven expected-error branches with descriptors declaring source, field, target and exact refusal cause. read_first/artifact rows now exclude the canonical required source, so a failed unsafe read cannot satisfy the expected Target is excluded diagnostic. All preview/apply messages, error files and reason arrays are exact; root aliases have both preview and apply checks. Quick, lock, marker, directory-prefix and nested contract cases are included. Red run: 73 tests, 42 failures before correction; final focused run: 133/133.",
+      "x-rereview": "Round 4 verified: descriptor matrix asserts exact messages, files and reason arrays for preview and apply with schema-valid fixtures and unchanged snapshots; unsafe rows cannot pass on unrelated safePath failures. Residual: safe-spelling read_first/artifact rows are decided by the added canonical exclusion, so case-alias binding coverage is tracked as F37."
     },
     {
       "id": "F34",
@@ -504,7 +506,8 @@
       "disposition": "fixed",
       "reason": "contextExcluded/key(options.candidate) now runs before safePath, so an absolute or drive-letter --candidate (natural when an agent writes a temp file, which the compact wrapper allows: \"outside the live target\") fails as \"Unsafe context metadata path\" although it is a CLI argument. A key()-rejected entry in any handoff, lock or manifest blocks every context command repo-wide, and the error names only the bad path, not the metadata file that declares it. key() and safePath() also encode overlapping path-safety rules separately (maintainability).",
       "x-fix": "Validate --candidate with safePath (or a labelled check) before keying; include the declaring metadata file in the unsafe-metadata error; state the repo-relative candidate rule in both compact wrapper copies and docs/06. Optionally share one assertRepoRelative helper between key() and safePath().",
-      "x-resolution": "T045/T047 label key() failures by origin: CLI candidates report Unsafe context path with the argument as file, while metadata reports the bad path and declaring handoff/manifest/lock. safePath invokes the same alias safety check before filesystem reads. Five invalid CLI candidate forms assert exact preview/apply diagnostics. Authored compact guidance and docs require repository-relative candidates; normal sync regenerates the pack copy without changing upstream pins or hashes."
+      "x-resolution": "T045/T047 label key() failures by origin: CLI candidates report Unsafe context path with the argument as file, while metadata reports the bad path and declaring handoff/manifest/lock. safePath invokes the same alias safety check before filesystem reads. Five invalid CLI candidate forms assert exact preview/apply diagnostics. Authored compact guidance and docs require repository-relative candidates; normal sync regenerates the pack copy without changing upstream pins or hashes.",
+      "x-rereview": "Round 4 verified: metadata errors read Unsafe context metadata path \"<p>\" declared by <source> with file=source; CLI candidates report Unsafe context path with file=argument (five candidate forms tested). Compact wrapper copies and docs/06 state the repository-relative rule."
     },
     {
       "id": "F35",
@@ -518,7 +521,8 @@
       "disposition": "fixed",
       "reason": "Line 255 marks T044 [x] through the implement writer, but lines 279-280 still read \"T044 remains pending until the mandatory final check and outgoing receipt succeed\". Constitution V (honest evidence) requires the record to state completion consistently.",
       "x-fix": "Update the Phase 10 evidence prose to cite the completed implement receipt and its full-suite result.",
-      "x-resolution": "T048 replaces obsolete pending wording with the completed 88c86d8 implementation receipt and its npm run check result of 520/520 tests."
+      "x-resolution": "T048 replaces obsolete pending wording with the completed 88c86d8 implementation receipt and its npm run check result of 520/520 tests.",
+      "x-rereview": "Round 4 verified: tasks.md Phase 10 prose now cites the completed 88c86d8 receipt and 520/520 result; no stale pending wording remains."
     },
     {
       "id": "F36",
@@ -532,7 +536,36 @@
       "disposition": "fixed",
       "reason": "The test asserts every numbered source specs/NNN-* directory has an exact cleanup entry, but stale specs/NNN-*/ entries for removed or renamed features are never flagged, so the list can drift.",
       "x-fix": "Assert set equality between numbered specs entries in cleanup.remove and existing numbered source feature directories.",
-      "x-resolution": "T049 asserts sorted exact equality between numbered source feature directories and numbered cleanup directory entries. Missing, stale and duplicate entries fail; the separate adopter-preservation integration coverage remains unchanged."
+      "x-resolution": "T049 asserts sorted exact equality between numbered source feature directories and numbered cleanup directory entries. Missing, stale and duplicate entries fail; the separate adopter-preservation integration coverage remains unchanged.",
+      "x-rereview": "Round 4 verified: adopt.test.mjs asserts sorted deepEqual between numbered source feature directories and numbered cleanup entries, catching missing and stale entries."
+    },
+    {
+      "id": "F37",
+      "severity": "P3",
+      "title": "Safe-spelling read_first/artifact alias rows no longer exercise the binding key",
+      "file": "test/integration/context.test.mjs",
+      "line": 334,
+      "persona": "testing-reviewer",
+      "confidence": 0.8,
+      "task": "T046",
+      "disposition": "open",
+      "reason": "The read_first and artifact descriptors set exclude:true, adding a canonical do_not_read of the target (L376), so contextExcluded (context-guards.mjs:255) refuses before the bound-target check (L260). Dot and duplicate-separator spellings are rejected by safePath anyway, so the only filesystem-resolvable safe alias for read_first/artifacts is a case variant, which the matrix lacks; the only case-alias tests cover backups (L289) and do_not_read (L595). Orchestrator probe: SPECS/002-DRAFT/SPEC.MD and Spec.md read_first/artifact aliases correctly refuse as \"Target is read_first, source/hash-bound or managed\", but replacing key(ref.path, path) at L200 with the raw path would pass every current test.",
+      "x-severity": "testing-reviewer rated P2 (0.8); synthesized P3 because current code is correct (independently probed) and the gap is regression detection only.",
+      "x-fix": "Add unexcluded case-variant read_first (no sha) and artifact (sha via hashArtifact) rows asserting preview allowed:false with reasons exactly [\"Target is read_first, source/hash-bound or managed\"] and the same E_CONTEXT_PROTECTED apply refusal with unchanged snapshots. Optionally add a ~2 short-name spelling and a .baton/lock.json declaring source."
+    },
+    {
+      "id": "F38",
+      "severity": "P3",
+      "title": "~digit alias rule refuses legitimate long names, aborting usage/scope and all context commands",
+      "file": "src/lib/context-guards.mjs",
+      "line": 362,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.85,
+      "task": "T045",
+      "disposition": "open",
+      "reason": "key() treats any segment containing ~<digit> as an 8.3 alias (L35-36). contextFilePaths passes every readdir entry to contextExcluded/key (L362), but readdir returns real long names, so a legitimate specs/<feature>/notes~2.md or contracts/draft~1/ makes usage/scope/concise throw Unsafe context path for the whole feature instead of listing it (adversarial persona reproduced; removing the file restored output). Likewise a schema-valid handoff/lock path such as docs/v~2-notes.md (handoff/lock path patterns accept ~) or a quick baton named fix~1.md blocks every context command repo-wide. Fails closed, so not a protection bypass, but it contradicts the accepted schema and spec usage reporting for valid feature trees.",
+      "x-severity": "adversarial-reviewer rated both instances P3 (0.85, 0.75); merged.",
+      "x-fix": "Narrow the short-name check to the generated 8.3 shape (e.g. /^[^.~]{1,6}~\\d{1,6}(\\.[^.]{0,3})?$/i) or exempt readdir-derived canonical names; keep metadata trailing-dot/space rejection. Add tests: a legitimate research~2.md in the feature tree still appears in usage/scope, and a schema-valid long ~digit metadata path does not disable context commands, while 002-DR~1/SPEC~1.MD aliases still refuse."
     }
   ]
 }
