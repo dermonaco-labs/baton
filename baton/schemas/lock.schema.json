@@ -39,7 +39,9 @@
             "note": { "$ref": "#/$defs/text" }
           },
           "patternProperties": { "^x-": {} }, "additionalProperties": false
-        }
+        },
+        "token-budget": { "$ref": "#/$defs/source" },
+        "optimize": { "$ref": "#/$defs/source" }
       },
       "patternProperties": { "^x-": {} }, "additionalProperties": false
     },
@@ -50,7 +52,7 @@
         "required": ["path", "upstream", "upstream_path", "stored_at", "sha256_upstream", "sha256", "license", "repair", "packs"],
         "properties": {
           "path": { "$ref": "#/$defs/path" },
-          "upstream": { "enum": ["speckit", "atv"] },
+          "upstream": { "enum": ["speckit", "atv", "token-budget", "optimize"] },
           "upstream_path": { "$ref": "#/$defs/path" },
           "stored_at": { "$ref": "#/$defs/path" },
           "sha256_upstream": { "$ref": "#/$defs/sha256" },
@@ -85,6 +87,19 @@
     "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\r\\n\\\\]+$" },
     "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
     "git_id": { "type": "string", "pattern": "^[a-fA-F0-9]{40}(?:[a-fA-F0-9]{24})?$" },
-    "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+    "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+    "source": {
+      "type": "object",
+      "required": ["version", "repo", "tag", "commit", "tree", "license"],
+      "properties": {
+        "version": { "$ref": "#/$defs/text" },
+        "repo": { "$ref": "#/$defs/text" },
+        "tag": { "$ref": "#/$defs/text" },
+        "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "tree": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "license": { "const": "MIT" }
+      },
+      "patternProperties": { "^x-": {} }, "additionalProperties": false
+    }
   }
 }

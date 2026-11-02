@@ -150,3 +150,67 @@ test('upstream-absent checks installable pinned resources, not upstream developm
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('optional context packs are explicit, core-dependent and vendor only pinned inert inputs', async () => {
+  const root = resolve(import.meta.dirname, '../..');
+  const shipped = await loadPacks(root);
+  assert.deepEqual(resolvePacks(shipped, []), ['core']);
+  const expected = {
+    'token-budget': {
+      vendor: ['LICENSE', 'extension.yml', 'token-budget-config.template.yml',
+        ...['compact', 'restore', 'scope', 'concise', 'usage'].map((name) => `commands/${name}.md`),
+        ...['compact_helper', 'estimate_tokens', 'slim_output'].map((name) => `scripts/bash/${name}.sh`),
+        ...['compact_helper', 'estimate_tokens'].map((name) => `scripts/powershell/${name}.ps1`)],
+      wrappers: ['compact', 'restore', 'scope', 'concise', 'usage'].map((name) => `speckit-token-budget-${name}`),
+    },
+    optimize: {
+      vendor: ['LICENSE', 'extension.yml', 'config-template.yml',
+        ...['run', 'tokens', 'learn'].map((name) => `commands/speckit.optimize.${name}.md`)],
+      wrappers: ['run', 'tokens', 'learn'].map((name) => `speckit-optimize-${name}`),
+    },
+  };
+  for (const [id, { vendor, wrappers }] of Object.entries(expected)) {
+    const pack = shipped.get(id);
+    assert.ok(pack, id);
+    assert.deepEqual(pack.requires, ['core']);
+    assert.deepEqual(resolvePacks(shipped, [id]), ['core', id]);
+    for (const other of shipped.values()) {
+      if (other.id !== id) assert.ok(!other.files.some((file) => file.from === id), `${other.id} uses ${id}`);
+    }
+    const sourced = pack.files.filter((file) => file.from === id);
+    assert.deepEqual(sourced.map((file) => file.upstream_path).sort(), [...vendor].sort());
+    for (const file of sourced) assert.equal(file.path, `.baton/vendor/${id}/${file.upstream_path}`);
+    const authored = pack.files.filter((file) => file.from === 'baton').map((file) => file.path).sort();
+    assert.deepEqual(authored, wrappers.map((name) => `.github/skills/${name}/SKILL.md`).sort());
+    assert.equal(pack.files.length, sourced.length + authored.length);
+    assert.ok(!pack.files.some((file) => /^\.specify\/|extensions\.yml$|\/hooks?\//.test(file.path)));
+  }
+  assert.ok(!shipped.get('optimize').files.some((file) => /check|apply/.test(file.path)));
+});
+
+test('dotted Spec Kit command names resolve to their skills without hiding dangling commands', () => {
+  const pack = (files) => new Map([
+    ['core', { id: 'core', requires: [], conflicts: [], files: [
+      { path: '.github/skills/speckit-constitution/SKILL.md' },
+      { path: '.github/skills/speckit-optimize-run/SKILL.md' },
+      { path: '.github/skills/speckit-token-budget-compact/SKILL.md' },
+      ...files] }],
+  ]);
+  const check = (text) => validatePackClosure(pack([{ path: 'x.md' }]), 'core', new Map([
+    ['x.md', text],
+    ['.github/skills/speckit-constitution/SKILL.md', ''],
+    ['.github/skills/speckit-optimize-run/SKILL.md', ''],
+    ['.github/skills/speckit-token-budget-compact/SKILL.md', ''],
+  ])).map((issue) => issue.message);
+  assert.deepEqual(check('handoffs:\n  - agent: speckit.constitution\n    file: "commands/speckit.optimize.run.md"\n' +
+    '# bookkeeping for /speckit.token-budget.compact.\n'), []);
+  assert.deepEqual(check('agent: speckit.missing\n'), ['Reference speckit-missing is not in core + requires closure']);
+  assert.deepEqual(check('file: "commands/speckit.optimize.absent.md"\n'),
+    ['Reference speckit-optimize-absent is not in core + requires closure']);
+  assert.deepEqual(check('Run /speckit.token-budget.absent.\n'),
+    ['Reference speckit-token-budget-absent is not in core + requires closure']);
+  assert.deepEqual(check('agent: speckit\nUse /compact now.\n').sort(), [
+    'Reference compact is not in core + requires closure',
+    'Reference speckit is not in core + requires closure',
+  ]);
+});

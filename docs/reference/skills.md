@@ -128,6 +128,14 @@ alongside their skills; these are read by the skills, not run as commands.
 | `learning` | `evolve` | Refine reviewed learned skills | Human review before commit |
 | `docs-review` | `document-review` | Advisory spec/plan prose review | Current Spec Kit owner; not the code-review gate |
 | `docs-review` | `ce-compound-refresh` | Refresh an existing solution | `ce-compound` or human review |
+| `token-budget` | `speckit-token-budget-compact` | Preview or compact an eligible unapproved, unbound draft | Guarded writer, then author review |
+| `token-budget` | `speckit-token-budget-restore` | Restore a draft backup with the same protection checks | Guarded writer or refusal |
+| `token-budget` | `speckit-token-budget-scope` | Get advice subordinate to ordered baton context | Current phase owner |
+| `token-budget` | `speckit-token-budget-concise` | Use concise responses in this session only | Current conversation |
+| `token-budget` | `speckit-token-budget-usage` | Inspect approximate artifact token overhead | Author review; no file changes |
+| `optimize` | `speckit-optimize-run` | Report governance audit findings without applying changes | `speckit-constitution` for reviewed amendments |
+| `optimize` | `speckit-optimize-tokens` | Report governance token estimates | Maintainer review; mandatory rules remain |
+| `optimize` | `speckit-optimize-learn` | Propose evidence-backed session learnings without persistence | Human review; constitution flow for amendments |
 | `security` | `atv-security` | Deeper opt-in security audit | `baton-review` or human reviewer |
 | `issues` | `speckit-taskstoissues` | Create GitHub issues from tasks | Maintainer review of issues |
 | `design` | `frontend-design` | Design frontend components | `speckit-implement` or `ce-work` under the chosen lane |

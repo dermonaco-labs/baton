@@ -1,6 +1,6 @@
 import { existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { sha256, UpstreamError } from '../lib/upstream.mjs';
+import { OPTIONAL_SOURCES, sha256, UpstreamError } from '../lib/upstream.mjs';
 
 /** @param {{cwd?:string}} [options] */
 export function verifyLock({ cwd = process.cwd() } = {}) {
@@ -42,6 +42,19 @@ export function verifyLock({ cwd = process.cwd() } = {}) {
   }
   /** @type {Set<string>} */
   const unique = new Set();
+  const upstreams = lock.upstreams && typeof lock.upstreams === 'object' ? lock.upstreams : {};
+  for (const id of Object.keys(upstreams)) {
+    if (!['speckit', 'atv'].includes(id) && !id.startsWith('x-') && !Object.hasOwn(OPTIONAL_SOURCES, id)) {
+      mismatch.push(`unknown upstream ${id}`);
+    }
+  }
+  for (const [id, pin] of Object.entries(OPTIONAL_SOURCES)) {
+    const locked = upstreams[id];
+    if (locked && (locked.license !== pin.license ||
+        /** @type {const} */ (['version', 'repo', 'tag', 'commit', 'tree']).some(field => locked[field] !== pin[field]))) {
+      mismatch.push(`upstream ${id} differs from the vetted ${pin.repo} ${pin.tag} pin`);
+    }
+  }
   for (const entry of lock.files) {
     if (!entry || typeof entry !== 'object') {
       mismatch.push('invalid lock entry');
@@ -50,6 +63,18 @@ export function verifyLock({ cwd = process.cwd() } = {}) {
     if (unique.has(entry.stored_at)) mismatch.push(`duplicate ${entry.stored_at}`);
     unique.add(entry.stored_at);
     check(entry.stored_at, entry.sha256);
+    if (Object.hasOwn(OPTIONAL_SOURCES, entry.upstream)) {
+      const id = entry.upstream;
+      const path = `.baton/vendor/${id}/${entry.upstream_path}`;
+      // Optional sources are vendored raw: no repair, MIT, owned only by their pack, under its vendor directory.
+      if (!upstreams[id] || typeof entry.upstream_path !== 'string' ||
+          entry.upstream_path.split('/').some((/** @type {string} */ part) => !part || part === '.' || part === '..') ||
+          entry.path !== path || entry.stored_at !== `packs/${id}/files/${path}` ||
+          entry.sha256 !== entry.sha256_upstream || entry.repair !== null || entry.license !== 'MIT' ||
+          !Array.isArray(entry.packs) || entry.packs.length !== 1 || entry.packs[0] !== id) {
+        mismatch.push(`invalid ${id} provenance ${entry.stored_at}`);
+      }
+    }
   }
   if (mismatch.length) throw new UpstreamError('E_LOCK_MISMATCH', mismatch.join('\n'));
   return { ok: true, files: lock.files.length };

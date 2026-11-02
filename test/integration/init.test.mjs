@@ -364,3 +364,48 @@ test('F39 live init --script ps installs every script its Spec Kit skills refere
     assert.deepEqual(missing, []);
   } finally { await cleanup(); }
 });
+test('optional context packs install pinned inert vendor bytes with their own provenance', async () => {
+  const { root, cleanup } = await tempRepo('repos/empty');
+  try {
+    const lock = JSON.parse(await readFile(join(sourceRoot, 'baton.lock.json'), 'utf8'));
+    const core = await cli(root, ['init']);
+    assert.equal(core.code, 0, core.stderr);
+    assert.ok(!await exists(root, '.baton/vendor'));
+    let manifest = JSON.parse(await readFile(join(root, '.baton/manifest.json'), 'utf8'));
+    assert.deepEqual(Object.keys(manifest.upstreams).sort(), ['atv', 'speckit']);
+    const pins = { 'token-budget': ['1.1.0', '11c5589'], optimize: ['1.0.0', 'd6dba6a'] };
+    for (const [index, id] of ['token-budget', 'optimize'].entries()) {
+      const result = await cli(root, ['init', '--packs', id]);
+      assert.equal(result.code, 0, result.stderr || result.stdout);
+      manifest = JSON.parse(await readFile(join(root, '.baton/manifest.json'), 'utf8'));
+      assert.deepEqual(manifest.packs, ['core', 'token-budget', 'optimize'].slice(0, index + 2));
+      assert.equal(manifest.upstreams[id], `${pins[id][0]}@${pins[id][1]}`);
+      assert.deepEqual(lock.upstreams[id], { version: pins[id][0], repo: id === 'optimize'
+        ? 'sakitA/spec-kit-optimize' : 'tinesoft/spec-kit-token-budget', tag: `v${pins[id][0]}`,
+      commit: id === 'optimize' ? 'd6dba6ae93bf60322deee3bdc4ffcf127e42b2b9' : '11c5589f347ddb3789b51b09927ef825c88e3f19',
+      tree: id === 'optimize' ? 'c5bb7b7a37912ef26bc369397980c26c3d70cf7b' : '0188d6c187e1f1ddc03293660cc8e4d129ea0fa5',
+      license: 'MIT' });
+      const vendored = lock.files.filter(entry => entry.upstream === id);
+      assert.equal(vendored.length, id === 'optimize' ? 6 : 13);
+      for (const entry of vendored) {
+        assert.deepEqual(entry.packs, [id]);
+        assert.equal(entry.path, `.baton/vendor/${id}/${entry.upstream_path}`);
+        assert.equal(entry.sha256, entry.sha256_upstream);
+        assert.equal(entry.repair, null);
+        assert.deepEqual(await readFile(join(root, entry.path)), await readFile(join(sourceRoot, entry.stored_at)), entry.path);
+        const row = manifest.files.find(file => file.path === entry.path);
+        assert.equal(row?.owner, id, entry.path);
+        assert.equal(row.pack, id);
+        assert.equal(row.sha256, entry.sha256);
+      }
+      for (const entry of lock.files.filter(entry => entry.packs.includes(id) && entry.upstream === 'baton')) {
+        assert.ok(entry.path.startsWith('.github/skills/speckit-'), entry.path);
+        assert.equal(manifest.files.find(file => file.path === entry.path)?.owner, 'baton', entry.path);
+      }
+    }
+    assert.ok(!await exists(root, '.specify/extensions/token-budget'));
+    assert.ok(!await exists(root, '.specify/extensions/optimize'));
+    const extensions = await readFile(join(root, '.specify/extensions.yml'), 'utf8').catch(() => '');
+    assert.doesNotMatch(extensions, /token-budget|optimize/);
+  } finally { await cleanup(); }
+});

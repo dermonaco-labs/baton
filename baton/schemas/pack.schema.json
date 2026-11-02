@@ -30,15 +30,27 @@
     "file": {
       "type": "object", "required": ["from", "path"],
       "properties": {
-        "from": { "enum": ["speckit", "atv", "baton"] },
+        "from": { "enum": ["speckit", "atv", "baton", "token-budget", "optimize"] },
         "upstream_path": { "$ref": "#/$defs/path" },
         "path": { "$ref": "#/$defs/path" },
         "role": { "type": "string", "minLength": 1 }
       },
       "patternProperties": { "^x-": {} },
       "additionalProperties": false,
-      "if": { "properties": { "from": { "const": "atv" } }, "required": ["from"] },
-      "then": { "required": ["upstream_path"] }
+      "allOf": [
+        {
+          "if": { "properties": { "from": { "const": "atv" } }, "required": ["from"] },
+          "then": { "required": ["upstream_path"] }
+        },
+        {
+          "if": { "properties": { "from": { "const": "token-budget" } }, "required": ["from"] },
+          "then": { "required": ["upstream_path"], "properties": { "path": { "pattern": "^\\.baton/vendor/token-budget/" } } }
+        },
+        {
+          "if": { "properties": { "from": { "const": "optimize" } }, "required": ["from"] },
+          "then": { "required": ["upstream_path"], "properties": { "path": { "pattern": "^\\.baton/vendor/optimize/" } } }
+        }
+      ]
     },
     "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\r\\n\\\\]+$" }
   }

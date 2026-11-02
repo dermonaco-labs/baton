@@ -40,7 +40,7 @@ export async function buildBundle(root, check = false) {
     logLevel: 'silent',
   });
   const bundle = output.outputFiles[0].contents;
-  if (bundle.byteLength >= 400 * 1024) throw new BatonError('E_BUNDLE_SIZE', `Bundle is ${bundle.byteLength} bytes (limit: 409600)`);
+  if (bundle.byteLength >= 450 * 1024) throw new BatonError('E_BUNDLE_SIZE', `Bundle is ${bundle.byteLength} bytes (limit: 460800)`);
 
   /** @type {Set<string>} */
   const packages = new Set();

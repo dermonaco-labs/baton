@@ -27,6 +27,22 @@
       "tree": "777a37ef9cf15f3a6fd6a3355cc3c945e8bb1c47",
       "license": "MIT",
       "note": "pinned to main: v2.6.3 ships corrupted agent templates (fixed in f0a86ef)"
+    },
+    "token-budget": {
+      "version": "1.1.0",
+      "repo": "tinesoft/spec-kit-token-budget",
+      "tag": "v1.1.0",
+      "commit": "11c5589f347ddb3789b51b09927ef825c88e3f19",
+      "tree": "0188d6c187e1f1ddc03293660cc8e4d129ea0fa5",
+      "license": "MIT"
+    },
+    "optimize": {
+      "version": "1.0.0",
+      "repo": "sakitA/spec-kit-optimize",
+      "tag": "v1.0.0",
+      "commit": "d6dba6ae93bf60322deee3bdc4ffcf127e42b2b9",
+      "tree": "c5bb7b7a37912ef26bc369397980c26c3d70cf7b",
+      "license": "MIT"
     }
   },
   "files": [
@@ -1230,6 +1246,84 @@
       ]
     },
     {
+      "path": ".baton/vendor/optimize/commands/speckit.optimize.learn.md",
+      "upstream": "optimize",
+      "upstream_path": "commands/speckit.optimize.learn.md",
+      "stored_at": "packs/optimize/files/.baton/vendor/optimize/commands/speckit.optimize.learn.md",
+      "sha256_upstream": "980e70586d1c8efde62928e9e0d005d64be3a3c6bafacbd94893144abae43d9a",
+      "sha256": "980e70586d1c8efde62928e9e0d005d64be3a3c6bafacbd94893144abae43d9a",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "optimize"
+      ]
+    },
+    {
+      "path": ".baton/vendor/optimize/commands/speckit.optimize.run.md",
+      "upstream": "optimize",
+      "upstream_path": "commands/speckit.optimize.run.md",
+      "stored_at": "packs/optimize/files/.baton/vendor/optimize/commands/speckit.optimize.run.md",
+      "sha256_upstream": "49724e6cc2cf91eb8cf23a39d26cb62306e84f40505760fd59f9beac46d8fb68",
+      "sha256": "49724e6cc2cf91eb8cf23a39d26cb62306e84f40505760fd59f9beac46d8fb68",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "optimize"
+      ]
+    },
+    {
+      "path": ".baton/vendor/optimize/commands/speckit.optimize.tokens.md",
+      "upstream": "optimize",
+      "upstream_path": "commands/speckit.optimize.tokens.md",
+      "stored_at": "packs/optimize/files/.baton/vendor/optimize/commands/speckit.optimize.tokens.md",
+      "sha256_upstream": "02856c897c08b8cc2b20c3ee6f20ef5315b87be31a28db61af1480147c6cd723",
+      "sha256": "02856c897c08b8cc2b20c3ee6f20ef5315b87be31a28db61af1480147c6cd723",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "optimize"
+      ]
+    },
+    {
+      "path": ".baton/vendor/optimize/config-template.yml",
+      "upstream": "optimize",
+      "upstream_path": "config-template.yml",
+      "stored_at": "packs/optimize/files/.baton/vendor/optimize/config-template.yml",
+      "sha256_upstream": "6e3f28cf1d01a34eb3107562c20bb6ac1c41788da7fb956e3c99bac227bc5cc7",
+      "sha256": "6e3f28cf1d01a34eb3107562c20bb6ac1c41788da7fb956e3c99bac227bc5cc7",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "optimize"
+      ]
+    },
+    {
+      "path": ".baton/vendor/optimize/extension.yml",
+      "upstream": "optimize",
+      "upstream_path": "extension.yml",
+      "stored_at": "packs/optimize/files/.baton/vendor/optimize/extension.yml",
+      "sha256_upstream": "011bc93e18ca788185271fc493d658d66c2544b99c131fcd293b136442af30f1",
+      "sha256": "011bc93e18ca788185271fc493d658d66c2544b99c131fcd293b136442af30f1",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "optimize"
+      ]
+    },
+    {
+      "path": ".baton/vendor/optimize/LICENSE",
+      "upstream": "optimize",
+      "upstream_path": "LICENSE",
+      "stored_at": "packs/optimize/files/.baton/vendor/optimize/LICENSE",
+      "sha256_upstream": "ad532cf5fa1032c2d19408f8063a507edab58774f78904ea771faa9f56a1f46b",
+      "sha256": "ad532cf5fa1032c2d19408f8063a507edab58774f78904ea771faa9f56a1f46b",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "optimize"
+      ]
+    },
+    {
       "path": ".github/agents/best-practices-researcher.agent.md",
       "upstream": "atv",
       "upstream_path": "pkg/scaffold/templates/agents/best-practices-researcher.agent.md",
@@ -1526,6 +1620,175 @@
       "repair": null,
       "packs": [
         "stack-typescript"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/commands/compact.md",
+      "upstream": "token-budget",
+      "upstream_path": "commands/compact.md",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/commands/compact.md",
+      "sha256_upstream": "2b9c66ea6fe3fa882ea5a772771a0115218e2d4f48ba1deba040ba09611f0ea7",
+      "sha256": "2b9c66ea6fe3fa882ea5a772771a0115218e2d4f48ba1deba040ba09611f0ea7",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/commands/concise.md",
+      "upstream": "token-budget",
+      "upstream_path": "commands/concise.md",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/commands/concise.md",
+      "sha256_upstream": "15e179afeeef7a063f3e76e7da375c89147abd58eef59ab0d0f6b40486e78138",
+      "sha256": "15e179afeeef7a063f3e76e7da375c89147abd58eef59ab0d0f6b40486e78138",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/commands/restore.md",
+      "upstream": "token-budget",
+      "upstream_path": "commands/restore.md",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/commands/restore.md",
+      "sha256_upstream": "4b6caf3e2ca977b035ca2cd28dfb0ad4af844855bae771e77530152559f63e60",
+      "sha256": "4b6caf3e2ca977b035ca2cd28dfb0ad4af844855bae771e77530152559f63e60",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/commands/scope.md",
+      "upstream": "token-budget",
+      "upstream_path": "commands/scope.md",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/commands/scope.md",
+      "sha256_upstream": "76bff46b2e4a96be56fac8622ac91c43991d02440da7f464083b2e3410e5d4e4",
+      "sha256": "76bff46b2e4a96be56fac8622ac91c43991d02440da7f464083b2e3410e5d4e4",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/commands/usage.md",
+      "upstream": "token-budget",
+      "upstream_path": "commands/usage.md",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/commands/usage.md",
+      "sha256_upstream": "790f4a1c4b169cdbdf3d2d8a3b2d663bdae76d3ab74c48701ba75e61eda6eec5",
+      "sha256": "790f4a1c4b169cdbdf3d2d8a3b2d663bdae76d3ab74c48701ba75e61eda6eec5",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/extension.yml",
+      "upstream": "token-budget",
+      "upstream_path": "extension.yml",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/extension.yml",
+      "sha256_upstream": "be1fbbd21d0cce6cd32f048ffad331a68d268947aead092681ee5e5d8667a3d0",
+      "sha256": "be1fbbd21d0cce6cd32f048ffad331a68d268947aead092681ee5e5d8667a3d0",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/LICENSE",
+      "upstream": "token-budget",
+      "upstream_path": "LICENSE",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/LICENSE",
+      "sha256_upstream": "c1b640aba90c494225e92cd3742d6c18c8d28422835d714124df715be5742751",
+      "sha256": "c1b640aba90c494225e92cd3742d6c18c8d28422835d714124df715be5742751",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/scripts/bash/compact_helper.sh",
+      "upstream": "token-budget",
+      "upstream_path": "scripts/bash/compact_helper.sh",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/scripts/bash/compact_helper.sh",
+      "sha256_upstream": "bd0a90a7c01a8f89e88dbe6b7547b334cf4d7450667626d291291166ac1e12cd",
+      "sha256": "bd0a90a7c01a8f89e88dbe6b7547b334cf4d7450667626d291291166ac1e12cd",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/scripts/bash/estimate_tokens.sh",
+      "upstream": "token-budget",
+      "upstream_path": "scripts/bash/estimate_tokens.sh",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/scripts/bash/estimate_tokens.sh",
+      "sha256_upstream": "e9f4f723cf6b94a91bb7b7bf43e271f651bc4db236a0ea0069ee8c3b46da9fba",
+      "sha256": "e9f4f723cf6b94a91bb7b7bf43e271f651bc4db236a0ea0069ee8c3b46da9fba",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/scripts/bash/slim_output.sh",
+      "upstream": "token-budget",
+      "upstream_path": "scripts/bash/slim_output.sh",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/scripts/bash/slim_output.sh",
+      "sha256_upstream": "686c0ab3f924bab853ee3dbaef0c809a2d26fd66ad454ff9702a6e6580d137ef",
+      "sha256": "686c0ab3f924bab853ee3dbaef0c809a2d26fd66ad454ff9702a6e6580d137ef",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/scripts/powershell/compact_helper.ps1",
+      "upstream": "token-budget",
+      "upstream_path": "scripts/powershell/compact_helper.ps1",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/scripts/powershell/compact_helper.ps1",
+      "sha256_upstream": "bf5004c9eacae58961c96cf3763da45fd140829d103be01a0ed468077fe5750f",
+      "sha256": "bf5004c9eacae58961c96cf3763da45fd140829d103be01a0ed468077fe5750f",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/scripts/powershell/estimate_tokens.ps1",
+      "upstream": "token-budget",
+      "upstream_path": "scripts/powershell/estimate_tokens.ps1",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/scripts/powershell/estimate_tokens.ps1",
+      "sha256_upstream": "72fc53c745ace8e46256bfb6ce25b676298be18247563c9f612720453a3f1eb2",
+      "sha256": "72fc53c745ace8e46256bfb6ce25b676298be18247563c9f612720453a3f1eb2",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
+      ]
+    },
+    {
+      "path": ".baton/vendor/token-budget/token-budget-config.template.yml",
+      "upstream": "token-budget",
+      "upstream_path": "token-budget-config.template.yml",
+      "stored_at": "packs/token-budget/files/.baton/vendor/token-budget/token-budget-config.template.yml",
+      "sha256_upstream": "345de3272c523b49901af86aed2c50852940f4b0d19363cf4760a56b1de0f0c3",
+      "sha256": "345de3272c523b49901af86aed2c50852940f4b0d19363cf4760a56b1de0f0c3",
+      "license": "MIT",
+      "repair": null,
+      "packs": [
+        "token-budget"
       ]
     }
   ]

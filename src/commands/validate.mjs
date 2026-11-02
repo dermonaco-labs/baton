@@ -129,7 +129,7 @@ export async function run(root, args) {
     }
     const name = jsonFiles.get(path) ?? yamlFiles.get(path) ??
       (/(?:^|\/)(?:review|[^/]+\.review)\.json$/.test(path) ? 'findings' : null) ??
-      (path.startsWith('packs/') && path.endsWith('.yml') && path !== 'packs/repairs.yml' ? 'pack' : null);
+      (/^packs\/[^/]+\.yml$/.test(path) && path !== 'packs/repairs.yml' ? 'pack' : null);
     if (name) {
       try {
         const source = await readFile(absolute, 'utf8');

@@ -1,0 +1,15 @@
+schema: 1
+id: optimize
+description: Optional opt-in governance and token-usage analysis with pinned inert optimize inputs and Baton-safe wrappers.
+requires: [core]
+conflicts: []
+files:
+  - { from: optimize, upstream_path: LICENSE, path: .baton/vendor/optimize/LICENSE }
+  - { from: optimize, upstream_path: extension.yml, path: .baton/vendor/optimize/extension.yml }
+  - { from: optimize, upstream_path: config-template.yml, path: .baton/vendor/optimize/config-template.yml }
+  - { from: optimize, upstream_path: commands/speckit.optimize.run.md, path: .baton/vendor/optimize/commands/speckit.optimize.run.md }
+  - { from: optimize, upstream_path: commands/speckit.optimize.tokens.md, path: .baton/vendor/optimize/commands/speckit.optimize.tokens.md }
+  - { from: optimize, upstream_path: commands/speckit.optimize.learn.md, path: .baton/vendor/optimize/commands/speckit.optimize.learn.md }
+  - { from: baton, path: .github/skills/speckit-optimize-run/SKILL.md }
+  - { from: baton, path: .github/skills/speckit-optimize-tokens/SKILL.md }
+  - { from: baton, path: .github/skills/speckit-optimize-learn/SKILL.md }

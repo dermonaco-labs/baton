@@ -85,6 +85,16 @@ When to use: remove managed, unmodified files and Baton marker sections
 without deleting specifications, solutions or the constitution. Hands off to:
 review preserved user files and conflicts. Preview with `--dry-run`.
 
+### `context`
+
+When to use: run explicitly selected token-budget or optimize pack operations.
+Compact/restore preview by default and apply only through the guarded draft
+writer; approved, hashed, managed and `read_first` targets are protected.
+Scope/concise/usage and optimize run/tokens/learn are non-mutating.
+Hands off to: author review for draft candidates, the existing relay for
+protected artifacts, or `/speckit-constitution` for proposed governance
+amendments. See [guarded syntax](cli.md#guarded-context-operations).
+
 ## Maintainer commands
 
 ### `sync`
