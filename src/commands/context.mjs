@@ -1,5 +1,5 @@
-import { readdir } from 'node:fs/promises';
-import { contextProtection, contextText, featureContext, mutateContext } from '../lib/context-guards.mjs';
+import { contextExcluded, contextFilePaths, contextProtection, contextText, estimatedTokens,
+  featureContext, mutateContext, TOKEN_ESTIMATE } from '../lib/context-guards.mjs';
 import { BatonError } from '../lib/report.mjs';
 
 /** @param {string} message */
@@ -55,14 +55,11 @@ export async function run(root, args) {
     const feature = required(options, '--feature');
     const context = await featureContext(root, feature);
     const files = [];
-    for (const entry of await readdir(context.directory, { withFileTypes: true })) {
-      if (!entry.isFile() || !entry.name.endsWith('.md') || entry.name.endsWith('.full.md')) continue;
-      const path = `specs/${feature}/${entry.name}`;
-      if (context.protection.excludedPaths.has(path.toLowerCase())) continue;
+    for (const path of await contextFilePaths(root, feature, context.protection)) {
       const text = await contextText(root, path);
-      if (text !== null) files.push({ path, estimated_tokens: Math.ceil(text.length / 4) });
+      if (text !== null) files.push({ path, estimated_tokens: estimatedTokens(text) });
     }
-    return { data: { action, feature, report_only: true, estimate: 'characters / 4; not provider billing',
+    return { data: { action, feature, report_only: true, estimate: TOKEN_ESTIMATE,
       read_first: context.baton?.read_first ?? [],
       do_not_read: context.baton?.do_not_read ?? [],
       files, estimated_tokens: files.reduce((total, file) => total + file.estimated_tokens, 0) } };
@@ -80,13 +77,13 @@ export async function run(root, args) {
         /\.(?:md|ya?ml)$/.test(item.path)).map((item) => item.path)])];
     const files = [];
     for (const path of paths) {
-      if (protection.excludedPaths.has(path.toLowerCase())) continue;
+      if (contextExcluded(protection, path)) continue;
       const text = await contextText(root, path);
-      if (text !== null) files.push({ path, estimated_tokens: Math.ceil(text.length / 4), protected: true });
+      if (text !== null) files.push({ path, estimated_tokens: estimatedTokens(text), protected: true });
     }
     return { data: { action: rest[0], report_only: true, files,
       estimated_tokens: files.reduce((total, file) => total + file.estimated_tokens, 0),
-      estimate: 'characters / 4; not provider billing',
+      estimate: TOKEN_ESTIMATE,
       instruction: 'Report proposals only. Mandatory gates, scanner rules and approval semantics are not removable. No governance or memory writes. Route amendments through /speckit-constitution.' } };
   }
   throw usage('Use context compact|restore|scope|concise|usage|optimize');

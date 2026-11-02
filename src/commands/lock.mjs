@@ -1,6 +1,6 @@
 import { existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { OPTIONAL_SOURCES, sha256, UpstreamError } from '../lib/upstream.mjs';
+import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, sha256, UpstreamError } from '../lib/upstream.mjs';
 
 /** @param {{cwd?:string}} [options] */
 export function verifyLock({ cwd = process.cwd() } = {}) {
@@ -50,9 +50,9 @@ export function verifyLock({ cwd = process.cwd() } = {}) {
   }
   for (const [id, pin] of Object.entries(OPTIONAL_SOURCES)) {
     const locked = upstreams[id];
-    if (locked && (locked.license !== pin.license ||
-        /** @type {const} */ (['version', 'repo', 'tag', 'commit', 'tree']).some(field => locked[field] !== pin[field]))) {
-      mismatch.push(`upstream ${id} differs from the vetted ${pin.repo} ${pin.tag} pin`);
+    if (!locked) continue;
+    for (const field of OPTIONAL_PIN_FIELDS) {
+      if (locked[field] !== pin[field]) mismatch.push(`upstream ${id} ${field} differs from the vetted ${pin.repo} ${pin.tag} pin`);
     }
   }
   for (const entry of lock.files) {
@@ -65,15 +65,23 @@ export function verifyLock({ cwd = process.cwd() } = {}) {
     check(entry.stored_at, entry.sha256);
     if (Object.hasOwn(OPTIONAL_SOURCES, entry.upstream)) {
       const id = entry.upstream;
-      const path = `.baton/vendor/${id}/${entry.upstream_path}`;
+      /** @param {string} field @param {string} [expected] */
+      const invalid = (field, expected) =>
+        mismatch.push(`${id} row ${entry.stored_at} has invalid ${field}${expected ? ` (expected ${expected})` : ''}`);
       // Optional sources are vendored raw: no repair, MIT, owned only by their pack, under its vendor directory.
-      if (!upstreams[id] || typeof entry.upstream_path !== 'string' ||
-          entry.upstream_path.split('/').some((/** @type {string} */ part) => !part || part === '.' || part === '..') ||
-          entry.path !== path || entry.stored_at !== `packs/${id}/files/${path}` ||
-          entry.sha256 !== entry.sha256_upstream || entry.repair !== null || entry.license !== 'MIT' ||
-          !Array.isArray(entry.packs) || entry.packs.length !== 1 || entry.packs[0] !== id) {
-        mismatch.push(`invalid ${id} provenance ${entry.stored_at}`);
+      if (!upstreams[id]) mismatch.push(`upstream ${id} pin is missing for ${entry.stored_at}`);
+      if (typeof entry.upstream_path !== 'string' ||
+          entry.upstream_path.split('/').some((/** @type {string} */ part) => !part || part === '.' || part === '..')) {
+        invalid('upstream_path');
+      } else {
+        const path = `.baton/vendor/${id}/${entry.upstream_path}`;
+        if (entry.path !== path) invalid('path', path);
+        if (entry.stored_at !== `packs/${id}/files/${path}`) invalid('stored_at', `packs/${id}/files/${path}`);
       }
+      if (entry.sha256 !== entry.sha256_upstream) invalid('sha256_upstream');
+      if (entry.repair !== null) invalid('repair');
+      if (entry.license !== 'MIT') invalid('license');
+      if (!Array.isArray(entry.packs) || entry.packs.length !== 1 || entry.packs[0] !== id) invalid('packs');
     }
   }
   if (mismatch.length) throw new UpstreamError('E_LOCK_MISMATCH', mismatch.join('\n'));

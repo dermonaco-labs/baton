@@ -4,7 +4,7 @@ import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { diffDocument, generatedStable, lockFile, packDefinitions, prepareEntries, snapshotDrift } from '../../src/commands/sync.mjs';
-import { ATV_COMMIT, ATV_TREE, OPTIONAL_SOURCES, SPECKIT_COMMIT, SPECKIT_VERSION, sha256 } from '../../src/lib/upstream.mjs';
+import { ATV_COMMIT, ATV_TREE, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_COMMIT, SPECKIT_VERSION, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
 import { sourceRoot } from '../helpers/index.mjs';
 
 test('pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift', async () => {
@@ -260,6 +260,24 @@ test('lock and snapshot document label optional provenance by its named source',
   assert.match(document, /\| `packs\/optimize\/files\/\.baton\/vendor\/optimize\/LICENSE` \| optimize \| `LICENSE` \|/);
   const core = lockFile([], 'b'.repeat(64), ATV_COMMIT, ATV_TREE, SPECKIT_VERSION, SPECKIT_COMMIT);
   assert.deepEqual(Object.keys(core.upstreams), ['speckit', 'atv']);
+});
+
+test('optional pin fields are one immutable list matching the locked projection order', () => {
+  assert.deepEqual(OPTIONAL_PIN_FIELDS, ['version', 'repo', 'tag', 'commit', 'tree', 'license']);
+  assert.ok(Object.isFrozen(OPTIONAL_PIN_FIELDS));
+  const lock = lockFile([], 'b'.repeat(64), ATV_COMMIT, ATV_TREE, SPECKIT_VERSION, SPECKIT_COMMIT, OPTIONAL_SOURCES);
+  for (const id of Object.keys(OPTIONAL_SOURCES)) {
+    assert.deepEqual(Object.keys(lock.upstreams[id]), [...OPTIONAL_PIN_FIELDS]);
+  }
+});
+
+test('MIT license verifier keeps each source copyright requirement', () => {
+  const atv = 'MIT License\n\nCopyright (c) 2026 All The Vibes\n';
+  assert.doesNotThrow(() => verifyMitLicense(atv, 'Copyright (c) 2026 All The Vibes', 'ATV'));
+  assert.throws(() => verifyMitLicense(atv, OPTIONAL_SOURCES.optimize.copyright, 'optimize'),
+    { code: 'E_LICENSE', message: 'E_LICENSE Pinned optimize LICENSE is not the expected MIT license' });
+  assert.throws(() => verifyMitLicense('Apache License\nCopyright (c) 2026 All The Vibes\n', 'Copyright (c) 2026 All The Vibes', 'ATV'),
+    { code: 'E_LICENSE', message: 'E_LICENSE Pinned ATV LICENSE is not the expected MIT license' });
 });
 
 test('pack definitions require every original pack and accept additional optional packs', async () => {

@@ -5,7 +5,7 @@ import YAML from 'yaml';
 import { validatePackClosure } from '../lib/packs.mjs';
 import { assertFrontmatter, repairAtv } from '../lib/repairs.mjs';
 import {
-  ATV_COMMIT, ATV_TREE, OPTIONAL_SOURCES, SPECKIT_COMMIT, SPECKIT_VERSION, UpstreamError,
+  ATV_COMMIT, ATV_TREE, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_COMMIT, SPECKIT_VERSION, UpstreamError,
   fetchAtv, fetchSource, prepareSpeckit, regenerateRequirements, run as runTool, sha256, workspace
 } from '../lib/upstream.mjs';
 
@@ -299,7 +299,7 @@ export function prepareEntries(root, generated, atv, packs, repairs, oldLock, bu
 /** @param {VendoredEntry[]} entries @param {string} requirementsHash @param {string} atvCommit @param {string} atvTree @param {string} version @param {string} speckitCommit @param {Record<string,{version:string,repo:string,tag:string,commit:string,tree:string,license:string}>} [optional] */
 export function lockFile(entries, requirementsHash, atvCommit, atvTree, version, speckitCommit, optional = {}) {
   const named = Object.fromEntries(Object.entries(optional).map(([id, pin]) =>
-    [id, { version: pin.version, repo: pin.repo, tag: pin.tag, commit: pin.commit, tree: pin.tree, license: pin.license }]));
+    [id, Object.fromEntries(OPTIONAL_PIN_FIELDS.map(field => [field, pin[field]]))]));
   return {
     schema: 1, generated_by: 'baton sync 0.1.3',
     'x-bump-summary': /** @type {string|undefined} */ (undefined),
@@ -397,8 +397,7 @@ export function sync({ cwd = process.cwd(), check = false, bump = null } = {}) {
   for (const id of optionalIds) {
     const pin = OPTIONAL_SOURCES[id];
     const locked = oldLock?.upstreams?.[id];
-    const fields = /** @type {const} */ (['version', 'repo', 'tag', 'commit', 'tree']);
-    if (locked && fields.some(field => locked[field] !== pin[field])) {
+    if (locked && OPTIONAL_PIN_FIELDS.some(field => locked[field] !== pin[field])) {
       throw new UpstreamError('E_UPSTREAM_VERIFY', `Lock pin for ${id} differs from the vetted ${pin.repo} ${pin.tag} ref`);
     }
   }

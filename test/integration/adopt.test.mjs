@@ -4,6 +4,7 @@ import { mkdtemp, cp, readFile, readdir, stat, rm, mkdir, writeFile } from 'node
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { sourceRoot, runCli } from '../helpers/index.mjs';
+import { parseFrontmatter, serializeFrontmatter } from '../../src/lib/frontmatter.mjs';
 
 async function runSource(root, args, environment = {}) {
   return await new Promise((resolve, reject) => {
@@ -131,6 +132,30 @@ test('adopt refuses to clean the source repository', async () => {
   }
 });
 
+test('adopt retires source feature 002 and preserves an independent adopter feature', async () => {
+  const { root, cleanup } = await derivedCopy();
+  try {
+    const own = 'specs/900-adopter-feature';
+    const specification = '# Adopter feature\nKeep this specification.\n';
+    const { data, body } = parseFrontmatter(await readFile(
+      join(sourceRoot, 'test/fixtures/handoffs/valid/feature/specify.md'), 'utf8'));
+    data.feature = '900-adopter-feature';
+    data.read_first = [{ path: `${own}/spec.md`, why: 'Adopter context' }];
+    data.artifacts = [];
+    const handoff = serializeFrontmatter(data, body);
+    await mkdir(join(root, own), { recursive: true });
+    await writeFile(join(root, own, 'spec.md'), specification);
+    await writeFile(join(root, own, 'handoff.md'), handoff);
+    const result = await runCli(root, ['adopt', '--no-workflows', '--json'], { BATON_FORCE_CLEANUP: '1' });
+    assert.equal(result.code, 0, result.stdout || result.stderr);
+    await assert.rejects(stat(join(root, 'specs/002-context-optimization-packs')), { code: 'ENOENT' });
+    assert.equal(await readFile(join(root, own, 'spec.md'), 'utf8'), specification);
+    assert.equal(await readFile(join(root, own, 'handoff.md'), 'utf8'), handoff);
+    const validated = await runCli(root, ['validate', '--json']);
+    assert.equal(validated.code, 0, validated.stdout || validated.stderr);
+  } finally { await cleanup(); }
+});
+
 test('adopt --prune-workflows removes the dormant Windows smoke workflow', async () => {
   const { root, cleanup } = await derivedCopy();
   try {
@@ -184,7 +209,7 @@ test('adopt applies every disposition row, rewrites moved docs links and validat
     const result = await runSource(root, ['adopt'], { BATON_FORCE_CLEANUP: '1' });
     assert.equal(result.code, 0, result.stderr || result.stdout);
     for (const path of [
-      'src', 'test', 'specs/001-baton-template', 'packs', 'baton', 'baton.lock.json',
+      'src', 'test', 'specs/001-baton-template', 'specs/002-context-optimization-packs', 'packs', 'baton', 'baton.lock.json',
       'package.json', 'package-lock.json', '.baton/template-cleanup-pending',
     ]) await assert.rejects(stat(join(root, path)), { code: 'ENOENT' }, path);
     assert.equal((await readFile(join(root, 'docs/baton/reference/nested/links.md'), 'utf8')),

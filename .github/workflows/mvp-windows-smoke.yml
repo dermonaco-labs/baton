@@ -37,6 +37,7 @@ jobs:
           git -c user.name=t -c user.email=t@t commit -qm base
           BATON_FORCE_CLEANUP=1 node .baton/bin/baton.mjs adopt --no-workflows
           test ! -e src && test ! -e test && test ! -e specs/001-baton-template
+          test ! -e specs/002-context-optimization-packs
           test ! -e package.json && test -d docs/baton
           test -f .github/workflows/baton.yml
           test -z "$(git status --porcelain -- .github/workflows)"

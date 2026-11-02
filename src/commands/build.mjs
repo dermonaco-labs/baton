@@ -6,6 +6,15 @@ import { BatonError } from '../lib/report.mjs';
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
+export const BUNDLE_LIMIT_BYTES = 450 * 1024;
+
+/** @param {number} byteLength */
+export function checkBundleSize(byteLength) {
+  if (byteLength >= BUNDLE_LIMIT_BYTES) {
+    throw new BatonError('E_BUNDLE_SIZE', `Bundle is ${byteLength} bytes (limit: ${BUNDLE_LIMIT_BYTES})`);
+  }
+}
+
 /** @param {string} root @param {string} name */
 async function packageMetadata(root, name) {
   for (let directory = root; ; directory = dirname(directory)) {
@@ -40,7 +49,7 @@ export async function buildBundle(root, check = false) {
     logLevel: 'silent',
   });
   const bundle = output.outputFiles[0].contents;
-  if (bundle.byteLength >= 450 * 1024) throw new BatonError('E_BUNDLE_SIZE', `Bundle is ${bundle.byteLength} bytes (limit: 460800)`);
+  checkBundleSize(bundle.byteLength);
 
   /** @type {Set<string>} */
   const packages = new Set();

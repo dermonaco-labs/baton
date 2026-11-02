@@ -9,9 +9,13 @@ test('context guards restrict writable artifact paths instead of relying on prom
   }
   for (const path of ['AGENTS.md', '.specify/memory/constitution.md', 'specs/002-draft/handoff.md',
     'specs/002-draft/spec.full.md', 'specs/002-draft/contracts/constitution.md',
-    'specs/002-draft/../002-draft/spec.md', 'specs/003-other/spec.md']) {
-    assert.throws(() => contextTarget('002-draft', path), /draft|target|path|protected/i);
+    'specs/002-draft/../002-draft/spec.md', 'specs/003-other/spec.md',
+    'SPECS/002-DRAFT/spec.md', 'specs/002-draft/SPEC.md', 'C:/specs/002-draft/spec.md',
+    'C:\\specs\\002-draft\\spec.md', '/specs/002-draft/spec.md', '\\specs\\002-draft\\spec.md',
+    'specs/002-draft/spec.md:stream', 'specs\\002-draft\\spec.md:stream']) {
+    assert.throws(() => contextTarget('002-draft', path), { code: 'E_CONTEXT_PROTECTED' });
   }
+  assert.equal(contextTarget('002-draft', 'specs\\002-draft\\spec.md'), 'specs/002-draft/spec.md');
 });
 
 test('context guards retain existing artifact normalization and strict raw integrity semantics', () => {

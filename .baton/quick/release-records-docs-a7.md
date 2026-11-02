@@ -26,7 +26,7 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: .baton/template-cleanup.yml
     why: Source-only cleanup coverage for new docs lane and later canonical review artifacts
-    sha256: eb375087dc59b79749b669cb62bc7b09b5d20f88a664c63601db77ea77402e5b
+    sha256: 232ee939153736600d8802e9be822ebdb5fe141135a9073d0146e0089c22df5d
   - path: .baton/quick/release-records-docs-a7.work.json
     why: Actual judgment-only input to this new canonical WORK write
     sha256: de632df430c6cae373d42517f38b3d1bde768ad2f66a7923bcb449813cc449f4
@@ -120,6 +120,10 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Approved feature 002 adds optional-pack README documentation; preserve original approval history but invalidate the prior release-doc snapshot binding rather than treating revised docs as previously approved.
     by: implementation-session
+  - id: D17
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Bind the intentional exact source002 cleanup retirement required by F01; retain the old lane's unapproved gate and do not land or authorize that legacy lane
+    by: implementation-session
 gate:
   required: true
   approved_by: null
@@ -202,7 +206,14 @@ history:
     x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
     commit: 5e6de1b
     x-action: refresh
-updated_at: 2026-11-02T16:24:26.458Z
+  - phase: land
+    at: 2026-11-02T17:29:22.377Z
+    by: implementation-session
+    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
+    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
+    commit: fb17e9a
+    x-action: refresh
+updated_at: 2026-11-02T17:29:22.377Z
 updated_by: implementation-session
 do_not_read:
   - path: specs/001-baton-template/roadmap.md

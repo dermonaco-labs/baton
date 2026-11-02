@@ -27,8 +27,9 @@
       "line": 6,
       "persona": "learnings-researcher",
       "confidence": 0.98,
-      "task": "T023",
-      "disposition": "open",
+      "task": "T030",
+      "disposition": "fixed",
+      "x-resolution": "T030: exact source002 retirement in cleanup and four template smoke assertions; adoption regression verifies removal, byte-preserved independent adopter feature and successful adopter validation.",
       "reason": "No task covers template disposition of the new source feature; converge must append a dedicated task (cleanup remove entry plus adoption coverage).",
       "x-evidence": "Reproduced independently from git archive HEAD c7bd8d4 in an isolated temp repo: BATON_FORCE_CLEANUP=1 adopt --no-workflows exits 0, specs/002-context-optimization-packs survives, validate --json exits 1 with E_MISSING_ARTIFACT for src/lib/context-guards.mjs, src/commands/context.mjs, test/integration/context.test.mjs, packs/token-budget.yml, packs/optimize.yml and docs/06-packs-and-customization.md. The remove list retires specs/001-baton-template/ but not specs/002-context-optimization-packs/. Smoke workflows assert only 001 absence (smoke.yml:42,76,117; mvp-windows-smoke.yml:39). adopt.test.mjs derivedCopy copies the working tree; feature 002 read_first gained removed/moved source paths only at the implement receipt, so earlier coverage could pass while leaking the feature. Violates docs/solutions/quick-lane-scope-and-stranded-land-2026-09-29.md lesson (a).",
       "x-fix": "Add specs/002-context-optimization-packs/ to the remove list; extend adoption coverage (and smoke assertions where appropriate) to prove source 002 is removed while a separate adopter-owned feature survives. Do not weaken validation or blanket-delete adopter specs; no production adopt logic change expected."
@@ -42,7 +43,8 @@
       "persona": "adversarial-reviewer",
       "confidence": 0.95,
       "task": "T013",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T031: both actions protect backups before reads/mutations. Six exact-code modes cover cross-baton read_first/hash, managed, excluded existing/absent and case-aliased backups; invalid excluded bytes are not decoded.",
       "reason": "Executable guard violates FR-007/FR-009 and the cross-baton protection edge case: a hash-bound or read_first backup is consumed and removed.",
       "x-evidence": "L233 checks only the target against protection.protectedPaths. backupPath (L252-253) is never checked; restore reads it (L264) and rm(backup) at L290. Adversarial reproduction: another feature's handoff binding specs/002-draft/spec.full.md with its sha256; restore preview allowed:true, apply exit 0, backup deleted, then context scope for that feature fails 'Required context source is missing'. Security reviewer independently raised the same gap.",
       "x-fix": "Refuse compact and restore (preview reason and apply) when key(backupPath) is in protectedPaths or excludedPaths; add an integration case where another baton binds the backup."
@@ -56,7 +58,8 @@
       "persona": "correctness-reviewer",
       "confidence": 0.95,
       "task": "T013",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T032: preview reports missing backup with allowed:false; apply returns E_CONTEXT_PROTECTED and the relative backup path, with unchanged snapshots.",
       "reason": "contracts/context.md requires an existing backup and repository-standard diagnostics naming target/reason.",
       "x-evidence": "Preview returns at L246 before any backup check; restore branch calls readFile(backup) unguarded, so ENOENT reaches cli.mjs:68-74 as E_INTERNAL with an absolute path. Compact branch uses optionalBytes and a typed E_CONFLICT. Correctness and adversarial agree; adversarial reproduced exit 10.",
       "x-fix": "Check optionalBytes(root, backupPath) for restore before building the report; add a preview reason and throw a typed BatonError with the relative backup path on apply; add a regression test."
@@ -70,7 +73,8 @@
       "persona": "correctness-reviewer",
       "confidence": 0.72,
       "task": "T013",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T032: optional decisions type/default matches the schema; schema-validated omitted-decisions fixture previews successfully. Multiple same-feature handoffs are separately refused as ambiguous.",
       "reason": "decisions is not in handoff.schema.json required; elsewhere code uses data.decisions ?? [].",
       "x-fix": "Use (data.decisions ?? []).some(...); add a fixture baton without decisions."
     },
@@ -83,7 +87,8 @@
       "persona": "adversarial-reviewer",
       "confidence": 0.88,
       "task": "T013",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T036 implements the minimum non-contract-changing remedy proposed by review: backup_sha256 and explicit restore-overwrite/provenance warning; docs explain loss of later edits and unauthenticated sibling backups. No new persistent provenance protocol.",
       "reason": "Downgraded from P1: apply requires --expect bound to the current target digest, so replacement is explicit; still, a backup not produced by compaction is accepted and post-compaction edits are discarded without a recovery copy.",
       "x-evidence": "Adversarial scenarios: unrelated user spec.full.md restored over a never-compacted spec (exit 0, original gone); FR-999 edit after compaction lost on restore with preview digest.",
       "x-fix": "Record backup/compacted digests at compaction and verify on restore, or preserve the current target with wx before rename; at minimum surface the backup digest in the preview."
@@ -97,7 +102,8 @@
       "persona": "testing-reviewer",
       "confidence": 0.82,
       "task": "T011",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T033: exact E_CONTEXT_PROTECTED per protection branch and restore; only stale digest accepts E_CONFLICT. Schema assertions prevent malformed approval fixtures from passing for the wrong reason.",
       "reason": "A protection regression masked by the stale-digest conflict, or a restore failing for an unrelated reason, keeps AC-US2-2 green.",
       "x-fix": "Assert one exact code per mode (E_CONTEXT_PROTECTED for read_first/hash/approved/history/malformed/managed; E_CONFLICT for stale) and errors[0].code for restore refusals (L114-116)."
     },
@@ -110,7 +116,8 @@
       "persona": "testing-reviewer",
       "confidence": 0.72,
       "task": "T011",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T031-T033: executable backup, missing-input, target/backup/backslash alias, whitespace, duplicate target, absent token-budget, excluded candidate and ambiguous-handoff cases assert exact diagnostics and unchanged snapshots.",
       "reason": "Guard branches at context-guards.mjs L248-264/L304 are unexercised; F02/F03/F04 escaped because of these gaps.",
       "x-fix": "Extend the exact-code refusal matrix with these modes and unchanged-snapshot assertions."
     },
@@ -123,7 +130,8 @@
       "persona": "testing-reviewer",
       "confidence": 0.75,
       "task": "T011",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T033: exact-code unit cases cover uppercase, drive absolute, rooted slash/backslash and ADS forms; canonical backslash paths remain supported. Integration cases exercise case-folded exclusions and backslash candidate aliases.",
       "reason": "Spec edge case requires Windows case aliases not to evade protection; unit test uses a loose catch-all regex.",
       "x-fix": "Add backslash, uppercase, C:/, leading-slash and ':stream' cases with exact codes."
     },
@@ -136,7 +144,8 @@
       "persona": "correctness-reviewer",
       "confidence": 0.65,
       "task": "T013",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T032: preview checks existing/missing backups and supplied candidate content/aliases, reports allowed:false and reasons, and remains non-mutating.",
       "reason": "Preview-then-apply flow in wrappers can mislead agents; either add deterministic precondition reasons or document that allowed covers protection only."
     },
     {
@@ -148,7 +157,8 @@
       "persona": "testing-reviewer",
       "confidence": 0.65,
       "task": "T011",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T033: phase, status, attach-approved, schema-invalid handoff and malformed manifest/lock cases added. Every generated approval fixture is schema-validated before use.",
       "reason": "Regression in these guard branches would make approved artifacts compactable without a failing test."
     },
     {
@@ -160,7 +170,8 @@
       "persona": "testing-reviewer",
       "confidence": 0.7,
       "task": "T016",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T033: optimize apply/flags assert E_USAGE, absent-pack refusal names optimize, readable output uses valid candidate/expect with exact E_CONTEXT_PROTECTED/exit1. Positive reports assert protected files, totals and byte-identical snapshots.",
       "reason": "L172-183 and L235-243 accept any failure; assert exact E_USAGE / pack-missing codes and E_CONTEXT_PROTECTED with valid candidate/expect."
     },
     {
@@ -172,7 +183,8 @@
       "persona": "correctness-reviewer",
       "confidence": 0.6,
       "task": "T020",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T034: bounded contracts-tree discovery includes nested Markdown, skips links/backups and honors case-normalized file/tree exclusions before reads. Scope and usage assert exact files and estimates.",
       "reason": "Usage under-reports context size relative to contextTarget's allowed set."
     },
     {
@@ -184,7 +196,8 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.8,
       "task": "T013",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T031: one non-global PROTECTED_MARKER constant covers targets, candidates and backups.",
       "reason": "Security-relevant guard copies at L234/L261/L265 can drift; hoist to one constant/helper."
     },
     {
@@ -196,7 +209,8 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.75,
       "task": "T020",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T034: shared estimatedTokens and TOKEN_ESTIMATE define formula/label for mutation previews and advisory reports; tests retain independent numerical expectations.",
       "reason": "Math.ceil(length/4) and the estimate label repeat at context.mjs:63/65/85/89 and context-guards.mjs:245/292."
     },
     {
@@ -208,7 +222,8 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.75,
       "task": "T007",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T035: frozen OPTIONAL_PIN_FIELDS drives verification/projection; tests assert exact contents, immutability and unchanged lock field order.",
       "reason": "sync.mjs:400, lock.mjs:54 and sync.mjs:301 must change together; export one field list."
     },
     {
@@ -220,7 +235,8 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.75,
       "task": "T005",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T035: ATV reuses verifyMitLicense with its existing copyright/message; source-specific copyright verification remains enforced and tested.",
       "reason": "Two implementations of the same license policy in one module."
     },
     {
@@ -232,7 +248,8 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.7,
       "task": "T023",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T035: BUNDLE_LIMIT_BYTES supplies comparison/error text; strict 450 KiB boundary and independently spelled-out test budget are unchanged.",
       "reason": "Use one BUNDLE_LIMIT constant for the comparison and message; D6 value unchanged."
     },
     {
@@ -244,7 +261,8 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.65,
       "task": "T020",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T034: advisory and guard code share contextExcluded, which owns canonical keys and directory-prefix exclusion semantics.",
       "reason": "Expose isExcluded(protection, path) or export key() and use it at L61/L83."
     },
     {
@@ -256,7 +274,8 @@
       "persona": "project-standards-reviewer",
       "confidence": 0.62,
       "task": "T022",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T036: approved cap increase is under Unreleased / Changed; no release or tag.",
       "reason": "Keep a Changelog 1.1.0 files changes to existing enforced limits under Changed."
     },
     {
@@ -268,7 +287,8 @@
       "persona": "testing-reviewer",
       "confidence": 0.62,
       "task": "T010",
-      "disposition": "open",
+      "disposition": "fixed",
+      "x-resolution": "T037: optional pin/row mismatches identify their source and exact field; 17 tamper cases plus raw-line-ending tampering assert precise diagnostics and E_LOCK_MISMATCH.",
       "reason": "Assert the tampered field/source appears in the diagnostic so per-field checks cannot silently regress."
     },
     {

@@ -74,31 +74,45 @@ test('lock verify checks optional source pins and vendored row provenance offlin
       return lock(root, ['verify']);
     };
     assert.deepEqual(await verify(), { data: { ok: true, files: 1 }, errors: [] });
+    const vetted = 'differs from the vetted sakitA/spec-kit-optimize v1.0.0 pin';
+    const learn = '.baton/vendor/optimize/commands/speckit.optimize.learn.md';
+    /** @type {Record<string, [(lock:any)=>void, string[]]>} */
     const tampering = {
-      commit: (/** @type {any} */ l) => { l.upstreams.optimize.commit = '0'.repeat(40); },
-      tree: (/** @type {any} */ l) => { l.upstreams.optimize.tree = '1'.repeat(40); },
-      tag: (/** @type {any} */ l) => { l.upstreams.optimize.tag = 'v9.9.9'; },
-      repo: (/** @type {any} */ l) => { l.upstreams.optimize.repo = 'fork/spec-kit-optimize'; },
-      license: (/** @type {any} */ l) => { l.upstreams.optimize.license = 'Apache-2.0'; },
-      'missing pin': (/** @type {any} */ l) => { delete l.upstreams.optimize; },
-      'upstream hash': (/** @type {any} */ l) => { l.files[0].sha256_upstream = '2'.repeat(64); },
-      repair: (/** @type {any} */ l) => { l.files[0].repair = { id: 'x', reason: 'y', upstream_issue: 'pending' }; },
-      'row license': (/** @type {any} */ l) => { l.files[0].license = 'Apache-2.0'; },
-      'owning pack': (/** @type {any} */ l) => { l.files[0].packs = ['core']; },
-      'shared pack': (/** @type {any} */ l) => { l.files[0].packs = ['optimize', 'core']; },
-      'vendor path': (/** @type {any} */ l) => { l.files[0].path = '.github/skills/speckit-optimize-run/SKILL.md'; },
-      'upstream path': (/** @type {any} */ l) => { l.files[0].upstream_path = 'commands/speckit.optimize.learn.md'; },
-      'escaping path': (/** @type {any} */ l) => { l.files[0].upstream_path = '../commands/speckit.optimize.run.md'; },
-      'stored at': (/** @type {any} */ l) => { l.files[0].stored_at = path; },
-      'unknown source': (/** @type {any} */ l) => { l.upstreams.extra = { ...pin }; },
+      commit: [l => { l.upstreams.optimize.commit = '0'.repeat(40); }, [`upstream optimize commit ${vetted}`]],
+      tree: [l => { l.upstreams.optimize.tree = '1'.repeat(40); }, [`upstream optimize tree ${vetted}`]],
+      tag: [l => { l.upstreams.optimize.tag = 'v9.9.9'; }, [`upstream optimize tag ${vetted}`]],
+      repo: [l => { l.upstreams.optimize.repo = 'fork/spec-kit-optimize'; }, [`upstream optimize repo ${vetted}`]],
+      version: [l => { l.upstreams.optimize.version = '9.9.9'; }, [`upstream optimize version ${vetted}`]],
+      license: [l => { l.upstreams.optimize.license = 'Apache-2.0'; }, [`upstream optimize license ${vetted}`]],
+      'missing pin': [l => { delete l.upstreams.optimize; }, [`upstream optimize pin is missing for ${stored}`]],
+      'upstream hash': [l => { l.files[0].sha256_upstream = '2'.repeat(64); },
+        [`optimize row ${stored} has invalid sha256_upstream`]],
+      repair: [l => { l.files[0].repair = { id: 'x', reason: 'y', upstream_issue: 'pending' }; },
+        [`optimize row ${stored} has invalid repair`]],
+      'row license': [l => { l.files[0].license = 'Apache-2.0'; }, [`optimize row ${stored} has invalid license`]],
+      'owning pack': [l => { l.files[0].packs = ['core']; }, [`optimize row ${stored} has invalid packs`]],
+      'shared pack': [l => { l.files[0].packs = ['optimize', 'core']; }, [`optimize row ${stored} has invalid packs`]],
+      'vendor path': [l => { l.files[0].path = '.github/skills/speckit-optimize-run/SKILL.md'; },
+        [`optimize row ${stored} has invalid path (expected ${path})`]],
+      'upstream path': [l => { l.files[0].upstream_path = 'commands/speckit.optimize.learn.md'; },
+        [`optimize row ${stored} has invalid path (expected ${learn})`,
+          `optimize row ${stored} has invalid stored_at (expected packs/optimize/files/${learn})`]],
+      'escaping path': [l => { l.files[0].upstream_path = '../commands/speckit.optimize.run.md'; },
+        [`optimize row ${stored} has invalid upstream_path`]],
+      'stored at': [l => { l.files[0].stored_at = path; },
+        [path, `optimize row ${path} has invalid stored_at (expected ${stored})`]],
+      'unknown source': [l => { l.upstreams.extra = { ...pin }; }, ['unknown upstream extra']],
     };
-    for (const [name, mutate] of Object.entries(tampering)) {
+    for (const [name, [mutate, expected]] of Object.entries(tampering)) {
       const result = await verify(mutate);
       assert.equal(result.exitCode, 1, name);
-      assert.ok(result.errors.some(({ code }) => code === 'E_LOCK_MISMATCH'), name);
+      assert.deepEqual(result.errors.map(({ code, message }) => [code, message.split('\n')]),
+        [['E_LOCK_MISMATCH', expected]], name);
     }
     await writeFile(join(root, stored), bytes.replace('\r\n', '\n'));
-    assert.equal((await verify()).exitCode, 1, 'normalized vendored bytes');
+    const normalized = await verify();
+    assert.equal(normalized.exitCode, 1, 'normalized vendored bytes');
+    assert.deepEqual(normalized.errors.map(({ code, message }) => [code, message]), [['E_LOCK_MISMATCH', stored]]);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

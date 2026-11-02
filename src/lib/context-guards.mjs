@@ -7,9 +7,17 @@ import { loadSchemas, validateSchema } from './schema.mjs';
 import { BatonError } from './report.mjs';
 
 /** @typedef {{path:string,why?:string,sha256?:string}} Reference */
-/** @typedef {{feature:string,lane:string,phase_completed:string,status:string,read_first:Reference[],do_not_read?:Reference[],artifacts:Reference[],gate:{approved_by:string|null},history:Array<{by:string,'x-action'?:string}>,decisions:Array<{by:string,tag?:string}>}} ContextBaton */
+/** @typedef {{feature:string,lane:string,phase_completed:string,status:string,read_first:Reference[],do_not_read?:Reference[],artifacts:Reference[],gate:{approved_by:string|null},history:Array<{by:string,'x-action'?:string}>,decisions?:Array<{by:string,tag?:string}>}} ContextBaton */
 /** @typedef {{packs:string[],files:Array<{path:string,sha256:string}>,marker_sections:Array<{path:string}>}} ContextManifest */
 /** @typedef {{path:string,bytes:Buffer}} SnapshotFile */
+
+const PROTECTED_MARKER = /<!--\s*(?:BATON|SPECKIT):(?:START|END)/i;
+export const TOKEN_ESTIMATE = 'characters / 4; not provider billing';
+
+/** @param {string} text */
+export function estimatedTokens(text) {
+  return Math.ceil(text.length / 4);
+}
 
 /** @param {string} message @param {string} [path] */
 function protectedError(message, path = '') {
@@ -178,7 +186,7 @@ export async function contextProtection(root, pack) {
   for (const { data } of batons) {
     for (const ref of [...data.read_first, ...data.artifacts]) {
       protectedPaths.add(key(ref.path));
-      if (excludedPaths.has(key(ref.path))) continue;
+      if (contextExcluded({ excludedPaths }, ref.path)) continue;
       const source = await readFile(await requiredPath(root, ref.path));
       if (ref.sha256 && hashArtifact(ref.path, source) !== ref.sha256) {
         throw protectedError('Stale handoff source prevents safe mutation', ref.path);
@@ -226,45 +234,64 @@ async function assertSnapshot(root, protection) {
 export async function mutateContext(root, action, options) {
   const path = contextTarget(options.feature, options.target);
   const protection = await contextProtection(root, 'token-budget');
+  if (contextExcluded(protection, path)) throw protectedError('Target is excluded from context', path);
   const absolute = await requiredPath(root, path);
   const bytes = await readFile(absolute);
   const text = textBytes(bytes, path);
   const reasons = [];
   if (protection.protectedPaths.has(key(path))) reasons.push('Target is read_first, source/hash-bound or managed');
-  if (/<!--\s*(?:BATON|SPECKIT):(?:START|END)/i.test(text)) reasons.push('Target contains protected instruction markers');
-  for (const baton of protection.batons) {
-    if (key(dirname(baton.path)) !== key(`specs/${options.feature}`)) continue;
+  if (PROTECTED_MARKER.test(text)) reasons.push('Target contains protected instruction markers');
+  const selected = protection.batons.filter((baton) => key(dirname(baton.path)) === key(`specs/${options.feature}`));
+  if (selected.length > 1) reasons.push('Multiple handoffs make feature context ambiguous');
+  for (const baton of selected) {
     const data = baton.data;
     if (data.gate.approved_by || data.history.some((item) => item['x-action'] === 'approve' || item.by.startsWith('human:')) ||
-        data.decisions.some((item) => item.tag === 'attach-approved') ||
+        (data.decisions ?? []).some((item) => item.tag === 'attach-approved') ||
         !['none', 'specify', 'brainstorm'].includes(data.phase_completed) || data.status !== 'ready') {
       reasons.push('Feature has approval history or cannot establish pre-approval draft state');
     }
   }
-  const report = { action, target: path, allowed: reasons.length === 0, reasons,
-    applied: false, sha256: hashBytes(bytes), estimated_tokens: Math.ceil(text.length / 4) };
+  const backupPath = path.replace(/\.md$/, '.full.md');
+  const backupProtected = protection.protectedPaths.has(key(backupPath)) || contextExcluded(protection, backupPath);
+  if (backupProtected) reasons.push(`Backup is protected, bound, managed or excluded: ${backupPath}`);
+  const backupBytes = backupProtected ? null : await optionalBytes(root, backupPath);
+  let proposed = '';
+  if (action === 'compact' && options.candidate) {
+    if (contextExcluded(protection, options.candidate)) {
+      reasons.push('Candidate is excluded from context');
+    } else if (key(options.candidate) === key(path) || key(options.candidate) === key(backupPath)) {
+      reasons.push('Candidate aliases target or backup');
+    } else {
+      const candidatePath = await requiredPath(root, options.candidate);
+      proposed = textBytes(await readFile(candidatePath), options.candidate);
+      if (!proposed.trim() || PROTECTED_MARKER.test(proposed)) reasons.push('Invalid or protected compaction candidate');
+    }
+  }
+  if (action === 'restore' && !backupProtected) {
+    if (backupBytes === null) reasons.push(`Restore backup is missing: ${backupPath}`);
+    else if (PROTECTED_MARKER.test(textBytes(backupBytes, backupPath))) reasons.push(`Backup contains protected instructions: ${backupPath}`);
+  }
+  const backupConflict = action === 'compact' && backupBytes !== null;
+  const report = { action, target: path, allowed: reasons.length === 0 && !backupConflict,
+    reasons: backupConflict ? [...reasons, 'Existing compaction backup will not be overwritten'] : reasons,
+    applied: false, sha256: hashBytes(bytes), estimated_tokens: estimatedTokens(text), estimate: TOKEN_ESTIMATE,
+    backup_path: backupPath, backup_sha256: backupBytes === null ? null : hashBytes(backupBytes),
+    ...(action === 'restore' ? { warning: 'Restore replaces the current target with the backup and deletes the backup; compaction provenance is not verified. Inspect both before applying.' } : {}) };
   if (!options.apply) return report;
   if (reasons.length) throw protectedError(reasons.join('; '), path);
   if (!options.expect || !/^[a-f0-9]{64}$/.test(options.expect)) {
     throw new BatonError('E_USAGE', 'Apply requires --expect with the original raw SHA-256', 2);
   }
   if (options.expect !== report.sha256) throw new BatonError('E_CONFLICT', 'Candidate target digest is stale', 4, path);
-  const backupPath = path.replace(/\.md$/, '.full.md');
   const backup = await safePath(root, backupPath, true);
   let replacement;
   if (action === 'compact') {
     if (!options.candidate) throw new BatonError('E_USAGE', 'Compaction apply requires --candidate', 2);
-    const candidatePath = await requiredPath(root, options.candidate);
-    if (key(candidatePath) === key(absolute) || key(candidatePath) === key(backup)) throw protectedError('Candidate aliases target or backup');
-    if (await optionalBytes(root, backupPath)) throw new BatonError('E_CONFLICT', 'Existing compaction backup will not be overwritten', 4, backupPath);
-    const proposed = textBytes(await readFile(candidatePath), options.candidate);
-    if (!proposed.trim() || /<!--\s*(?:BATON|SPECKIT):(?:START|END)/i.test(proposed)) throw protectedError('Invalid or protected compaction candidate');
+    if (backupConflict) throw new BatonError('E_CONFLICT', 'Existing compaction backup will not be overwritten', 4, backupPath);
     replacement = Buffer.from(proposed.replace(/\r\n/g, '\n').replace(/\n/g, text.includes('\r\n') ? '\r\n' : '\n'));
   } else {
-    replacement = await readFile(backup);
-    if (/<!--\s*(?:BATON|SPECKIT):(?:START|END)/i.test(textBytes(replacement, backupPath))) {
-      throw protectedError('Backup contains protected instructions', backupPath);
-    }
+    if (backupBytes === null) throw protectedError('Restore backup is missing', backupPath);
+    replacement = backupBytes;
     protection.files.push({ path: backupPath, bytes: replacement });
   }
   const temporary = `${absolute}.context-${randomUUID()}.tmp`;
@@ -289,11 +316,38 @@ export async function mutateContext(root, action, options) {
       }
       await rm(backup);
     }
-    return { ...report, applied: true, sha256: hashBytes(replacement), estimated_tokens: Math.ceil(replacement.toString('utf8').length / 4) };
+    return { ...report, applied: true, sha256: hashBytes(replacement), estimated_tokens: estimatedTokens(replacement.toString('utf8')) };
   } finally {
     await rm(temporary, { force: true });
     if (createdBackup && !committed && (await optionalBytes(root, backupPath))?.equals(bytes)) await rm(backup);
   }
+}
+
+/** @param {{excludedPaths:Set<string>}} protection @param {string} path */
+export function contextExcluded(protection, path) {
+  const normalized = key(path).replace(/\/$/, '');
+  for (const excluded of protection.excludedPaths) {
+    const prefix = excluded.replace(/\/$/, '');
+    if (normalized === prefix || normalized.startsWith(`${prefix}/`)) return true;
+  }
+  return false;
+}
+
+/** @param {string} root @param {string} feature @param {Awaited<ReturnType<typeof contextProtection>>} protection */
+export async function contextFilePaths(root, feature, protection) {
+  const directory = `specs/${feature}`;
+  const pending = [directory];
+  const paths = [];
+  for (let index = 0; index < pending.length; index++) {
+    const current = pending[index];
+    for (const entry of await entries(root, current)) {
+      const path = `${current}/${entry.name}`;
+      if (contextExcluded(protection, path) || entry.isSymbolicLink()) continue;
+      if (entry.isDirectory() && (current !== directory || entry.name === 'contracts')) pending.push(path);
+      else if (entry.isFile() && entry.name.endsWith('.md') && !entry.name.endsWith('.full.md')) paths.push(path);
+    }
+  }
+  return paths.sort();
 }
 
 /** @param {string} root @param {string} feature */

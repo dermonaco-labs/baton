@@ -100,11 +100,12 @@ export function fetchAtv({ work, commit = ATV_COMMIT, tree = ATV_TREE }) {
   }
   run('git', ['-C', repo, 'checkout', '-q', '--detach', 'FETCH_HEAD']);
   const license = readFileSync(join(repo, 'LICENSE'), 'utf8');
-  if (!/^MIT License\s*\r?\n/.test(license) || !license.includes('Copyright (c) 2026 All The Vibes')) {
-    throw new UpstreamError('E_LICENSE', 'Pinned ATV LICENSE is not the expected MIT license');
-  }
+  verifyMitLicense(license, 'Copyright (c) 2026 All The Vibes', 'ATV');
   return repo;
 }
+
+/** Locked optional-source pin fields, in lock projection order. */
+export const OPTIONAL_PIN_FIELDS = Object.freeze(/** @type {const} */ (['version', 'repo', 'tag', 'commit', 'tree', 'license']));
 
 /**
  * Optional, opt-in sources vendored only as inert pack payload under `.baton/vendor/<id>/`.

@@ -60,6 +60,17 @@ guarded Node writer with a selected feature/target and expected raw digest.
 Only draft SDD artifacts before approval **and** hash binding are eligible.
 An unapproved but already hashed artifact is protected.
 
+The same protections and exclusions cover `.full.md` backups: a backup bound
+by any feature or quick baton cannot be created, consumed or deleted by these
+commands. Previews report missing restore backups, existing compact backups
+and invalid supplied candidates before apply.
+
+Restore previews show the backup's raw digest and an overwrite warning.
+`--expect` binds the current target, not backup provenance: restore explicitly
+replaces that target with the selected sibling backup and then removes the
+backup. Review both files first; later target edits are not preserved, and an
+arbitrary sibling backup is not authenticated as a prior compaction result.
+
 Approved or historically approved sources, managed files, source-of-truth
 bindings and all `read_first` targets (even without a checksum) refuse
 in-place compact/restore. Missing or malformed protection metadata and
@@ -71,7 +82,8 @@ and then reapprove merely to silence a stale binding.
 Constitution, AGENTS.md, CLAUDE.md, other agent instructions and Baton/SPECKIT
 sections are never compaction targets. Concise applies only to the current
 session. Scope cannot replace, reorder or shrink the baton's required context
-and must honor exclusions. Usage estimates use characters divided by four,
+and must honor exclusions. Scope/usage include nested contract Markdown but
+do not follow linked trees. Usage estimates use characters divided by four,
 not provider billing. Output slimming is explicitly requested conversational
 summarization only, never automatic filtering of checks, stderr, required
 evidence or command failure status.

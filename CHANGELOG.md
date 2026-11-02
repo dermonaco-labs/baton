@@ -19,6 +19,8 @@ All notable changes to Baton are documented here. This follows
   scope advice and usage estimates. Governance amendments retain the normal
   speckit-constitution flow; mandatory gates, scanner rules and approval
   semantics cannot be optimized away.
+### Changed
+
 - Increase the strictly enforced bundle cap from 400 KiB to 450 KiB with
   explicit human approval for the added source verification and guarded
   operations. No release or tag is cut by these additions.

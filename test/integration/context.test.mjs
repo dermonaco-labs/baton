@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import { tempRepo, runCli, sourceRoot } from '../helpers/index.mjs';
 import { hashBytes, hashArtifact } from '../../src/lib/hash.mjs';
 import { parseFrontmatter, serializeFrontmatter } from '../../src/lib/frontmatter.mjs';
+import { loadSchemas, validateSchema } from '../../src/lib/schema.mjs';
 
 const feature = '002-draft';
 const target = `specs/${feature}/spec.md`;
@@ -67,6 +68,14 @@ async function baton(root, mode) {
     phase: 'specify', at: '2026-11-02T00:00:00Z', by: 'human:repository-owner',
     commit: null, 'x-action': 'approve',
   });
+  if (mode === 'phase') data.phase_completed = 'plan';
+  if (mode === 'status') data.status = 'blocked';
+  if (mode === 'attach-approved') data.decisions = [{
+    id: 'D1', by: 'human:repository-owner', tag: 'attach-approved',
+    decision: 'Owner approved attachment', rationale: 'Explicit owner approval',
+  }];
+  if (mode === 'no-decisions') delete data.decisions;
+  assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', data), [], `Invalid ${mode} fixture`);
   const path = `specs/${feature}/handoff.md`;
   await writeFile(join(root, path), serializeFrontmatter(data, body));
 }
@@ -90,10 +99,14 @@ test('context draft previews write nothing and explicit compact/restore preserve
 });
 
 test('context protection refuses bound approved historical and malformed targets with no side effects', async (t) => {
-  for (const mode of ['read_first', 'hash', 'approved', 'history', 'malformed', 'managed', 'stale']) {
+  for (const mode of ['read_first', 'hash', 'approved', 'history', 'phase', 'status', 'attach-approved',
+    'malformed', 'managed', 'stale', 'invalid-handoff', 'malformed-manifest', 'malformed-lock']) {
     await t.test(mode, async (t) => {
       const { root } = await fixture(t);
       if (mode === 'malformed') await writeFile(join(root, `specs/${feature}/handoff.md`), '---\nbaton: [broken\n---\n');
+      else if (mode === 'invalid-handoff') await writeFile(join(root, `specs/${feature}/handoff.md`), '---\nschema: 1\n---\n');
+      else if (mode === 'malformed-manifest') await writeFile(join(root, '.baton/manifest.json'), '{');
+      else if (mode === 'malformed-lock') await writeFile(join(root, 'baton.lock.json'), '{');
       else if (mode === 'managed') {
         const path = join(root, '.baton/manifest.json');
         const manifest = JSON.parse(await readFile(path, 'utf8'));
@@ -105,14 +118,15 @@ test('context protection refuses bound approved historical and malformed targets
         '--candidate', 'candidate.md', '--expect', mode === 'stale' ? '0'.repeat(64) : digest, '--apply']);
       assert.notEqual(result.code, 0, mode);
       assert.equal(result.output.ok, false, mode);
-      assert.ok(result.output.errors.some((error) =>
-        ['E_CONTEXT_PROTECTED', 'E_CONFLICT'].includes(error.code)), JSON.stringify(result.output));
+      assert.equal(result.output.errors[0].code, mode === 'stale' ? 'E_CONFLICT' : 'E_CONTEXT_PROTECTED',
+        JSON.stringify(result.output));
       assert.deepEqual(await snapshot(root), before, mode);
       await writeFile(join(root, `specs/${feature}/spec.full.md`), original);
       const restoreBefore = await snapshot(root);
       if (mode !== 'stale') {
         const restore = await invoke(root, ['restore', '--feature', feature, '--target', target, '--expect', digest, '--apply']);
         assert.notEqual(restore.code, 0, mode);
+        assert.equal(restore.output.errors[0].code, 'E_CONTEXT_PROTECTED', JSON.stringify(restore.output));
         assert.deepEqual(await snapshot(root), restoreBefore, mode);
       }
     });
@@ -160,6 +174,10 @@ test('context optimize reports run tokens learn never edit governance or memory'
     assert.equal(result.code, 0, result.stderr);
     assert.equal(result.output.data.report_only, true);
     assert.match(result.output.data.instruction, /Mandatory gates, scanner rules and approval semantics are not removable/);
+    assert.equal(result.output.data.files.find((file) => file.path === '.baton/phases.yml').protected, true);
+    assert.equal(result.output.data.estimated_tokens,
+      result.output.data.files.reduce((total, file) => total + file.estimated_tokens, 0));
+    assert.ok(result.output.data.files.every((file) => file.protected === true && file.estimated_tokens > 0));
     assert.deepEqual(await snapshot(root), before);
   }
 });
@@ -171,16 +189,20 @@ test('context optimize apply and missing-pack requests fail without weakening pr
     const before = await snapshot(root);
     const result = await invoke(root, ['optimize', action, '--apply']);
     assert.notEqual(result.code, 0);
+    assert.equal(result.output.errors[0].code, 'E_USAGE');
     assert.deepEqual(await snapshot(root), before);
   }
   for (const flag of ['--remove-rules', '--persist', '--auto-execute']) {
     const before = await snapshot(root);
-    assert.notEqual((await invoke(root, ['optimize', 'learn', flag])).code, 0);
+    const result = await invoke(root, ['optimize', 'learn', flag]);
+    assert.equal(result.output.errors[0].code, 'E_USAGE');
     assert.deepEqual(await snapshot(root), before);
   }
   const absent = await fixture(t, []);
   const result = await invoke(absent.root, ['optimize', 'run']);
   assert.notEqual(result.code, 0);
+  assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+  assert.match(result.output.errors[0].message, /optimize pack is not installed/);
 });
 
 test('context protection honors cross-feature quick references and refuses backup conflicts', async (t) => {
@@ -232,16 +254,179 @@ test('context advisory preserves ordered read_first exclusions and session-only 
 
 test('context output preserves errors failure status readable reports and inactive helpers', async (t) => {
   const { root } = await fixture(t);
-  const bad = await runCli(root, ['context', 'compact', '--feature', feature, '--target', 'AGENTS.md', '--apply']);
-  assert.notEqual(bad.code, 0);
-  assert.match(bad.stderr, /E_(?:USAGE|CONTEXT_PROTECTED|CHECK_FAILED)/);
+  const bad = await runCli(root, ['context', 'compact', '--feature', feature, '--target', 'AGENTS.md',
+    '--candidate', 'candidate.md', '--expect', digest, '--apply']);
+  assert.equal(bad.code, 1);
+  assert.match(bad.stderr, /E_CONTEXT_PROTECTED/);
+  assert.doesNotMatch(bad.stderr, /E_USAGE|E_INTERNAL/);
   const report = await runCli(root, ['context', 'usage', '--feature', feature]);
   assert.equal(report.code, 0, report.stderr);
   assert.match(report.stdout, /estimated|tokens/i);
   const before = await snapshot(root);
   const duplicate = await invoke(root, ['usage', '--feature', feature, '--feature', feature]);
   assert.notEqual(duplicate.code, 0);
+  assert.equal(duplicate.output.errors[0].code, 'E_USAGE');
   assert.deepEqual(await snapshot(root), before);
+});
+
+test('context protection covers cross-baton bound managed excluded and case-aliased backups', async (t) => {
+  for (const mode of ['read_first', 'hash', 'excluded', 'excluded-absent', 'managed', 'case-alias']) {
+    await t.test(mode, async (t) => {
+      const { root } = await fixture(t);
+      const backup = `specs/${feature}/spec.full.md`;
+      if (mode !== 'excluded-absent') {
+        await writeFile(join(root, backup), mode === 'excluded' ? Buffer.from([0xff]) : original);
+      }
+      if (mode === 'managed') {
+        const path = join(root, '.baton/manifest.json');
+        const manifest = JSON.parse(await readFile(path, 'utf8'));
+        manifest.files.push({ path: backup, sha256: digest, pack: 'core', owner: 'baton', managed: true });
+        await writeFile(path, JSON.stringify(manifest));
+      } else {
+        await baton(root, 'draft');
+        const own = join(root, `specs/${feature}/handoff.md`);
+        const { data, body } = parseFrontmatter(await readFile(own, 'utf8'));
+        const path = mode === 'case-alias' ? backup.toUpperCase() : backup;
+        if (mode.startsWith('excluded') || mode === 'case-alias') data.do_not_read = [{ path, why: 'Excluded backup' }];
+        else if (mode === 'hash') data.artifacts = [{ path, role: 'source-of-truth', sha256: hashArtifact(backup, original) }];
+        else data.read_first.push({ path, why: 'Required backup' });
+        await mkdir(join(root, 'specs/003-other'));
+        await writeFile(join(root, 'specs/003-other/handoff.md'), serializeFrontmatter(data, body));
+        await rm(own);
+      }
+      const before = await snapshot(root);
+      for (const action of ['compact', 'restore']) {
+        const args = [action, '--feature', feature, '--target', target,
+          ...(action === 'compact' ? ['--candidate', 'candidate.md'] : [])];
+        const preview = await invoke(root, args);
+        assert.equal(preview.code, 0, JSON.stringify(preview.output));
+        assert.equal(preview.output.data.allowed, false);
+        assert.match(preview.output.data.reasons.join('; '), /backup.*(?:protected|bound|excluded|managed)/i);
+        const result = await invoke(root, [...args, '--expect', digest, '--apply']);
+        assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED', JSON.stringify(result.output));
+        assert.deepEqual(await snapshot(root), before);
+      }
+    });
+  }
+});
+
+test('context draft metadata allows omitted decisions but refuses ambiguous handoffs', async (t) => {
+  const { root } = await fixture(t);
+  await baton(root, 'no-decisions');
+  const preview = await invoke(root, ['compact', '--feature', feature, '--target', target]);
+  assert.equal(preview.code, 0, JSON.stringify(preview.output));
+  assert.equal(preview.output.data.allowed, true);
+  await cp(join(root, `specs/${feature}/handoff.md`), join(root, `specs/${feature}/handoff.extra.md`));
+  const before = await snapshot(root);
+  const ambiguous = await invoke(root, ['compact', '--feature', feature, '--target', target,
+    '--candidate', 'candidate.md', '--expect', digest, '--apply']);
+  assert.equal(ambiguous.output.errors[0].code, 'E_CONTEXT_PROTECTED', JSON.stringify(ambiguous.output));
+  assert.match(ambiguous.output.errors[0].message, /ambiguous/i);
+  assert.deepEqual(await snapshot(root), before);
+});
+
+test('context protection reports missing restore backup and existing compact backup accurately', async (t) => {
+  const { root } = await fixture(t);
+  const args = ['--feature', feature, '--target', target];
+  const before = await snapshot(root);
+  const preview = await invoke(root, ['restore', ...args]);
+  assert.equal(preview.code, 0, JSON.stringify(preview.output));
+  assert.equal(preview.output.data.allowed, false);
+  assert.match(preview.output.data.reasons.join('; '), /backup.*missing/i);
+  const result = await invoke(root, ['restore', ...args, '--expect', digest, '--apply']);
+  assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+  assert.match(result.output.errors[0].message, /backup.*missing/i);
+  assert.match(result.output.errors[0].message, new RegExp(`specs/${feature}/spec\\.full\\.md`));
+  assert.deepEqual(await snapshot(root), before);
+  await writeFile(join(root, `specs/${feature}/spec.full.md`), original);
+  const conflict = await invoke(root, ['compact', ...args, '--candidate', 'candidate.md']);
+  assert.equal(conflict.output.data.allowed, false);
+  assert.match(conflict.output.data.reasons.join('; '), /backup.*(?:exists|overwrit)/i);
+});
+
+test('context draft restore preview exposes backup digest and overwrite semantics without writing provenance', async (t) => {
+  const { root } = await fixture(t);
+  const backup = `specs/${feature}/spec.full.md`;
+  await writeFile(join(root, backup), original);
+  const before = await snapshot(root);
+  const result = await invoke(root, ['restore', '--feature', feature, '--target', target]);
+  assert.equal(result.code, 0, JSON.stringify(result.output));
+  assert.equal(result.output.data.backup_sha256, digest);
+  assert.match(result.output.data.warning, /replaces.*current.*provenance/i);
+  assert.deepEqual(await snapshot(root), before);
+});
+
+test('context protection refusal contracts preserve exact diagnostics and every file', async (t) => {
+  for (const mode of ['expect', 'candidate', 'target-alias', 'backslash-alias', 'backup-alias', 'whitespace',
+    'duplicate-target', 'absent-pack', 'excluded-candidate']) {
+    await t.test(mode, async (t) => {
+      const { root } = await fixture(t, mode === 'absent-pack' ? [] : ['token-budget']);
+      if (mode === 'whitespace') await writeFile(join(root, 'candidate.md'), ' \r\n\t');
+      if (mode === 'backup-alias') await writeFile(join(root, `specs/${feature}/spec.full.md`), original);
+      if (mode === 'excluded-candidate') {
+        await baton(root, 'draft');
+        const path = join(root, `specs/${feature}/handoff.md`);
+        const { data, body } = parseFrontmatter(await readFile(path, 'utf8'));
+        data.do_not_read = [{ path: 'candidate.md', why: 'Never load this candidate' }];
+        await writeFile(path, serializeFrontmatter(data, body));
+        await writeFile(join(root, 'candidate.md'), Buffer.from([0xff]));
+      }
+      const proposed = mode === 'target-alias' ? target : mode === 'backslash-alias' ? target.replaceAll('/', '\\') :
+        mode === 'backup-alias' ? `specs/${feature}/spec.full.md` : 'candidate.md';
+      const args = ['compact', '--feature', feature, '--target', target,
+        ...(mode === 'duplicate-target' ? ['--target', target] : []),
+        ...(mode === 'candidate' ? [] : ['--candidate', proposed]),
+        ...(mode === 'expect' ? [] : ['--expect', digest]), '--apply'];
+      const before = await snapshot(root);
+      if (['target-alias', 'backslash-alias', 'backup-alias', 'whitespace', 'excluded-candidate'].includes(mode)) {
+        const preview = await invoke(root, args.slice(0, -1));
+        assert.equal(preview.code, 0, JSON.stringify(preview.output));
+        assert.equal(preview.output.data.allowed, false);
+      }
+      const result = await invoke(root, args);
+      assert.equal(result.code, ['expect', 'candidate', 'duplicate-target'].includes(mode) ? 2 : 1,
+        JSON.stringify(result.output));
+      assert.equal(result.output.errors[0].code,
+        ['expect', 'candidate', 'duplicate-target'].includes(mode) ? 'E_USAGE' : 'E_CONTEXT_PROTECTED');
+      if (mode === 'absent-pack') assert.match(result.output.errors[0].message, /token-budget pack is not installed/);
+      if (mode === 'excluded-candidate') assert.match(result.output.errors[0].message, /Candidate is excluded/);
+      assert.deepEqual(await snapshot(root), before);
+    });
+  }
+});
+
+test('context advisory includes nested contract Markdown but skips excluded or linked trees', async (t) => {
+  const { root } = await fixture(t);
+  const contract = `specs/${feature}/contracts/nested/api.md`;
+  const excluded = `specs/${feature}/contracts/nested/private.md`;
+  await mkdir(join(root, `specs/${feature}/contracts/nested`), { recursive: true });
+  await writeFile(join(root, contract), '# API\nDescribe this contract.\n');
+  await writeFile(join(root, excluded), 'Must not be counted.\n');
+  await mkdir(join(root, `specs/${feature}/contracts/private`));
+  await writeFile(join(root, `specs/${feature}/contracts/private/secret.md`), Buffer.from([0xff]));
+  await mkdir(join(root, 'outside'));
+  await writeFile(join(root, 'outside/hidden.md'), 'Must not follow links.\n');
+  await symlink(join(root, 'outside'), join(root, `specs/${feature}/contracts/link`), 'junction');
+  await baton(root, 'draft');
+  const path = join(root, `specs/${feature}/handoff.md`);
+  const { data, body } = parseFrontmatter(await readFile(path, 'utf8'));
+  data.do_not_read = [
+    { path: excluded.toUpperCase(), why: 'Private contract' },
+    { path: `specs/${feature}/contracts/private/`, why: 'Excluded contract tree' },
+  ];
+  await writeFile(path, serializeFrontmatter(data, body));
+  const before = await snapshot(root);
+  for (const action of ['scope', 'usage']) {
+    const result = await invoke(root, [action, '--feature', feature]);
+    assert.equal(result.code, 0, JSON.stringify(result.output));
+    const entry = result.output.data.files.find((item) => item.path === contract);
+    assert.deepEqual(entry, { path: contract, estimated_tokens: Math.ceil('# API\nDescribe this contract.\n'.length / 4) });
+    assert.ok(!result.output.data.files.some((item) =>
+      item.path === excluded || item.path.includes('/link/') || item.path.includes('/private/')));
+    assert.equal(result.output.data.estimated_tokens,
+      result.output.data.files.reduce((sum, item) => sum + item.estimated_tokens, 0));
+    assert.deepEqual(await snapshot(root), before);
+  }
 });
 
 test('context protection refuses excluded drafts markers malformed locks and invalid candidates', async (t) => {
