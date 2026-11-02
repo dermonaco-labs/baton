@@ -472,10 +472,11 @@
       "persona": "adversarial-reviewer",
       "confidence": 1,
       "task": "T039",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "key() is lexical only (POSIX normalize, trailing-slash strip, lowercase). The handoff/manifest/lock path patterns accept segments ending in \".\" or \" \" and 8.3 short names (e.g. 002-DR~1), which Win32 resolves to the canonical file, but key() maps them to different keys. Schema-valid do_not_read entries spelled this way are silently ignored: restore applied and deleted the excluded backup (orchestrator probe), compact applied on an excluded target and on a nested contracts/** target under a trailing-dot directory exclusion, and context usage still reported an excluded file (adversarial probe). Same class as F22 and the spec.md:150 edge case that Windows aliases must not evade protection.",
       "x-severity": "Reviewers disagreed: adversarial P1 (0.90), testing P2 (0.65), security P3 (0.62). Synthesized P2: the impact matches F22, but these spellings do not arise from normal authoring, Node fs returns ENOENT for them so Baton cannot be steered into reading an aliased file, and compaction keeps a recoverable backup. Agreement of three reviewers plus an independent probe raises the confidence.",
-      "x-fix": "Fail closed in key() (and ideally the metadata path schema) for any segment ending in \".\" or \" \" or matching an 8.3 \"~<digit>\" form, or key existing metadata entries via realpath relative to the real root. Add refusal rows for these spellings to the alias matrix for do_not_read (file and directory prefix), manifest and lock entries, asserting no writes."
+      "x-fix": "Fail closed in key() (and ideally the metadata path schema) for any segment ending in \".\" or \" \" or matching an 8.3 \"~<digit>\" form, or key existing metadata entries via realpath relative to the real root. Add refusal rows for these spellings to the alias matrix for do_not_read (file and directory prefix), manifest and lock entries, asserting no writes.",
+      "x-resolution": "T045/T046: key() rejects trailing-dot/trailing-space segments and ~digit spellings before protection lookup or reads; safePath shares this check. Exact dot segments remain canonicalized for F22. Metadata failures identify both the bad spelling and declaring source. The 60-row matrix covers six spellings across feature/quick exclusions, backup/candidate exclusions, excluded read_first/artifacts, managed files/markers, locks and nested contract directory prefixes. Unsafe directory cases also refuse usage reports. Every preview/apply asserts exact diagnostics and unchanged snapshots."
     },
     {
       "id": "F33",
@@ -486,9 +487,10 @@
       "persona": "testing-reviewer",
       "confidence": 0.9,
       "task": "T041",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "Run against the a4e3277 bundle, 6 of the 18 rows (leading-dot, internal-dot and duplicate-separator x read_first/artifact) pass because requiredPath already refused aliases with the same E_CONTEXT_PROTECTED code, so they cannot detect a key() regression. Preview reasons are matched by /protected|excluded|managed/i (line 358). The root-alias test (line 370) checks only --apply, not preview or the \"Unsafe context metadata path\" message. Quick-lane, lock, marker_sections, directory-prefix and contracts/** alias rows are missing. Kind-driven branching inside one body makes failures hard to read.",
-      "x-fix": "Assert the exact per-kind reason or message for preview and apply. Add an excluded read_first/artifact variant so only the protection key decides. Add preview plus message checks for root aliases and a smaller matrix for quick/lock/marker/directory-prefix aliases. Prefer table-driven per-kind descriptors."
+      "x-fix": "Assert the exact per-kind reason or message for preview and apply. Add an excluded read_first/artifact variant so only the protection key decides. Add preview plus message checks for root aliases and a smaller matrix for quick/lock/marker/directory-prefix aliases. Prefer table-driven per-kind descriptors.",
+      "x-resolution": "T046 replaces kind-driven expected-error branches with descriptors declaring source, field, target and exact refusal cause. read_first/artifact rows now exclude the canonical required source, so a failed unsafe read cannot satisfy the expected Target is excluded diagnostic. All preview/apply messages, error files and reason arrays are exact; root aliases have both preview and apply checks. Quick, lock, marker, directory-prefix and nested contract cases are included. Red run: 73 tests, 42 failures before correction; final focused run: 133/133."
     },
     {
       "id": "F34",
@@ -499,9 +501,10 @@
       "persona": "agent-native-reviewer",
       "confidence": 0.85,
       "task": "T039",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "contextExcluded/key(options.candidate) now runs before safePath, so an absolute or drive-letter --candidate (natural when an agent writes a temp file, which the compact wrapper allows: \"outside the live target\") fails as \"Unsafe context metadata path\" although it is a CLI argument. A key()-rejected entry in any handoff, lock or manifest blocks every context command repo-wide, and the error names only the bad path, not the metadata file that declares it. key() and safePath() also encode overlapping path-safety rules separately (maintainability).",
-      "x-fix": "Validate --candidate with safePath (or a labelled check) before keying; include the declaring metadata file in the unsafe-metadata error; state the repo-relative candidate rule in both compact wrapper copies and docs/06. Optionally share one assertRepoRelative helper between key() and safePath()."
+      "x-fix": "Validate --candidate with safePath (or a labelled check) before keying; include the declaring metadata file in the unsafe-metadata error; state the repo-relative candidate rule in both compact wrapper copies and docs/06. Optionally share one assertRepoRelative helper between key() and safePath().",
+      "x-resolution": "T045/T047 label key() failures by origin: CLI candidates report Unsafe context path with the argument as file, while metadata reports the bad path and declaring handoff/manifest/lock. safePath invokes the same alias safety check before filesystem reads. Five invalid CLI candidate forms assert exact preview/apply diagnostics. Authored compact guidance and docs require repository-relative candidates; normal sync regenerates the pack copy without changing upstream pins or hashes."
     },
     {
       "id": "F35",
@@ -512,9 +515,10 @@
       "persona": "project-standards-reviewer",
       "confidence": 0.8,
       "task": "T044",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "Line 255 marks T044 [x] through the implement writer, but lines 279-280 still read \"T044 remains pending until the mandatory final check and outgoing receipt succeed\". Constitution V (honest evidence) requires the record to state completion consistently.",
-      "x-fix": "Update the Phase 10 evidence prose to cite the completed implement receipt and its full-suite result."
+      "x-fix": "Update the Phase 10 evidence prose to cite the completed implement receipt and its full-suite result.",
+      "x-resolution": "T048 replaces obsolete pending wording with the completed 88c86d8 implementation receipt and its npm run check result of 520/520 tests."
     },
     {
       "id": "F36",
@@ -525,9 +529,10 @@
       "persona": "testing-reviewer",
       "confidence": 0.6,
       "task": "T043",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "The test asserts every numbered source specs/NNN-* directory has an exact cleanup entry, but stale specs/NNN-*/ entries for removed or renamed features are never flagged, so the list can drift.",
-      "x-fix": "Assert set equality between numbered specs entries in cleanup.remove and existing numbered source feature directories."
+      "x-fix": "Assert set equality between numbered specs entries in cleanup.remove and existing numbered source feature directories.",
+      "x-resolution": "T049 asserts sorted exact equality between numbered source feature directories and numbered cleanup directory entries. Missing, stale and duplicate entries fail; the separate adopter-preservation integration coverage remains unchanged."
     }
   ]
 }

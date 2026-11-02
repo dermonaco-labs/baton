@@ -29,12 +29,16 @@ function missing(error) {
   return /** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT';
 }
 
-/** @param {string} path */
-function key(path) {
-  const normalized = posix.normalize(path.replaceAll('\\', '/')).replace(/\/$/, '');
-  if (!normalized || normalized === '.' || normalized === '..' || normalized.startsWith('../') ||
+/** @param {string} path @param {string} [source] */
+function key(path, source = '') {
+  const slashes = path.replaceAll('\\', '/');
+  const windowsAlias = slashes.split('/').some((part) =>
+    part !== '.' && (/[. ]$/.test(part) || /~\d/.test(part)));
+  const normalized = posix.normalize(slashes).replace(/\/$/, '');
+  if (windowsAlias || !normalized || normalized === '.' || normalized === '..' || normalized.startsWith('../') ||
       normalized.startsWith('/') || normalized.includes(':')) {
-    throw protectedError('Unsafe context metadata path', path);
+    throw protectedError(source ? `Unsafe context metadata path "${path}" declared by ${source}` : 'Unsafe context path',
+      source || path);
   }
   return normalized.toLowerCase();
 }
@@ -64,6 +68,7 @@ async function safePath(root, path, allowMissingLeaf = false) {
       normalized.split('/').some((part) => !part || part === '.' || part === '..')) {
     throw protectedError('Unsafe context path', path);
   }
+  key(normalized);
   const target = resolve(base, ...normalized.split('/'));
   if (!target.startsWith(base + sep)) throw protectedError('Context path escapes repository', path);
   const parts = normalized.split('/');
@@ -164,7 +169,8 @@ export async function contextProtection(root, pack) {
   const manifest = /** @type {ContextManifest} */ (parsedManifest);
   if (!manifest.packs.includes(pack)) throw protectedError(`The ${pack} pack is not installed`);
   remember('.baton/manifest.json', manifestBytes);
-  const protectedPaths = new Set([...manifest.files, ...manifest.marker_sections].map((item) => key(item.path)));
+  const protectedPaths = new Set([...manifest.files, ...manifest.marker_sections]
+    .map((item) => key(item.path, '.baton/manifest.json')));
   const excludedPaths = new Set();
   /** @type {string[]} */
   const absent = [];
@@ -184,13 +190,14 @@ export async function contextProtection(root, pack) {
     remember(path, bytes);
     batons.push({ path, data });
     for (const ref of data.do_not_read ?? []) {
-      excludedPaths.add(key(ref.path));
-      protectedPaths.add(key(ref.path));
+      const canonical = key(ref.path, path);
+      excludedPaths.add(canonical);
+      protectedPaths.add(canonical);
     }
   }
-  for (const { data } of batons) {
+  for (const { path, data } of batons) {
     for (const ref of [...data.read_first, ...data.artifacts]) {
-      protectedPaths.add(key(ref.path));
+      protectedPaths.add(key(ref.path, path));
       if (contextExcluded({ excludedPaths }, ref.path)) continue;
       const source = await readFile(await requiredPath(root, ref.path));
       if (ref.sha256 && hashArtifact(ref.path, source) !== ref.sha256) {
@@ -213,7 +220,7 @@ export async function contextProtection(root, pack) {
       throw protectedError('Malformed source lock prevents protection discovery', path);
     }
     if (validateSchema(schemas, 'lock', lock).length) throw protectedError('Invalid source lock', path);
-    for (const file of /** @type {Array<{path:string}>} */ (lock.files)) protectedPaths.add(key(file.path));
+    for (const file of /** @type {Array<{path:string}>} */ (lock.files)) protectedPaths.add(key(file.path, path));
     remember(path, bytes);
   }
   return { manifest, files, batons, paths, protectedPaths, excludedPaths, absent };

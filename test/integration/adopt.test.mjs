@@ -13,9 +13,8 @@ test('template cleanup explicitly retires every shipped source feature without r
     .filter((entry) => entry.isDirectory() && /^\d{3}-/.test(entry.name));
   assert.ok(features.length > 0);
   assert.ok(!cleanup.remove.includes('specs/') && !cleanup.remove.includes('specs'));
-  for (const feature of features) {
-    assert.ok(cleanup.remove.includes(`specs/${feature.name}/`), `Missing exact cleanup for ${feature.name}`);
-  }
+  assert.deepEqual(cleanup.remove.filter((path) => /^specs\/\d{3}-[^/]+\/$/.test(path)).sort(),
+    features.map((feature) => `specs/${feature.name}/`).sort());
 });
 
 async function runSource(root, args, environment = {}) {

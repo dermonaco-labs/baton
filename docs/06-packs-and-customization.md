@@ -79,6 +79,10 @@ remain outside the supported-workflow boundary.
 A compact preview without a candidate checks draft eligibility. `allowed`
 does not waive the required candidate and expected target digest for apply;
 supplied candidates are checked during preview.
+Candidate paths must be repository-relative, such as `.baton/.tmp/candidate.md`,
+not absolute paths or drive-letter paths. Protection metadata with unsafe
+Windows trailing-dot, trailing-space or short-name spellings fails closed
+and identifies the declaring handoff, manifest or lock.
 
 Approved or historically approved sources, managed files, source-of-truth
 bindings and all `read_first` targets (even without a checksum) refuse

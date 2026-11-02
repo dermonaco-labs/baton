@@ -315,52 +315,99 @@ test('context protection canonicalizes schema-valid metadata aliases before any 
     { name: 'leading-dot', path: (path) => `./${path}` },
     { name: 'internal-dot', path: (path) => path.replace('/', '/./') },
     { name: 'duplicate-separator', path: (path) => path.replace('/', '//') },
+    { name: 'trailing-dot', path: (path) => `${path}.`, unsafe: true },
+    { name: 'trailing-space', path: (path) => `${path} `, unsafe: true },
+    { name: 'short-name', path: (path) => path.startsWith('specs/')
+      ? path.replace(feature, '002-DR~1') : path.replace('candidate.md', 'CANDID~1.MD'), unsafe: true },
+  ];
+  const excluded = 'Target is excluded from context';
+  const bound = 'Target is read_first, source/hash-bound or managed';
+  const backup = `specs/${feature}/spec.full.md`;
+  const proposed = 'drafts/candidate.md';
+  const directory = `specs/${feature}/contracts/long-name`;
+  const manifestSource = '.baton/manifest.json';
+  const kinds = [
+    { name: 'target', field: 'do_not_read', path: target, message: excluded, previewError: true },
+    { name: 'backup', field: 'do_not_read', path: backup, action: 'restore',
+      message: `Backup is protected, bound, managed or excluded: ${backup}` },
+    { name: 'candidate', field: 'do_not_read', path: proposed, message: 'Candidate is excluded from context' },
+    { name: 'read_first', field: 'read_first', path: target, exclude: true, message: excluded, previewError: true },
+    { name: 'artifact', field: 'artifacts', path: target, exclude: true, message: excluded, previewError: true,
+      ref: { role: 'source-of-truth', sha256: hashArtifact(target, original) } },
+    { name: 'managed', source: manifestSource, field: 'files', path: target, message: bound,
+      ref: { sha256: digest, pack: 'core', owner: 'baton', managed: true } },
+    { name: 'marker', source: manifestSource, field: 'marker_sections', path: target, message: bound,
+      ref: { marker: 'BATON', sha256: digest } },
+    { name: 'lock', source: 'baton.lock.json', field: 'files', path: target, message: bound },
+    { name: 'quick', source: '.baton/quick/other.md', field: 'do_not_read', path: target,
+      message: excluded, previewError: true },
+    { name: 'directory', field: 'do_not_read', path: directory, target: `${directory}/api.md`,
+      message: excluded, previewError: true },
   ];
   for (const spelling of spellings) {
-    for (const kind of ['target', 'backup', 'candidate', 'read_first', 'artifact', 'managed']) {
-      await t.test(`${spelling.name}/${kind}`, async (t) => {
+    for (const kind of kinds) {
+      await t.test(`${spelling.name}/${kind.name}`, async (t) => {
         const { root } = await fixture(t);
-        const backup = `specs/${feature}/spec.full.md`;
-        const proposed = 'drafts/candidate.md';
         await mkdir(join(root, 'drafts'));
-        await writeFile(join(root, proposed), kind === 'candidate' ? Buffer.from([0xff]) : candidate);
-        if (kind === 'backup') await writeFile(join(root, backup), Buffer.from([0xff]));
-        await baton(root, 'draft');
-        const handoff = join(root, `specs/${feature}/handoff.md`);
-        const { data, body } = parseFrontmatter(await readFile(handoff, 'utf8'));
-        const protectedPath = spelling.path(kind === 'backup' ? backup : kind === 'candidate' ? proposed : target);
-        if (kind === 'read_first') data.read_first = [{ path: protectedPath, why: 'Required source alias' }];
-        else if (kind === 'artifact') data.artifacts = [{ path: protectedPath, role: 'source-of-truth', sha256: hashArtifact(target, original) }];
-        else if (kind === 'managed') {
-          const manifestPath = join(root, '.baton/manifest.json');
-          const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
-          manifest.files.push({ path: protectedPath, sha256: digest, pack: 'core', owner: 'baton', managed: true });
-          assert.deepEqual(validateSchema(await loadSchemas(root), 'manifest', manifest), []);
-          await writeFile(manifestPath, JSON.stringify(manifest));
-        } else data.do_not_read = [{ path: protectedPath, why: 'Excluded source alias' }];
-        if (kind !== 'managed') {
-          data.feature = '003-other';
-          await mkdir(join(root, 'specs/003-other'));
+        await writeFile(join(root, proposed), kind.name === 'candidate' ? Buffer.from([0xff]) : candidate);
+        if (kind.name === 'backup') await writeFile(join(root, backup), Buffer.from([0xff]));
+        const selectedTarget = kind.target ?? target;
+        if (kind.target) {
+          await mkdir(join(root, directory), { recursive: true });
+          await writeFile(join(root, kind.target), original);
         }
-        assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', data), []);
-        await writeFile(kind === 'managed' ? handoff : join(root, 'specs/003-other/handoff.md'),
-          serializeFrontmatter(data, body));
-        const args = [kind === 'backup' ? 'restore' : 'compact', '--feature', feature, '--target', target,
-          ...(kind === 'backup' ? [] : ['--candidate', proposed])];
+        await baton(root, 'draft');
+        const source = kind.source ?? 'specs/003-other/handoff.md';
+        const protectedPath = spelling.path(kind.path);
+        const ref = { path: protectedPath, ...(kind.ref ?? { why: 'Protected source alias' }) };
+        if (source.endsWith('.json')) {
+          const schema = source === manifestSource ? 'manifest' : 'lock';
+          const data = JSON.parse(await readFile(join(schema === 'lock' ? sourceRoot : root, source), 'utf8'));
+          data[kind.field] = schema === 'lock' ? [{ ...data.files[0], path: protectedPath }] : [ref];
+          assert.deepEqual(validateSchema(await loadSchemas(root), schema, data), []);
+          await writeFile(join(root, source), JSON.stringify(data));
+        } else {
+          const quick = kind.name === 'quick';
+          const { data, body } = parseFrontmatter(await readFile(quick
+            ? join(sourceRoot, 'test/fixtures/handoffs/valid/quick/none.md')
+            : join(root, `specs/${feature}/handoff.md`), 'utf8'));
+          data.feature = quick ? 'other' : '003-other';
+          data.read_first = [{ path: `specs/${feature}/research.md`, why: 'Draft context' }];
+          data[kind.field] = [ref];
+          if (kind.exclude) data.do_not_read = [{ path: target, why: 'Exclude required source before reading' }];
+          await mkdir(dirname(join(root, source)), { recursive: true });
+          assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', data), []);
+          await writeFile(join(root, source), serializeFrontmatter(data, body));
+        }
+        const args = [kind.action ?? 'compact', '--feature', feature, '--target', selectedTarget,
+          ...(kind.action === 'restore' ? [] : ['--candidate', proposed])];
+        const message = spelling.unsafe
+          ? `Unsafe context metadata path "${protectedPath}" declared by ${source}` : kind.message;
+        const errorFile = spelling.unsafe ? source : selectedTarget;
         const before = await snapshot(root);
         const preview = await invoke(root, args);
-        if (['target', 'read_first', 'artifact'].includes(kind)) {
+        if (spelling.unsafe || kind.previewError) {
           assert.equal(preview.code, 1, JSON.stringify(preview.output));
           assert.equal(preview.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+          assert.equal(preview.output.errors[0].message, message);
+          assert.equal(preview.output.errors[0].file, errorFile);
         } else {
           assert.equal(preview.code, 0, JSON.stringify(preview.output));
           assert.equal(preview.output.data.allowed, false);
-          assert.match(preview.output.data.reasons.join('; '), /protected|excluded|managed/i);
+          assert.deepEqual(preview.output.data.reasons, [message]);
         }
         assert.deepEqual(await snapshot(root), before);
         const result = await invoke(root, [...args, '--expect', digest, '--apply']);
         assert.equal(result.code, 1, JSON.stringify(result.output));
         assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+        assert.equal(result.output.errors[0].message, message);
+        assert.equal(result.output.errors[0].file, errorFile);
+        if (spelling.unsafe && kind.name === 'directory') {
+          const usage = await invoke(root, ['usage', '--feature', feature]);
+          assert.equal(usage.code, 1, JSON.stringify(usage.output));
+          assert.equal(usage.output.errors[0].message, message);
+          assert.equal(usage.output.errors[0].file, source);
+        }
         assert.deepEqual(await snapshot(root), before);
       });
     }
@@ -378,11 +425,35 @@ test('context protection fails closed on metadata aliases of the repository root
       assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', data), []);
       await writeFile(handoff, serializeFrontmatter(data, body));
       const before = await snapshot(root);
-      const result = await invoke(root, ['compact', '--feature', feature, '--target', target,
-        '--candidate', 'candidate.md', '--expect', digest, '--apply']);
-      assert.equal(result.code, 1, JSON.stringify(result.output));
-      assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+      const args = ['compact', '--feature', feature, '--target', target, '--candidate', 'candidate.md'];
+      for (const flags of [[], ['--expect', digest, '--apply']]) {
+        const result = await invoke(root, [...args, ...flags]);
+        assert.equal(result.code, 1, JSON.stringify(result.output));
+        assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+        assert.equal(result.output.errors[0].message,
+          `Unsafe context metadata path "${path}" declared by specs/${feature}/handoff.md`);
+        assert.equal(result.output.errors[0].file, `specs/${feature}/handoff.md`);
+      }
       assert.deepEqual(await snapshot(root), before);
+    });
+  }
+});
+
+test('context protection labels unsafe CLI candidate paths without misidentifying metadata', async (t) => {
+  for (const path of ['/tmp/candidate.md', 'C:\\temp\\candidate.md', 'drafts/candidate.md.',
+    'drafts/candidate.md ', 'drafts/CANDID~1.MD']) {
+    await t.test(path, async (t) => {
+      const { root } = await fixture(t);
+      const before = await snapshot(root);
+      for (const flags of [[], ['--expect', digest, '--apply']]) {
+        const result = await invoke(root, ['compact', '--feature', feature, '--target', target,
+          '--candidate', path, ...flags]);
+        assert.equal(result.code, 1, JSON.stringify(result.output));
+        assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+        assert.equal(result.output.errors[0].message, 'Unsafe context path');
+        assert.equal(result.output.errors[0].file, path);
+        assert.deepEqual(await snapshot(root), before);
+      }
     });
   }
 });
@@ -447,7 +518,10 @@ test('context output wrappers expose preview limits and exact refusal causes', a
       assert.match(source, /backup_sha256/);
       assert.match(source, /warning/);
       assert.match(source, /informational/);
-    } else assert.match(source, /eligibility/);
+    } else {
+      assert.match(source, /eligibility/);
+      assert.match(source, /repository-relative/);
+    }
   }
 });
 

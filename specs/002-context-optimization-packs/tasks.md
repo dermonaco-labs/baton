@@ -114,7 +114,7 @@ Capture red evidence before implementing each behavior; do not weaken checks. --
 | AC-US1-1 | US1 | node --test --test-name-pattern="context packs" test/integration/context.test.mjs | command | fail | Original-baseline replay: 4 failures; timing disclosed below | Pass: 5 tests, including clean uninstall |
 | AC-US1-2 | US1 | node --test --test-name-pattern="context provenance" test/integration/context.test.mjs | command | fail | Live regression: modified commit incorrectly verified; original baseline lacks named pins | Pass: 1 test |
 | AC-US2-1 | US2 | node --test --test-name-pattern="context draft" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 3 tests, including optional decisions and restore preview |
-| AC-US2-2 | US2 | node --test --test-name-pattern="context protection" test/integration/context.test.mjs | command | fail | Strengthened assertions reject unknown-command false positives; baseline: 21 failures | Pass: 69 tests, including canonical metadata aliases, backup protection and exact-code refusals |
+| AC-US2-2 | US2 | node --test --test-name-pattern="context protection" test/integration/context.test.mjs | command | fail | Strengthened assertions reject unknown-command false positives; baseline: 21 failures | Pass: 117 tests, including canonical/Windows metadata aliases, backup protection and exact-code refusals |
 | AC-US3-1 | US3 | node --test --test-name-pattern="context optimize reports" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 1 test |
 | AC-US3-2 | US3 | node --test --test-name-pattern="context optimize apply" test/integration/context.test.mjs | command | fail | Positive control prevents unknown-command false positives; baseline: 1 failure | Pass: 1 test |
 | AC-US4-1 | US4 | node --test --test-name-pattern="context advisory" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 2 tests, including nested contracts and exclusions |
@@ -158,7 +158,7 @@ weakened, skipped or replaced.
 | AC-US1-1 | Red: retrospective original-baseline selector exited 1, 5 tests with 4 failures because optional packs were unknown; Green: same selector passes 5 tests, all four selections, clean uninstall, re-init/update and edited-wrapper retention. |
 | AC-US1-2 | Red: live selector accepted a substituted commit and failed; original-baseline replay also fails for missing named source pins; Green: selector passes 1 test covering exact pins, pin/tree tampering and raw payload changes. |
 | AC-US2-1 | Red: positive operation failed because context was unknown; retrospective baseline confirms 1 failed test in the initial test set; Green: selector covers 3 draft CRLF, optional-decisions and explicit restore-preview tests. |
-| AC-US2-2 | Red: strengthened initial test set failed 21 of 22 original-baseline tests, rejecting generic unknown-command errors as protection proof; Green: expanded selector covers all 69 protection tests without forbidden side effects. |
+| AC-US2-2 | Red: strengthened initial test set failed 21 of 22 original-baseline tests, rejecting generic unknown-command errors as protection proof; Green: expanded selector covers all 117 protection tests without forbidden side effects. |
 | AC-US3-1 | Red: context optimize command absent, confirmed by original-baseline replay; Green: selector passes 1 test exercising all three report operations and unchanged governance, gates, scanner config, approval history and memory. |
 | AC-US3-2 | Red: known-positive optimize control fails on original baseline rather than accepting arbitrary errors as safety; Green: selector passes 1 test covering apply, rule-removal, auto-execute, persistence and absent-pack refusal. |
 | AC-US4-1 | Red: scope/concise operations absent, confirmed by original-baseline replay; Green: expanded selector covers 2 tests preserving ordered context, nested contracts, exclusions and session-only guidance. |
@@ -276,5 +276,41 @@ F22/F25/F28-F31 record implementation fixes. F23/F24 retain the approved
 target-digest and eligibility-preview contract with explicit limitation
 guidance; F26/F27 retain the type-safe guard and distinct conflict diagnostic.
 These reasoned implementation dispositions are not independent review.
-T044 remains pending until the mandatory final check and outgoing receipt
-succeed; the actual full-suite result belongs to that receipt.
+T044 completed in the implementation receipt committed as `88c86d8`:
+`npm run check` passed all **520/520** tests. The outgoing receipt records
+the complete configured check evidence.
+
+## Phase 11: Convergence
+
+The third independent review upheld the prior fixes and contract-grounded
+dispositions. The same intent inventory now has five partial gaps: one HIGH
+Windows-alias protection gap, one MEDIUM refusal-coverage gap and three LOW
+diagnostic, evidence and cleanup-consistency gaps. No new public contract,
+backup reservation protocol or source pin is authorized.
+
+- [x] T045 Reject Windows trailing-dot, trailing-space and short-name metadata aliases before lookup/read; identify the declaring metadata source and distinguish unsafe CLI paths per FR-007 through FR-010 and review F32/F34 (partial, HIGH).
+- [x] T046 Pin exact preview/apply refusal causes and unchanged snapshots across feature/quick exclusions, manifest files/markers, locks, excluded read_first/artifacts and directory-prefix contracts; include root and Windows alias spellings per SC-003 and review F33/F34 (partial, MEDIUM).
+- [x] T047 State the repository-relative candidate rule in authored compact guidance and adopter docs, then regenerate matching pack copies without upstream drift per FR-008/FR-017 and review F34 (partial, LOW).
+- [x] T048 Replace obsolete T044 pending wording with its completed 520-test implementation receipt evidence per SC-006 and review F35 (partial, LOW).
+- [x] T049 Assert exact set equality between numbered source feature directories and cleanup entries, retaining adopter-feature preservation per SC-001 and review F36 (partial, LOW).
+- [x] T050 Resolve F32-F36 with evidence, rebuild, complete focused checks and run `baton handoff write --phase implement --mode converge` for the mandatory final check before another independent review per SC-006. <!-- baton:handoff-write:implement -->
+
+### Windows-Alias Correction Evidence
+
+The pre-fix focused run executed **73** tests, with **31** passing and **42**
+failing on Windows aliases, exact-origin diagnostics, root preview messages
+and missing candidate guidance. The corrected focused run passes **133/133**:
+**132** tests across the unchanged eight registered acceptance groups
+(**5, 1, 3, 117, 1, 1, 2, 2**) plus one bidirectional cleanup consistency test.
+The 60-row protection matrix now asserts exact causes and declaring files,
+including excluded required sources, quick batons, lock entries, managed
+markers and nested contract directory exclusions. Root and unsafe candidate
+cases check both preview and apply; all assert unchanged snapshots.
+
+Typecheck, Markdown/YAML lint and offline lock verification pass; only
+unchanged upstream YAML formatting warnings remain. Sync regenerated the
+authored compact wrapper copy without changing the 133 locked upstream files
+or source pins. Runtime: **426314 bytes**, below the strict **460800-byte** cap.
+F32-F36 have implementation fixes, not independent review approval.
+The deterministic outgoing implementation receipt records the mandatory
+full-check result; T050's checkbox tracks successful receipt completion.
