@@ -114,11 +114,11 @@ Capture red evidence before implementing each behavior; do not weaken checks. --
 | AC-US1-1 | US1 | node --test --test-name-pattern="context packs" test/integration/context.test.mjs | command | fail | Original-baseline replay: 4 failures; timing disclosed below | Pass: 5 tests, including clean uninstall |
 | AC-US1-2 | US1 | node --test --test-name-pattern="context provenance" test/integration/context.test.mjs | command | fail | Live regression: modified commit incorrectly verified; original baseline lacks named pins | Pass: 1 test |
 | AC-US2-1 | US2 | node --test --test-name-pattern="context draft" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 3 tests, including optional decisions and restore preview |
-| AC-US2-2 | US2 | node --test --test-name-pattern="context protection" test/integration/context.test.mjs | command | fail | Strengthened assertions reject unknown-command false positives; baseline: 21 failures | Pass: 46 tests, including backup protection and exact-code refusals |
+| AC-US2-2 | US2 | node --test --test-name-pattern="context protection" test/integration/context.test.mjs | command | fail | Strengthened assertions reject unknown-command false positives; baseline: 21 failures | Pass: 69 tests, including canonical metadata aliases, backup protection and exact-code refusals |
 | AC-US3-1 | US3 | node --test --test-name-pattern="context optimize reports" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 1 test |
 | AC-US3-2 | US3 | node --test --test-name-pattern="context optimize apply" test/integration/context.test.mjs | command | fail | Positive control prevents unknown-command false positives; baseline: 1 failure | Pass: 1 test |
 | AC-US4-1 | US4 | node --test --test-name-pattern="context advisory" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 2 tests, including nested contracts and exclusions |
-| AC-US4-2 | US4 | node --test --test-name-pattern="context output" test/integration/context.test.mjs | command | fail | Usage report absent; original-baseline replay: 1 failure | Pass: 1 test |
+| AC-US4-2 | US4 | node --test --test-name-pattern="context output" test/integration/context.test.mjs | command | fail | Usage report absent; original-baseline replay: 1 failure | Pass: 2 tests, including authored/generated wrapper guidance |
 
 ## Phase 8: Convergence
 
@@ -158,11 +158,11 @@ weakened, skipped or replaced.
 | AC-US1-1 | Red: retrospective original-baseline selector exited 1, 5 tests with 4 failures because optional packs were unknown; Green: same selector passes 5 tests, all four selections, clean uninstall, re-init/update and edited-wrapper retention. |
 | AC-US1-2 | Red: live selector accepted a substituted commit and failed; original-baseline replay also fails for missing named source pins; Green: selector passes 1 test covering exact pins, pin/tree tampering and raw payload changes. |
 | AC-US2-1 | Red: positive operation failed because context was unknown; retrospective baseline confirms 1 failed test in the initial test set; Green: selector covers 3 draft CRLF, optional-decisions and explicit restore-preview tests. |
-| AC-US2-2 | Red: strengthened initial test set failed 21 of 22 original-baseline tests, rejecting generic unknown-command errors as protection proof; Green: expanded selector covers all 46 protection tests without forbidden side effects. |
+| AC-US2-2 | Red: strengthened initial test set failed 21 of 22 original-baseline tests, rejecting generic unknown-command errors as protection proof; Green: expanded selector covers all 69 protection tests without forbidden side effects. |
 | AC-US3-1 | Red: context optimize command absent, confirmed by original-baseline replay; Green: selector passes 1 test exercising all three report operations and unchanged governance, gates, scanner config, approval history and memory. |
 | AC-US3-2 | Red: known-positive optimize control fails on original baseline rather than accepting arbitrary errors as safety; Green: selector passes 1 test covering apply, rule-removal, auto-execute, persistence and absent-pack refusal. |
 | AC-US4-1 | Red: scope/concise operations absent, confirmed by original-baseline replay; Green: expanded selector covers 2 tests preserving ordered context, nested contracts, exclusions and session-only guidance. |
-| AC-US4-2 | Red: readable usage operation fails on original baseline; Green: selector passes 1 test preserving readable reports, diagnostics, nonzero failures and duplicate-flag refusal. |
+| AC-US4-2 | Red: readable usage operation fails on original baseline; Green: selector passes 2 tests preserving readable reports, diagnostics, nonzero failures, duplicate-flag refusal and wrapper safety guidance. |
 
 Targeted source/guard/build units: 29 passed. Additional filtered init and
 validator checks: 4 passed, including live PowerShell-flavour initialization.
@@ -236,3 +236,45 @@ F01-F20 record concrete corrections in `review.json`; F21 retains its original
 reasoned dismissal. This is implementation disposition, not self-review or a
 claim that fresh independent review passed. The configured final check and
 outgoing receipt remain T038's mandatory bootstrap step.
+
+## Phase 10: Convergence
+
+The next independent review verified F01-F20 and found one HIGH alias
+protection gap plus four LOW wrapper, test and formatting gaps. The same
+20 requirements, 6 outcomes, 17 scenarios and approved plan remain the source
+of intent. F23/F24 propose stronger preview-to-apply guarantees than the
+approved contract; assess them against the existing explicit-input and
+external-writer limits rather than silently adding a public protocol.
+F26/F27 are advisory implementation alternatives, not requirements.
+
+- [x] T039 Canonicalize every protection/exclusion key, reject unsafe metadata roots and share feature-handoff selection; exercise schema-valid dot/duplicate-separator aliases for targets, backups, candidates and cross-baton bindings per FR-007 through FR-010, SC-003 and review F22/F28 (partial, HIGH).
+- [x] T040 Surface backup digest, overwrite/freshness limits, eligibility-vs-apply prerequisites and exact conflict causes in authored wrappers/docs; regenerate wrapper copies and verify unchanged locked checksums without modifying pinned upstream bytes per FR-010/FR-017 and review F23/F24/F25 (partial, LOW).
+- [x] T041 Assert exact preview backup paths/digests, no-write state and refusal exit codes per SC-003 and review F29 (partial, LOW).
+- [x] T042 Separate Unreleased headings with a blank line per FR-020 and review F30 (partial, LOW).
+- [x] T043 Guard source-repository feature retirement generically while preserving explicit per-directory cleanup and adopter-owned features per SC-001 and review F31 (partial, LOW).
+- [x] T044 Record evidence-based dispositions for F22-F31, complete focused checks, rebuild and execute the unchanged mandatory final check through `baton handoff write --phase implement --mode converge` before renewed independent review per SC-006. <!-- baton:handoff-write:implement -->
+
+### Canonical-Path Correction Evidence
+
+The new pre-fix selector ran 25 tests: 7 passed and 18 failed, reproducing
+schema-valid alias bypasses, unsafe root metadata and missing wrapper guidance.
+The first normalization attempt then exposed two trailing-slash root aliases;
+stripping that suffix before root validation corrected both. The final focused
+run passed **85/85** tests: **84** across the eight unchanged registered
+acceptance groups (**5, 1, 3, 69, 1, 1, 2, 2**) plus one generic cleanup test.
+Cross-feature exclusions use invalid UTF-8 backup/candidate bytes to prove
+excluded sources are not decoded. Exact preview/apply codes and immediate
+no-write snapshots prevent a generic failure from masquerading as protection.
+
+Typecheck and Markdown/YAML lint pass; YAML retains only unchanged upstream
+formatting warnings. Normal sync regenerated the two authored wrapper copies,
+and offline lock verification confirms unchanged source pins and all 133
+locked upstream files. The rebuilt runtime is **426142 bytes**, below the
+unchanged strict **460800-byte** cap.
+
+F22/F25/F28-F31 record implementation fixes. F23/F24 retain the approved
+target-digest and eligibility-preview contract with explicit limitation
+guidance; F26/F27 retain the type-safe guard and distinct conflict diagnostic.
+These reasoned implementation dispositions are not independent review.
+T044 remains pending until the mandatory final check and outgoing receipt
+succeed; the actual full-suite result belongs to that receipt.

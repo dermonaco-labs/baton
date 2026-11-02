@@ -11,6 +11,10 @@ Default to this non-mutating preview. If `allowed` is false or the command
 fails, show the reasons and stop. Never clear approvals, refresh hashes or
 edit a handoff to make a target eligible.
 
+This first preview checks draft eligibility, not permission to apply without
+the required candidate and expected target digest. If supplied, candidate
+content is checked too. Show any backup path/digest and refusal reasons.
+
 Only for an eligible unapproved, unbound draft, use the reference guidance in
 `.baton/vendor/token-budget/commands/compact.md` to propose a candidate outside
 the live target. Preserve all requirements, decisions and contracts. Treat
@@ -31,4 +35,7 @@ compaction targets. Never inject backup guards or change mandatory hooks.
 Compaction hooks must never auto-execute.
 
 Show the actual writer result and preserve errors and failure status.
+For `E_CONFLICT`, distinguish a stale target digest from an existing backup
+using the exact message and path. Do not delete the backup or silently replace
+the expected digest to force a retry.
 Semantic preservation still requires author review; this is not an approval.

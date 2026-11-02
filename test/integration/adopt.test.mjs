@@ -5,6 +5,18 @@ import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { sourceRoot, runCli } from '../helpers/index.mjs';
 import { parseFrontmatter, serializeFrontmatter } from '../../src/lib/frontmatter.mjs';
+import YAML from 'yaml';
+
+test('template cleanup explicitly retires every shipped source feature without removing all specs', async () => {
+  const cleanup = YAML.parse(await readFile(join(sourceRoot, '.baton/template-cleanup.yml'), 'utf8'));
+  const features = (await readdir(join(sourceRoot, 'specs'), { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory() && /^\d{3}-/.test(entry.name));
+  assert.ok(features.length > 0);
+  assert.ok(!cleanup.remove.includes('specs/') && !cleanup.remove.includes('specs'));
+  for (const feature of features) {
+    assert.ok(cleanup.remove.includes(`specs/${feature.name}/`), `Missing exact cleanup for ${feature.name}`);
+  }
+});
 
 async function runSource(root, args, environment = {}) {
   return await new Promise((resolve, reject) => {

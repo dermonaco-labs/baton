@@ -310,6 +310,83 @@ test('context protection covers cross-baton bound managed excluded and case-alia
   }
 });
 
+test('context protection canonicalizes schema-valid metadata aliases before any read or mutation', async (t) => {
+  const spellings = [
+    { name: 'leading-dot', path: (path) => `./${path}` },
+    { name: 'internal-dot', path: (path) => path.replace('/', '/./') },
+    { name: 'duplicate-separator', path: (path) => path.replace('/', '//') },
+  ];
+  for (const spelling of spellings) {
+    for (const kind of ['target', 'backup', 'candidate', 'read_first', 'artifact', 'managed']) {
+      await t.test(`${spelling.name}/${kind}`, async (t) => {
+        const { root } = await fixture(t);
+        const backup = `specs/${feature}/spec.full.md`;
+        const proposed = 'drafts/candidate.md';
+        await mkdir(join(root, 'drafts'));
+        await writeFile(join(root, proposed), kind === 'candidate' ? Buffer.from([0xff]) : candidate);
+        if (kind === 'backup') await writeFile(join(root, backup), Buffer.from([0xff]));
+        await baton(root, 'draft');
+        const handoff = join(root, `specs/${feature}/handoff.md`);
+        const { data, body } = parseFrontmatter(await readFile(handoff, 'utf8'));
+        const protectedPath = spelling.path(kind === 'backup' ? backup : kind === 'candidate' ? proposed : target);
+        if (kind === 'read_first') data.read_first = [{ path: protectedPath, why: 'Required source alias' }];
+        else if (kind === 'artifact') data.artifacts = [{ path: protectedPath, role: 'source-of-truth', sha256: hashArtifact(target, original) }];
+        else if (kind === 'managed') {
+          const manifestPath = join(root, '.baton/manifest.json');
+          const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+          manifest.files.push({ path: protectedPath, sha256: digest, pack: 'core', owner: 'baton', managed: true });
+          assert.deepEqual(validateSchema(await loadSchemas(root), 'manifest', manifest), []);
+          await writeFile(manifestPath, JSON.stringify(manifest));
+        } else data.do_not_read = [{ path: protectedPath, why: 'Excluded source alias' }];
+        if (kind !== 'managed') {
+          data.feature = '003-other';
+          await mkdir(join(root, 'specs/003-other'));
+        }
+        assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', data), []);
+        await writeFile(kind === 'managed' ? handoff : join(root, 'specs/003-other/handoff.md'),
+          serializeFrontmatter(data, body));
+        const args = [kind === 'backup' ? 'restore' : 'compact', '--feature', feature, '--target', target,
+          ...(kind === 'backup' ? [] : ['--candidate', proposed])];
+        const before = await snapshot(root);
+        const preview = await invoke(root, args);
+        if (['target', 'read_first', 'artifact'].includes(kind)) {
+          assert.equal(preview.code, 1, JSON.stringify(preview.output));
+          assert.equal(preview.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+        } else {
+          assert.equal(preview.code, 0, JSON.stringify(preview.output));
+          assert.equal(preview.output.data.allowed, false);
+          assert.match(preview.output.data.reasons.join('; '), /protected|excluded|managed/i);
+        }
+        assert.deepEqual(await snapshot(root), before);
+        const result = await invoke(root, [...args, '--expect', digest, '--apply']);
+        assert.equal(result.code, 1, JSON.stringify(result.output));
+        assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+        assert.deepEqual(await snapshot(root), before);
+      });
+    }
+  }
+});
+
+test('context protection fails closed on metadata aliases of the repository root', async (t) => {
+  for (const path of ['.', './', '././']) {
+    await t.test(path, async (t) => {
+      const { root } = await fixture(t);
+      await baton(root, 'draft');
+      const handoff = join(root, `specs/${feature}/handoff.md`);
+      const { data, body } = parseFrontmatter(await readFile(handoff, 'utf8'));
+      data.do_not_read = [{ path, why: 'Entire repository is excluded' }];
+      assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', data), []);
+      await writeFile(handoff, serializeFrontmatter(data, body));
+      const before = await snapshot(root);
+      const result = await invoke(root, ['compact', '--feature', feature, '--target', target,
+        '--candidate', 'candidate.md', '--expect', digest, '--apply']);
+      assert.equal(result.code, 1, JSON.stringify(result.output));
+      assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+      assert.deepEqual(await snapshot(root), before);
+    });
+  }
+});
+
 test('context draft metadata allows omitted decisions but refuses ambiguous handoffs', async (t) => {
   const { root } = await fixture(t);
   await baton(root, 'no-decisions');
@@ -332,16 +409,46 @@ test('context protection reports missing restore backup and existing compact bac
   const preview = await invoke(root, ['restore', ...args]);
   assert.equal(preview.code, 0, JSON.stringify(preview.output));
   assert.equal(preview.output.data.allowed, false);
+  assert.equal(preview.output.data.applied, false);
+  assert.equal(preview.output.data.backup_path, `specs/${feature}/spec.full.md`);
+  assert.equal(preview.output.data.backup_sha256, null);
   assert.match(preview.output.data.reasons.join('; '), /backup.*missing/i);
+  assert.deepEqual(await snapshot(root), before);
   const result = await invoke(root, ['restore', ...args, '--expect', digest, '--apply']);
+  assert.equal(result.code, 1);
   assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
   assert.match(result.output.errors[0].message, /backup.*missing/i);
   assert.match(result.output.errors[0].message, new RegExp(`specs/${feature}/spec\\.full\\.md`));
   assert.deepEqual(await snapshot(root), before);
   await writeFile(join(root, `specs/${feature}/spec.full.md`), original);
+  const conflictBefore = await snapshot(root);
   const conflict = await invoke(root, ['compact', ...args, '--candidate', 'candidate.md']);
+  assert.equal(conflict.code, 0, JSON.stringify(conflict.output));
   assert.equal(conflict.output.data.allowed, false);
+  assert.equal(conflict.output.data.applied, false);
+  assert.equal(conflict.output.data.backup_path, `specs/${feature}/spec.full.md`);
+  assert.equal(conflict.output.data.backup_sha256, digest);
   assert.match(conflict.output.data.reasons.join('; '), /backup.*(?:exists|overwrit)/i);
+  assert.deepEqual(await snapshot(root), conflictBefore);
+  const apply = await invoke(root, ['compact', ...args, '--candidate', 'candidate.md', '--expect', digest, '--apply']);
+  assert.equal(apply.code, 4);
+  assert.equal(apply.output.errors[0].code, 'E_CONFLICT');
+  assert.deepEqual(await snapshot(root), conflictBefore);
+});
+
+test('context output wrappers expose preview limits and exact refusal causes', async () => {
+  for (const action of ['compact', 'restore']) {
+    const skill = `speckit-token-budget-${action}/SKILL.md`;
+    const source = await readFile(join(sourceRoot, 'baton/skills', skill), 'utf8');
+    assert.equal(await readFile(join(sourceRoot, 'packs/token-budget/files/.github/skills', skill), 'utf8'), source);
+    assert.match(source, /E_CONFLICT/);
+    assert.match(source, /stale.*digest|digest.*stale/);
+    if (action === 'restore') {
+      assert.match(source, /backup_sha256/);
+      assert.match(source, /warning/);
+      assert.match(source, /informational/);
+    } else assert.match(source, /eligibility/);
+  }
 });
 
 test('context draft restore preview exposes backup digest and overwrite semantics without writing provenance', async (t) => {

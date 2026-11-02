@@ -1,5 +1,5 @@
 import { lstat, readFile, readdir, realpath, rename, rm, writeFile } from 'node:fs/promises';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, join, posix, relative, resolve, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { hashArtifact, hashBytes } from './hash.mjs';
 import { parseFrontmatter } from './frontmatter.mjs';
@@ -31,7 +31,12 @@ function missing(error) {
 
 /** @param {string} path */
 function key(path) {
-  return path.replaceAll('\\', '/').toLowerCase();
+  const normalized = posix.normalize(path.replaceAll('\\', '/')).replace(/\/$/, '');
+  if (!normalized || normalized === '.' || normalized === '..' || normalized.startsWith('../') ||
+      normalized.startsWith('/') || normalized.includes(':')) {
+    throw protectedError('Unsafe context metadata path', path);
+  }
+  return normalized.toLowerCase();
 }
 
 /** @param {string} feature @param {string} path */
@@ -214,6 +219,12 @@ export async function contextProtection(root, pack) {
   return { manifest, files, batons, paths, protectedPaths, excludedPaths, absent };
 }
 
+/** @param {Awaited<ReturnType<typeof contextProtection>>} protection @param {string} feature */
+function featureHandoffs(protection, feature) {
+  const directory = key(`specs/${feature}`);
+  return protection.batons.filter((baton) => key(dirname(baton.path)) === directory);
+}
+
 /** @param {string} root @param {Awaited<ReturnType<typeof contextProtection>>} protection */
 async function assertSnapshot(root, protection) {
   if (JSON.stringify(await handoffPaths(root)) !== JSON.stringify(protection.paths)) {
@@ -241,7 +252,7 @@ export async function mutateContext(root, action, options) {
   const reasons = [];
   if (protection.protectedPaths.has(key(path))) reasons.push('Target is read_first, source/hash-bound or managed');
   if (PROTECTED_MARKER.test(text)) reasons.push('Target contains protected instruction markers');
-  const selected = protection.batons.filter((baton) => key(dirname(baton.path)) === key(`specs/${options.feature}`));
+  const selected = featureHandoffs(protection, options.feature);
   if (selected.length > 1) reasons.push('Multiple handoffs make feature context ambiguous');
   for (const baton of selected) {
     const data = baton.data;
@@ -325,9 +336,8 @@ export async function mutateContext(root, action, options) {
 
 /** @param {{excludedPaths:Set<string>}} protection @param {string} path */
 export function contextExcluded(protection, path) {
-  const normalized = key(path).replace(/\/$/, '');
-  for (const excluded of protection.excludedPaths) {
-    const prefix = excluded.replace(/\/$/, '');
+  const normalized = key(path);
+  for (const prefix of protection.excludedPaths) {
     if (normalized === prefix || normalized.startsWith(`${prefix}/`)) return true;
   }
   return false;
@@ -354,7 +364,7 @@ export async function contextFilePaths(root, feature, protection) {
 export async function featureContext(root, feature) {
   contextTarget(feature, `specs/${feature}/spec.md`);
   const protection = await contextProtection(root, 'token-budget');
-  const selected = protection.batons.filter((baton) => key(dirname(baton.path)) === key(`specs/${feature}`));
+  const selected = featureHandoffs(protection, feature);
   if (selected.length > 1) throw protectedError('Multiple handoffs make feature context ambiguous');
   return { protection, directory: await safePath(root, `specs/${feature}`), baton: selected[0]?.data };
 }

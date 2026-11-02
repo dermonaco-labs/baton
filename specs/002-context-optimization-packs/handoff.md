@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 002-context-optimization-packs
-phase_completed: review
-next_phase: implement
-next_owner: speckit-implement
+phase_completed: implement
+next_phase: review
+next_owner: baton-review
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Fresh independent re-review of a4e3277 (tree-identical to 86a6d6a): F01-F20 verified fixed, F21 dismissed; new P1 F22 (non-canonical do_not_read spellings bypass exclusion/backup protection, reproduced) plus P2 F23 and P3 F24-F31 mapped to tasks. Route to implement."
+model_role: review
+suggested_model: claude-opus-5.5
+summary: "Complete T039-T044 corrective convergence: canonicalize metadata protection/exclusion keys and reject unsafe roots; share feature selection; expose restore and eligibility limits in synced wrappers; strengthen preview diagnostics and source-feature cleanup coverage. Focused acceptance groups pass 84 tests plus one generic cleanup test. F22/F25/F28-F31 are fixed; F23/F24/F26/F27 have contract-grounded dispositions. Run the mandatory final check, then require fresh independent review; no PR, merge, release or tag is claimed."
 read_first:
   - path: specs/002-context-optimization-packs/spec.md
     why: Approved behavior and safety scope
@@ -18,7 +18,7 @@ read_first:
     sha256: 34a9996f62a98e7b21fc0fed336f90a9e2a5ad8871473232b0e295a1a784a9a4
   - path: specs/002-context-optimization-packs/tasks.md
     why: Completed tasks, honest baseline timing and nonzero acceptance evidence
-    sha256: 285846cef31f3f741027928953e044e96fb17e198240a9d310d70adeef9fe65f
+    sha256: d10b7fa938b1358e7f21fb5dfc482565fe77ff56274f45003911970e24d04db2
   - path: specs/002-context-optimization-packs/contracts/context.md
     why: Supported public command and mutation boundaries
     sha256: 992a0fb4a1be617fd3ae1559964ac62c006cbeb6743f12188949a022b4596684
@@ -27,13 +27,13 @@ read_first:
     sha256: f0cbcaf06931f6c7e3dd0fabc267293a824bac2b7099de43a218710bf5a3bdae
   - path: src/lib/context-guards.mjs
     why: Executable protection discovery and guarded mutation
-    sha256: c10fb8e316fea29ea5c68d4df02bd9e23ccce6cf5c1ba39255900c5083dc6180
+    sha256: 4f9c00e10b5aa215365c565a6466889772e0266959cc300481d4ae5f827b7048
   - path: src/commands/context.mjs
     why: Strict CLI options and report-only adapters
     sha256: 7944c168691759abdfdfda6c6e9e41f65e45fcd23ca5d7efdeb4bb0da8aec6d7
   - path: test/integration/context.test.mjs
     why: Registered lifecycle, provenance and safety acceptance coverage
-    sha256: 92bd47c5b42b464c2d6aab527b796d9321974b57effb12cb8327a0bb26b5199a
+    sha256: 6d8b1eb94e6d8b663be56f89ef9446a597749206c438508a6243d052e18df7d3
   - path: packs/token-budget.yml
     why: Opt-in source and wrapper ownership
     sha256: 9f78004c0bbfb26dd8633136d27cd52b54744cd09960162d8ced7e4ee81e8c3e
@@ -42,7 +42,7 @@ read_first:
     sha256: 34fd4e89d13257e6c47f89d339cee54702819e01c0cdcc5e6a7e5d085a970931
   - path: docs/06-packs-and-customization.md
     why: Adopter safety and capability documentation
-    sha256: 42f44423f2ba1ae8cc6ba0d04c7ff1ea8ac2137aaeac08fbde0a405547b7857a
+    sha256: d28935f9a8101a04cdcd5ee1b3e9789e1fde3571b7a32638aa2bc02ff4be74c6
 artifacts:
   - path: specs/002-context-optimization-packs/spec.md
     role: source-of-truth
@@ -52,12 +52,90 @@ artifacts:
     sha256: 34a9996f62a98e7b21fc0fed336f90a9e2a5ad8871473232b0e295a1a784a9a4
   - path: specs/002-context-optimization-packs/tasks.md
     role: source-of-truth
-    sha256: 285846cef31f3f741027928953e044e96fb17e198240a9d310d70adeef9fe65f
+    sha256: d10b7fa938b1358e7f21fb5dfc482565fe77ff56274f45003911970e24d04db2
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: tasks-all-checked-or-deferred
     met: true
-    evidence: specs/002-context-optimization-packs/review.json
+    evidence: 0 outstanding tasks
+  - id: acceptance-evidence
+    met: true
+    evidence: 0 checks lack evidence
+  - id: local-checks-pass
+    met: true
+    evidence: |-
+      baton: 0
+      stdout (tail):
+      (0.2514ms)
+      ✔ shipped phase template is valid and never weakens its built-in contracts (23.7646ms)
+      ✔ tracked Baton documentation contains no private feed hostnames (118.6887ms)
+      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.9945ms)
+      ✔ adopter command table remains contiguous (1.1211ms)
+      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (1.3213ms)
+      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.6154ms)
+      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (50.024ms)
+      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (6.211ms)
+      ✔ compiles all draft 2020-12 schemas once (169.876ms)
+      ✔ findings fixture validates and invalid fixture reports a JSON pointer (3.0399ms)
+      ✔ pack schema requires a classified reason for every optional reference (1.324ms)
+      ✔ pack, lock and manifest schemas accept named optional sources without relaxing old shapes (8.0184ms)
+      ✔ sync bump explains pin and file changes for a PR body (1.565ms)
+      ✔ sync rejects unpinned bump values and check/bump combination (39.6731ms)
+      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (293.7561ms)
+      ✔ generated registry preserves verified bytes when only installation time changes (20.8597ms)
+      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (17.0004ms)
+      ✔ named optional sources keep raw provenance and refuse modified or misplaced payloads (29.1066ms)
+      ✔ lock and snapshot document label optional provenance by its named source (1.0724ms)
+      ✔ optional pin fields are one immutable list matching the locked projection order (0.3209ms)
+      ✔ MIT license verifier keeps each source copyright requirement (0.4207ms)
+      ✔ pack definitions require every original pack and accept additional optional packs (153.9546ms)
+      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (754.4904ms)
+      ✔ every feature phase and quick lane phase has a valid independent fixture (300.1307ms)
+      ✔ pre-existing feature baton without specify history or attachment still validates (570.4427ms)
+      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
+        ✔ E_ACTOR_FORMAT (102.0529ms)
+        ✔ E_ANALYSIS_CRITICAL (7.2836ms)
+        ✔ E_ANALYSIS_MISSING (9.2952ms)
+        ✔ E_APPROVER_FORMAT (4.5632ms)
+        ✔ E_BLOCKING_OPEN (3.9571ms)
+        ✔ E_BODY_SECTIONS (3.8693ms)
+        ✔ E_BUDGET (9.3753ms)
+        ✔ E_DENYLIST (4.9678ms)
+        ✔ E_EXIT_UNMET (3.7855ms)
+        ✔ E_GATE_PENDING (129.0994ms)
+        ✔ E_LANE_ESCALATE (1554.0141ms)
+        ✔ E_LANE_MISMATCH (4.3876ms)
+        ✔ E_MISSING_ARTIFACT (3.7466ms)
+        ✔ E_MODEL_NOT_ALLOWED (6.7138ms)
+        ✔ E_MULTIPLE_BATONS (6.6787ms)
+        ✔ E_NO_PREREG (5.0472ms)
+        ✔ E_OWNER (5.3881ms)
+        ✔ E_PR_MISSING (4.7098ms)
+        ✔ E_REVIEW_BLOCKING (313.6839ms)
+        ✔ E_REVIEW_MISSING (15.5064ms)
+        ✔ E_SCHEMA (14.2695ms)
+        ✔ E_STALE_ARTIFACT (9.8021ms)
+        ✔ E_TRANSITION (11.1305ms)
+      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (2290.3457ms)
+      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (204.7192ms)
+      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (100.8302ms)
+      ▶ model allowlist warns in warn mode and errors in error mode
+        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (144.9983ms)
+        ✔ error mode emits E_MODEL_NOT_ALLOWED (13.7494ms)
+      ✔ model allowlist warns in warn mode and errors in error mode (227.1933ms)
+      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (141.5689ms)
+      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (1.8994ms)
+      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (25.6906ms)
+      ✔ ready with a blocking question is rejected (117.5901ms)
+      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (161.4096ms)
+      ℹ tests 520
+      ℹ suites 0
+      ℹ pass 520
+      ℹ fail 0
+      ℹ cancelled 0
+      ℹ skipped 0
+      ℹ todo 0
+      ℹ duration_ms 349211.6881
 open_questions: []
 x-final-check-attempt-1:
   command: npm run check
@@ -141,6 +219,10 @@ decisions:
     tag: diff-base
     x-base-commit: a4e32779a237005277fb51e29f80db7db6cf4c8b
     by: baton
+  - id: D15
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Bind T039-T044 canonical-path review corrections and wrapper guidance; preserve approved spec, plan, acceptance commands and source pins
+    by: implementation-session
 gate:
   required: false
   approved_by: null
@@ -258,8 +340,22 @@ history:
     x-worktree: f161633938eb1237a91ef37792e081681bf544826c1b7845ac4df87394f8534b
     commit: a4e3277
     x-action: write
-updated_at: 2026-11-02T17:47:29.141Z
-updated_by: baton-review
+  - phase: review
+    at: 2026-11-02T18:01:12.699Z
+    by: implementation-session
+    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
+    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
+    commit: 404afa5
+    x-action: refresh
+  - phase: implement
+    at: 2026-11-02T18:07:37.485Z
+    by: baton
+    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
+    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
+    commit: 404afa5
+    x-action: write
+updated_at: 2026-11-02T18:01:16.978Z
+updated_by: speckit-implement
 acceptance_checks:
   - id: AC-US1-1
     story: US1
@@ -309,7 +405,7 @@ analysis:
 do_not_read: []
 x-implementation-writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
 x-implementation-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
-x-implementation-cycle: 76e6d12a962ba5736ec03cec85a50e25b05584e7860f01468617fe05ef39c837
+x-implementation-cycle: 494741527f23c87642708ebf70b59febaa6ba782d8274cee8087664b24473ea1
 review:
   findings_path: specs/002-context-optimization-packs/review.json
   blocking_findings: 1
@@ -323,10 +419,11 @@ approvals or weakening mandatory governance.
 
 Scope and pre-code approvals were recorded by the authorized human.
 Plan, contracts, tasks and analysis preregister the guarded implementation.
-Implementation and convergence tasks are complete. The corrected final
-candidate passed its configured full suite: 464 tests, zero failures.
-The failed first attempt and authorized fixture corrections remain recorded.
-No independent review or delivery completion is claimed.
+Implementation and convergence address both independent review rounds,
+including canonical metadata exclusions and explicit wrapper limitations.
+The latest configured full-suite result is recorded in the exit receipt;
+prior failed attempts and authorized fixture corrections remain recorded.
+Implementation dispositions are not a fresh independent review or delivery.
 
 ## Next steps
 

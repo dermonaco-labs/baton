@@ -70,6 +70,15 @@ Restore previews show the backup's raw digest and an overwrite warning.
 replaces that target with the selected sibling backup and then removes the
 backup. Review both files first; later target edits are not preserved, and an
 arbitrary sibling backup is not authenticated as a prior compaction result.
+The backup digest is informational and is not an expected-backup reservation
+across separate preview/apply calls. Re-preview and inspect the backup before
+an explicit restore; the writer checks the backup it reads during apply
+against its in-operation snapshot. Arbitrary external filesystem writers
+remain outside the supported-workflow boundary.
+
+A compact preview without a candidate checks draft eligibility. `allowed`
+does not waive the required candidate and expected target digest for apply;
+supplied candidates are checked during preview.
 
 Approved or historically approved sources, managed files, source-of-truth
 bindings and all `read_first` targets (even without a checksum) refuse

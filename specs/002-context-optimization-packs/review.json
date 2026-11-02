@@ -333,10 +333,11 @@
       "persona": "security-reviewer",
       "confidence": 0.95,
       "task": "T031",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "key() only folds separators and case, and contextExcluded compares raw strings, while the handoff path schema allows ./, /./ and // segments. Schema-valid exclusions of spec.full.md as ./specs/x/spec.full.md, specs/x/./spec.full.md or specs//x/spec.full.md let restore --apply overwrite the target with excluded content and delete the backup; ./ exclusion of the target let compact apply. Violates FR-007..FR-010 and the spec edge case that aliases must not evade protection.",
       "x-evidence": "Independent temp-repo probe at a4e3277: canonical spelling -> E_CONTEXT_PROTECTED; three non-canonical spellings -> exit 0, applied:true, target replaced, backup deleted; ./ target exclusion -> compact applied.",
-      "x-fix": "Canonicalize all protection/exclusion/read_first/artifact keys (collapse ./ and empty segments, POSIX-normalize, then case-fold) or reject non-canonical metadata paths fail-closed; add refusal tests for each spelling for target, backup and candidate."
+      "x-fix": "Canonicalize all protection/exclusion/read_first/artifact keys (collapse ./ and empty segments, POSIX-normalize, then case-fold) or reject non-canonical metadata paths fail-closed; add refusal tests for each spelling for target, backup and candidate.",
+      "x-resolution": "T039: key() POSIX-normalizes separators/dot segments before case folding and rejects normalized repository roots, traversal, absolute paths and colon aliases. Eighteen schema-valid alias cases exercise cross-feature excluded targets/backups/candidates, read_first/artifacts and managed paths; strict filesystem reads still fail closed on noncanonical required sources. Excluded backup/candidate fixtures contain invalid UTF-8 to prove they are not decoded. Three root spellings are refused. Preview/apply exact codes and unchanged snapshots are asserted."
     },
     {
       "id": "F23",
@@ -347,8 +348,8 @@
       "persona": "adversarial-reviewer",
       "confidence": 0.78,
       "task": "T036",
-      "disposition": "open",
-      "reason": "--expect binds only the target; apply re-reads the backup, writes it and deletes it, so a backup swapped after preview is restored unseen despite the surfaced backup_sha256.",
+      "disposition": "dismissed",
+      "reason": "The limitation is real but an expected-backup reservation is outside the approved contract: contracts/context.md Guarded Writer binds --expect to the original target only, and plan.md Implementation Design explicitly avoids new concurrent-writer protocols and excludes arbitrary external writers. T040 now requires surfacing warning/backup_sha256 and re-previewing before explicit apply, and documents that the backup digest is informational, not provenance or a cross-call freshness guarantee. Within-apply backup snapshot checks remain enforced. Adding a mandatory --expect-backup protocol needs separate scope approval; this disposition does not claim that cross-call backup replacement is detected.",
       "x-fix": "Require and verify an expected backup digest for restore apply (e.g. --expect-backup) and test a swapped backup."
     },
     {
@@ -360,8 +361,8 @@
       "persona": "correctness-reviewer",
       "confidence": 0.62,
       "task": "T032",
-      "disposition": "open",
-      "reason": "Preview should report the missing candidate as a reason so allowed matches apply outcome."
+      "disposition": "dismissed",
+      "reason": "Approved contracts/context.md explicitly defines a non-mutating eligibility/preview report and makes candidate/expect mandatory for apply, not for eligibility preview. The compact wrapper intentionally checks eligibility before generating the candidate. Treating a missing candidate as ineligible would contradict that flow. T040 clarifies that allowed does not waive apply prerequisites; existing exact E_USAGE tests retain their enforcement."
     },
     {
       "id": "F25",
@@ -372,8 +373,9 @@
       "persona": "agent-native-reviewer",
       "confidence": 0.66,
       "task": "T036",
-      "disposition": "open",
-      "reason": "Add wrapper guidance to show warning and backup digest before apply and to report conflict cause."
+      "disposition": "fixed",
+      "reason": "Add wrapper guidance to show warning and backup digest before apply and to report conflict cause.",
+      "x-resolution": "T040: authored restore guidance surfaces warning/backup_path/backup_sha256 and overwrite, removal, provenance and freshness limits. Both wrappers report exact E_CONFLICT causes without deleting backups or silently substituting digests. Normal sync regenerates matching authored pack copies; all locked upstream hashes and pins remain unchanged. A registered context output regression checks this guidance and generated-copy equality."
     },
     {
       "id": "F26",
@@ -384,8 +386,8 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.75,
       "task": "T032",
-      "disposition": "open",
-      "reason": "Missing backup is already a reason that throws earlier; remove dead branch or make it the single error source."
+      "disposition": "dismissed",
+      "reason": "The local null guard intentionally narrows Buffer|null for type-safe restore assignment and preserves the exact protected diagnostic if preflight changes. Earlier string reasons do not narrow backupBytes for TypeScript. Removing it would require an unsafe assertion or an unnecessary control-flow abstraction; missing-backup preview/apply contracts remain tested."
     },
     {
       "id": "F27",
@@ -396,8 +398,8 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.62,
       "task": "T032",
-      "disposition": "open",
-      "reason": "Fold the conflict into reasons with its typed error to keep one refusal path."
+      "disposition": "dismissed",
+      "reason": "The separate boolean preserves distinct public diagnostics: protected eligibility failures are E_CONTEXT_PROTECTED/exit 1, while an existing backup is E_CONFLICT/exit 4. Preview merges the conflict into reasons without mutating protection reasons. A typed reason framework or message matching would add complexity without a behavioral fix; T041 asserts both exact outcomes and no writes."
     },
     {
       "id": "F28",
@@ -408,8 +410,9 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.68,
       "task": "T032",
-      "disposition": "open",
-      "reason": "Extract a single selector so ambiguity rules cannot drift."
+      "disposition": "fixed",
+      "reason": "Extract a single selector so ambiguity rules cannot drift.",
+      "x-resolution": "T039: private featureHandoffs() owns normalized feature-directory selection for mutation and advisory context. Existing ambiguous-handoff refusals remain unchanged."
     },
     {
       "id": "F29",
@@ -420,8 +423,9 @@
       "persona": "testing-reviewer",
       "confidence": 0.62,
       "task": "T033",
-      "disposition": "open",
-      "reason": "Assert backup_sha256 null and backup_path on missing backup and code 0 on conflict preview."
+      "disposition": "fixed",
+      "reason": "Assert backup_sha256 null and backup_path on missing backup and code 0 on conflict preview.",
+      "x-resolution": "T041 asserts missing-backup path/null digest/applied:false, exact exit 1/E_CONTEXT_PROTECTED on apply, existing-backup preview exit 0/path/raw digest/applied:false, and apply exit 4/E_CONFLICT. Snapshots are checked immediately after each preview and again after refusal."
     },
     {
       "id": "F30",
@@ -432,8 +436,9 @@
       "persona": "project-standards-reviewer",
       "confidence": 0.8,
       "task": "T036",
-      "disposition": "open",
-      "reason": "Markdown structure nit; CHANGELOG is outside lint:md so not caught by checks."
+      "disposition": "fixed",
+      "reason": "Markdown structure nit; CHANGELOG is outside lint:md so not caught by checks.",
+      "x-resolution": "T042 inserts the missing blank line before the Unreleased Changed heading."
     },
     {
       "id": "F31",
@@ -444,8 +449,9 @@
       "persona": "learnings-researcher",
       "confidence": 0.6,
       "task": "T030",
-      "disposition": "open",
-      "reason": "Advisory: a future source feature could repeat F01; consider asserting all tracked source specs/* are in the remove list."
+      "disposition": "fixed",
+      "reason": "Advisory: a future source feature could repeat F01; consider asserting all tracked source specs/* are in the remove list.",
+      "x-resolution": "T043 enumerates numbered source feature directories and asserts each exact directory is explicitly retired by template cleanup, never the entire specs directory. Existing adoption coverage separately verifies receipt-bearing source retirement and preservation of an independent adopter's spec/handoff."
     }
   ]
 }
