@@ -29,18 +29,38 @@ function missing(error) {
   return /** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT';
 }
 
+/** @param {string} path @param {string} source */
+function unsafePath(path, source) {
+  return protectedError(source ? `Unsafe context metadata path "${path}" declared by ${source}` : 'Unsafe context path',
+    source || path);
+}
+
 /** @param {string} path @param {string} [source] */
 function key(path, source = '') {
   const slashes = path.replaceAll('\\', '/');
-  const windowsAlias = slashes.split('/').some((part) =>
-    part !== '.' && (/[. ]$/.test(part) || /~\d/.test(part)));
+  const windowsAlias = slashes.split('/').some((part) => part !== '.' && /[. ]$/.test(part));
   const normalized = posix.normalize(slashes).replace(/\/$/, '');
   if (windowsAlias || !normalized || normalized === '.' || normalized === '..' || normalized.startsWith('../') ||
       normalized.startsWith('/') || normalized.includes(':')) {
-    throw protectedError(source ? `Unsafe context metadata path "${path}" declared by ${source}` : 'Unsafe context path',
-      source || path);
+    throw unsafePath(path, source);
   }
   return normalized.toLowerCase();
+}
+
+/** @param {string} root @param {string} path @param {string} [source] */
+async function checkedKey(root, path, source = '') {
+  const normalized = key(path, source);
+  const shortName = path.replaceAll('\\', '/').split('/').some((part) =>
+    /^[^.~]{1,6}~\d{1,6}(?:\.[^.]{0,3})?$/i.test(part) && part.split('.')[0].length <= 8);
+  if (shortName) {
+    try {
+      await safePath(root, path);
+    } catch (error) {
+      if (!(error instanceof BatonError) && !missing(error)) throw error;
+      throw unsafePath(path, source);
+    }
+  }
+  return normalized;
 }
 
 /** @param {string} feature @param {string} path */
@@ -169,8 +189,11 @@ export async function contextProtection(root, pack) {
   const manifest = /** @type {ContextManifest} */ (parsedManifest);
   if (!manifest.packs.includes(pack)) throw protectedError(`The ${pack} pack is not installed`);
   remember('.baton/manifest.json', manifestBytes);
-  const protectedPaths = new Set([...manifest.files, ...manifest.marker_sections]
-    .map((item) => key(item.path, '.baton/manifest.json')));
+  /** @type {Set<string>} */
+  const protectedPaths = new Set();
+  for (const item of [...manifest.files, ...manifest.marker_sections]) {
+    protectedPaths.add(await checkedKey(root, item.path, '.baton/manifest.json'));
+  }
   const excludedPaths = new Set();
   /** @type {string[]} */
   const absent = [];
@@ -190,14 +213,14 @@ export async function contextProtection(root, pack) {
     remember(path, bytes);
     batons.push({ path, data });
     for (const ref of data.do_not_read ?? []) {
-      const canonical = key(ref.path, path);
+      const canonical = await checkedKey(root, ref.path, path);
       excludedPaths.add(canonical);
       protectedPaths.add(canonical);
     }
   }
   for (const { path, data } of batons) {
     for (const ref of [...data.read_first, ...data.artifacts]) {
-      protectedPaths.add(key(ref.path, path));
+      protectedPaths.add(await checkedKey(root, ref.path, path));
       if (contextExcluded({ excludedPaths }, ref.path)) continue;
       const source = await readFile(await requiredPath(root, ref.path));
       if (ref.sha256 && hashArtifact(ref.path, source) !== ref.sha256) {
@@ -220,7 +243,9 @@ export async function contextProtection(root, pack) {
       throw protectedError('Malformed source lock prevents protection discovery', path);
     }
     if (validateSchema(schemas, 'lock', lock).length) throw protectedError('Invalid source lock', path);
-    for (const file of /** @type {Array<{path:string}>} */ (lock.files)) protectedPaths.add(key(file.path, path));
+    for (const file of /** @type {Array<{path:string}>} */ (lock.files)) {
+      protectedPaths.add(await checkedKey(root, file.path, path));
+    }
     remember(path, bytes);
   }
   return { manifest, files, batons, paths, protectedPaths, excludedPaths, absent };
@@ -275,9 +300,10 @@ export async function mutateContext(root, action, options) {
   const backupBytes = backupProtected ? null : await optionalBytes(root, backupPath);
   let proposed = '';
   if (action === 'compact' && options.candidate) {
+    const candidateKey = await checkedKey(root, options.candidate);
     if (contextExcluded(protection, options.candidate)) {
       reasons.push('Candidate is excluded from context');
-    } else if (key(options.candidate) === key(path) || key(options.candidate) === key(backupPath)) {
+    } else if (candidateKey === key(path) || candidateKey === key(backupPath)) {
       reasons.push('Candidate aliases target or backup');
     } else {
       const candidatePath = await requiredPath(root, options.candidate);

@@ -81,8 +81,11 @@ does not waive the required candidate and expected target digest for apply;
 supplied candidates are checked during preview.
 Candidate paths must be repository-relative, such as `.baton/.tmp/candidate.md`,
 not absolute paths or drive-letter paths. Protection metadata with unsafe
-Windows trailing-dot, trailing-space or short-name spellings fails closed
-and identifies the declaring handoff, manifest or lock.
+Windows trailing-dot, trailing-space or non-canonical short-name spellings
+fails closed and identifies the declaring handoff, manifest or lock.
+Canonical filenames containing `~` and digits remain supported. An existing
+8.3-shaped metadata name must pass the same real-path identity check as other
+filesystem sources; an unresolved or aliased spelling is refused.
 
 Approved or historically approved sources, managed files, source-of-truth
 bindings and all `read_first` targets (even without a checksum) refuse

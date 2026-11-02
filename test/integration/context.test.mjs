@@ -439,6 +439,85 @@ test('context protection fails closed on metadata aliases of the repository root
   }
 });
 
+test('context protection keeps unexcluded case-alias read_first and artifact targets bound', async (t) => {
+  for (const path of [target.toUpperCase(), target.replace('/spec.md', '/Spec.md')]) {
+    for (const field of ['read_first', 'artifacts']) {
+      await t.test(`${field}/${path}`, async (t) => {
+        const { root } = await fixture(t);
+        await mkdir(dirname(join(root, path)), { recursive: true });
+        await writeFile(join(root, path), original);
+        await baton(root, 'draft');
+        const handoff = join(root, `specs/${feature}/handoff.md`);
+        const { data, body } = parseFrontmatter(await readFile(handoff, 'utf8'));
+        data[field] = field === 'read_first' ? [{ path, why: 'Required unexcluded case alias' }]
+          : [{ path, role: 'source-of-truth', sha256: hashArtifact(target, original) }];
+        data.do_not_read = [];
+        assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', data), []);
+        await writeFile(handoff, serializeFrontmatter(data, body));
+        const before = await snapshot(root);
+        const args = ['compact', '--feature', feature, '--target', target, '--candidate', 'candidate.md'];
+        const preview = await invoke(root, args);
+        const message = 'Target is read_first, source/hash-bound or managed';
+        assert.equal(preview.code, 0, JSON.stringify(preview.output));
+        assert.equal(preview.output.data.allowed, false);
+        assert.deepEqual(preview.output.data.reasons, [message]);
+        assert.deepEqual(await snapshot(root), before);
+        const apply = await invoke(root, [...args, '--expect', digest, '--apply']);
+        assert.equal(apply.code, 1, JSON.stringify(apply.output));
+        assert.equal(apply.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+        assert.equal(apply.output.errors[0].message, message);
+        assert.equal(apply.output.errors[0].file, target);
+        assert.deepEqual(await snapshot(root), before);
+      });
+    }
+  }
+});
+
+test('context advisory preserves canonical tilde-number names in files directories and metadata', async (t) => {
+  const { root } = await fixture(t);
+  const research = `specs/${feature}/research~2.md`;
+  const contract = `specs/${feature}/contracts/draft~1/api.md`;
+  const longName = 'docs/v~2-notes.md';
+  const shortName = 'docs/SPEC~1.MD';
+  for (const path of [research, contract, longName, shortName]) {
+    await mkdir(dirname(join(root, path)), { recursive: true });
+    await writeFile(join(root, path), '# Canonical filename, not an alias\n');
+  }
+  await baton(root, 'draft');
+  const handoff = join(root, `specs/${feature}/handoff.md`);
+  const { data, body } = parseFrontmatter(await readFile(handoff, 'utf8'));
+  data.read_first = [longName, shortName].map((path) => ({ path, why: 'Canonical required source' }));
+  data.do_not_read = [{ path: 'docs/v~3-absent.md', why: 'Excluded absent long name' }];
+  assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', data), []);
+  await writeFile(handoff, serializeFrontmatter(data, body));
+  const quickPath = '.baton/quick/fix~1.md';
+  const quick = parseFrontmatter(await readFile(join(sourceRoot, 'test/fixtures/handoffs/valid/quick/none.md'), 'utf8'));
+  quick.data.read_first = [{ path: quickPath, why: 'Canonical quick source' }];
+  await mkdir(join(root, '.baton/quick'), { recursive: true });
+  assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', quick.data), []);
+  await writeFile(join(root, quickPath), serializeFrontmatter(quick.data, quick.body));
+  const manifestPath = join(root, '.baton/manifest.json');
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  manifest.files.push({ path: shortName, sha256: digest, pack: 'core', owner: 'baton', managed: true });
+  await writeFile(manifestPath, JSON.stringify(manifest));
+  const lock = JSON.parse(await readFile(join(sourceRoot, 'baton.lock.json'), 'utf8'));
+  lock.files = [{ ...lock.files[0], path: shortName }];
+  assert.deepEqual(validateSchema(await loadSchemas(root), 'lock', lock), []);
+  await writeFile(join(root, 'baton.lock.json'), JSON.stringify(lock));
+  const before = await snapshot(root);
+  for (const action of ['scope', 'usage']) {
+    const result = await invoke(root, [action, '--feature', feature]);
+    assert.equal(result.code, 0, JSON.stringify(result.output));
+    assert.deepEqual(result.output.data.read_first, data.read_first);
+    for (const path of [research, contract]) assert.ok(result.output.data.files.some((file) => file.path === path));
+  }
+  assert.equal((await invoke(root, ['concise', 'on'])).code, 0);
+  const preview = await invoke(root, ['compact', '--feature', feature, '--target', target]);
+  assert.equal(preview.code, 0, JSON.stringify(preview.output));
+  assert.equal(preview.output.data.allowed, true);
+  assert.deepEqual(await snapshot(root), before);
+});
+
 test('context protection labels unsafe CLI candidate paths without misidentifying metadata', async (t) => {
   for (const path of ['/tmp/candidate.md', 'C:\\temp\\candidate.md', 'drafts/candidate.md.',
     'drafts/candidate.md ', 'drafts/CANDID~1.MD']) {

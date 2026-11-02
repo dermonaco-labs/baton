@@ -548,10 +548,11 @@
       "persona": "testing-reviewer",
       "confidence": 0.8,
       "task": "T046",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "The read_first and artifact descriptors set exclude:true, adding a canonical do_not_read of the target (L376), so contextExcluded (context-guards.mjs:255) refuses before the bound-target check (L260). Dot and duplicate-separator spellings are rejected by safePath anyway, so the only filesystem-resolvable safe alias for read_first/artifacts is a case variant, which the matrix lacks; the only case-alias tests cover backups (L289) and do_not_read (L595). Orchestrator probe: SPECS/002-DRAFT/SPEC.MD and Spec.md read_first/artifact aliases correctly refuse as \"Target is read_first, source/hash-bound or managed\", but replacing key(ref.path, path) at L200 with the raw path would pass every current test.",
       "x-severity": "testing-reviewer rated P2 (0.8); synthesized P3 because current code is correct (independently probed) and the gap is regression detection only.",
-      "x-fix": "Add unexcluded case-variant read_first (no sha) and artifact (sha via hashArtifact) rows asserting preview allowed:false with reasons exactly [\"Target is read_first, source/hash-bound or managed\"] and the same E_CONTEXT_PROTECTED apply refusal with unchanged snapshots. Optionally add a ~2 short-name spelling and a .baton/lock.json declaring source."
+      "x-fix": "Add unexcluded case-variant read_first (no sha) and artifact (sha via hashArtifact) rows asserting preview allowed:false with reasons exactly [\"Target is read_first, source/hash-bound or managed\"] and the same E_CONTEXT_PROTECTED apply refusal with unchanged snapshots. Optionally add a ~2 short-name spelling and a .baton/lock.json declaring source.",
+      "x-resolution": "T051 adds four unexcluded rows: uppercase full path and mixed-case leaf, each with checksum-free read_first or hashArtifact-bound artifact. Exact preview reason array and apply message/file/code assert the binding cause, with immediate no-write snapshots. Case-variant files are materialized so the same test exercises binding rather than missing-source errors on case-sensitive hosts."
     },
     {
       "id": "F38",
@@ -562,10 +563,11 @@
       "persona": "adversarial-reviewer",
       "confidence": 0.85,
       "task": "T045",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "key() treats any segment containing ~<digit> as an 8.3 alias (L35-36). contextFilePaths passes every readdir entry to contextExcluded/key (L362), but readdir returns real long names, so a legitimate specs/<feature>/notes~2.md or contracts/draft~1/ makes usage/scope/concise throw Unsafe context path for the whole feature instead of listing it (adversarial persona reproduced; removing the file restored output). Likewise a schema-valid handoff/lock path such as docs/v~2-notes.md (handoff/lock path patterns accept ~) or a quick baton named fix~1.md blocks every context command repo-wide. Fails closed, so not a protection bypass, but it contradicts the accepted schema and spec usage reporting for valid feature trees.",
       "x-severity": "adversarial-reviewer rated both instances P3 (0.85, 0.75); merged.",
-      "x-fix": "Narrow the short-name check to the generated 8.3 shape (e.g. /^[^.~]{1,6}~\\d{1,6}(\\.[^.]{0,3})?$/i) or exempt readdir-derived canonical names; keep metadata trailing-dot/space rejection. Add tests: a legitimate research~2.md in the feature tree still appears in usage/scope, and a schema-valid long ~digit metadata path does not disable context commands, while 002-DR~1/SPEC~1.MD aliases still refuse."
+      "x-fix": "Narrow the short-name check to the generated 8.3 shape (e.g. /^[^.~]{1,6}~\\d{1,6}(\\.[^.]{0,3})?$/i) or exempt readdir-derived canonical names; keep metadata trailing-dot/space rejection. Add tests: a legitimate research~2.md in the feature tree still appears in usage/scope, and a schema-valid long ~digit metadata path does not disable context commands, while 002-DR~1/SPEC~1.MD aliases still refuse.",
+      "x-resolution": "T052 limits extra validation to genuine 8.3-shaped components with at most eight base characters, then uses safePath real-path identity to distinguish an actual canonical tilde-number name from an alias. Lexical keys retain dot/space/root rejection but no longer reject ordinary readdir names merely for containing ~digit. checkedKey preserves declaring-source errors for unresolved/aliased metadata and unsafe CLI candidates. New coverage reports research~2.md and contracts/draft~1/api.md, accepts long-name and literal SPEC~1.MD metadata in handoff/manifest/lock plus a fix~1.md quick baton, and exercises scope/usage/concise/compact preview without writes. The existing 60-row alias matrix remains green. Pre-fix new tests: five pass, one canonical-name regression fails; final focused acceptance:139/139."
     }
   ]
 }
