@@ -3,11 +3,12 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/002-context-optimization-packs-independent-20261102/report.md",
-    "x-scope": "Independent fresh-checkout review of implementation commit c7bd8d4 against base 5e6de1be. CE-reviewed set equals the 85-file pinned diff; the 71 handoff-scope CLI subjects are a subset (extras: generated bundle + metafile/sha256, release-records-docs-a7 quick baton, specs/002 artifacts). Vendor bytes verified by lock verify rather than prose review. No fixes applied: the coordinator forbids implementation during review, so safe_auto items are reported open. Full suite not rerun by instruction; targeted checks only (lock verify, feature handoff validate, archive-adopt reproduction)."
+    "run_artifact": ".context/compound-engineering/ce-review/002-context-optimization-packs-rereview-20261102/report.md",
+    "x-scope": "Round 2 fresh independent re-review of corrected candidate 86a6d6a (cherry-picked here as a4e3277, identical tree) against original feature base 5e6de1be. All eight personas reviewed the 24-file corrective delta c7bd8d4..a4e3277 (CLI diff-base c7bd8d4; 16 handoff-scope CLI subjects are a subset) with round-1 full-feature coverage of 5e6de1be..c7bd8d4 carried forward. No fixes applied: coordinator forbids coding during review. Full suite not rerun by instruction.",
+    "x-checks": "lock verify OK; validate handoff OK (W_PACK_RECOMMENDED only); six changed test files 90/90 pass; git-archive adopt smoke with independent adopter feature: specs/001 and specs/002 removed, adopter feature preserved, validate 0, doctor --strict 0, workflows unchanged; temp probe reproduced F22 (restore applied with ./, /./ and // do_not_read spellings; compact applied on ./-excluded target) while canonical spelling was refused."
   },
   "base": "5e6de1be30c555f26669211b55194b5746611a8a",
-  "head": "c7bd8d4d2649d77b5930dac52d4312736767326f",
+  "head": "a4e32779a237005277fb51e29f80db7db6cf4c8b",
   "personas": [
     "correctness-reviewer",
     "security-reviewer",
@@ -32,7 +33,8 @@
       "x-resolution": "T030: exact source002 retirement in cleanup and four template smoke assertions; adoption regression verifies removal, byte-preserved independent adopter feature and successful adopter validation.",
       "reason": "No task covers template disposition of the new source feature; converge must append a dedicated task (cleanup remove entry plus adoption coverage).",
       "x-evidence": "Reproduced independently from git archive HEAD c7bd8d4 in an isolated temp repo: BATON_FORCE_CLEANUP=1 adopt --no-workflows exits 0, specs/002-context-optimization-packs survives, validate --json exits 1 with E_MISSING_ARTIFACT for src/lib/context-guards.mjs, src/commands/context.mjs, test/integration/context.test.mjs, packs/token-budget.yml, packs/optimize.yml and docs/06-packs-and-customization.md. The remove list retires specs/001-baton-template/ but not specs/002-context-optimization-packs/. Smoke workflows assert only 001 absence (smoke.yml:42,76,117; mvp-windows-smoke.yml:39). adopt.test.mjs derivedCopy copies the working tree; feature 002 read_first gained removed/moved source paths only at the implement receipt, so earlier coverage could pass while leaking the feature. Violates docs/solutions/quick-lane-scope-and-stranded-land-2026-09-29.md lesson (a).",
-      "x-fix": "Add specs/002-context-optimization-packs/ to the remove list; extend adoption coverage (and smoke assertions where appropriate) to prove source 002 is removed while a separate adopter-owned feature survives. Do not weaken validation or blanket-delete adopter specs; no production adopt logic change expected."
+      "x-fix": "Add specs/002-context-optimization-packs/ to the remove list; extend adoption coverage (and smoke assertions where appropriate) to prove source 002 is removed while a separate adopter-owned feature survives. Do not weaken validation or blanket-delete adopter specs; no production adopt logic change expected.",
+      "x-rereview": "archive adopt smoke independently confirmed removal plus adopter preservation and clean validate/doctor"
     },
     {
       "id": "F02",
@@ -47,7 +49,8 @@
       "x-resolution": "T031: both actions protect backups before reads/mutations. Six exact-code modes cover cross-baton read_first/hash, managed, excluded existing/absent and case-aliased backups; invalid excluded bytes are not decoded.",
       "reason": "Executable guard violates FR-007/FR-009 and the cross-baton protection edge case: a hash-bound or read_first backup is consumed and removed.",
       "x-evidence": "L233 checks only the target against protection.protectedPaths. backupPath (L252-253) is never checked; restore reads it (L264) and rm(backup) at L290. Adversarial reproduction: another feature's handoff binding specs/002-draft/spec.full.md with its sha256; restore preview allowed:true, apply exit 0, backup deleted, then context scope for that feature fails 'Required context source is missing'. Security reviewer independently raised the same gap.",
-      "x-fix": "Refuse compact and restore (preview reason and apply) when key(backupPath) is in protectedPaths or excludedPaths; add an integration case where another baton binds the backup."
+      "x-fix": "Refuse compact and restore (preview reason and apply) when key(backupPath) is in protectedPaths or excludedPaths; add an integration case where another baton binds the backup.",
+      "x-rereview": "backup protection evaluated before reads; exclusion/case-alias/managed/hash/read_first refusal tests pass (canonical spellings only, see F22)"
     },
     {
       "id": "F03",
@@ -62,7 +65,8 @@
       "x-resolution": "T032: preview reports missing backup with allowed:false; apply returns E_CONTEXT_PROTECTED and the relative backup path, with unchanged snapshots.",
       "reason": "contracts/context.md requires an existing backup and repository-standard diagnostics naming target/reason.",
       "x-evidence": "Preview returns at L246 before any backup check; restore branch calls readFile(backup) unguarded, so ENOENT reaches cli.mjs:68-74 as E_INTERNAL with an absolute path. Compact branch uses optionalBytes and a typed E_CONFLICT. Correctness and adversarial agree; adversarial reproduced exit 10.",
-      "x-fix": "Check optionalBytes(root, backupPath) for restore before building the report; add a preview reason and throw a typed BatonError with the relative backup path on apply; add a regression test."
+      "x-fix": "Check optionalBytes(root, backupPath) for restore before building the report; add a preview reason and throw a typed BatonError with the relative backup path on apply; add a regression test.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F04",
@@ -76,7 +80,8 @@
       "disposition": "fixed",
       "x-resolution": "T032: optional decisions type/default matches the schema; schema-validated omitted-decisions fixture previews successfully. Multiple same-feature handoffs are separately refused as ambiguous.",
       "reason": "decisions is not in handoff.schema.json required; elsewhere code uses data.decisions ?? [].",
-      "x-fix": "Use (data.decisions ?? []).some(...); add a fixture baton without decisions."
+      "x-fix": "Use (data.decisions ?? []).some(...); add a fixture baton without decisions.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F05",
@@ -91,7 +96,8 @@
       "x-resolution": "T036 implements the minimum non-contract-changing remedy proposed by review: backup_sha256 and explicit restore-overwrite/provenance warning; docs explain loss of later edits and unauthenticated sibling backups. No new persistent provenance protocol.",
       "reason": "Downgraded from P1: apply requires --expect bound to the current target digest, so replacement is explicit; still, a backup not produced by compaction is accepted and post-compaction edits are discarded without a recovery copy.",
       "x-evidence": "Adversarial scenarios: unrelated user spec.full.md restored over a never-compacted spec (exit 0, original gone); FR-999 edit after compaction lost on restore with preview digest.",
-      "x-fix": "Record backup/compacted digests at compaction and verify on restore, or preserve the current target with wx before rename; at minimum surface the backup digest in the preview."
+      "x-fix": "Record backup/compacted digests at compaction and verify on restore, or preserve the current target with wx before rename; at minimum surface the backup digest in the preview.",
+      "x-rereview": "minimum remedy present (backup_sha256, warning, docs); preview-to-apply digest enforcement tracked separately as F23"
     },
     {
       "id": "F06",
@@ -105,7 +111,8 @@
       "disposition": "fixed",
       "x-resolution": "T033: exact E_CONTEXT_PROTECTED per protection branch and restore; only stale digest accepts E_CONFLICT. Schema assertions prevent malformed approval fixtures from passing for the wrong reason.",
       "reason": "A protection regression masked by the stale-digest conflict, or a restore failing for an unrelated reason, keeps AC-US2-2 green.",
-      "x-fix": "Assert one exact code per mode (E_CONTEXT_PROTECTED for read_first/hash/approved/history/malformed/managed; E_CONFLICT for stale) and errors[0].code for restore refusals (L114-116)."
+      "x-fix": "Assert one exact code per mode (E_CONTEXT_PROTECTED for read_first/hash/approved/history/malformed/managed; E_CONFLICT for stale) and errors[0].code for restore refusals (L114-116).",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F07",
@@ -119,7 +126,8 @@
       "disposition": "fixed",
       "x-resolution": "T031-T033: executable backup, missing-input, target/backup/backslash alias, whitespace, duplicate target, absent token-budget, excluded candidate and ambiguous-handoff cases assert exact diagnostics and unchanged snapshots.",
       "reason": "Guard branches at context-guards.mjs L248-264/L304 are unexercised; F02/F03/F04 escaped because of these gaps.",
-      "x-fix": "Extend the exact-code refusal matrix with these modes and unchanged-snapshot assertions."
+      "x-fix": "Extend the exact-code refusal matrix with these modes and unchanged-snapshot assertions.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F08",
@@ -133,7 +141,8 @@
       "disposition": "fixed",
       "x-resolution": "T033: exact-code unit cases cover uppercase, drive absolute, rooted slash/backslash and ADS forms; canonical backslash paths remain supported. Integration cases exercise case-folded exclusions and backslash candidate aliases.",
       "reason": "Spec edge case requires Windows case aliases not to evade protection; unit test uses a loose catch-all regex.",
-      "x-fix": "Add backslash, uppercase, C:/, leading-slash and ':stream' cases with exact codes."
+      "x-fix": "Add backslash, uppercase, C:/, leading-slash and ':stream' cases with exact codes.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F09",
@@ -146,7 +155,8 @@
       "task": "T013",
       "disposition": "fixed",
       "x-resolution": "T032: preview checks existing/missing backups and supplied candidate content/aliases, reports allowed:false and reasons, and remains non-mutating.",
-      "reason": "Preview-then-apply flow in wrappers can mislead agents; either add deterministic precondition reasons or document that allowed covers protection only."
+      "reason": "Preview-then-apply flow in wrappers can mislead agents; either add deterministic precondition reasons or document that allowed covers protection only.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F10",
@@ -159,7 +169,8 @@
       "task": "T011",
       "disposition": "fixed",
       "x-resolution": "T033: phase, status, attach-approved, schema-invalid handoff and malformed manifest/lock cases added. Every generated approval fixture is schema-validated before use.",
-      "reason": "Regression in these guard branches would make approved artifacts compactable without a failing test."
+      "reason": "Regression in these guard branches would make approved artifacts compactable without a failing test.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F11",
@@ -172,7 +183,8 @@
       "task": "T016",
       "disposition": "fixed",
       "x-resolution": "T033: optimize apply/flags assert E_USAGE, absent-pack refusal names optimize, readable output uses valid candidate/expect with exact E_CONTEXT_PROTECTED/exit1. Positive reports assert protected files, totals and byte-identical snapshots.",
-      "reason": "L172-183 and L235-243 accept any failure; assert exact E_USAGE / pack-missing codes and E_CONTEXT_PROTECTED with valid candidate/expect."
+      "reason": "L172-183 and L235-243 accept any failure; assert exact E_USAGE / pack-missing codes and E_CONTEXT_PROTECTED with valid candidate/expect.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F12",
@@ -185,7 +197,8 @@
       "task": "T020",
       "disposition": "fixed",
       "x-resolution": "T034: bounded contracts-tree discovery includes nested Markdown, skips links/backups and honors case-normalized file/tree exclusions before reads. Scope and usage assert exact files and estimates.",
-      "reason": "Usage under-reports context size relative to contextTarget's allowed set."
+      "reason": "Usage under-reports context size relative to contextTarget's allowed set.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F13",
@@ -198,7 +211,8 @@
       "task": "T013",
       "disposition": "fixed",
       "x-resolution": "T031: one non-global PROTECTED_MARKER constant covers targets, candidates and backups.",
-      "reason": "Security-relevant guard copies at L234/L261/L265 can drift; hoist to one constant/helper."
+      "reason": "Security-relevant guard copies at L234/L261/L265 can drift; hoist to one constant/helper.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F14",
@@ -211,7 +225,8 @@
       "task": "T020",
       "disposition": "fixed",
       "x-resolution": "T034: shared estimatedTokens and TOKEN_ESTIMATE define formula/label for mutation previews and advisory reports; tests retain independent numerical expectations.",
-      "reason": "Math.ceil(length/4) and the estimate label repeat at context.mjs:63/65/85/89 and context-guards.mjs:245/292."
+      "reason": "Math.ceil(length/4) and the estimate label repeat at context.mjs:63/65/85/89 and context-guards.mjs:245/292.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F15",
@@ -224,7 +239,8 @@
       "task": "T007",
       "disposition": "fixed",
       "x-resolution": "T035: frozen OPTIONAL_PIN_FIELDS drives verification/projection; tests assert exact contents, immutability and unchanged lock field order.",
-      "reason": "sync.mjs:400, lock.mjs:54 and sync.mjs:301 must change together; export one field list."
+      "reason": "sync.mjs:400, lock.mjs:54 and sync.mjs:301 must change together; export one field list.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F16",
@@ -237,7 +253,8 @@
       "task": "T005",
       "disposition": "fixed",
       "x-resolution": "T035: ATV reuses verifyMitLicense with its existing copyright/message; source-specific copyright verification remains enforced and tested.",
-      "reason": "Two implementations of the same license policy in one module."
+      "reason": "Two implementations of the same license policy in one module.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F17",
@@ -250,7 +267,8 @@
       "task": "T023",
       "disposition": "fixed",
       "x-resolution": "T035: BUNDLE_LIMIT_BYTES supplies comparison/error text; strict 450 KiB boundary and independently spelled-out test budget are unchanged.",
-      "reason": "Use one BUNDLE_LIMIT constant for the comparison and message; D6 value unchanged."
+      "reason": "Use one BUNDLE_LIMIT constant for the comparison and message; D6 value unchanged.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F18",
@@ -263,7 +281,8 @@
       "task": "T020",
       "disposition": "fixed",
       "x-resolution": "T034: advisory and guard code share contextExcluded, which owns canonical keys and directory-prefix exclusion semantics.",
-      "reason": "Expose isExcluded(protection, path) or export key() and use it at L61/L83."
+      "reason": "Expose isExcluded(protection, path) or export key() and use it at L61/L83.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F19",
@@ -276,7 +295,8 @@
       "task": "T022",
       "disposition": "fixed",
       "x-resolution": "T036: approved cap increase is under Unreleased / Changed; no release or tag.",
-      "reason": "Keep a Changelog 1.1.0 files changes to existing enforced limits under Changed."
+      "reason": "Keep a Changelog 1.1.0 files changes to existing enforced limits under Changed.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F20",
@@ -289,7 +309,8 @@
       "task": "T010",
       "disposition": "fixed",
       "x-resolution": "T037: optional pin/row mismatches identify their source and exact field; 17 tamper cases plus raw-line-ending tampering assert precise diagnostics and E_LOCK_MISMATCH.",
-      "reason": "Assert the tampered field/source appears in the diagnostic so per-field checks cannot silently regress."
+      "reason": "Assert the tampered field/source appears in the diagnostic so per-field checks cannot silently regress.",
+      "x-rereview": "Verified by round-2 persona review and focused tests (90/90) at a4e3277."
     },
     {
       "id": "F21",
@@ -302,6 +323,129 @@
       "task": null,
       "disposition": "dismissed",
       "reason": "Approved design: plan.md:108 allows a missing first handoff when other checks establish an unbound draft (manifest, lock and all-baton read_first/artifact protection still apply). Spec edge case for quick-lane batons concerns batons that refer to the target, which protectedPaths enforces across all feature and quick batons. The quick-baton approval scenario was not reproduced."
+    },
+    {
+      "id": "F22",
+      "severity": "P1",
+      "title": "Non-canonical do_not_read spellings bypass exclusion and backup protection",
+      "file": "src/lib/context-guards.mjs",
+      "line": 33,
+      "persona": "security-reviewer",
+      "confidence": 0.95,
+      "task": "T031",
+      "disposition": "open",
+      "reason": "key() only folds separators and case, and contextExcluded compares raw strings, while the handoff path schema allows ./, /./ and // segments. Schema-valid exclusions of spec.full.md as ./specs/x/spec.full.md, specs/x/./spec.full.md or specs//x/spec.full.md let restore --apply overwrite the target with excluded content and delete the backup; ./ exclusion of the target let compact apply. Violates FR-007..FR-010 and the spec edge case that aliases must not evade protection.",
+      "x-evidence": "Independent temp-repo probe at a4e3277: canonical spelling -> E_CONTEXT_PROTECTED; three non-canonical spellings -> exit 0, applied:true, target replaced, backup deleted; ./ target exclusion -> compact applied.",
+      "x-fix": "Canonicalize all protection/exclusion/read_first/artifact keys (collapse ./ and empty segments, POSIX-normalize, then case-fold) or reject non-canonical metadata paths fail-closed; add refusal tests for each spelling for target, backup and candidate."
+    },
+    {
+      "id": "F23",
+      "severity": "P2",
+      "title": "Restore apply does not bind the previewed backup digest",
+      "file": "src/lib/context-guards.mjs",
+      "line": 294,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.78,
+      "task": "T036",
+      "disposition": "open",
+      "reason": "--expect binds only the target; apply re-reads the backup, writes it and deletes it, so a backup swapped after preview is restored unseen despite the surfaced backup_sha256.",
+      "x-fix": "Require and verify an expected backup digest for restore apply (e.g. --expect-backup) and test a swapped backup."
+    },
+    {
+      "id": "F24",
+      "severity": "P3",
+      "title": "Compact preview without --candidate reports allowed:true but apply fails E_USAGE",
+      "file": "src/lib/context-guards.mjs",
+      "line": 259,
+      "persona": "correctness-reviewer",
+      "confidence": 0.62,
+      "task": "T032",
+      "disposition": "open",
+      "reason": "Preview should report the missing candidate as a reason so allowed matches apply outcome."
+    },
+    {
+      "id": "F25",
+      "severity": "P3",
+      "title": "Restore/compact wrappers do not tell agents to surface warning/backup_sha256 or distinguish E_CONFLICT causes",
+      "file": "packs/token-budget/files/.github/skills/speckit-token-budget-restore/SKILL.md",
+      "line": 10,
+      "persona": "agent-native-reviewer",
+      "confidence": 0.66,
+      "task": "T036",
+      "disposition": "open",
+      "reason": "Add wrapper guidance to show warning and backup digest before apply and to report conflict cause."
+    },
+    {
+      "id": "F26",
+      "severity": "P3",
+      "title": "Unreachable missing-backup throw after reasons gate",
+      "file": "src/lib/context-guards.mjs",
+      "line": 293,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.75,
+      "task": "T032",
+      "disposition": "open",
+      "reason": "Missing backup is already a reason that throws earlier; remove dead branch or make it the single error source."
+    },
+    {
+      "id": "F27",
+      "severity": "P3",
+      "title": "Backup conflict uses a separate reason channel from reasons[]",
+      "file": "src/lib/context-guards.mjs",
+      "line": 274,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.62,
+      "task": "T032",
+      "disposition": "open",
+      "reason": "Fold the conflict into reasons with its typed error to keep one refusal path."
+    },
+    {
+      "id": "F28",
+      "severity": "P3",
+      "title": "Feature handoff selection duplicated in mutateContext and featureContext",
+      "file": "src/lib/context-guards.mjs",
+      "line": 244,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.68,
+      "task": "T032",
+      "disposition": "open",
+      "reason": "Extract a single selector so ambiguity rules cannot drift."
+    },
+    {
+      "id": "F29",
+      "severity": "P3",
+      "title": "Missing-backup/conflict previews lack backup_path/backup_sha256 and exit-code assertions",
+      "file": "test/integration/context.test.mjs",
+      "line": 333,
+      "persona": "testing-reviewer",
+      "confidence": 0.62,
+      "task": "T033",
+      "disposition": "open",
+      "reason": "Assert backup_sha256 null and backup_path on missing backup and code 0 on conflict preview."
+    },
+    {
+      "id": "F30",
+      "severity": "P3",
+      "title": "CHANGELOG lacks blank line before ### Changed",
+      "file": "CHANGELOG.md",
+      "line": 22,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.8,
+      "task": "T036",
+      "disposition": "open",
+      "reason": "Markdown structure nit; CHANGELOG is outside lint:md so not caught by checks."
+    },
+    {
+      "id": "F31",
+      "severity": "P3",
+      "title": "No generic guard that every source specs/* feature is retired by template cleanup",
+      "file": "test/integration/adopt.test.mjs",
+      "line": 134,
+      "persona": "learnings-researcher",
+      "confidence": 0.6,
+      "task": "T030",
+      "disposition": "open",
+      "reason": "Advisory: a future source feature could repeat F01; consider asserting all tracked source specs/* are in the remove list."
     }
   ]
 }
