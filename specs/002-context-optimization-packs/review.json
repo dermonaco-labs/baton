@@ -3,12 +3,12 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/002-context-optimization-packs-rereview-20261102/report.md",
-    "x-scope": "Round 2 fresh independent re-review of corrected candidate 86a6d6a (cherry-picked here as a4e3277, identical tree) against original feature base 5e6de1be. All eight personas reviewed the 24-file corrective delta c7bd8d4..a4e3277 (CLI diff-base c7bd8d4; 16 handoff-scope CLI subjects are a subset) with round-1 full-feature coverage of 5e6de1be..c7bd8d4 carried forward. No fixes applied: coordinator forbids coding during review. Full suite not rerun by instruction.",
-    "x-checks": "lock verify OK; validate handoff OK (W_PACK_RECOMMENDED only); six changed test files 90/90 pass; git-archive adopt smoke with independent adopter feature: specs/001 and specs/002 removed, adopter feature preserved, validate 0, doctor --strict 0, workflows unchanged; temp probe reproduced F22 (restore applied with ./, /./ and // do_not_read spellings; compact applied on ./-excluded target) while canonical spelling was refused."
+    "run_artifact": ".context/compound-engineering/ce-review/002-context-optimization-packs-rereview3-20261102/report.md",
+    "x-scope": "Round 3 fresh independent re-review of corrected candidate 88c86d8 (cherry-picked here as b228777 onto round-2 receipt 3cc2660, tree-identical) against original feature base 5e6de1be. All eight personas reviewed the 15-file corrective delta a4e3277..b228777 (CLI diff-base a4e3277; 9 handoff-scope subjects are a subset) with rounds 1-2 full-feature coverage of 5e6de1be..a4e3277 carried forward. Implementer dispositions of F23/F24/F26/F27 were independently re-judged against contracts/context.md. No fixes applied: coordinator forbids coding during review. Full suite not rerun by instruction.",
+    "x-checks": "Focused tests (context integration, adopt integration, context-guards unit) 102/102 pass; lock verify OK; build --check OK (bundle 426142 bytes < 460800); tsc --noEmit OK; sync --check OK with env-only internal PyPI feed (first attempt failed: public PyPI TLS handshake, environmental). Independent temp probe: canonical, ./, /./, //, mixed-case and directory-prefix (specs/002-draft/, ./specs/./002-draft//) exclusions now refuse with unchanged target and preserved backup (F22 fixed); trailing-dot and trailing-space do_not_read spellings still let restore apply and delete the backup (F32). Testing persona ran the new alias matrix against the pre-fix a4e3277 bundle: 17 fail, 6 pass (F33)."
   },
   "base": "5e6de1be30c555f26669211b55194b5746611a8a",
-  "head": "a4e32779a237005277fb51e29f80db7db6cf4c8b",
+  "head": "b228777c0e635a8d44e3601560b9fede70f5daca",
   "personas": [
     "correctness-reviewer",
     "security-reviewer",
@@ -332,12 +332,13 @@
       "line": 33,
       "persona": "security-reviewer",
       "confidence": 0.95,
-      "task": "T031",
+      "task": "T039",
       "disposition": "fixed",
       "reason": "key() only folds separators and case, and contextExcluded compares raw strings, while the handoff path schema allows ./, /./ and // segments. Schema-valid exclusions of spec.full.md as ./specs/x/spec.full.md, specs/x/./spec.full.md or specs//x/spec.full.md let restore --apply overwrite the target with excluded content and delete the backup; ./ exclusion of the target let compact apply. Violates FR-007..FR-010 and the spec edge case that aliases must not evade protection.",
       "x-evidence": "Independent temp-repo probe at a4e3277: canonical spelling -> E_CONTEXT_PROTECTED; three non-canonical spellings -> exit 0, applied:true, target replaced, backup deleted; ./ target exclusion -> compact applied.",
       "x-fix": "Canonicalize all protection/exclusion/read_first/artifact keys (collapse ./ and empty segments, POSIX-normalize, then case-fold) or reject non-canonical metadata paths fail-closed; add refusal tests for each spelling for target, backup and candidate.",
-      "x-resolution": "T039: key() POSIX-normalizes separators/dot segments before case folding and rejects normalized repository roots, traversal, absolute paths and colon aliases. Eighteen schema-valid alias cases exercise cross-feature excluded targets/backups/candidates, read_first/artifacts and managed paths; strict filesystem reads still fail closed on noncanonical required sources. Excluded backup/candidate fixtures contain invalid UTF-8 to prove they are not decoded. Three root spellings are refused. Preview/apply exact codes and unchanged snapshots are asserted."
+      "x-resolution": "T039: key() POSIX-normalizes separators/dot segments before case folding and rejects normalized repository roots, traversal, absolute paths and colon aliases. Eighteen schema-valid alias cases exercise cross-feature excluded targets/backups/candidates, read_first/artifacts and managed paths; strict filesystem reads still fail closed on noncanonical required sources. Excluded backup/candidate fixtures contain invalid UTF-8 to prove they are not decoded. Three root spellings are refused. Preview/apply exact codes and unchanged snapshots are asserted.",
+      "x-rereview": "Round 3 verified: key() normalizes ./, /./, //, trailing slash and case before comparison and fails closed on root/traversal/absolute/colon; independent probe refused every listed spelling for target, backup and directory-prefix exclusion with no writes. Residual Windows trailing-dot/space/8.3 aliases tracked separately as F32."
     },
     {
       "id": "F23",
@@ -347,10 +348,11 @@
       "line": 294,
       "persona": "adversarial-reviewer",
       "confidence": 0.78,
-      "task": "T036",
+      "task": "T040",
       "disposition": "dismissed",
       "reason": "The limitation is real but an expected-backup reservation is outside the approved contract: contracts/context.md Guarded Writer binds --expect to the original target only, and plan.md Implementation Design explicitly avoids new concurrent-writer protocols and excludes arbitrary external writers. T040 now requires surfacing warning/backup_sha256 and re-previewing before explicit apply, and documents that the backup digest is informational, not provenance or a cross-call freshness guarantee. Within-apply backup snapshot checks remain enforced. Adding a mandatory --expect-backup protocol needs separate scope approval; this disposition does not claim that cross-call backup replacement is detected.",
-      "x-fix": "Require and verify an expected backup digest for restore apply (e.g. --expect-backup) and test a swapped backup."
+      "x-fix": "Require and verify an expected backup digest for restore apply (e.g. --expect-backup) and test a swapped backup.",
+      "x-rereview": "Round 3 review upholds dismissal: contracts/context.md binds --expect to the target only and places external writers outside the guarded boundary; restore re-reads and snapshots the backup within one apply and T040 surfaces backup_sha256 plus explicit freshness limits. The adversarial persona reproduced a backup swap between separate preview and apply runs and judged the dismissal weakly defensible against spec.md:148-149; extending the public CLI with --expect-backup or amending the approved spec is a human scope decision, not a review fix."
     },
     {
       "id": "F24",
@@ -360,9 +362,10 @@
       "line": 259,
       "persona": "correctness-reviewer",
       "confidence": 0.62,
-      "task": "T032",
+      "task": "T040",
       "disposition": "dismissed",
-      "reason": "Approved contracts/context.md explicitly defines a non-mutating eligibility/preview report and makes candidate/expect mandatory for apply, not for eligibility preview. The compact wrapper intentionally checks eligibility before generating the candidate. Treating a missing candidate as ineligible would contradict that flow. T040 clarifies that allowed does not waive apply prerequisites; existing exact E_USAGE tests retain their enforcement."
+      "reason": "Approved contracts/context.md explicitly defines a non-mutating eligibility/preview report and makes candidate/expect mandatory for apply, not for eligibility preview. The compact wrapper intentionally checks eligibility before generating the candidate. Treating a missing candidate as ineligible would contradict that flow. T040 clarifies that allowed does not waive apply prerequisites; existing exact E_USAGE tests retain their enforcement.",
+      "x-rereview": "Round 3 review upholds dismissal: contract defines candidate-free eligibility preview; wrappers/docs now state allowed does not waive apply prerequisites."
     },
     {
       "id": "F25",
@@ -372,10 +375,11 @@
       "line": 10,
       "persona": "agent-native-reviewer",
       "confidence": 0.66,
-      "task": "T036",
+      "task": "T040",
       "disposition": "fixed",
       "reason": "Add wrapper guidance to show warning and backup digest before apply and to report conflict cause.",
-      "x-resolution": "T040: authored restore guidance surfaces warning/backup_path/backup_sha256 and overwrite, removal, provenance and freshness limits. Both wrappers report exact E_CONFLICT causes without deleting backups or silently substituting digests. Normal sync regenerates matching authored pack copies; all locked upstream hashes and pins remain unchanged. A registered context output regression checks this guidance and generated-copy equality."
+      "x-resolution": "T040: authored restore guidance surfaces warning/backup_path/backup_sha256 and overwrite, removal, provenance and freshness limits. Both wrappers report exact E_CONFLICT causes without deleting backups or silently substituting digests. Normal sync regenerates matching authored pack copies; all locked upstream hashes and pins remain unchanged. A registered context output regression checks this guidance and generated-copy equality.",
+      "x-rereview": "Round 3 verified: both wrapper copies byte-identical, surface warning/backup_path/backup_sha256 and name E_CONFLICT causes."
     },
     {
       "id": "F26",
@@ -387,7 +391,8 @@
       "confidence": 0.75,
       "task": "T032",
       "disposition": "dismissed",
-      "reason": "The local null guard intentionally narrows Buffer|null for type-safe restore assignment and preserves the exact protected diagnostic if preflight changes. Earlier string reasons do not narrow backupBytes for TypeScript. Removing it would require an unsafe assertion or an unnecessary control-flow abstraction; missing-backup preview/apply contracts remain tested."
+      "reason": "The local null guard intentionally narrows Buffer|null for type-safe restore assignment and preserves the exact protected diagnostic if preflight changes. Earlier string reasons do not narrow backupBytes for TypeScript. Removing it would require an unsafe assertion or an unnecessary control-flow abstraction; missing-backup preview/apply contracts remain tested.",
+      "x-rereview": "Round 3 review upholds dismissal: the throw is unreachable at runtime but narrows Buffer|null for tsc; one line, no behavioral defect."
     },
     {
       "id": "F27",
@@ -399,7 +404,8 @@
       "confidence": 0.62,
       "task": "T032",
       "disposition": "dismissed",
-      "reason": "The separate boolean preserves distinct public diagnostics: protected eligibility failures are E_CONTEXT_PROTECTED/exit 1, while an existing backup is E_CONFLICT/exit 4. Preview merges the conflict into reasons without mutating protection reasons. A typed reason framework or message matching would add complexity without a behavioral fix; T041 asserts both exact outcomes and no writes."
+      "reason": "The separate boolean preserves distinct public diagnostics: protected eligibility failures are E_CONTEXT_PROTECTED/exit 1, while an existing backup is E_CONFLICT/exit 4. Preview merges the conflict into reasons without mutating protection reasons. A typed reason framework or message matching would add complexity without a behavioral fix; T041 asserts both exact outcomes and no writes.",
+      "x-rereview": "Round 3 review upholds dismissal: separate channel preserves distinct E_CONTEXT_PROTECTED (exit 1) vs E_CONFLICT (exit 4) contracts, now asserted by T041."
     },
     {
       "id": "F28",
@@ -409,10 +415,11 @@
       "line": 244,
       "persona": "maintainability-reviewer",
       "confidence": 0.68,
-      "task": "T032",
+      "task": "T039",
       "disposition": "fixed",
       "reason": "Extract a single selector so ambiguity rules cannot drift.",
-      "x-resolution": "T039: private featureHandoffs() owns normalized feature-directory selection for mutation and advisory context. Existing ambiguous-handoff refusals remain unchanged."
+      "x-resolution": "T039: private featureHandoffs() owns normalized feature-directory selection for mutation and advisory context. Existing ambiguous-handoff refusals remain unchanged.",
+      "x-rereview": "Round 3 verified: featureHandoffs() is the single selector for mutation and advisory context."
     },
     {
       "id": "F29",
@@ -422,10 +429,11 @@
       "line": 333,
       "persona": "testing-reviewer",
       "confidence": 0.62,
-      "task": "T033",
+      "task": "T041",
       "disposition": "fixed",
       "reason": "Assert backup_sha256 null and backup_path on missing backup and code 0 on conflict preview.",
-      "x-resolution": "T041 asserts missing-backup path/null digest/applied:false, exact exit 1/E_CONTEXT_PROTECTED on apply, existing-backup preview exit 0/path/raw digest/applied:false, and apply exit 4/E_CONFLICT. Snapshots are checked immediately after each preview and again after refusal."
+      "x-resolution": "T041 asserts missing-backup path/null digest/applied:false, exact exit 1/E_CONTEXT_PROTECTED on apply, existing-backup preview exit 0/path/raw digest/applied:false, and apply exit 4/E_CONFLICT. Snapshots are checked immediately after each preview and again after refusal.",
+      "x-rereview": "Round 3 verified: exact backup_path, digest, applied:false, exit codes and snapshots asserted."
     },
     {
       "id": "F30",
@@ -435,10 +443,11 @@
       "line": 22,
       "persona": "project-standards-reviewer",
       "confidence": 0.8,
-      "task": "T036",
+      "task": "T042",
       "disposition": "fixed",
       "reason": "Markdown structure nit; CHANGELOG is outside lint:md so not caught by checks.",
-      "x-resolution": "T042 inserts the missing blank line before the Unreleased Changed heading."
+      "x-resolution": "T042 inserts the missing blank line before the Unreleased Changed heading.",
+      "x-rereview": "Round 3 verified: blank line present."
     },
     {
       "id": "F31",
@@ -448,10 +457,77 @@
       "line": 134,
       "persona": "learnings-researcher",
       "confidence": 0.6,
-      "task": "T030",
+      "task": "T043",
       "disposition": "fixed",
       "reason": "Advisory: a future source feature could repeat F01; consider asserting all tracked source specs/* are in the remove list.",
-      "x-resolution": "T043 enumerates numbered source feature directories and asserts each exact directory is explicitly retired by template cleanup, never the entire specs directory. Existing adoption coverage separately verifies receipt-bearing source retirement and preservation of an independent adopter's spec/handoff."
+      "x-resolution": "T043 enumerates numbered source feature directories and asserts each exact directory is explicitly retired by template cleanup, never the entire specs directory. Existing adoption coverage separately verifies receipt-bearing source retirement and preservation of an independent adopter's spec/handoff.",
+      "x-rereview": "Round 3 verified: generic numbered-feature retirement test present; one-directional limitation tracked as F36."
+    },
+    {
+      "id": "F32",
+      "severity": "P2",
+      "title": "Windows trailing-dot, trailing-space and 8.3 short-name aliases in protection metadata bypass exclusion and backup protection",
+      "file": "src/lib/context-guards.mjs",
+      "line": 33,
+      "persona": "adversarial-reviewer",
+      "confidence": 1,
+      "task": "T039",
+      "disposition": "open",
+      "reason": "key() is lexical only (POSIX normalize, trailing-slash strip, lowercase). The handoff/manifest/lock path patterns accept segments ending in \".\" or \" \" and 8.3 short names (e.g. 002-DR~1), which Win32 resolves to the canonical file, but key() maps them to different keys. Schema-valid do_not_read entries spelled this way are silently ignored: restore applied and deleted the excluded backup (orchestrator probe), compact applied on an excluded target and on a nested contracts/** target under a trailing-dot directory exclusion, and context usage still reported an excluded file (adversarial probe). Same class as F22 and the spec.md:150 edge case that Windows aliases must not evade protection.",
+      "x-severity": "Reviewers disagreed: adversarial P1 (0.90), testing P2 (0.65), security P3 (0.62). Synthesized P2: the impact matches F22, but these spellings do not arise from normal authoring, Node fs returns ENOENT for them so Baton cannot be steered into reading an aliased file, and compaction keeps a recoverable backup. Agreement of three reviewers plus an independent probe raises the confidence.",
+      "x-fix": "Fail closed in key() (and ideally the metadata path schema) for any segment ending in \".\" or \" \" or matching an 8.3 \"~<digit>\" form, or key existing metadata entries via realpath relative to the real root. Add refusal rows for these spellings to the alias matrix for do_not_read (file and directory prefix), manifest and lock entries, asserting no writes."
+    },
+    {
+      "id": "F33",
+      "severity": "P3",
+      "title": "Alias-matrix tests do not pin the refusal cause; six read_first/artifact rows already pass on the pre-fix bundle",
+      "file": "test/integration/context.test.mjs",
+      "line": 313,
+      "persona": "testing-reviewer",
+      "confidence": 0.9,
+      "task": "T041",
+      "disposition": "open",
+      "reason": "Run against the a4e3277 bundle, 6 of the 18 rows (leading-dot, internal-dot and duplicate-separator x read_first/artifact) pass because requiredPath already refused aliases with the same E_CONTEXT_PROTECTED code, so they cannot detect a key() regression. Preview reasons are matched by /protected|excluded|managed/i (line 358). The root-alias test (line 370) checks only --apply, not preview or the \"Unsafe context metadata path\" message. Quick-lane, lock, marker_sections, directory-prefix and contracts/** alias rows are missing. Kind-driven branching inside one body makes failures hard to read.",
+      "x-fix": "Assert the exact per-kind reason or message for preview and apply. Add an excluded read_first/artifact variant so only the protection key decides. Add preview plus message checks for root aliases and a smaller matrix for quick/lock/marker/directory-prefix aliases. Prefer table-driven per-kind descriptors."
+    },
+    {
+      "id": "F34",
+      "severity": "P3",
+      "title": "Unsafe --candidate spellings and metadata entries produce misleading or unlocatable diagnostics",
+      "file": "src/lib/context-guards.mjs",
+      "line": 270,
+      "persona": "agent-native-reviewer",
+      "confidence": 0.85,
+      "task": "T039",
+      "disposition": "open",
+      "reason": "contextExcluded/key(options.candidate) now runs before safePath, so an absolute or drive-letter --candidate (natural when an agent writes a temp file, which the compact wrapper allows: \"outside the live target\") fails as \"Unsafe context metadata path\" although it is a CLI argument. A key()-rejected entry in any handoff, lock or manifest blocks every context command repo-wide, and the error names only the bad path, not the metadata file that declares it. key() and safePath() also encode overlapping path-safety rules separately (maintainability).",
+      "x-fix": "Validate --candidate with safePath (or a labelled check) before keying; include the declaring metadata file in the unsafe-metadata error; state the repo-relative candidate rule in both compact wrapper copies and docs/06. Optionally share one assertRepoRelative helper between key() and safePath()."
+    },
+    {
+      "id": "F35",
+      "severity": "P3",
+      "title": "tasks.md Phase 10 prose still says T044 is pending although T044 is checked by the receipt",
+      "file": "specs/002-context-optimization-packs/tasks.md",
+      "line": 279,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.8,
+      "task": "T044",
+      "disposition": "open",
+      "reason": "Line 255 marks T044 [x] through the implement writer, but lines 279-280 still read \"T044 remains pending until the mandatory final check and outgoing receipt succeed\". Constitution V (honest evidence) requires the record to state completion consistently.",
+      "x-fix": "Update the Phase 10 evidence prose to cite the completed implement receipt and its full-suite result."
+    },
+    {
+      "id": "F36",
+      "severity": "P3",
+      "title": "Generic source-feature retirement test is one-directional",
+      "file": "test/integration/adopt.test.mjs",
+      "line": 10,
+      "persona": "testing-reviewer",
+      "confidence": 0.6,
+      "task": "T043",
+      "disposition": "open",
+      "reason": "The test asserts every numbered source specs/NNN-* directory has an exact cleanup entry, but stale specs/NNN-*/ entries for removed or renamed features are never flagged, so the list can drift.",
+      "x-fix": "Assert set equality between numbered specs entries in cleanup.remove and existing numbered source feature directories."
     }
   ]
 }
