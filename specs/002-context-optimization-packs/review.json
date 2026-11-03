@@ -3,12 +3,12 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/002-context-optimization-packs-rereview5-20261102/report.md",
-    "x-scope": "Round 5 fresh independent re-review of corrected candidate b583ee8 (cherry-picked here as e38faa4 onto round-4 receipt cdb029f, tree-identical; parent import 6c9221c verified tree-equal to cdb029f) against original feature base 5e6de1be. The 9-file corrective delta cdb029f..e38faa4 (T051-T053 for F37/F38) was reviewed directly by the orchestrator (correctness, security, maintainability, project standards, docs/tasks/receipt consistency) plus dispatched adversarial-reviewer and testing-reviewer personas; rounds 1-4 full-feature coverage is carried forward. No fixes applied: coordinator forbids coding during review. Full suite not rerun by instruction.",
-    "x-checks": "Focused tests (context integration, context-guards unit, adopt integration) 156/156 pass; lock verify OK; build --check OK (bundle 426619 bytes < 460800); tsc --noEmit OK; markdownlint 0 errors; yamllint OK (warnings only); sync --check OK with env-only internal feeds; baton validate OK (pre-existing W_QUICK_LARGE advisories only). Independent probes on the e38faa4 bundle in an os.tmpdir repo on an 8.3-enabled NTFS volume (real generated aliases 002-DR~1, RESEAR~1.MD, CANDID~1.MD): directory/file aliases in do_not_read (upper and lower case), read_first, artifacts and manifest files refuse with source-labelled Unsafe context metadata path; alias candidate refuses as Unsafe context path; canonical fix~1.md read_first, canonical candidate and usage succeed. Absent ABSENT~1.MD do_not_read refuses every context command (F40). Real generated alias A~B-LO~1.MD of long name a~b-long-name.md declared in do_not_read does NOT exclude the canonical candidate: preview allowed and --apply wrote the excluded bytes into the draft target (F39, independently reproduced after adversarial persona report)."
+    "run_artifact": ".context/compound-engineering/ce-review/002-context-optimization-packs-rereview6-20261103/report.md",
+    "x-scope": "Round 6 fresh independent re-review of corrected candidate 61132dc (cherry-picked here as 565a8b7 onto round-5 receipt bb0232e, tree-identical; parent import 5b982a1 verified tree-equal to bb0232e) against original feature base 5e6de1be. The 9-file corrective delta bb0232e..565a8b7 (T054-T057 for F39/F40) was reviewed directly by the orchestrator (correctness, security, maintainability, project standards, docs/tasks/receipt consistency) plus freshly dispatched adversarial-reviewer and testing-reviewer personas; rounds 1-5 full-feature coverage is carried forward. No fixes applied: coordinator forbids coding during review. Full suite not rerun by instruction.",
+    "x-checks": "Focused context integration + context-guards unit tests 142/142 pass, 0 skipped on Windows; lock verify OK; build --check OK (bundle 426596 bytes < 460800); tsc --noEmit OK; markdownlint 0 errors; yamllint exit 0 (pre-existing warnings only); sync --check OK; baton validate exit 0 (pre-existing W_QUICK_LARGE advisories). Independent orchestrator probe on 8.3-enabled os.tmpdir volume with real generated aliases A~B-LO~1.MD (file) and A~B-LO~1 (directory): alias file/dir exclusions refuse compact and scope with source-labelled Unsafe context metadata path; canonical exclusion with alias candidate (file and through alias dir) refuses as Unsafe context path; upper-case candidate of excluded file reports Candidate is excluded; absent NOTES~1.MD exclusion and absent leaf under alias dir do not block; hardlinked do_not_read entry refuses scope; target bytes unchanged. Adversarial persona reproduced EPERM (icacls deny) on an excluded path crashing scope/optimize run with E_INTERNAL exit 10 at HEAD versus exit 0 at bb0232e."
   },
   "base": "5e6de1be30c555f26669211b55194b5746611a8a",
-  "head": "e38faa4a2bfa1b99f3e48a4f8243f8c241e69d7a",
+  "head": "565a8b7b1599d757385eb75cb9b7f043cc9a7140",
   "personas": [
     "correctness-reviewer",
     "security-reviewer",
@@ -584,7 +584,8 @@
       "reason": "checkedKey only runs the safePath/realpath identity check when a segment matches /^[^.~]{1,6}~\\d{1,6}(?:\\.[^.]{0,3})?$/i. Windows preserves ~ from the long name when generating short names, so a~b-long-name.md gets the generated alias A~B-LO~1.MD (two tildes), which the [^.~] prefix rejects. The alias is then keyed lexically as drafts/a~b-lo~1.md and never equals the canonical key, so contextExcluded misses the canonical file. Orchestrator reproduced on an 8.3-enabled os.tmpdir volume: do_not_read [drafts/A~B-LO~1.MD]; --candidate drafts/A~B-LO~1.MD previews refused as excluded, but --candidate drafts/a~b-long-name.md previews allowed:true and --expect/--apply exit 0 wrote the excluded bytes into specs/002-draft/spec.md. The persona also observed scope reading and counting an excluded feature file declared via such an alias (FR-016). Round-4 code rejected these segments lexically, so this is a regression introduced by T052; it violates FR-007/FR-008 exclusion fail-closed semantics in the same class as F32.",
       "x-severity": "adversarial-reviewer rated P1 (0.9); synthesized P2 to match F32 (same alias-exclusion bypass class, requires an alias-spelled declaration, exclusion-only because contextTarget names cannot contain ~).",
       "x-fix": "Trigger the filesystem identity check for any existing segment that could be a generated short name regardless of preceding characters (e.g. any segment containing ~ followed by digits, or simply canonicalize every existing metadata/candidate path through safePath/realpath before keying), keeping fail-closed on identity mismatch. Add a Windows regression that creates a long name containing ~ (e.g. drafts/a~b-long-name.md and a feature-tree file), reads its generated alias via dir /x, declares the alias in do_not_read, and asserts the canonical candidate is refused with exact reason/no writes and scope/usage omit the excluded file; skip with an explicit reason only when no short name is generated. Have the existing short-name matrix rows assert the alias exists on Windows hosts (or skip) so the realpath identity branch, not ENOENT, is what is under test.",
-      "x-resolution": "T054/T056: every existing metadata reference now passes safePath identity checks, independent of filename heuristics, with normalized lexical metadata syntax and declaring-source diagnostics. Candidate short-name checks also accept arbitrary prefixes before ~digit. The new Windows regression obtains the generated A~B-LO~1.MD alias through cmd's short-name expansion, proves it exists, is not a symbolic link and resolves to the same file, and asserts exact metadata refusal in compact preview/apply and scope/usage with null report data and unchanged snapshots. The ten matrix short-name rows now obtain and prove real generated aliases too. The owner explicitly approved unsupported-platform handling while keeping all safety assertions and AC-US2-2 mandatory. Both new behavioral tests failed before the guard change; all 63 selected identity/matrix tests and all 140 registered acceptance tests passed afterward without skips on this Windows filesystem. Independent verification remains required."
+      "x-resolution": "T054/T056: every existing metadata reference now passes safePath identity checks, independent of filename heuristics, with normalized lexical metadata syntax and declaring-source diagnostics. Candidate short-name checks also accept arbitrary prefixes before ~digit. The new Windows regression obtains the generated A~B-LO~1.MD alias through cmd's short-name expansion, proves it exists, is not a symbolic link and resolves to the same file, and asserts exact metadata refusal in compact preview/apply and scope/usage with null report data and unchanged snapshots. The ten matrix short-name rows now obtain and prove real generated aliases too. The owner explicitly approved unsupported-platform handling while keeping all safety assertions and AC-US2-2 mandatory. Both new behavioral tests failed before the guard change; all 63 selected identity/matrix tests and all 140 registered acceptance tests passed afterward without skips on this Windows filesystem. Independent verification remains required.",
+      "x-rereview": "Verified round 6: orchestrator reproduced the original round-5 scenario with real generated aliases and found refusal with no writes; adversarial and testing personas independently confirmed; focused 142/142 with 0 skips."
     },
     {
       "id": "F40",
@@ -599,7 +600,8 @@
       "reason": "checkedKey converts ENOENT from safePath into Unsafe context metadata path for any segment matching the short-name shape. A schema-valid do_not_read naming a not-yet-created legitimate file such as notes~1.md (or ABSENT~1.MD, probed) therefore makes contextProtection throw, so scope, usage and optimize reports fail repo-wide, including on Linux where no 8.3 aliasing exists. A path that does not resolve cannot alias any existing file at evaluation time, so this over-refusal protects nothing; FR-008 requires fail-closed for mutation, and F38 required legitimate tilde-number names not to disable context commands. No test pins the intended policy (the canonical test uses v~3-absent.md, which does not match the shape).",
       "x-severity": "adversarial-reviewer rated P3 (0.65); testing-reviewer independently flagged the missing absent short-shaped do_not_read coverage (0.6); merged with agreement boost.",
       "x-fix": "Treat ENOENT from the identity check as \"no alias possible\" and key the path lexically (still rejecting dot/space/root/colon spellings and non-ENOENT errors), or explicitly document and test a different intended policy. Add tests for an absent short-shaped do_not_read entry and an existing literal SPEC~1.MD in do_not_read asserting scope/usage behaviour and exclusion of a candidate bound by it.",
-      "x-resolution": "T055/T056: only ENOENT during metadata identity discovery preserves the normalized lexical key; existing aliases, unsafe syntax and other filesystem failures remain non-success. Required read_first/artifact content still must exist and satisfy its binding, and missing short-shaped CLI candidates retain their strict refusal. The regression proves ABSENT~1.MD is absent and excludes a real literal LITERA~1.MD containing invalid UTF-8. Scope/usage omit both while preserving exclusions, concise remains session-only, all three optimize reports stay report-only, an ordinary draft candidate remains eligible and the excluded literal candidate refuses preview/apply before decoding. Snapshots remain unchanged. Documentation states the absent-metadata versus required-source boundary. Owner approval of corrected real-alias fixtures was recorded without waiving AC-US2-2; independent verification remains required."
+      "x-resolution": "T055/T056: only ENOENT during metadata identity discovery preserves the normalized lexical key; existing aliases, unsafe syntax and other filesystem failures remain non-success. Required read_first/artifact content still must exist and satisfy its binding, and missing short-shaped CLI candidates retain their strict refusal. The regression proves ABSENT~1.MD is absent and excludes a real literal LITERA~1.MD containing invalid UTF-8. Scope/usage omit both while preserving exclusions, concise remains session-only, all three optimize reports stay report-only, an ordinary draft candidate remains eligible and the excluded literal candidate refuses preview/apply before decoding. Snapshots remain unchanged. Documentation states the absent-metadata versus required-source boundary. Owner approval of corrected real-alias fixtures was recorded without waiving AC-US2-2; independent verification remains required.",
+      "x-rereview": "Verified round 6: orchestrator reproduced the original round-5 scenario with real generated aliases and found refusal with no writes; adversarial and testing personas independently confirmed; focused 142/142 with 0 skips."
     },
     {
       "id": "F41",
@@ -612,6 +614,56 @@
       "task": null,
       "disposition": "dismissed",
       "reason": "Dismissed: fails closed with no write, and the CLI candidate contract established for F35/F36 (test \"context protection labels unsafe CLI candidate paths\", docs/06 candidate guidance) deliberately reports unresolved or aliased short-shaped candidates as Unsafe context path in both preview and apply. Folding it into reasons would change an asserted diagnostic contract for no safety benefit."
+    },
+    {
+      "id": "F42",
+      "severity": "P3",
+      "title": "Non-ENOENT filesystem errors on any metadata reference now crash report-only context commands as raw E_INTERNAL",
+      "file": "src/lib/context-guards.mjs",
+      "line": 58,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.85,
+      "task": "T056",
+      "disposition": "open",
+      "reason": "T056 routes every manifest/handoff/lock reference through safePath, but checkedKey still rethrows any error that is neither ENOENT nor BatonError. An excluded path the user cannot stat (e.g. do_not_read secrets/prod.env under a directory with a deny ACL, or a POSIX directory without search permission) now makes scope, usage and optimize run exit 10 with E_INTERNAL and an absolute-path message, where bb0232e returned exit 0. It still fails closed (no write), so FR-008 holds, but report-only commands lose the source-labelled diagnostic required by FR-017 and the T056/F40 intent that exclusion-only metadata not abort reports. Reproduced by the adversarial persona via icacls deny; confirmed by code reading of checkedKey L54-60.",
+      "x-fix": "Convert non-ENOENT filesystem errors from metadata identity checks into a BatonError that names the declaring source (e.g. Unsafe context metadata path ... declared by <source> with the errno reason) so mutation stays fail-closed and reports fail with a protected, diagnosable error; or explicitly treat EACCES/EPERM on exclusion-only (do_not_read) metadata as the lexical key, keeping read_first/artifact/manifest/lock strict. Add a regression asserting exact code/message/file and unchanged snapshot (chmod 000 parent on POSIX, deny ACL or injected error on Windows)."
+    },
+    {
+      "id": "F43",
+      "severity": "P3",
+      "title": "No regression pins identity checks for linked metadata; reverting checkedKey to the ~digit trigger passes the suite",
+      "file": "test/integration/context.test.mjs",
+      "line": 445,
+      "persona": "testing-reviewer",
+      "confidence": 0.75,
+      "task": "T054",
+      "disposition": "open",
+      "reason": "Every metadata-refusal assertion uses a ~digit spelling, trailing dot/space or root alias, so changing `source || /~\\d/.test(path)` back to the tilde heuristic (or dropping the identity call for non-tilde metadata) would not fail any test on Windows or Linux. The round-6 change also closes a pre-existing do_not_read bypass (adversarial persona: at bb0232e a junction vendor -> vendor-real excluded via do_not_read vendor allowed compact --candidate vendor-real/x.md; HEAD refuses), but nothing guards that closure. Additionally shortAlias skips before asserting the base path exists, so a fixture mistake converts mandatory AC-US2-2 rows into silent skips.",
+      "x-fix": "Add a platform-independent test where do_not_read (and one manifest/read_first entry) names a junction/directory-symlink and a hardlinked file; assert exact E_CONTEXT_PROTECTED Unsafe context metadata path ... declared by <source>, file=source, null data and unchanged snapshot for compact preview/apply and scope/usage, plus a junction-target candidate refusal. In shortAlias, lstat the base path before invoking cmd so missing fixtures fail rather than skip."
+    },
+    {
+      "id": "F44",
+      "severity": "P3",
+      "title": "Hardlinked, junction or file-component metadata references now abort report-only commands",
+      "file": "src/lib/context-guards.mjs",
+      "line": 55,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.85,
+      "task": null,
+      "disposition": "dismissed",
+      "reason": "Dismissed: these refusals fail closed and match the approved contract. FR-008 requires unreadable/ambiguous protection metadata to fail closed, the spec edge case requires links/junctions not to evade protection, and docs/06 states linked or aliased paths are not trusted metadata. Unlike F40 (an absent path that cannot alias anything), a linked or hardlinked exclusion names real bytes reachable through another spelling; the junction case demonstrably closes a bypass that existed at bb0232e. A path through a regular-file component is malformed metadata. Richer dual-key exclusion semantics would be a contract change for the owner, not a review fix. Diagnostic quality is covered by F42."
+    },
+    {
+      "id": "F45",
+      "severity": "P3",
+      "title": "No CI job executes the real-alias AC-US2-2/F39 rows",
+      "file": "test/integration/context.test.mjs",
+      "line": 20,
+      "persona": "testing-reviewer",
+      "confidence": 0.85,
+      "task": null,
+      "disposition": "dismissed",
+      "reason": "Dismissed: the repository owner explicitly approved real-alias fixtures with skips only where real 8.3 aliases are unavailable (recorded baton question answered Keep requirement); Linux CI cannot generate them, and adding Windows CI jobs is new CI scope outside the approved plan. AC-US2-2 remains mandatory and was verified independently in this checkout on Windows with 0 skips. The silent-skip-on-missing-fixture weakness is captured in F43."
     }
   ]
 }
