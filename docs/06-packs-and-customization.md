@@ -84,8 +84,12 @@ not absolute paths or drive-letter paths. Protection metadata with unsafe
 Windows trailing-dot, trailing-space or non-canonical short-name spellings
 fails closed and identifies the declaring handoff, manifest or lock.
 Canonical filenames containing `~` and digits remain supported. An existing
-8.3-shaped metadata name must pass the same real-path identity check as other
-filesystem sources; an unresolved or aliased spelling is refused.
+metadata reference must pass the same real-path identity check as other
+filesystem sources, regardless of its spelling. This includes generated 8.3
+names that retain a tilde from the original filename. Nonexistent metadata
+entries retain their normalized protection keys, so an absent short-shaped
+exclusion does not block reports. Required `read_first` and artifact sources
+must still exist and satisfy their bindings; existing aliases remain refused.
 
 Approved or historically approved sources, managed files, source-of-truth
 bindings and all `read_first` targets (even without a checksum) refuse

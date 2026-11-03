@@ -114,10 +114,10 @@ Capture red evidence before implementing each behavior; do not weaken checks. --
 | AC-US1-1 | US1 | node --test --test-name-pattern="context packs" test/integration/context.test.mjs | command | fail | Original-baseline replay: 4 failures; timing disclosed below | Pass: 5 tests, including clean uninstall |
 | AC-US1-2 | US1 | node --test --test-name-pattern="context provenance" test/integration/context.test.mjs | command | fail | Live regression: modified commit incorrectly verified; original baseline lacks named pins | Pass: 1 test |
 | AC-US2-1 | US2 | node --test --test-name-pattern="context draft" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 3 tests, including optional decisions and restore preview |
-| AC-US2-2 | US2 | node --test --test-name-pattern="context protection" test/integration/context.test.mjs | command | fail | Strengthened assertions reject unknown-command false positives; baseline: 21 failures | Pass: 122 tests, including unexcluded case bindings, canonical/Windows metadata aliases and exact-code refusals |
+| AC-US2-2 | US2 | node --test --test-name-pattern="context protection" test/integration/context.test.mjs | command | fail | Strengthened assertions reject unknown-command false positives; baseline: 21 failures | Pass: 123 tests, including verified real Windows aliases, tilde-containing aliases, unexcluded case bindings and exact-code refusals |
 | AC-US3-1 | US3 | node --test --test-name-pattern="context optimize reports" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 1 test |
 | AC-US3-2 | US3 | node --test --test-name-pattern="context optimize apply" test/integration/context.test.mjs | command | fail | Positive control prevents unknown-command false positives; baseline: 1 failure | Pass: 1 test |
-| AC-US4-1 | US4 | node --test --test-name-pattern="context advisory" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 3 tests, including nested contracts, exclusions and canonical tilde-number names |
+| AC-US4-1 | US4 | node --test --test-name-pattern="context advisory" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 4 tests, including nested contracts, canonical tilde-number names and absent/literal short-shaped exclusions |
 | AC-US4-2 | US4 | node --test --test-name-pattern="context output" test/integration/context.test.mjs | command | fail | Usage report absent; original-baseline replay: 1 failure | Pass: 2 tests, including authored/generated wrapper guidance |
 
 ## Phase 8: Convergence
@@ -342,3 +342,47 @@ Typecheck, Markdown lint and offline source-lock verification pass.
 Runtime: **426619 bytes**, below the strict **460800-byte** cap.
 The outgoing implementation receipt records the mandatory full-check result;
 T053's checkbox tracks successful receipt completion, not review approval.
+
+## Phase 13: Convergence
+
+The fifth independent review verified F37/F38 but found two remaining partial
+gaps in T052. F39 is HIGH against FR-008/FR-016: generated short names can
+themselves contain a tilde before the numeric suffix, bypassing the lexical
+trigger for identity checks. F40 is LOW against FR-016/FR-017: a nonexistent
+short-shaped exclusion incorrectly aborts non-mutating reports.
+The approved real-path and fail-closed design remains unchanged.
+
+- [x] T054 Register F39 regressions using verified existing Windows short-name aliases of tilde-containing long names, exact preview/apply refusals, unchanged snapshots and scope/usage exclusion safety per FR-008/FR-009/FR-016 and review F39 (partial, HIGH).
+- [x] T055 Register absent and existing-literal short-shaped exclusion coverage across scope, usage, concise, optimize and mutation eligibility previews; obtain owner approval before changing unsupported-platform handling in the existing short-name matrix per FR-016/FR-017, Constitution V and review F40 (partial, LOW).
+- [x] T056 Replace heuristic-only metadata identity discovery with filesystem-backed checks of existing metadata paths, preserve lexical keys for absent metadata, retain strict candidate validation and document the boundary per FR-007 through FR-010/FR-020 and review F39/F40 (partial, HIGH).
+- [x] T057 Record F39/F40 dispositions and any owner fixture decision, rebuild, complete focused checks and run `baton handoff write --phase implement --mode converge` for the unchanged mandatory final check before fresh independent review per SC-006. <!-- baton:handoff-write:implement -->
+
+### Metadata-Identity Evidence
+
+The owner approved correcting the ten platform-specific short-name fixtures
+to use verified existing Windows aliases, with explicit skips only where real
+8.3 aliases are unavailable. All safety assertions and AC-US2-2 remain required;
+the recorded question was answered `Keep requirement`, not waived.
+
+After correcting a test-helper quoting error (not a behavioral failure), both
+new regressions failed before the guard change: F39 preview incorrectly
+returned `allowed:true`, and F40 scope refused the absent exclusion.
+The corrected real-alias/matrix selection passed **63/63** with no skips.
+All eight unchanged registered commands then passed **140** tests
+(**5, 1, 3, 123, 1, 1, 4, 2**), with no skips on this Windows filesystem.
+Real aliases are checked for existence, non-link identity and matching real
+paths; invalid excluded literal bytes are never decoded.
+
+Every existing metadata reference now receives filesystem identity validation,
+not a heuristic filename classification. Only absent metadata retains a lexical
+key; required sources and unsafe CLI candidates still fail closed.
+Typecheck, Markdown lint and offline source-lock verification pass.
+Runtime: **426596 bytes**, below the unchanged strict **460800-byte** cap.
+F39/F40 are implementation dispositions pending independent review.
+The outgoing implementation receipt records the mandatory full-check result;
+T057 stays unchecked until that receipt succeeds.
+
+The first T057 exit attempt completed its configured checks but rejected the
+outgoing summary for exceeding the schema's 600-character limit. No handoff
+was written. This was a receipt-format failure, not a reported test failure;
+the corrected summary must pass the same mandatory writer and checks.

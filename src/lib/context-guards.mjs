@@ -50,12 +50,11 @@ function key(path, source = '') {
 /** @param {string} root @param {string} path @param {string} [source] */
 async function checkedKey(root, path, source = '') {
   const normalized = key(path, source);
-  const shortName = path.replaceAll('\\', '/').split('/').some((part) =>
-    /^[^.~]{1,6}~\d{1,6}(?:\.[^.]{0,3})?$/i.test(part) && part.split('.')[0].length <= 8);
-  if (shortName) {
+  if (source || /~\d/.test(path)) {
     try {
-      await safePath(root, path);
+      await safePath(root, source ? posix.normalize(path.replaceAll('\\', '/')).replace(/\/$/, '') : path);
     } catch (error) {
+      if (source && missing(error)) return normalized;
       if (!(error instanceof BatonError) && !missing(error)) throw error;
       throw unsafePath(path, source);
     }

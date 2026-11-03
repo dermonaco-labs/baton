@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cp, mkdir, readFile, writeFile, readdir, link, symlink, rm } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { cp, mkdir, readFile, writeFile, readdir, realpath, lstat, link, symlink, rm } from 'node:fs/promises';
+import { basename, dirname, join } from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { tempRepo, runCli, sourceRoot } from '../helpers/index.mjs';
 import { hashBytes, hashArtifact } from '../../src/lib/hash.mjs';
 import { parseFrontmatter, serializeFrontmatter } from '../../src/lib/frontmatter.mjs';
@@ -12,6 +14,28 @@ const target = `specs/${feature}/spec.md`;
 const original = '# Draft\r\n\r\n## Requirements\r\nKeep this requirement.\r\n';
 const candidate = '# Draft\nKeep this requirement.\n';
 const digest = hashBytes(original);
+const execute = promisify(execFile);
+
+async function shortAlias(t, root, path) {
+  if (process.platform !== 'win32') {
+    t.skip('Real Windows 8.3 aliases require Windows');
+    return null;
+  }
+  assert.match(basename(path), /^[a-z0-9._~-]+$/i);
+  const { stdout } = await execute(process.env.ComSpec ?? 'cmd.exe',
+    ['/d', '/c', `for %I in (${basename(path)}) do @echo %~snxI`],
+    { cwd: join(root, dirname(path)), windowsHide: true });
+  const name = stdout.trim();
+  assert.ok(name && !/[\\/\r\n]/.test(name), `Invalid short-name result: ${stdout}`);
+  if (name.toLowerCase() === basename(path).toLowerCase()) {
+    t.skip('The temporary filesystem does not generate an alternate 8.3 name');
+    return null;
+  }
+  const alias = `${path.slice(0, path.lastIndexOf('/') + 1)}${name}`;
+  assert.equal((await lstat(join(root, alias))).isSymbolicLink(), false);
+  assert.equal(await realpath(join(root, alias)), await realpath(join(root, path)));
+  return alias;
+}
 
 async function fixture(t, packs = ['token-budget', 'optimize']) {
   const repo = await tempRepo();
@@ -317,8 +341,11 @@ test('context protection canonicalizes schema-valid metadata aliases before any 
     { name: 'duplicate-separator', path: (path) => path.replace('/', '//') },
     { name: 'trailing-dot', path: (path) => `${path}.`, unsafe: true },
     { name: 'trailing-space', path: (path) => `${path} `, unsafe: true },
-    { name: 'short-name', path: (path) => path.startsWith('specs/')
-      ? path.replace(feature, '002-DR~1') : path.replace('candidate.md', 'CANDID~1.MD'), unsafe: true },
+    { name: 'short-name', path: async (path, root, t) => {
+      const base = path.startsWith('specs/') ? `specs/${feature}` : path;
+      const alias = await shortAlias(t, root, base);
+      return alias === null ? null : `${alias}${path.slice(base.length)}`;
+    }, unsafe: true },
   ];
   const excluded = 'Target is excluded from context';
   const bound = 'Target is read_first, source/hash-bound or managed';
@@ -358,7 +385,8 @@ test('context protection canonicalizes schema-valid metadata aliases before any 
         }
         await baton(root, 'draft');
         const source = kind.source ?? 'specs/003-other/handoff.md';
-        const protectedPath = spelling.path(kind.path);
+        const protectedPath = await spelling.path(kind.path, root, t);
+        if (protectedPath === null) return;
         const ref = { path: protectedPath, ...(kind.ref ?? { why: 'Protected source alias' }) };
         if (source.endsWith('.json')) {
           const schema = source === manifestSource ? 'manifest' : 'lock';
@@ -412,6 +440,80 @@ test('context protection canonicalizes schema-valid metadata aliases before any 
       });
     }
   }
+});
+
+test('context protection refuses real short-name aliases containing an earlier tilde', async (t) => {
+  const { root } = await fixture(t);
+  const path = `specs/${feature}/a~b-long-name.md`;
+  await writeFile(join(root, path), '# Excluded candidate\nDo not use these bytes.\n');
+  const alias = await shortAlias(t, root, path);
+  if (alias === null) return;
+  assert.match(basename(alias), /~.*~\d/i, `The generated alias must retain the original tilde: ${alias}`);
+  await baton(root, 'draft');
+  const source = `specs/${feature}/handoff.md`;
+  const { data, body } = parseFrontmatter(await readFile(join(root, source), 'utf8'));
+  data.do_not_read = [{ path: alias, why: 'Exclude the real Windows alias' }];
+  assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', data), []);
+  await writeFile(join(root, source), serializeFrontmatter(data, body));
+  const before = await snapshot(root);
+  const args = ['compact', '--feature', feature, '--target', target, '--candidate', path];
+  for (const command of [args, [...args, '--expect', digest, '--apply'],
+    ['scope', '--feature', feature], ['usage', '--feature', feature]]) {
+    const result = await invoke(root, command);
+    assert.equal(result.code, 1, JSON.stringify(result.output));
+    assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+    assert.equal(result.output.errors[0].message,
+      `Unsafe context metadata path "${alias}" declared by ${source}`);
+    assert.equal(result.output.errors[0].file, source);
+    assert.equal(result.output.data, null);
+    assert.deepEqual(await snapshot(root), before);
+  }
+});
+
+test('context advisory accepts absent and existing literal short-shaped exclusions without reads', async (t) => {
+  const { root } = await fixture(t);
+  const absent = `specs/${feature}/ABSENT~1.MD`;
+  const literal = `specs/${feature}/LITERA~1.MD`;
+  await assert.rejects(readFile(join(root, absent)), { code: 'ENOENT' });
+  await writeFile(join(root, literal), Buffer.from([0xff]));
+  await baton(root, 'draft');
+  const source = join(root, `specs/${feature}/handoff.md`);
+  const { data, body } = parseFrontmatter(await readFile(source, 'utf8'));
+  data.do_not_read = [absent, literal].map((path) => ({ path, why: 'Excluded, not an alias' }));
+  assert.deepEqual(validateSchema(await loadSchemas(root), 'handoff', data), []);
+  await writeFile(source, serializeFrontmatter(data, body));
+  const before = await snapshot(root);
+  for (const action of ['scope', 'usage']) {
+    const result = await invoke(root, [action, '--feature', feature]);
+    assert.equal(result.code, 0, JSON.stringify(result.output));
+    assert.equal(result.output.data.report_only, true);
+    assert.deepEqual(result.output.data.do_not_read, data.do_not_read);
+    assert.ok(result.output.data.files.some((file) => file.path === target));
+    assert.ok(result.output.data.files.every((file) => ![absent, literal].includes(file.path)));
+  }
+  const concise = await invoke(root, ['concise', 'on']);
+  assert.equal(concise.code, 0, JSON.stringify(concise.output));
+  assert.equal(concise.output.data.session_only, true);
+  for (const action of ['run', 'tokens', 'learn']) {
+    const result = await invoke(root, ['optimize', action]);
+    assert.equal(result.code, 0, JSON.stringify(result.output));
+    assert.equal(result.output.data.report_only, true);
+  }
+  const preview = await invoke(root, ['compact', '--feature', feature, '--target', target,
+    '--candidate', 'candidate.md']);
+  assert.equal(preview.code, 0, JSON.stringify(preview.output));
+  assert.equal(preview.output.data.allowed, true);
+  const excludedArgs = ['compact', '--feature', feature, '--target', target, '--candidate', literal];
+  const excluded = await invoke(root, excludedArgs);
+  assert.equal(excluded.code, 0, JSON.stringify(excluded.output));
+  assert.equal(excluded.output.data.allowed, false);
+  assert.deepEqual(excluded.output.data.reasons, ['Candidate is excluded from context']);
+  const apply = await invoke(root, [...excludedArgs, '--expect', digest, '--apply']);
+  assert.equal(apply.code, 1, JSON.stringify(apply.output));
+  assert.equal(apply.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+  assert.equal(apply.output.errors[0].message, 'Candidate is excluded from context');
+  assert.equal(apply.output.errors[0].file, target);
+  assert.deepEqual(await snapshot(root), before);
 });
 
 test('context protection fails closed on metadata aliases of the repository root', async (t) => {
