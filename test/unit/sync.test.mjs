@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { generatedStable, prepareEntries, snapshotDrift } from '../../src/commands/sync.mjs';
-import { sha256 } from '../../src/lib/upstream.mjs';
+import { diffDocument, generatedStable, lockFile, packDefinitions, prepareEntries, snapshotDrift } from '../../src/commands/sync.mjs';
+import { ATV_COMMIT, ATV_TREE, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_COMMIT, SPECKIT_VERSION, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
 import { sourceRoot } from '../helpers/index.mjs';
 
 test('pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift', async () => {
@@ -166,6 +166,139 @@ test('generated Spec Kit manifest preserves locked bytes when file keys are reor
       files: { 'scripts/a.sh': 'changed-hash', 'scripts/b.sh': 'hash-b' },
     }, null, 2));
     assert.notDeepEqual(generatedStable(changed, path, root), original);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+async function optionalFixture() {
+  const root = await mkdtemp(join(tmpdir(), 'baton-sync-optional-'));
+  const generated = join(root, 'generated');
+  const atv = join(root, 'atv');
+  const source = join(root, 'source-token-budget');
+  for (const dir of [generated, atv, join(source, 'commands')]) await mkdir(dir, { recursive: true });
+  const contract = 'specs/001-baton-template/contracts/packs.md';
+  await mkdir(join(root, contract, '..'), { recursive: true });
+  await cp(join(sourceRoot, contract), join(root, contract));
+  // Raw upstream bytes, including CRLF, must never be normalized for optional sources.
+  const raw = Buffer.from('# Usage\r\nEstimate only.\n');
+  await writeFile(join(source, 'commands', 'usage.md'), raw);
+  const file = { from: 'token-budget', upstream_path: 'commands/usage.md',
+    path: '.baton/vendor/token-budget/commands/usage.md' };
+  const packs = [{ id: 'core', requires: [], conflicts: [], files: [] },
+    { id: 'token-budget', requires: ['core'], conflicts: [], files: [file] }];
+  return { root, generated, atv, source, raw, file, packs, cleanup: () => rm(root, { recursive: true, force: true }) };
+}
+
+test('named optional sources keep raw provenance and refuse modified or misplaced payloads', async () => {
+  const fixture = await optionalFixture();
+  const { root, generated, atv, source, raw, file, packs } = fixture;
+  try {
+    const sources = { 'token-budget': source };
+    const { vendored, authored } = prepareEntries(root, generated, atv, packs, [], null, false, sources);
+    assert.deepEqual(authored, []);
+    assert.equal(vendored.length, 1);
+    const [entry] = vendored;
+    assert.equal(entry.upstream, 'token-budget');
+    assert.equal(entry.upstream_path, 'commands/usage.md');
+    assert.equal(entry.path, file.path);
+    assert.equal(entry.stored_at, `packs/token-budget/files/${file.path}`);
+    assert.deepEqual(entry.bytes, raw);
+    assert.equal(entry.sha256_upstream, sha256(raw));
+    assert.equal(entry.sha256, sha256(raw));
+    assert.equal(entry.repair, null);
+    assert.equal(entry.license, 'MIT');
+    assert.deepEqual(entry.packs, ['token-budget']);
+    assert.equal(entry['x-baton-source'], undefined);
+
+    const lock = { files: [{ path: file.path, packs: ['token-budget'], sha256_upstream: '0'.repeat(64) }] };
+    for (const bump of [false, true]) {
+      assert.throws(() => prepareEntries(root, generated, atv, packs, [], lock, bump, sources),
+        /E_UPSTREAM_VERIFY.*usage\.md.*differs from the lock/);
+    }
+    assert.throws(() => prepareEntries(root, generated, atv, packs, [], null, false, {}),
+      /E_UPSTREAM_VERIFY.*token-budget/);
+    /** @param {object} changed @param {string} [id] */
+    const variant = (changed, id = 'token-budget') => [packs[0],
+      { ...packs[1], id, files: [{ ...file, ...changed }] }];
+    for (const [changed, id] of [
+      [{ path: '.github/skills/usage/SKILL.md' }],
+      [{ path: '.specify/extensions/token-budget/extension.yml' }],
+      [{ path: '.baton/vendor/optimize/commands/usage.md' }],
+      [{ upstream_path: undefined }],
+      [{ upstream_path: '../outside.md' }],
+      [{ from: 'unregistered' }],
+      [{}, 'optimize'],
+    ]) {
+      assert.throws(() => prepareEntries(root, generated, atv, variant(changed, id), [], null, false, sources),
+        /E_UPSTREAM_VERIFY|E_DANGLING_REF/, JSON.stringify(changed));
+    }
+    await writeFile(join(source, 'commands', 'usage.md'), Buffer.from('# Usage\nEstimate only.\n'));
+    const prior = { files: [{ path: file.path, packs: ['token-budget'], sha256_upstream: sha256(raw) }] };
+    assert.throws(() => prepareEntries(root, generated, atv, packs, [], prior, false, sources),
+      /E_UPSTREAM_VERIFY.*differs from the lock/);
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+test('lock and snapshot document label optional provenance by its named source', () => {
+  const entry = { path: '.baton/vendor/optimize/LICENSE', upstream: 'optimize', upstream_path: 'LICENSE',
+    stored_at: 'packs/optimize/files/.baton/vendor/optimize/LICENSE', sha256_upstream: 'a'.repeat(64),
+    sha256: 'a'.repeat(64), license: 'MIT', repair: null, packs: ['optimize'], bytes: Buffer.from('x') };
+  const lock = lockFile([entry], 'b'.repeat(64), ATV_COMMIT, ATV_TREE, SPECKIT_VERSION, SPECKIT_COMMIT,
+    { optimize: OPTIONAL_SOURCES.optimize });
+  assert.deepEqual(Object.keys(lock.upstreams), ['speckit', 'atv', 'optimize']);
+  assert.deepEqual(lock.upstreams.optimize, {
+    version: '1.0.0', repo: 'sakitA/spec-kit-optimize', tag: 'v1.0.0',
+    commit: 'd6dba6ae93bf60322deee3bdc4ffcf127e42b2b9', tree: 'c5bb7b7a37912ef26bc369397980c26c3d70cf7b', license: 'MIT',
+  });
+  assert.equal(lock.files[0].upstream, 'optimize');
+  assert.equal(lock.files[0].bytes, undefined);
+  const document = diffDocument(lock);
+  assert.match(document, /- optimize: sakitA\/spec-kit-optimize v1\.0\.0 at `d6dba6ae93bf60322deee3bdc4ffcf127e42b2b9` \(tree `c5bb7b7a37912ef26bc369397980c26c3d70cf7b`\)/);
+  assert.match(document, /\| `packs\/optimize\/files\/\.baton\/vendor\/optimize\/LICENSE` \| optimize \| `LICENSE` \|/);
+  const core = lockFile([], 'b'.repeat(64), ATV_COMMIT, ATV_TREE, SPECKIT_VERSION, SPECKIT_COMMIT);
+  assert.deepEqual(Object.keys(core.upstreams), ['speckit', 'atv']);
+});
+
+test('optional pin fields are one immutable list matching the locked projection order', () => {
+  assert.deepEqual(OPTIONAL_PIN_FIELDS, ['version', 'repo', 'tag', 'commit', 'tree', 'license']);
+  assert.ok(Object.isFrozen(OPTIONAL_PIN_FIELDS));
+  const lock = lockFile([], 'b'.repeat(64), ATV_COMMIT, ATV_TREE, SPECKIT_VERSION, SPECKIT_COMMIT, OPTIONAL_SOURCES);
+  for (const id of Object.keys(OPTIONAL_SOURCES)) {
+    assert.deepEqual(Object.keys(lock.upstreams[id]), [...OPTIONAL_PIN_FIELDS]);
+  }
+});
+
+test('MIT license verifier keeps each source copyright requirement', () => {
+  const atv = 'MIT License\n\nCopyright (c) 2026 All The Vibes\n';
+  assert.doesNotThrow(() => verifyMitLicense(atv, 'Copyright (c) 2026 All The Vibes', 'ATV'));
+  assert.throws(() => verifyMitLicense(atv, OPTIONAL_SOURCES.optimize.copyright, 'optimize'),
+    { code: 'E_LICENSE', message: 'E_LICENSE Pinned optimize LICENSE is not the expected MIT license' });
+  assert.throws(() => verifyMitLicense('Apache License\nCopyright (c) 2026 All The Vibes\n', 'Copyright (c) 2026 All The Vibes', 'ATV'),
+    { code: 'E_LICENSE', message: 'E_LICENSE Pinned ATV LICENSE is not the expected MIT license' });
+});
+
+test('pack definitions require every original pack and accept additional optional packs', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'baton-sync-definitions-'));
+  try {
+    await mkdir(join(root, 'packs'));
+    const required = ['core', 'design', 'docs-review', 'issues', 'learning', 'research', 'review-plus',
+      'security', 'stack-python', 'stack-rails', 'stack-typescript'];
+    for (const id of [...required, 'repairs']) await cp(join(sourceRoot, 'packs', `${id}.yml`), join(root, 'packs', `${id}.yml`));
+    assert.equal(packDefinitions(root).packs.length, 11);
+    await writeFile(join(root, 'packs', 'extra.yml'),
+      'schema: 1\nid: extra\ndescription: Extra\nrequires: [core]\nconflicts: []\nfiles:\n  - { from: baton, path: x.md }\n');
+    assert.deepEqual(packDefinitions(root).packs.map((pack) => pack.id).sort(), [...required, 'extra'].sort());
+    await writeFile(join(root, 'packs', 'extra.yml'), 'schema: 1\nid: extra\nrequires: [core]\nconflicts: []\n');
+    assert.throws(() => packDefinitions(root), /E_PREREQUISITE/);
+    await writeFile(join(root, 'packs', 'extra.yml'),
+      'schema: 1\nid: other\ndescription: Extra\nrequires: [core]\nconflicts: []\nfiles:\n  - { from: baton, path: x.md }\n');
+    assert.throws(() => packDefinitions(root), /E_PREREQUISITE.*extra/);
+    await rm(join(root, 'packs', 'extra.yml'));
+    await rm(join(root, 'packs', 'security.yml'));
+    assert.throws(() => packDefinitions(root), /E_PREREQUISITE.*security/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

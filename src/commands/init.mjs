@@ -10,11 +10,12 @@ import { mergeMarker } from '../lib/markers.mjs';
 import { mergeAttributes } from '../lib/attributes.mjs';
 import { hashManaged } from '../lib/hash.mjs';
 import { repairAtv } from '../lib/repairs.mjs';
-import { prepareSpeckit, UpstreamError } from '../lib/upstream.mjs';
+import { OPTIONAL_SOURCES, prepareSpeckit, UpstreamError } from '../lib/upstream.mjs';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
 export const protectedPath = /^(?:specs\/|docs\/(?:brainstorms|solutions)\/|\.specify\/(?:feature\.json$|memory\/constitution\.md$))/;
+const optionalSources = Object.keys(OPTIONAL_SOURCES);
 const instructions = '.github/copilot-instructions.md';
 const hooks = '.github/hooks/copilot-hooks.json';
 const extensions = '.specify/extensions.yml';
@@ -185,7 +186,7 @@ export async function run(root, args) {
       let bytes = await payloadBytes(payload.root, entry.stored_at);
       if (digest(bytes) !== entry.sha256) throw new BatonError('E_LOCK_MISMATCH', `Payload changed: ${entry.stored_at}`);
       if (generated && entry.upstream === 'speckit') bytes = await flavouredBytes(generated.project, entry.path, bytes);
-      planned.set(entry.path, { bytes, pack, owner: entry.upstream === 'atv' ? 'atv' : entry.upstream === 'speckit' ? 'speckit' : 'baton' });
+      planned.set(entry.path, { bytes, pack, owner: optionalSources.includes(entry.upstream) || entry.upstream === 'atv' || entry.upstream === 'speckit' ? entry.upstream : 'baton' });
     }
     for (const pack of packs) {
       for (const entry of definitions.get(pack)?.files ?? []) {
@@ -344,7 +345,9 @@ export async function run(root, args) {
       source: previous?.source ?? 'init',
       script,
       upstreams: { speckit: `${lock.upstreams.speckit.version}@${lock.upstreams.speckit.commit.slice(0, 7)}`,
-        atv: `${lock.upstreams.atv.ref}@${lock.upstreams.atv.commit.slice(0, 7)}` },
+        atv: `${lock.upstreams.atv.ref}@${lock.upstreams.atv.commit.slice(0, 7)}`,
+        ...Object.fromEntries(optionalSources.filter(id => packs.includes(id) && lock.upstreams[id])
+          .map(id => [id, `${lock.upstreams[id].version}@${lock.upstreams[id].commit.slice(0, 7)}`])) },
       packs, recommended_packs: recommendedPacks(definitions, packs),
       files: installed, marker_sections: sections,
     };

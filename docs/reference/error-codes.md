@@ -53,6 +53,8 @@ warnings are informational unless a command explicitly documents otherwise.
 | `E_WORKFLOW_GUARD` | A source-only maintainer workflow job lacks the repository guard; restore `if: github.repository == 'dermonaco-labs/baton'` on each maintainer job. CI runs on PRs/main; smoke also permits manual dispatch; release runs on version tags or manual dry runs. The adopter `baton.yml` must remain active in derived repos. |
 | `E_BUNDLE_STALE` | Rebuild and verify the CLI bundle. |
 | `E_UPSTREAM_VERIFY` | Correct failed upstream pin, tree, hash or file provenance. |
+| `E_CONTEXT_PROTECTED` | Context mutation is unsafe or its pack/protection metadata is missing or invalid. Keep approved, bound, managed and instruction sources unchanged; use an eligible unbound draft, not refreshed hashes or cleared approvals. |
+| `E_BUNDLE_SIZE` | The runtime exceeds its strictly enforced 450 KiB limit. Reduce the bundle or obtain an explicit reviewed budget change; never bypass the check. |
 
 ## Warnings
 

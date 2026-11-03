@@ -1,0 +1,28 @@
+schema: 1
+id: token-budget
+description: Optional opt-in context-budget workflow with pinned inert token-budget inputs and Baton-safe wrappers.
+requires: [core]
+conflicts: []
+files:
+  - { from: token-budget, upstream_path: LICENSE, path: .baton/vendor/token-budget/LICENSE }
+  - { from: token-budget, upstream_path: extension.yml, path: .baton/vendor/token-budget/extension.yml }
+  - { from: token-budget, upstream_path: token-budget-config.template.yml, path: .baton/vendor/token-budget/token-budget-config.template.yml }
+  - { from: token-budget, upstream_path: commands/compact.md, path: .baton/vendor/token-budget/commands/compact.md }
+  - { from: token-budget, upstream_path: commands/restore.md, path: .baton/vendor/token-budget/commands/restore.md }
+  - { from: token-budget, upstream_path: commands/scope.md, path: .baton/vendor/token-budget/commands/scope.md }
+  - { from: token-budget, upstream_path: commands/concise.md, path: .baton/vendor/token-budget/commands/concise.md }
+  - { from: token-budget, upstream_path: commands/usage.md, path: .baton/vendor/token-budget/commands/usage.md }
+  - { from: token-budget, upstream_path: scripts/bash/compact_helper.sh, path: .baton/vendor/token-budget/scripts/bash/compact_helper.sh }
+  - { from: token-budget, upstream_path: scripts/bash/estimate_tokens.sh, path: .baton/vendor/token-budget/scripts/bash/estimate_tokens.sh }
+  - { from: token-budget, upstream_path: scripts/bash/slim_output.sh, path: .baton/vendor/token-budget/scripts/bash/slim_output.sh }
+  - { from: token-budget, upstream_path: scripts/powershell/compact_helper.ps1, path: .baton/vendor/token-budget/scripts/powershell/compact_helper.ps1 }
+  - { from: token-budget, upstream_path: scripts/powershell/estimate_tokens.ps1, path: .baton/vendor/token-budget/scripts/powershell/estimate_tokens.ps1 }
+  - { from: baton, path: .github/skills/speckit-token-budget-compact/SKILL.md }
+  - { from: baton, path: .github/skills/speckit-token-budget-restore/SKILL.md }
+  - { from: baton, path: .github/skills/speckit-token-budget-scope/SKILL.md }
+  - { from: baton, path: .github/skills/speckit-token-budget-concise/SKILL.md }
+  - { from: baton, path: .github/skills/speckit-token-budget-usage/SKILL.md }
+optional_refs:
+  - ref: compact
+    reason: upstream-absent
+    note: Inert vendored token-budget prose (commands/restore.md, extension.yml) says /compact as shorthand for its own speckit.token-budget.compact command; no compact skill exists in the pinned upstreams, and Baton's only entry point is speckit-token-budget-compact.

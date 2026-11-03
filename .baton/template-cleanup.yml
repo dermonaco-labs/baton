@@ -4,6 +4,7 @@ remove:
   - src/
   - test/
   - specs/001-baton-template/
+  - specs/002-context-optimization-packs/
   - packs/
   - baton/
   - baton.lock.json

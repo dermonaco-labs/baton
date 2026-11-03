@@ -1,0 +1,37 @@
+---
+name: speckit-token-budget-restore
+description: Restore an eligible draft backup without bypassing artifact or approval protection.
+---
+
+# Guarded Draft Restoration
+
+Require explicit feature and target. First run
+`node .baton/bin/baton.mjs --json context restore --feature <id> --target <path>`.
+Default to preview. Stop on failure or `allowed: false`.
+
+Show `warning`, `backup_path` and `backup_sha256` before apply. The backup
+digest is informational: `--expect` binds only the current target, not a
+backup from an earlier preview or its compaction provenance. Restoration
+replaces the target, discards later target edits and removes the backup.
+Inspect both files and re-preview immediately before an explicit apply;
+if the displayed backup changes, stop and review the new proposal first.
+
+Only for an explicit apply request use:
+
+```text
+node .baton/bin/baton.mjs --json context restore --feature <id> --target <path> --expect <preview-sha256> --apply
+```
+
+Restoration is a write and obeys the same protection as compaction.
+Never copy a backup over a live file directly, delete protected backups,
+refresh hashes, clear approvals or run upstream mutating helpers.
+Do not follow the memory-guard cleanup or constitution restoration steps in
+`.baton/vendor/token-budget/commands/restore.md`; it is inactive reference
+material. Never edit AGENTS.md, CLAUDE.md, constitution, mandatory hooks or
+other managed instructions.
+
+An artifact that became approved, hashed or `read_first`-bound after
+compaction cannot be restored in place through this tool.
+Show the actual result or refusal with its errors and exit status intact.
+For `E_CONFLICT`, report the exact cause, such as a stale target digest.
+Never silently substitute a new digest or discard a backup to force a retry.

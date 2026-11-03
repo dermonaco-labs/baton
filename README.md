@@ -425,11 +425,19 @@ plus `repo-research-analyst` and `learnings-researcher`). Everything else is an 
 | `issues` | `speckit-taskstoissues` | you want GitHub issues from `tasks.md` |
 | `stack-python` / `stack-typescript` / `stack-rails` | stack-specific reviewers | you work in that stack |
 | `design` | `frontend-design`, design-implementation reviewer, Figma sync, design iterator | you build UI |
+| `token-budget` | guarded draft compact/restore, scoped context advice, session-only concise and usage estimates | you want smaller unapproved, unbound SDD artifacts without invalidating handoffs |
+| `optimize` | report-only governance audits, token overhead and session-learning proposals | you want complementary instruction optimization without changing gates or approvals |
 
 Packs are **closed**: every skill or agent a pack's files reference or dispatch must be in the pack, in core, or
 listed as an optional reference with a reason. `sync` fails with `E_DANGLING_REF` otherwise. When core refers to
 something a pack provides, `validate` and `doctor` print `W_PACK_RECOMMENDED`, a warning that tells you which pack
 would enable it. Run `npx --yes github:dermonaco-labs/baton#main init --packs <ids>` to add a pack to an existing installation.
+
+The context packs are opt-in and retain pinned upstream bytes as inactive
+references. Only Baton-owned guarded wrappers are public. Approved, hashed,
+managed and `read_first` artifacts cannot be compacted/restored in place;
+optimize never directly applies changes. See
+[pack safety boundaries](docs/06-packs-and-customization.md#context-optimization-packs).
 
 ## How the two kits are combined
 

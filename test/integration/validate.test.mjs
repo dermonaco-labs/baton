@@ -8,6 +8,22 @@ import { runCli, sourceRoot } from '../helpers/index.mjs';
 import { run as validate } from '../../src/commands/validate.mjs';
 import { parseFrontmatter, serializeFrontmatter } from '../../src/lib/frontmatter.mjs';
 
+test('validate distinguishes top-level pack definitions from inert upstream YAML snapshots', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'baton-pack-yaml-'));
+  try {
+    await cp(join(sourceRoot, 'baton/schemas'), join(root, 'baton/schemas'), { recursive: true });
+    const nested = 'packs/token-budget/files/.baton/vendor/token-budget/extension.yml';
+    await mkdir(dirname(join(root, nested)), { recursive: true });
+    await writeFile(join(root, nested), 'name: token-budget\nversion: 1.1.0\n');
+    assert.deepEqual((await validate(root, ['--path', nested])).errors, []);
+    await writeFile(join(root, 'packs/token-budget.yml'), 'name: not-a-baton-pack\n');
+    assert.ok((await validate(root, ['--path', 'packs/token-budget.yml'])).errors
+      .some(({ code }) => code === 'E_PACK'));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 for (const state of ['untracked', 'changed']) {
   test(`validate does not classify ${state} command docs or templates as handoffs`, async (context) => {
     const root = await mkdtemp(join(tmpdir(), 'baton-command-docs-'));

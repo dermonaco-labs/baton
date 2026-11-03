@@ -2,8 +2,10 @@
 
 Baton redistributes the following upstream materials under their respective
 licenses. File-level provenance is recorded in `baton.lock.json` in the source
-repository. The upstream root LICENSE files are not copied into the installed
-payload; this notice preserves their copyright and permission terms. A template
+repository. Spec Kit and ATV root LICENSE files are not copied into the installed
+payload; this notice preserves their copyright and permission terms. The optional
+context packs additionally retain their upstream LICENSE files under
+`.baton/vendor/<id>/`. A template
 derivative retains this file; an overlay installation must retain a copy when
 redistributing the installed files.
 
@@ -17,6 +19,10 @@ redistributing the installed files.
   Copyright (c) 2025 Every.
 - [awesome-copilot material included in ATV](https://github.com/github/awesome-copilot/blob/6c4d33b9cfca967a28bb2962ef4d55e4a384c88c/LICENSE):
   Copyright GitHub, Inc.
+- [spec-kit-token-budget v1.1.0](https://github.com/tinesoft/spec-kit-token-budget/blob/11c5589f347ddb3789b51b09927ef825c88e3f19/LICENSE):
+  Copyright (c) 2026 Tine Kondo. Included only with the optional token-budget pack.
+- [spec-kit-optimize v1.0.0](https://github.com/sakitA/spec-kit-optimize/blob/d6dba6ae93bf60322deee3bdc4ffcf127e42b2b9/LICENSE):
+  Copyright (c) 2026 sakitA. Included only with the optional optimize pack.
 - `ajv`: Copyright (c) 2015-2021 Evgeny Poberezkin.
 - `ajv-formats`: Copyright (c) 2020 Evgeny Poberezkin.
 - `fast-deep-equal`: Copyright (c) 2017 Evgeny Poberezkin.

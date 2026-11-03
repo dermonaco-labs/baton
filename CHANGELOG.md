@@ -6,6 +6,26 @@ All notable changes to Baton are documented here. This follows
 
 ## [Unreleased]
 
+### Added
+
+- Two optional opt-in packs: token-budget v1.1.0 and optimize v1.0.0, with
+  immutable source/tree pins, byte-identical inactive upstream snapshots,
+  locked checksums and MIT notices. Core defaults remain unchanged.
+- Baton-owned context wrappers and guarded draft compact/restore operations:
+  reject approved, hash-bound, managed, source-of-truth and `read_first`
+  targets, malformed metadata, unsafe paths and stale candidates. No
+  automatic compaction hooks or constitution/instruction rewriting.
+- Report-only optimize run/tokens/learn, session-only concise, baton-subordinate
+  scope advice and usage estimates. Governance amendments retain the normal
+  speckit-constitution flow; mandatory gates, scanner rules and approval
+  semantics cannot be optimized away.
+
+### Changed
+
+- Increase the strictly enforced bundle cap from 400 KiB to 450 KiB with
+  explicit human approval for the added source verification and guarded
+  operations. No release or tag is cut by these additions.
+
 ## [0.1.3] - 2026-10-12
 
 ### Fixed

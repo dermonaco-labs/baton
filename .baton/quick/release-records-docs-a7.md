@@ -17,7 +17,7 @@ read_first:
     sha256: 22e28d2178758bc3f6c85619d08ed1404d169782715f3318b9413a60a7701487
   - path: README.md
     why: Published release status and evidence link
-    sha256: e71bd70ccac7b4317887dd46a8a4e50ce3c5b8118031e0a243e693fae6f73fe3
+    sha256: 139f8fc46b356c622eb579fe3d9a682ed539061de4bc9f3e6ad65c4a02bc5f6a
   - path: SECURITY.md
     why: Supported v0.1 release line after publication
     sha256: 61ecec33aad1e5a6ee9fed40994ee287150751564952eda98a054537c3156ae2
@@ -26,7 +26,7 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: .baton/template-cleanup.yml
     why: Source-only cleanup coverage for new docs lane and later canonical review artifacts
-    sha256: eb375087dc59b79749b669cb62bc7b09b5d20f88a664c63601db77ea77402e5b
+    sha256: 232ee939153736600d8802e9be822ebdb5fe141135a9073d0146e0089c22df5d
   - path: .baton/quick/release-records-docs-a7.work.json
     why: Actual judgment-only input to this new canonical WORK write
     sha256: de632df430c6cae373d42517f38b3d1bde768ad2f66a7923bcb449813cc449f4
@@ -116,10 +116,18 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: "User decision verbatim: D1 and D2 approved at 2026-10-10T23:39:24.666+02:00, relayed by control plane. D1 authorizes one checksum-only refresh for frozen cleanup 5c7665fb92d76dfa38686f645edc26c30c34743ddb10c891ea9f88d6deeb453e -> eb375087dc59b79749b669cb62bc7b09b5d20f88a664c63601db77ea77402e5b at HEAD bf0753104b2c6c673dddc3e11dc04a567226bfc8, followed by one fresh owner gate approval. No semantic or sealed receipt changes."
     by: implementation-session
+  - id: D16
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Approved feature 002 adds optional-pack README documentation; preserve original approval history but invalidate the prior release-doc snapshot binding rather than treating revised docs as previously approved.
+    by: implementation-session
+  - id: D17
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Bind the intentional exact source002 cleanup retirement required by F01; retain the old lane's unapproved gate and do not land or authorize that legacy lane
+    by: implementation-session
 gate:
   required: true
-  approved_by: repository owner via control-plane delegation
-  approved_at: 2026-10-10
+  approved_by: null
+  approved_at: null
 history:
   - phase: work
     at: 2026-10-09T14:15:01.488Z
@@ -191,8 +199,22 @@ history:
     x-worktree: ea27aaadedaa3658e0445b1bad9ab10f00b04bbbc54eec622cf8a4598436d1c8
     commit: bf07531
     x-action: approve
-updated_at: 2026-10-10T21:41:58.843Z
-updated_by: human:repository-owner
+  - phase: land
+    at: 2026-11-02T16:24:26.459Z
+    by: implementation-session
+    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
+    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
+    commit: 5e6de1b
+    x-action: refresh
+  - phase: land
+    at: 2026-11-02T17:29:22.377Z
+    by: implementation-session
+    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
+    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
+    commit: fb17e9a
+    x-action: refresh
+updated_at: 2026-11-02T17:29:22.377Z
+updated_by: implementation-session
 do_not_read:
   - path: specs/001-baton-template/roadmap.md
     why: Future feature scope is not authorized by this docs-only lane

@@ -61,9 +61,12 @@ function referencedNames(text) {
   for (const [index, regex] of patterns.entries()) {
     for (const match of (index === 5 ? outsideCode : text).matchAll(regex)) {
       if (index === 2 && !/^[a-z][a-z0-9-]+$/.test(match[1])) continue;
+      // A dotted Spec Kit command such as `agent: speckit.plan` is resolved in full by the speckit pattern.
+      if (index === 2 && match[1].toLowerCase() === 'speckit' && /^\.[a-z]/.test(text.slice(match.index + match[0].length))) continue;
       if (index === 3 && match[1] === 'cross-reviewer') continue;
       if (index === 5 && /^e\d+$/.test(match[1])) continue;
-      const name = index === 7 ? `speckit-${match[1].replaceAll('.', '-')}` : match[1];
+      // Command file names (speckit.x.md) and sentence-final periods are not part of the command name.
+      const name = index === 7 ? `speckit-${match[1].replace(/(?:\.md)?\.*$/, '').replaceAll('.', '-')}` : match[1];
       found.add(name);
     }
   }

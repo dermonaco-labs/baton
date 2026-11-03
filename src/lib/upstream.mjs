@@ -100,9 +100,59 @@ export function fetchAtv({ work, commit = ATV_COMMIT, tree = ATV_TREE }) {
   }
   run('git', ['-C', repo, 'checkout', '-q', '--detach', 'FETCH_HEAD']);
   const license = readFileSync(join(repo, 'LICENSE'), 'utf8');
-  if (!/^MIT License\s*\r?\n/.test(license) || !license.includes('Copyright (c) 2026 All The Vibes')) {
-    throw new UpstreamError('E_LICENSE', 'Pinned ATV LICENSE is not the expected MIT license');
+  verifyMitLicense(license, 'Copyright (c) 2026 All The Vibes', 'ATV');
+  return repo;
+}
+
+/** Locked optional-source pin fields, in lock projection order. */
+export const OPTIONAL_PIN_FIELDS = Object.freeze(/** @type {const} */ (['version', 'repo', 'tag', 'commit', 'tree', 'license']));
+
+/**
+ * Optional, opt-in sources vendored only as inert pack payload under `.baton/vendor/<id>/`.
+ * @type {Readonly<Record<string, Readonly<{version:string,repo:string,tag:string,commit:string,tree:string,license:'MIT',copyright:string}>>>}
+ */
+export const OPTIONAL_SOURCES = Object.freeze({
+  'token-budget': Object.freeze({
+    version: '1.1.0', repo: 'tinesoft/spec-kit-token-budget', tag: 'v1.1.0',
+    commit: '11c5589f347ddb3789b51b09927ef825c88e3f19', tree: '0188d6c187e1f1ddc03293660cc8e4d129ea0fa5',
+    license: 'MIT', copyright: 'Copyright (c) 2026 Tine Kondo',
+  }),
+  optimize: Object.freeze({
+    version: '1.0.0', repo: 'sakitA/spec-kit-optimize', tag: 'v1.0.0',
+    commit: 'd6dba6ae93bf60322deee3bdc4ffcf127e42b2b9', tree: 'c5bb7b7a37912ef26bc369397980c26c3d70cf7b',
+    license: 'MIT', copyright: 'Copyright (c) 2026 sakitA',
+  }),
+});
+
+/** @param {string} text @param {string} copyright @param {string} label */
+export function verifyMitLicense(text, copyright, label) {
+  if (!/^MIT License\s*\r?\n/.test(text) || !text.includes(copyright)) {
+    throw new UpstreamError('E_LICENSE', `Pinned ${label} LICENSE is not the expected MIT license`);
   }
+}
+
+/** @param {{work:string,id:string,pin?:{repo:string,tag:string,commit:string,tree:string,copyright:string}}} options */
+export function fetchSource({ work, id, pin = OPTIONAL_SOURCES[id] }) {
+  if (!pin) throw new UpstreamError('E_UPSTREAM_VERIFY', `Unknown optional source ${id}`);
+  if (!/^[a-f0-9]{40}$/.test(pin.commit) || !/^[a-f0-9]{40}$/.test(pin.tree) ||
+      !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(pin.repo) || !/^[A-Za-z0-9_.-]+$/.test(pin.tag)) {
+    throw new UpstreamError('E_UPSTREAM_VERIFY', `${id} pin must specify repository, tag and complete commit and tree ids`);
+  }
+  const repo = join(work, `source-${id}`);
+  mkdirSync(repo, { recursive: true });
+  run('git', ['init', '-q', repo]);
+  run('git', ['-C', repo, 'config', '--local', 'core.autocrlf', 'false']);
+  run('git', ['-C', repo, 'fetch', '--depth', '1', `https://github.com/${pin.repo}`, `refs/tags/${pin.tag}`]);
+  const actualCommit = run('git', ['-C', repo, 'rev-parse', 'FETCH_HEAD^{commit}']);
+  const actualTree = run('git', ['-C', repo, 'rev-parse', 'FETCH_HEAD^{tree}']);
+  if (actualCommit !== pin.commit || actualTree !== pin.tree) {
+    throw new UpstreamError('E_UPSTREAM_VERIFY',
+      `${id} ${pin.tag} expected ${pin.commit}/${pin.tree}, fetched ${actualCommit}/${actualTree}`);
+  }
+  run('git', ['-C', repo, 'checkout', '-q', '--detach', 'FETCH_HEAD']);
+  const license = join(repo, 'LICENSE');
+  if (!existsSync(license)) throw new UpstreamError('E_LICENSE', `Pinned ${id} has no LICENSE`);
+  verifyMitLicense(readFileSync(license, 'utf8'), pin.copyright, id);
   return repo;
 }
 

@@ -55,6 +55,46 @@ checkout's absolute path: a fresh clone at the same path can review, while
 deleting `.baton/.local/session.json` or running `git clean -xfd` in the
 implementing worktree cannot bypass the guard.
 
+## Guarded Context Operations
+
+These commands require the explicitly installed optional pack and support the
+normal `--json` envelope. Human-readable reports show the same data.
+
+```text
+context compact --feature ID --target PATH [--candidate PATH] [--expect RAW_SHA256] [--apply]
+context restore --feature ID --target PATH [--expect RAW_SHA256] [--apply]
+context scope --feature ID
+context concise [on|off]
+context usage --feature ID
+context optimize run|tokens|learn
+```
+
+Token-budget provides compact/restore/scope/concise/usage; optimize provides
+the three report-only audit operations. No `check` or optimize apply command
+exists. Unsupported and duplicate options are rejected.
+
+Compact/restore default to preview with `allowed`, protection `reasons` and the
+target's raw `sha256`; no backup or target is written. Applying compact needs
+`--candidate`, `--expect` and `--apply`; applying restore needs `--expect` and
+an existing `.full.md` backup. The expected digest is the exact current target
+hash from the preview, not its normalized handoff hash.
+
+Only existing draft SDD Markdown within the explicit numbered feature is
+writable: spec, plan, tasks, research, data-model, quickstart and contract
+Markdown. Approved/historically approved, hashed, managed, source-of-truth or
+any `read_first` targets refuse mutation with `E_CONTEXT_PROTECTED` (exit 1).
+Invalid protection metadata and unsafe linked/aliased paths also fail closed.
+Constitution, instruction files, handoffs, scanner rules and gate configuration
+are never targets. Detected stale content or a conflicting backup fails with
+`E_CONFLICT` (exit 4); the existing backup is never overwritten.
+
+Scope returns ordered `read_first` and `do_not_read` unchanged. Concise only
+returns session-style guidance, never persisted instructions. Usage and
+optimize reports label their estimates as character-based approximations.
+Optimize supplies context for the skills' audits; proposed changes are not
+applied. Use `/speckit-constitution` for reviewed governance amendments.
+No context operation automatically writes reports or learned memories.
+
 ## Other commands
 
 For per-command behaviour and switches, see [commands](commands.md).

@@ -90,6 +90,7 @@ test('landing captures outside the repo and verifies again after the land receip
   const { root, cleanup } = await tempRepo();
   const remote = await tempRepo();
   const notes = await tempRepo();
+  const publisher = await tempRepo();
   try {
     await initialize(root);
     git(remote.root, 'init', '--bare', '-q');
@@ -125,10 +126,12 @@ test('landing captures outside the repo and verifies again after the land receip
     const localHead = git(root, 'rev-parse', 'HEAD');
     const remoteRef = `refs/heads/${branch}`;
     assert.equal(git(root, 'ls-remote', '--heads', 'origin', remoteRef).split(/\s+/)[0], localHead);
-    const remoteAdvance = git(root, 'commit-tree', 'HEAD^{tree}', '-p', localHead, '-m', 'Remote-only advance');
-    git(root, 'push', '-q', remote.root, `${remoteAdvance}:${remoteRef}`);
+    git(publisher.root, 'clone', '-q', '--branch', branch, remote.root, '.');
+    const remoteAdvance = git(publisher.root, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+      'commit-tree', 'HEAD^{tree}', '-p', localHead, '-m', 'Remote-only advance');
+    git(publisher.root, 'push', '-q', 'origin', `${remoteAdvance}:${remoteRef}`);
     assert.equal(git(root, 'status', '--porcelain'), '');
-    assert.equal(git(root, 'rev-parse', `origin/${branch}`), localHead, 'URL push leaves local tracking stale');
+    assert.equal(git(root, 'rev-parse', `origin/${branch}`), localHead, 'Independent publisher leaves original tracking stale');
     assert.notEqual(git(root, 'ls-remote', '--heads', 'origin', remoteRef).split(/\s+/)[0], localHead,
       'Clean status and local/tracking equality do not prove actual remote publication');
     git(root, 'fetch', '-q', 'origin', branch);
@@ -148,5 +151,6 @@ test('landing captures outside the repo and verifies again after the land receip
     await cleanup();
     await remote.cleanup();
     await notes.cleanup();
+    await publisher.cleanup();
   }
 });

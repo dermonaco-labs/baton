@@ -38,6 +38,9 @@ export function formatResult(result, flags = {}) {
     const next = /** @type {{instruction:string,role:string,model:string|null}} */ (result.data);
     return `${next.instruction} (model role: ${next.role}${next.model ? ` -> ${next.model}` : ' -> inherit'})`;
   }
+  if (result.command === 'context' && !errors.length && result.data) {
+    return JSON.stringify(result.data, null, 2);
+  }
   if (result.command === 'models' && !errors.length && result.data && typeof result.data === 'object' && 'changed' in result.data) {
     const applied = /** @type {{changed:string[],dry_run?:boolean,message?:string}} */ (result.data);
     lines.push(applied.message ?? `${applied.dry_run ? 'Would update' : 'Updated'} ${applied.changed.length} managed agent(s)`);
