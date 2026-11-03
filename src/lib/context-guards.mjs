@@ -55,7 +55,12 @@ async function checkedKey(root, path, source = '') {
       await safePath(root, source ? posix.normalize(path.replaceAll('\\', '/')).replace(/\/$/, '') : path);
     } catch (error) {
       if (source && missing(error)) return normalized;
-      if (!(error instanceof BatonError) && !missing(error)) throw error;
+      if (!(error instanceof BatonError) && !missing(error)) {
+        if (!source) throw error;
+        const code = error instanceof Error && 'code' in error && typeof error.code === 'string'
+          ? error.code : 'filesystem error';
+        throw protectedError(`Cannot verify context metadata path "${path}" declared by ${source}: ${code}`, source);
+      }
       throw unsafePath(path, source);
     }
   }

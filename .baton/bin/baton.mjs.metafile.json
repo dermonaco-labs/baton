@@ -3370,7 +3370,7 @@
       "format": "esm"
     },
     "src/lib/context-guards.mjs": {
-      "bytes": 20040,
+      "bytes": 20336,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -5557,7 +5557,7 @@
           "bytesInOutput": 980
         },
         "src/lib/context-guards.mjs": {
-          "bytesInOutput": 9750
+          "bytesInOutput": 9935
         },
         "src/commands/context.mjs": {
           "bytesInOutput": 2866
@@ -5653,7 +5653,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 426596
+      "bytes": 426781
     }
   }
 }

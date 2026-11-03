@@ -1,13 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cp, mkdir, readFile, writeFile, readdir, realpath, lstat, link, symlink, rm } from 'node:fs/promises';
+import filesystem, { cp, mkdir, readFile, writeFile, readdir, realpath, lstat, link, symlink, rm } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { syncBuiltinESMExports } from 'node:module';
 import { tempRepo, runCli, sourceRoot } from '../helpers/index.mjs';
 import { hashBytes, hashArtifact } from '../../src/lib/hash.mjs';
 import { parseFrontmatter, serializeFrontmatter } from '../../src/lib/frontmatter.mjs';
 import { loadSchemas, validateSchema } from '../../src/lib/schema.mjs';
+import { contextProtection } from '../../src/lib/context-guards.mjs';
 
 const feature = '002-draft';
 const target = `specs/${feature}/spec.md`;
@@ -17,6 +19,7 @@ const digest = hashBytes(original);
 const execute = promisify(execFile);
 
 async function shortAlias(t, root, path) {
+  await lstat(join(root, path));
   if (process.platform !== 'win32') {
     t.skip('Real Windows 8.3 aliases require Windows');
     return null;
@@ -468,6 +471,102 @@ test('context protection refuses real short-name aliases containing an earlier t
     assert.equal(result.output.data, null);
     assert.deepEqual(await snapshot(root), before);
   }
+});
+
+test('context protection labels non-ENOENT metadata failures without exposing absolute paths', async (t) => {
+  for (const code of ['EACCES', 'EPERM', 'ENAMETOOLONG']) {
+    await t.test(code, async (t) => {
+      const { root } = await fixture(t);
+      await baton(root, 'draft');
+      const path = 'vendor-real';
+      const blocked = join(root, path);
+      await mkdir(blocked);
+      const source = `specs/${feature}/handoff.md`;
+      const { data, body } = parseFrontmatter(await readFile(join(root, source), 'utf8'));
+      data.do_not_read = [{ path, why: 'Unreadable excluded metadata' }];
+      await writeFile(join(root, source), serializeFrontmatter(data, body));
+      const before = await snapshot(root);
+      const originalStat = filesystem.lstat;
+      const mocked = t.mock.method(filesystem, 'lstat', (path) => path === blocked
+        ? Promise.reject(Object.assign(new Error(`${code}: cannot stat ${blocked}`), { code }))
+        : originalStat(path));
+      syncBuiltinESMExports();
+      try {
+        await assert.rejects(contextProtection(root, 'token-budget'), (error) => {
+          assert.equal(error.code, 'E_CONTEXT_PROTECTED');
+          assert.equal(error.exitCode, 1);
+          assert.equal(error.file, source);
+          assert.equal(error.message, `Cannot verify context metadata path "${path}" declared by ${source}: ${code}`);
+          assert.ok(!error.message.includes(root));
+          return true;
+        });
+      } finally {
+        mocked.mock.restore();
+        syncBuiltinESMExports();
+      }
+      assert.deepEqual(await snapshot(root), before);
+    });
+  }
+});
+
+test('context protection rejects plain-named linked metadata before candidate use', async (t) => {
+  for (const sourceKind of ['handoff', 'manifest']) {
+    for (const kind of ['junction', 'hardlink', 'file-symlink']) {
+      await t.test(`${sourceKind}/${kind}`, async (t) => {
+        const { root } = await fixture(t);
+        const candidate = 'vendor-real/x.md';
+        const alias = kind === 'junction' ? 'vendor-alias' : 'vendor-alias.md';
+        await mkdir(join(root, 'vendor-real'));
+        await writeFile(join(root, candidate), '# Excluded through a plain alias\n');
+        if (kind === 'junction') {
+          await symlink(join(root, 'vendor-real'), join(root, alias),
+            process.platform === 'win32' ? 'junction' : 'dir');
+        } else if (kind === 'hardlink') {
+          await link(join(root, candidate), join(root, alias));
+        } else {
+          try {
+            await symlink(join(root, candidate), join(root, alias), 'file');
+          } catch (error) {
+            if (process.platform !== 'win32' || error.code !== 'EPERM') throw error;
+            t.skip('Windows file symlink creation requires unavailable permission');
+            return;
+          }
+        }
+        await baton(root, 'draft');
+        const source = sourceKind === 'handoff' ? `specs/${feature}/handoff.md` : '.baton/manifest.json';
+        const declared = sourceKind === 'manifest' && kind === 'junction' ? `${alias}/x.md` : alias;
+        if (sourceKind === 'handoff') {
+          const { data, body } = parseFrontmatter(await readFile(join(root, source), 'utf8'));
+          data.do_not_read = [{ path: declared, why: 'Excluded linked source' }];
+          await writeFile(join(root, source), serializeFrontmatter(data, body));
+        } else {
+          const data = JSON.parse(await readFile(join(root, source), 'utf8'));
+          data.files = [{ path: declared, sha256: digest, pack: 'core', owner: 'baton', managed: true }];
+          assert.deepEqual(validateSchema(await loadSchemas(root), 'manifest', data), []);
+          await writeFile(join(root, source), JSON.stringify(data));
+        }
+        const before = await snapshot(root);
+        const args = ['compact', '--feature', feature, '--target', target, '--candidate', candidate];
+        for (const command of [args, [...args, '--expect', digest, '--apply'],
+          ['scope', '--feature', feature], ['usage', '--feature', feature]]) {
+          const result = await invoke(root, command);
+          assert.equal(result.code, 1, JSON.stringify(result.output));
+          assert.equal(result.output.errors[0].code, 'E_CONTEXT_PROTECTED');
+          assert.equal(result.output.errors[0].message,
+            `Unsafe context metadata path "${declared}" declared by ${source}`);
+          assert.equal(result.output.errors[0].file, source);
+          assert.equal(result.output.data, null);
+          assert.deepEqual(await snapshot(root), before);
+        }
+      });
+    }
+  }
+});
+
+test('context protection short-name helper validates its base before any platform skip', async (t) => {
+  const { root } = await fixture(t);
+  const noSkip = { skip: (message) => assert.fail(`Skipped before checking fixture existence: ${message}`) };
+  await assert.rejects(shortAlias(noSkip, root, 'missing-file.md'), { code: 'ENOENT' });
 });
 
 test('context advisory accepts absent and existing literal short-shaped exclusions without reads', async (t) => {

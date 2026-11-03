@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 002-context-optimization-packs
-phase_completed: review
-next_phase: implement
-next_owner: speckit-implement
+phase_completed: implement
+next_phase: review
+next_owner: baton-review
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Round 6 independent review of 565a8b7 (61132dc): F39/F40 verified fixed with real 8.3 aliases and fresh personas. New P3 F42 (non-ENOENT metadata errors crash report-only commands as E_INTERNAL, T056) and F43 (no regression for linked metadata identity refusal; shortAlias skips before existence check, T054) are open; F44/F45 dismissed. No P0-P2. Route to implement/converge, then fresh independent review."
+model_role: review
+suggested_model: claude-opus-5.5
+summary: "T058-T061 address F42/F43: non-ENOENT metadata failures stay fail-closed with source-labelled diagnostics; regressions cover plain linked metadata and missing short-name fixtures. Protection selector: 135 tests, 133 pass, 2 initially conditional Windows file-symlink permission skips, no failures. Real 8.3 aliases still execute. Fresh independent review required; no push, PR, CI, merge, release or tag."
 read_first:
   - path: specs/002-context-optimization-packs/spec.md
     why: Approved behavior and safety scope
@@ -18,7 +18,7 @@ read_first:
     sha256: 34a9996f62a98e7b21fc0fed336f90a9e2a5ad8871473232b0e295a1a784a9a4
   - path: specs/002-context-optimization-packs/tasks.md
     why: Completed tasks, honest baseline timing and nonzero acceptance evidence
-    sha256: 363142d23e8aff0084c64f0ff6751c9a57d42b003cd4b526150ee77a57d95fe1
+    sha256: b8b9f60b440f3cfcfbfd72ffc3e91873710c0f5f2e7fc8587219edd7bde93afe
   - path: specs/002-context-optimization-packs/contracts/context.md
     why: Supported public command and mutation boundaries
     sha256: 992a0fb4a1be617fd3ae1559964ac62c006cbeb6743f12188949a022b4596684
@@ -27,13 +27,13 @@ read_first:
     sha256: f0cbcaf06931f6c7e3dd0fabc267293a824bac2b7099de43a218710bf5a3bdae
   - path: src/lib/context-guards.mjs
     why: Executable protection discovery and guarded mutation
-    sha256: 8ebafcef3ccf41d19459364d0e0f58480e9963b8f97dd1277b544c1d886ba9bd
+    sha256: f00dcaf30b55db273dc18ec1ea0834bf15cd1991b2a70389fd8e25d37502f6f0
   - path: src/commands/context.mjs
     why: Strict CLI options and report-only adapters
     sha256: 7944c168691759abdfdfda6c6e9e41f65e45fcd23ca5d7efdeb4bb0da8aec6d7
   - path: test/integration/context.test.mjs
     why: Registered lifecycle, provenance and safety acceptance coverage
-    sha256: 8d4186a5150ba00a6a9ca9e057c5752b345015158bdb1cba841f4a5b386638a9
+    sha256: 7f577b3bb37f86bf9d601ed7673c094af0a0c28739b4b354dee7998f9cc9c400
   - path: packs/token-budget.yml
     why: Opt-in source and wrapper ownership
     sha256: 9f78004c0bbfb26dd8633136d27cd52b54744cd09960162d8ced7e4ee81e8c3e
@@ -42,7 +42,7 @@ read_first:
     sha256: 34fd4e89d13257e6c47f89d339cee54702819e01c0cdcc5e6a7e5d085a970931
   - path: docs/06-packs-and-customization.md
     why: Adopter safety and capability documentation
-    sha256: e6437807d5b37f6aabde8192c27b0a5c442c0edbc37932c3877c85edab653ddd
+    sha256: fa9e5d5318d76faa4fb5e6090291873b267cc2d0340c0b8f41a93b351099bc8e
 artifacts:
   - path: specs/002-context-optimization-packs/spec.md
     role: source-of-truth
@@ -52,12 +52,90 @@ artifacts:
     sha256: 34a9996f62a98e7b21fc0fed336f90a9e2a5ad8871473232b0e295a1a784a9a4
   - path: specs/002-context-optimization-packs/tasks.md
     role: source-of-truth
-    sha256: 363142d23e8aff0084c64f0ff6751c9a57d42b003cd4b526150ee77a57d95fe1
+    sha256: b8b9f60b440f3cfcfbfd72ffc3e91873710c0f5f2e7fc8587219edd7bde93afe
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: tasks-all-checked-or-deferred
     met: true
-    evidence: specs/002-context-optimization-packs/review.json
+    evidence: 0 outstanding tasks
+  - id: acceptance-evidence
+    met: true
+    evidence: 0 checks lack evidence
+  - id: local-checks-pass
+    met: true
+    evidence: |-
+      baton: 0
+      stdout (tail):
+      ts (0.4299ms)
+      ✔ shipped phase template is valid and never weakens its built-in contracts (25.8181ms)
+      ✔ tracked Baton documentation contains no private feed hostnames (120.1874ms)
+      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.9908ms)
+      ✔ adopter command table remains contiguous (0.7581ms)
+      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.607ms)
+      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.631ms)
+      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (46.9508ms)
+      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (3.223ms)
+      ✔ compiles all draft 2020-12 schemas once (189.6998ms)
+      ✔ findings fixture validates and invalid fixture reports a JSON pointer (3.9623ms)
+      ✔ pack schema requires a classified reason for every optional reference (1.2726ms)
+      ✔ pack, lock and manifest schemas accept named optional sources without relaxing old shapes (11.2651ms)
+      ✔ sync bump explains pin and file changes for a PR body (1.9221ms)
+      ✔ sync rejects unpinned bump values and check/bump combination (44.2552ms)
+      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (317.763ms)
+      ✔ generated registry preserves verified bytes when only installation time changes (11.4071ms)
+      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (10.5294ms)
+      ✔ named optional sources keep raw provenance and refuse modified or misplaced payloads (28.6175ms)
+      ✔ lock and snapshot document label optional provenance by its named source (1.0583ms)
+      ✔ optional pin fields are one immutable list matching the locked projection order (0.3327ms)
+      ✔ MIT license verifier keeps each source copyright requirement (0.8472ms)
+      ✔ pack definitions require every original pack and accept additional optional packs (140.5163ms)
+      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (844.3385ms)
+      ✔ every feature phase and quick lane phase has a valid independent fixture (298.3394ms)
+      ✔ pre-existing feature baton without specify history or attachment still validates (127.3576ms)
+      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
+        ✔ E_ACTOR_FORMAT (90.0842ms)
+        ✔ E_ANALYSIS_CRITICAL (6.3297ms)
+        ✔ E_ANALYSIS_MISSING (5.7988ms)
+        ✔ E_APPROVER_FORMAT (5.7887ms)
+        ✔ E_BLOCKING_OPEN (5.3597ms)
+        ✔ E_BODY_SECTIONS (4.3175ms)
+        ✔ E_BUDGET (10.2073ms)
+        ✔ E_DENYLIST (4.6916ms)
+        ✔ E_EXIT_UNMET (4.4646ms)
+        ✔ E_GATE_PENDING (115.8971ms)
+        ✔ E_LANE_ESCALATE (1583.1107ms)
+        ✔ E_LANE_MISMATCH (3.5017ms)
+        ✔ E_MISSING_ARTIFACT (4.6968ms)
+        ✔ E_MODEL_NOT_ALLOWED (6.8596ms)
+        ✔ E_MULTIPLE_BATONS (6.3396ms)
+        ✔ E_NO_PREREG (6.7891ms)
+        ✔ E_OWNER (4.8341ms)
+        ✔ E_PR_MISSING (5.2352ms)
+        ✔ E_REVIEW_BLOCKING (298.2983ms)
+        ✔ E_REVIEW_MISSING (8.6451ms)
+        ✔ E_SCHEMA (4.6831ms)
+        ✔ E_STALE_ARTIFACT (4.7327ms)
+        ✔ E_TRANSITION (5.5934ms)
+      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (2231.8572ms)
+      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (147.6365ms)
+      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (44.7222ms)
+      ▶ model allowlist warns in warn mode and errors in error mode
+        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (122.0548ms)
+        ✔ error mode emits E_MODEL_NOT_ALLOWED (16.7461ms)
+      ✔ model allowlist warns in warn mode and errors in error mode (179.0302ms)
+      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (121.7407ms)
+      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (3.8951ms)
+      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (35.6291ms)
+      ✔ ready with a blocking question is rejected (118.325ms)
+      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (165.1225ms)
+      ℹ tests 588
+      ℹ suites 0
+      ℹ pass 586
+      ℹ fail 0
+      ℹ cancelled 0
+      ℹ skipped 2
+      ℹ todo 0
+      ℹ duration_ms 413335.2399
 open_questions: []
 x-final-check-attempt-1:
   command: npm run check
@@ -229,25 +307,15 @@ decisions:
     tag: diff-base
     x-base-commit: 565a8b7b1599d757385eb75cb9b7f043cc9a7140
     by: baton
+  - id: D32
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Bind T058-T061 diagnostic and linked-metadata coverage; preserve all approved requirements and registered acceptance commands
+    by: implementation-session
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: implement
-    at: 2026-11-02T17:34:29.328Z
-    by: baton
-    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
-    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
-    commit: fb17e9a
-    x-action: write
-  - phase: review
-    at: 2026-11-02T17:47:29.151Z
-    by: baton
-    writer: 948e86a6e5e4d08bdcad428ccbae562b312381687ebc1b16ae635e8608889fad
-    x-worktree: f161633938eb1237a91ef37792e081681bf544826c1b7845ac4df87394f8534b
-    commit: a4e3277
-    x-action: write
   - phase: review
     at: 2026-11-02T18:01:12.699Z
     by: implementation-session
@@ -374,8 +442,22 @@ history:
     x-worktree: f161633938eb1237a91ef37792e081681bf544826c1b7845ac4df87394f8534b
     commit: 565a8b7
     x-action: write
-updated_at: 2026-11-03T09:01:57.143Z
-updated_by: baton-review
+  - phase: review
+    at: 2026-11-03T09:11:48.768Z
+    by: implementation-session
+    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
+    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
+    commit: 82ce458
+    x-action: refresh
+  - phase: implement
+    at: 2026-11-03T09:19:11.359Z
+    by: baton
+    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
+    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
+    commit: 82ce458
+    x-action: write
+updated_at: 2026-11-03T09:11:49.294Z
+updated_by: speckit-implement
 acceptance_checks:
   - id: AC-US1-1
     story: US1
@@ -425,7 +507,7 @@ analysis:
 do_not_read: []
 x-implementation-writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
 x-implementation-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
-x-implementation-cycle: 3810df6248ceb0b7f5c495375aaed099b7fc10cd301ec746a42209e462a25032
+x-implementation-cycle: 3396d4632802e7fad24249d3506eeec2b383370295101e818ebc3227befc7ac0
 review:
   findings_path: specs/002-context-optimization-packs/review.json
   blocking_findings: 0

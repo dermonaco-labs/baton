@@ -90,6 +90,8 @@ names that retain a tilde from the original filename. Nonexistent metadata
 entries retain their normalized protection keys, so an absent short-shaped
 exclusion does not block reports. Required `read_first` and artifact sources
 must still exist and satisfy their bindings; existing aliases remain refused.
+Filesystem identity failures remain nonzero and identify the declaring
+metadata source and error code without exposing raw absolute-path errors.
 
 Approved or historically approved sources, managed files, source-of-truth
 bindings and all `read_first` targets (even without a checksum) refuse

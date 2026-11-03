@@ -114,7 +114,7 @@ Capture red evidence before implementing each behavior; do not weaken checks. --
 | AC-US1-1 | US1 | node --test --test-name-pattern="context packs" test/integration/context.test.mjs | command | fail | Original-baseline replay: 4 failures; timing disclosed below | Pass: 5 tests, including clean uninstall |
 | AC-US1-2 | US1 | node --test --test-name-pattern="context provenance" test/integration/context.test.mjs | command | fail | Live regression: modified commit incorrectly verified; original baseline lacks named pins | Pass: 1 test |
 | AC-US2-1 | US2 | node --test --test-name-pattern="context draft" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 3 tests, including optional decisions and restore preview |
-| AC-US2-2 | US2 | node --test --test-name-pattern="context protection" test/integration/context.test.mjs | command | fail | Strengthened assertions reject unknown-command false positives; baseline: 21 failures | Pass: 123 tests, including verified real Windows aliases, tilde-containing aliases, unexcluded case bindings and exact-code refusals |
+| AC-US2-2 | US2 | node --test --test-name-pattern="context protection" test/integration/context.test.mjs | command | fail | Strengthened assertions reject unknown-command false positives; baseline: 21 failures | 135 tests: 133 pass, 2 initially conditional file-symlink permission skips; real Windows aliases, linked metadata, source-labelled errors and exact-code refusals covered |
 | AC-US3-1 | US3 | node --test --test-name-pattern="context optimize reports" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 1 test |
 | AC-US3-2 | US3 | node --test --test-name-pattern="context optimize apply" test/integration/context.test.mjs | command | fail | Positive control prevents unknown-command false positives; baseline: 1 failure | Pass: 1 test |
 | AC-US4-1 | US4 | node --test --test-name-pattern="context advisory" test/integration/context.test.mjs | command | fail | Context command absent; original-baseline replay: 1 failure | Pass: 4 tests, including nested contracts, canonical tilde-number names and absent/literal short-shaped exclusions |
@@ -386,3 +386,37 @@ The first T057 exit attempt completed its configured checks but rejected the
 outgoing summary for exceeding the schema's 600-character limit. No handoff
 was written. This was a receipt-format failure, not a reported test failure;
 the corrected summary must pass the same mandatory writer and checks.
+
+## Phase 14: Convergence
+
+The sixth independent review verified F39/F40. Two LOW partial gaps remain:
+source-labelled diagnostics for non-ENOENT metadata failures (FR-017), and
+regression coverage for existing plain-named linked metadata (SC-003).
+The approved fail-closed policy remains unchanged; permission failures must
+not become successful lexical fallbacks.
+
+- [x] T058 Register source-labelled non-ENOENT metadata failure coverage without absolute-path leakage or writes per FR-008/FR-017 and review F42 (partial, LOW).
+- [x] T059 Register exact plain-name junction, hardlink and file-link metadata refusals, with file symlink cases conditional only on platform permission support from initial registration; check the canonical base exists before any shortAlias skip per SC-003 and review F43 (partial, LOW).
+- [x] T060 Keep non-ENOENT metadata failures fail-closed with a declaring-source diagnostic and filesystem error code, while preserving all current alias/absence behavior per FR-008/FR-017 and review F42 (partial, LOW).
+- [x] T061 Resolve F42/F43 with evidence, rebuild, complete focused checks and run `baton handoff write --phase implement --mode converge` for the unchanged mandatory final check before fresh independent review per SC-006. <!-- baton:handoff-write:implement -->
+
+### Metadata-Diagnostic Evidence
+
+The initial nine-test selection reported **3 pass, 5 fail, 1 permission skip**.
+The three injected errno cases and missing-fixture helper check failed before
+correction; linked metadata was already correctly refused. No permission
+changes or retrospective red claims were used.
+
+The complete protection selector now runs **135** tests: **133 pass, 2 skip,
+0 fail**. Both skips are file-symlink creation without the required Windows
+permission, conditional from their initial registration. The handoff and
+manifest junction/hardlink cases execute, as do all real 8.3 alias rows.
+Compaction preview/apply and scope/usage assert exact source-labelled
+refusals, null report data and unchanged snapshots. The diagnostic tests
+inject EACCES/EPERM/ENAMETOOLONG deterministically and restore builtin ESM
+bindings in `finally`; raw absolute-path messages never escape.
+
+The current guard still fails closed, and no existing acceptance command,
+required source, approval or protection is waived. F42/F43 are implementation
+dispositions pending independent verification. T061 remains unchecked until
+the mandatory final receipt succeeds.
