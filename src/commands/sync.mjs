@@ -301,7 +301,7 @@ export function lockFile(entries, requirementsHash, atvCommit, atvTree, version,
   const named = Object.fromEntries(Object.entries(optional).map(([id, pin]) =>
     [id, Object.fromEntries(OPTIONAL_PIN_FIELDS.map(field => [field, pin[field]]))]));
   return {
-    schema: 1, generated_by: 'baton sync 0.1.3',
+    schema: 1, generated_by: 'baton sync 0.1.4',
     'x-bump-summary': /** @type {string|undefined} */ (undefined),
     upstreams: {
       speckit: {

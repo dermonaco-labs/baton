@@ -6,6 +6,8 @@ All notable changes to Baton are documented here. This follows
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-11-03
+
 ### Added
 
 - Two optional opt-in packs: token-budget v1.1.0 and optimize v1.0.0, with
@@ -25,6 +27,17 @@ All notable changes to Baton are documented here. This follows
 - Increase the strictly enforced bundle cap from 400 KiB to 450 KiB with
   explicit human approval for the added source verification and guarded
   operations. No release or tag is cut by these additions.
+
+### Upstream
+
+- Baton extension and preset component versions remain `0.1.0`; the CLI and
+  package patch version is `0.1.4`. Vendored core upstream bytes are unchanged.
+- Spec Kit `specify-cli` 1.0.11 at commit `8147943512404afb9d99c6252cb9bf84369fd0b0` (unchanged).
+- ATV Starter Kit `main` at commit `ad996736b879be87c7755df5c5017d5336203bbc` (unchanged).
+- Optional token-budget pack: `tinesoft/spec-kit-token-budget` v1.1.0 at commit
+  `11c5589f347ddb3789b51b09927ef825c88e3f19` (new opt-in pin; unchanged by release preparation).
+- Optional optimize pack: `sakitA/spec-kit-optimize` v1.0.0 at commit
+  `d6dba6ae93bf60322deee3bdc4ffcf127e42b2b9` (new opt-in pin; unchanged by release preparation).
 
 ## [0.1.3] - 2026-10-12
 
@@ -111,7 +124,8 @@ All notable changes to Baton are documented here. This follows
 - Spec Kit `specify-cli` 1.0.11, installed from hash-locked requirements.
 - ATV Starter Kit pinned to commit `ad996736b879be87c7755df5c5017d5336203bbc`.
 
-[Unreleased]: https://github.com/dermonaco-labs/baton/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/dermonaco-labs/baton/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/dermonaco-labs/baton/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/dermonaco-labs/baton/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/dermonaco-labs/baton/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/dermonaco-labs/baton/compare/v0.1.0...v0.1.1
