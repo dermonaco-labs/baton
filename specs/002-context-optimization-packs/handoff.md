@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 002-context-optimization-packs
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: land
+next_owner: baton-land
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "T058-T061 address F42/F43: non-ENOENT metadata failures stay fail-closed with source-labelled diagnostics; regressions cover plain linked metadata and missing short-name fixtures. Protection selector: 135 tests, 133 pass, 2 initially conditional Windows file-symlink permission skips, no failures. Real 8.3 aliases still execute. Fresh independent review required; no push, PR, CI, merge, release or tag."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Round 7 review of 2827bd6: F42/F43 verified fixed (focused 152/154, 2 preregistered permission skips; mutation-checked). No open findings. Route to land."
 read_first:
   - path: specs/002-context-optimization-packs/spec.md
     why: Approved behavior and safety scope
@@ -55,87 +55,12 @@ artifacts:
     sha256: b8b9f60b440f3cfcfbfd72ffc3e91873710c0f5f2e7fc8587219edd7bde93afe
 entry_checked: []
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
+    evidence: specs/002-context-optimization-packs/review.json
+  - id: findings-mapped-to-tasks-or-dismissed
     met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      ts (0.4299ms)
-      ✔ shipped phase template is valid and never weakens its built-in contracts (25.8181ms)
-      ✔ tracked Baton documentation contains no private feed hostnames (120.1874ms)
-      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.9908ms)
-      ✔ adopter command table remains contiguous (0.7581ms)
-      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.607ms)
-      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.631ms)
-      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (46.9508ms)
-      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (3.223ms)
-      ✔ compiles all draft 2020-12 schemas once (189.6998ms)
-      ✔ findings fixture validates and invalid fixture reports a JSON pointer (3.9623ms)
-      ✔ pack schema requires a classified reason for every optional reference (1.2726ms)
-      ✔ pack, lock and manifest schemas accept named optional sources without relaxing old shapes (11.2651ms)
-      ✔ sync bump explains pin and file changes for a PR body (1.9221ms)
-      ✔ sync rejects unpinned bump values and check/bump combination (44.2552ms)
-      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (317.763ms)
-      ✔ generated registry preserves verified bytes when only installation time changes (11.4071ms)
-      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (10.5294ms)
-      ✔ named optional sources keep raw provenance and refuse modified or misplaced payloads (28.6175ms)
-      ✔ lock and snapshot document label optional provenance by its named source (1.0583ms)
-      ✔ optional pin fields are one immutable list matching the locked projection order (0.3327ms)
-      ✔ MIT license verifier keeps each source copyright requirement (0.8472ms)
-      ✔ pack definitions require every original pack and accept additional optional packs (140.5163ms)
-      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (844.3385ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (298.3394ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (127.3576ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (90.0842ms)
-        ✔ E_ANALYSIS_CRITICAL (6.3297ms)
-        ✔ E_ANALYSIS_MISSING (5.7988ms)
-        ✔ E_APPROVER_FORMAT (5.7887ms)
-        ✔ E_BLOCKING_OPEN (5.3597ms)
-        ✔ E_BODY_SECTIONS (4.3175ms)
-        ✔ E_BUDGET (10.2073ms)
-        ✔ E_DENYLIST (4.6916ms)
-        ✔ E_EXIT_UNMET (4.4646ms)
-        ✔ E_GATE_PENDING (115.8971ms)
-        ✔ E_LANE_ESCALATE (1583.1107ms)
-        ✔ E_LANE_MISMATCH (3.5017ms)
-        ✔ E_MISSING_ARTIFACT (4.6968ms)
-        ✔ E_MODEL_NOT_ALLOWED (6.8596ms)
-        ✔ E_MULTIPLE_BATONS (6.3396ms)
-        ✔ E_NO_PREREG (6.7891ms)
-        ✔ E_OWNER (4.8341ms)
-        ✔ E_PR_MISSING (5.2352ms)
-        ✔ E_REVIEW_BLOCKING (298.2983ms)
-        ✔ E_REVIEW_MISSING (8.6451ms)
-        ✔ E_SCHEMA (4.6831ms)
-        ✔ E_STALE_ARTIFACT (4.7327ms)
-        ✔ E_TRANSITION (5.5934ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (2231.8572ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (147.6365ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (44.7222ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (122.0548ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (16.7461ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (179.0302ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (121.7407ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (3.8951ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (35.6291ms)
-      ✔ ready with a blocking question is rejected (118.325ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (165.1225ms)
-      ℹ tests 588
-      ℹ suites 0
-      ℹ pass 586
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 2
-      ℹ todo 0
-      ℹ duration_ms 413335.2399
+    evidence: 0 findings unresolved
 open_questions: []
 x-final-check-attempt-1:
   command: npm run check
@@ -311,18 +236,24 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Bind T058-T061 diagnostic and linked-metadata coverage; preserve all approved requirements and registered acceptance commands
     by: implementation-session
+  - id: D33
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 5b1822aafc10c5cf2932fb4e631b16efa53c3f5313115ad46fd717adcd35f93e
+    x-base-commit: 565a8b7b1599d757385eb75cb9b7f043cc9a7140
+    by: baton
+  - id: D34
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 4c86684a5ac21faf37ecd511901a496922e7f187
+    by: baton
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: review
-    at: 2026-11-02T18:01:12.699Z
-    by: implementation-session
-    writer: 43e31a88f8d52c695ad6b73ab86be5bd30c1c24e6623587a4179aab5a55508b6
-    x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
-    commit: 404afa5
-    x-action: refresh
   - phase: implement
     at: 2026-11-02T18:07:37.485Z
     by: baton
@@ -456,8 +387,15 @@ history:
     x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
     commit: 82ce458
     x-action: write
-updated_at: 2026-11-03T09:11:49.294Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-11-03T09:27:33.539Z
+    by: baton
+    writer: 948e86a6e5e4d08bdcad428ccbae562b312381687ebc1b16ae635e8608889fad
+    x-worktree: f161633938eb1237a91ef37792e081681bf544826c1b7845ac4df87394f8534b
+    commit: 4c86684
+    x-action: write
+updated_at: 2026-11-03T09:27:33.524Z
+updated_by: baton-review
 acceptance_checks:
   - id: AC-US1-1
     story: US1
