@@ -85,14 +85,39 @@ in the tracking issue. Closing a candidate PR without merging suppresses
 that pin until a newer one appears. A bot-only candidate made obsolete by
 the default branch is closed with a comment; its branch is kept. Failed
 generation or validation, link failures and blocked candidates are
-reported in the single `upstream-watch` tracking issue with a run link,
-and the workflow run fails.
+reported in the single tracking issue titled **Upstream watch: releases
+and verification** (label `upstream-bump`; find it with
+`gh issue list --label upstream-bump`) with a run link, and the workflow
+run fails. Keep that title and label: the workflow finds the issue by both
+and opens a new one if either changes.
+
+The ATV tracking policy is the lock's `ref` and is never switched by the
+workflow. To move ATV between `main` and stable releases, run the
+matching `sync --bump atv=…` yourself and edit the maintainer-owned ATV
+`note` in `baton.lock.json` in the same PR; `sync` preserves the note
+unchanged.
 
 To review a candidate: read the PR's check summary, compare the pins and
 upstream links, read every changed agent and skill prompt in full, review
 licenses and `docs/reference/upstream-diff.md`, then mark the PR **Ready
 for review** to start the standard PR checks. Merge and any release remain
 manual, human decisions under the normal Baton gates.
+
+The workflow drives `node src/maintainer/upstream-upgrade.mjs <stage>`
+with these stages: `detect`, `package`, `publish` and `report`. Each stage
+reads only environment variables set by the workflow. They share
+`GITHUB_REPOSITORY`, `GITHUB_SERVER_URL`, `GITHUB_RUN_ID`, `GITHUB_REF` and
+`PREVIEW`. `detect` also reads the sync-check and link-check results
+(`SYNC_*`, `LINKS_*`) and emits the `PLAN` JSON that the later stages
+read. `package` reads `UPSTREAM`, `CANDIDATE_DIR` and the bump and check
+step outcomes and logs (`BUMP_*`, `CHECK_*`), and receives no token.
+`publish` and `report` read each upstream's downloaded artifact from
+`ARTIFACTS_DIR/<upstream>`. `publish` also requires `DIGEST_SPECKIT` and
+`DIGEST_ATV`, the digests attested by the generate job, and rejects a
+candidate whose verified digest differs. `report` also reads `RESULTS`
+and the job results. `detect` gets a read-only `GITHUB_TOKEN`; only
+`publish` (contents and pull requests) and `report` (issues) get write
+permissions.
 
 Dispatch with `preview: true` to detect, generate and validate without
 any branch, PR or issue write; results appear in the run summary. Runs on

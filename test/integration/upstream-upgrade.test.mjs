@@ -49,7 +49,7 @@ function fixture() {
   sh(work, ['add', '-A']);
   sh(work, ['-c', 'core.autocrlf=false', 'commit', '-q', '-m', 'base'], humanEnv);
   sh(work, ['push', '-q', remote, 'main']);
-  return { root, work, remote, lock, target, artifacts: join(root, 'artifacts'), seq: 0,
+  return { root, work, remote, lock, target, artifacts: join(root, 'artifacts'), seq: 0, digest: '',
     cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
 
@@ -65,16 +65,19 @@ function remoteRef(fx, branch) {
 /** Recording emulation of the GitHub and PyPI endpoints the watcher uses. @param {ReturnType<typeof fixture>} fx */
 function mockGitHub(fx) {
   const state = {
-    speckit: '9.9.9', speckitCommit: sha('9'), pypiBroken: false, denyPr: false, nextPr: 100, nextIssue: 1,
+    speckit: '9.9.9', speckitCommit: sha('9'), pypiBroken: false, denyPr: false, truncateCompare: false, nextPr: 100, nextIssue: 1,
     /** @type {any[]} */ prs: [], /** @type {any[]} */ issues: [], /** @type {any[]} */ comments: [],
     /** @type {Set<string>} */ labels: new Set(),
+    /** Stale PR heads, emulating a branch that moves after publish re-reads the PR. @type {Map<string,string>} */
+    heads: new Map(),
     /** @type {Array<{method:string,host:string,path:string,body:any,auth:string|null}>} */ calls: [],
     /** @type {typeof fetch} */ fetch: /** @type {any} */ (null)
   };
   /** @param {number} status @param {unknown} body */
   const res = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body,
     text: async () => typeof body === 'string' ? body : JSON.stringify(body) });
-  const view = (/** @type {any} */ pr) => ({ ...pr, head: { ...pr.head, sha: remoteRef(fx, pr.head.ref) } });
+  const view = (/** @type {any} */ pr) => ({ ...pr,
+    head: { ...pr.head, sha: state.heads.get(pr.head.ref) ?? remoteRef(fx, pr.head.ref) } });
   state.fetch = /** @type {any} */ (async (/** @type {string} */ url, /** @type {any} */ init = {}) => {
     const method = init.method ?? 'GET';
     const body = init.body ? JSON.parse(init.body) : undefined;
@@ -126,7 +129,7 @@ function mockGitHub(fx) {
         const [an, ae, cn, ce, message] = item.split('\x1f');
         return { commit: { author: { name: an, email: ae }, committer: { name: cn, email: ce }, message } };
       });
-      return res(200, { total_commits: commits.length, commits });
+      return res(200, { total_commits: commits.length + (state.truncateCompare ? 1 : 0), commits });
     }
     if (p === `${own}/issues` && method === 'GET') return res(200, u.searchParams.get('page') === '1' ? state.issues : []);
     if (p === `${own}/issues` && method === 'POST') {
@@ -214,15 +217,22 @@ async function packageStage(fx, gh, plan, env = {}) {
   const leg = JSON.parse(plan).plans.find((/** @type {any} */ item) => item.upstream.id === 'speckit');
   if (env.BUMP_OUTCOME !== 'failure') simulateBump(fx, leg.upstream.latest.version, leg.upstream.latest.commit);
   try {
-    return await stage(packageCandidate, fx, gh, { PLAN: plan, UPSTREAM: 'speckit', BUMP_OUTCOME: 'success',
-      CHECK_OUTCOME: 'success', CANDIDATE_DIR: join(fx.artifacts, 'candidate-speckit'), ...env });
+    const packaged = await stage(packageCandidate, fx, gh, { PLAN: plan, UPSTREAM: 'speckit', BUMP_OUTCOME: 'success',
+      CHECK_OUTCOME: 'success', CANDIDATE_DIR: join(fx.artifacts, 'speckit'), ...env });
+    fx.digest = packaged.outputs.digest ?? '';
+    return packaged;
   } finally {
     resetWork(fx);
   }
 }
 
-/** @param {ReturnType<typeof fixture>} fx @param {ReturnType<typeof mockGitHub>} gh @param {string} plan */
-const publishStage = (fx, gh, plan) => stage(publish, fx, gh, { PLAN: plan, ARTIFACTS_DIR: fx.artifacts });
+/**
+ * Publish with the digest the package stage attested, as the workflow passes it.
+ * @param {ReturnType<typeof fixture>} fx @param {ReturnType<typeof mockGitHub>} gh @param {string} plan
+ * @param {Record<string,string>} [env]
+ */
+const publishStage = (fx, gh, plan, env = {}) => stage(publish, fx, gh,
+  { PLAN: plan, ARTIFACTS_DIR: fx.artifacts, DIGEST_SPECKIT: fx.digest, ...env });
 
 /**
  * @param {ReturnType<typeof fixture>} fx @param {ReturnType<typeof mockGitHub>} gh @param {string} plan
@@ -332,7 +342,7 @@ describe('upstream upgrade publish', () => {
     try {
       const gh = mockGitHub(fx);
       const { outputs } = await detectStage(fx, gh);
-      const dir = join(fx.artifacts, 'candidate-speckit');
+      const dir = join(fx.artifacts, 'speckit');
       const manifestPath = join(dir, 'manifest.json');
       /** @param {(m:any)=>void} edit */
       const editManifest = edit => {
@@ -340,7 +350,23 @@ describe('upstream upgrade publish', () => {
         edit(manifest);
         writeFileSync(manifestPath, JSON.stringify(manifest));
       };
-      /** @type {Array<[string,string,()=>boolean|void]>} */
+      /** Add a file to the artifact with a matching manifest entry. @param {string} path */
+      const addFile = path => {
+        const bytes = Buffer.from('injected\n');
+        write(join(dir, 'files'), path, bytes);
+        editManifest(m => m.changed.push({ path, sha256: hex(bytes), mode: '100644' }));
+      };
+      /** Rewrite the candidate lock and keep its manifest hash consistent. @param {(lock:any)=>void} edit */
+      const editLock = edit => {
+        const lockPath = join(dir, 'files', 'baton.lock.json');
+        const lock = JSON.parse(readFileSync(lockPath, 'utf8'));
+        edit(lock);
+        const bytes = Buffer.from(`${JSON.stringify(lock, null, 2)}\n`);
+        writeFileSync(lockPath, bytes);
+        editManifest(m => { m.changed.find((/** @type {any} */ item) => item.path === 'baton.lock.json').sha256 = hex(bytes); });
+      };
+      const atvRow = fx.lock.files.find((/** @type {any} */ file) => file.upstream === 'atv');
+      /** @type {Array<[string,string,()=>boolean|void|Record<string,string>,RegExp?]>} */
       const cases = [
         ['tampered hash', 'E_CANDIDATE_VERIFY', () => writeFileSync(join(dir, 'files', fx.target), 'tampered\n')],
         ['symlink', 'E_CANDIDATE_VERIFY', () => {
@@ -352,25 +378,37 @@ describe('upstream upgrade publish', () => {
             throw error;
           }
         }],
-        ['forbidden path', 'E_PATH_POLICY', () => {
-          const bytes = Buffer.from('on: push\n');
-          write(join(dir, 'files'), '.github/workflows/evil.yml', bytes);
-          editManifest(m => m.changed.push({ path: '.github/workflows/evil.yml', sha256: hex(bytes), mode: '100644' }));
-        }],
+        ['forbidden path', 'E_PATH_POLICY', () => addFile('.github/workflows/evil.yml')],
+        ['unsafe path character', 'E_PATH_POLICY', () => addFile('baton/upstream/spec-kit/a`b.md')],
+        ['path owned by another upstream', 'E_PATH_POLICY', () => {
+          addFile(atvRow.stored_at);
+          editLock(lock => { lock.files.find((/** @type {any} */ row) => row.stored_at === atvRow.stored_at).sha256 = hex('injected\n'); });
+        }, /is owned by "atv", not speckit/],
+        ['other upstream row changed', 'E_PATH_POLICY', () => editLock(lock => {
+          lock.files.find((/** @type {any} */ row) => row.stored_at === atvRow.stored_at).upstream = 'speckit';
+        }), /changed upstream from "atv" to "speckit"/],
+        ['other upstream row removed', 'E_PATH_POLICY', () => editLock(lock => {
+          lock.files = lock.files.filter((/** @type {any} */ row) => row.stored_at !== atvRow.stored_at);
+        }), /\(atv\) removed/],
         ['mode', 'E_CANDIDATE_VERIFY', () => editManifest(m => { m.changed[0].mode = '120000'; })],
         ['base mismatch', 'E_CANDIDATE_VERIFY', () => editManifest(m => { m.base = sha('a'); })],
-        ['bump mismatch', 'E_CANDIDATE_VERIFY', () => editManifest(m => { m.bump = 'speckit=9.9.8'; })]
+        ['bump mismatch', 'E_CANDIDATE_VERIFY', () => editManifest(m => { m.bump = 'speckit=9.9.8'; })],
+        ['pin mismatch', 'E_CANDIDATE_VERIFY', () => editManifest(m => { m.pin.version = '9.9.8'; })],
+        ['missing attested digest', 'E_CANDIDATE_VERIFY', () => ({ DIGEST_SPECKIT: '' })],
+        ['attested digest mismatch', 'E_CANDIDATE_VERIFY', () => ({ DIGEST_SPECKIT: '0'.repeat(64) })]
       ];
-      for (const [name, code, tamper] of cases) {
+      for (const [name, code, tamper, excerpt] of cases) {
         await packageStage(fx, gh, outputs.plan);
-        if (tamper() === false) {
+        const env = tamper();
+        if (env === false) {
           t.diagnostic(`${name}: symlinks unavailable on this platform; case skipped`);
           continue;
         }
         const before = gh.calls.length;
-        const published = await publishStage(fx, gh, outputs.plan);
+        const published = await publishStage(fx, gh, outputs.plan, typeof env === 'object' ? env : {});
         const result = JSON.parse(published.outputs.results).speckit;
         assert.equal(result.blocker?.code, code, name);
+        if (excerpt) assert.match(result.blocker.excerpt, excerpt, name);
         assert.equal(published.exitCode, 1, name);
         assert.equal(published.pushes.length, 0, name);
         assert.equal(gh.calls.slice(before).filter(call => call.method !== 'GET').length, 0, name);
@@ -468,6 +506,71 @@ describe('upstream upgrade publish', () => {
     }
   });
 
+  test('a remote-rejected push maps to E_PUSH with the remote reason', async () => {
+    const fx = fixture();
+    try {
+      const gh = mockGitHub(fx);
+      const hook = join(fx.remote, 'hooks', 'pre-receive');
+      writeFileSync(hook, '#!/bin/sh\necho "protected branch" >&2\nexit 1\n', { mode: 0o755 });
+      const { published } = await openCandidate(fx, gh);
+      const result = JSON.parse(published.outputs.results).speckit;
+      assert.equal(result.blocker.code, 'E_PUSH');
+      assert.match(result.blocker.excerpt, /remote rejected the push to baton\/upstream-upgrade\/speckit: pre-receive hook declined/);
+      assert.equal(published.exitCode, 1);
+      assert.equal(gh.prs.length, 0);
+      assert.equal(remoteRef(fx, BRANCH), null);
+    } finally {
+      fx.cleanup();
+    }
+  });
+
+  test('report falls back to trusted failures when artifacts, results or the plan are missing', async () => {
+    const fx = fixture();
+    try {
+      const gh = mockGitHub(fx);
+      const detected = await detectStage(fx, gh);
+      const missing = await reportStage(fx, gh, detected.outputs.plan, '{}', { GENERATE_RESULT: 'failure' });
+      assert.equal(missing.exitCode, 1);
+      assert.match(gh.issues[0].body, /\| speckit \|[^\n]*\| failed \| E_CHECK_FAILED \(generate\)/);
+      await packageStage(fx, gh, detected.outputs.plan);
+      const unpublished = await reportStage(fx, gh, detected.outputs.plan, '{}', { PUBLISH_RESULT: 'failure' });
+      assert.equal(unpublished.exitCode, 1);
+      assert.match(gh.issues[0].body, /\| speckit \|[^\n]*\| failed \| E_PUBLISH \(publish\)/);
+      const malformed = await reportStage(fx, gh, '{"schema":1', '{}', { DETECT_RESULT: 'failure' });
+      assert.equal(malformed.exitCode, 1);
+      for (const id of ['speckit', 'atv']) {
+        assert.match(gh.issues[0].body, new RegExp(`\\| ${id} \\|[^\\n]*E_UPSTREAM_VERIFY \\(detect\\)`), id);
+      }
+      assert.equal(gh.issues.length, 1);
+      assert.equal(gh.issues[0].state, 'open');
+    } finally {
+      fx.cleanup();
+    }
+  });
+
+  test('report surfaces a sync --bump failure such as E_DANGLING_REF in the tracking issue', async () => {
+    const fx = fixture();
+    try {
+      const gh = mockGitHub(fx);
+      const log = join(fx.root, 'bump.log');
+      writeFileSync(log, 'E_DANGLING_REF: closure references a file that is not vendored\n');
+      const detected = await detectStage(fx, gh);
+      const packaged = await packageStage(fx, gh, detected.outputs.plan, { BUMP_OUTCOME: 'failure', BUMP_LOG: log });
+      assert.equal(packaged.value, false);
+      const published = await publishStage(fx, gh, detected.outputs.plan);
+      assert.equal(published.pushes.length, 0);
+      const reported = await reportStage(fx, gh, detected.outputs.plan, published.outputs.results,
+        { GENERATE_RESULT: 'failure' });
+      assert.equal(reported.exitCode, 1);
+      const [issue] = gh.issues;
+      assert.match(issue.body, /\| speckit \|[^\n]*\| failed \| E_UPSTREAM_VERIFY \(generate\)/);
+      assert.match(issue.body, /### speckit: E_UPSTREAM_VERIFY\n\n```+text\nE_DANGLING_REF: closure references a file that is not vendored\n```+/);
+      assert.equal(gh.prs.length, 0);
+    } finally {
+      fx.cleanup();
+    }
+  });
+
   test('maintainer modules import only Node built-ins and relative modules', () => {
     for (const file of ['src/maintainer/upstream-upgrade.mjs', 'src/lib/upstream-candidates.mjs', 'src/lib/upstream.mjs']) {
       const source = readFileSync(join(sourceRoot, file), 'utf8');
@@ -530,6 +633,28 @@ describe('upstream upgrade lifecycle', () => {
     }
   });
 
+  test('a truncated compare commit list is never treated as bot-only', async () => {
+    const fx = fixture();
+    try {
+      const gh = mockGitHub(fx);
+      await openCandidate(fx, gh);
+      const head = remoteRef(fx, BRANCH);
+      gh.speckit = '9.9.10';
+      gh.speckitCommit = sha('8');
+      gh.truncateCompare = true;
+      const before = gh.calls.length;
+      const detected = await detectStage(fx, gh);
+      assert.equal(action(detected.outputs.plan, 'speckit'), 'waiting-human');
+      assert.equal(detected.outputs.generate, 'false');
+      const published = await publishStage(fx, gh, detected.outputs.plan);
+      assert.equal(published.pushes.length, 0);
+      assert.equal(gh.calls.slice(before).filter(call => call.method !== 'GET').length, 0);
+      assert.equal(remoteRef(fx, BRANCH), head);
+    } finally {
+      fx.cleanup();
+    }
+  });
+
   test('a newer pin updates the same bot PR with a lease-protected push', async () => {
     const fx = fixture();
     try {
@@ -552,22 +677,27 @@ describe('upstream upgrade lifecycle', () => {
     }
   });
 
-  test('a branch moved after detection fails with E_LEASE', async () => {
+  test('a branch moved after detection fails with E_PR_CHANGED, or E_LEASE after the re-read', async () => {
     const fx = fixture();
     try {
       const gh = mockGitHub(fx);
       await openCandidate(fx, gh);
+      const observed = /** @type {string} */ (remoteRef(fx, BRANCH));
       gh.speckit = '9.9.10';
       gh.speckitCommit = sha('8');
       const detected = await detectStage(fx, gh);
       await packageStage(fx, gh, detected.outputs.plan);
       const moved = commitOnBranch(fx, botEnv, 'concurrent.md');
-      const before = gh.calls.length;
-      const published = await publishStage(fx, gh, detected.outputs.plan);
-      assert.equal(JSON.parse(published.outputs.results).speckit.blocker.code, 'E_LEASE');
-      assert.equal(published.exitCode, 1);
-      assert.equal(remoteRef(fx, BRANCH), moved);
-      assert.equal(gh.calls.slice(before).filter(call => call.method !== 'GET').length, 0);
+      for (const [code, stale] of [['E_PR_CHANGED', false], ['E_LEASE', true]]) {
+        if (stale) gh.heads.set(BRANCH, observed);
+        const before = gh.calls.length;
+        const published = await publishStage(fx, gh, detected.outputs.plan);
+        assert.equal(JSON.parse(published.outputs.results).speckit.blocker.code, code);
+        assert.equal(published.exitCode, 1);
+        assert.equal(published.pushes.length, stale ? 1 : 0);
+        assert.equal(remoteRef(fx, BRANCH), moved);
+        assert.equal(gh.calls.slice(before).filter(call => call.method !== 'GET').length, 0);
+      }
     } finally {
       fx.cleanup();
     }
@@ -605,6 +735,55 @@ describe('upstream upgrade lifecycle', () => {
     }
   });
 
+  test('a PR closed after detection fails with E_PR_CHANGED before any push', async () => {
+    const fx = fixture();
+    try {
+      const gh = mockGitHub(fx);
+      await openCandidate(fx, gh);
+      const old = remoteRef(fx, BRANCH);
+      gh.speckit = '9.9.10';
+      gh.speckitCommit = sha('8');
+      const detected = await detectStage(fx, gh);
+      assert.equal(action(detected.outputs.plan, 'speckit'), 'generate');
+      await packageStage(fx, gh, detected.outputs.plan);
+      gh.prs[0].state = 'closed';
+      const before = gh.calls.length;
+      const published = await publishStage(fx, gh, detected.outputs.plan);
+      assert.equal(JSON.parse(published.outputs.results).speckit.blocker.code, 'E_PR_CHANGED');
+      assert.equal(published.exitCode, 1);
+      assert.equal(published.pushes.length, 0);
+      assert.equal(gh.calls.slice(before).filter(call => call.method !== 'GET').length, 0);
+      assert.equal(remoteRef(fx, BRANCH), old);
+    } finally {
+      fx.cleanup();
+    }
+  });
+
+  test('a bot PR without its marker is blocked and a closed one is suppressed by its title', async () => {
+    const fx = fixture();
+    try {
+      const gh = mockGitHub(fx);
+      await openCandidate(fx, gh);
+      gh.prs[0].body = 'Marker removed by a maintainer.';
+      gh.speckit = '9.9.10';
+      gh.speckitCommit = sha('8');
+      const blocked = await detectStage(fx, gh);
+      assert.equal(action(blocked.outputs.plan, 'speckit'), 'blocked');
+      assert.equal(JSON.parse(blocked.outputs.plan).plans[0].blocker.code, 'E_PR_MARKER');
+      assert.equal(blocked.outputs.generate, 'false');
+      const published = await publishStage(fx, gh, blocked.outputs.plan);
+      assert.equal(published.pushes.length, 0);
+      gh.speckit = '9.9.9';
+      gh.speckitCommit = sha('9');
+      gh.prs[0].state = 'closed';
+      const suppressed = await detectStage(fx, gh);
+      assert.equal(action(suppressed.outputs.plan, 'speckit'), 'suppressed');
+      assert.equal(suppressed.outputs.generate, 'false');
+    } finally {
+      fx.cleanup();
+    }
+  });
+
   test('failed legs and human-edited obsolete PRs receive no writes', async () => {
     const fx = fixture();
     try {
@@ -614,10 +793,10 @@ describe('upstream upgrade lifecycle', () => {
       writeFileSync(log, 'resolution failed\n');
       const packaged = await packageStage(fx, gh, detected.outputs.plan, { BUMP_OUTCOME: 'failure', BUMP_LOG: log });
       assert.equal(packaged.value, false);
-      const result = JSON.parse(readFileSync(join(fx.artifacts, 'candidate-speckit', 'result.json'), 'utf8'));
+      const result = JSON.parse(readFileSync(join(fx.artifacts, 'speckit', 'result.json'), 'utf8'));
       assert.equal(result.blocker.code, 'E_UPSTREAM_VERIFY');
       assert.equal(result.blocker.stage, 'generate');
-      assert.equal(existsSync(join(fx.artifacts, 'candidate-speckit', 'manifest.json')), false);
+      assert.equal(existsSync(join(fx.artifacts, 'speckit', 'manifest.json')), false);
       const skipped = await publishStage(fx, gh, detected.outputs.plan);
       assert.equal(skipped.pushes.length, 0);
       assert.equal(writes(gh).length, 0);

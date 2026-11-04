@@ -10,6 +10,7 @@ import {
 } from '../lib/upstream.mjs';
 
 const lockedRequirements = 'baton/upstream/specify-cli.requirements.txt';
+const slug = (/** @type {string} */ url) => new URL(url).pathname.slice(1);
 const forbidden = /(?:^|\/)(?:karpathy-guidelines|\.env(?:\..*)?|\.context|node_modules|\.git)(?:\/|$)/i;
 /** @typedef {{from:string,path:string,upstream_path?:string}} PackFile */
 /** @typedef {{id:string,requires:string[],conflicts:string[],files:PackFile[],optional_refs?:Array<{ref:string,reason:string,note:string}>}} PackDefinition */
@@ -319,13 +320,13 @@ export function lockFile(entries, { base, speckit, atv }, optional = {}) {
     'x-bump-summary': /** @type {string|undefined} */ (undefined),
     upstreams: {
       speckit: {
-        package: baseSpeckit.package ?? 'specify-cli', version: speckit.version, repo: 'github/spec-kit',
+        package: baseSpeckit.package ?? 'specify-cli', version: speckit.version, repo: slug(SPECKIT_REPO),
         tag: `v${speckit.version}`, commit: speckit.commit, requirements: lockedRequirements,
         requirements_sha256: speckit.requirements_sha256, license: 'MIT',
         init_args: baseSpeckit.init_args ?? ['--integration', 'copilot', '--script', 'sh']
       },
       atv: {
-        package: baseAtv.package ?? 'atv-starterkit', version: atv.version, repo: 'All-The-Vibes/ATV-StarterKit',
+        package: baseAtv.package ?? 'atv-starterkit', version: atv.version, repo: slug(ATV_REPO),
         ...(release ? { tag: release } : {}), ref: release ?? 'main', commit: atv.commit, tree: atv.tree, license: 'MIT',
         ...(baseAtv.note === undefined ? {} : { note: baseAtv.note })
       },
@@ -351,11 +352,11 @@ export function parseBump(value) {
 export function formatBumpSummary(previous, next) {
   const pinLines = [];
   if (previous.upstreams.speckit.commit !== next.upstreams.speckit.commit) {
-    pinLines.push(`- Spec Kit: ${previous.upstreams.speckit.version} (\`${previous.upstreams.speckit.commit}\`) → ${next.upstreams.speckit.version} (\`${next.upstreams.speckit.commit}\`). [Releases](https://github.com/github/spec-kit/releases).`);
+    pinLines.push(`- Spec Kit: ${previous.upstreams.speckit.version} (\`${previous.upstreams.speckit.commit}\`) → ${next.upstreams.speckit.version} (\`${next.upstreams.speckit.commit}\`). [Releases](${SPECKIT_REPO}/releases).`);
   }
   if (previous.upstreams.atv.commit !== next.upstreams.atv.commit) {
     const label = (/** @type {{version?:string|null,commit:string}} */ pin) => pin.version ? `${pin.version} (\`${pin.commit}\`)` : `\`${pin.commit}\``;
-    pinLines.push(`- ATV: ${label(previous.upstreams.atv)} → ${label(next.upstreams.atv)}. [Compare](https://github.com/All-The-Vibes/ATV-StarterKit/compare/${previous.upstreams.atv.commit}...${next.upstreams.atv.commit}).`);
+    pinLines.push(`- ATV: ${label(previous.upstreams.atv)} → ${label(next.upstreams.atv)}. [Compare](${ATV_REPO}/compare/${previous.upstreams.atv.commit}...${next.upstreams.atv.commit}).`);
   }
   const oldFiles = new Map(previous.files.map((/** @type {{stored_at:string,sha256:string}} */ file) => [file.stored_at, file.sha256]));
   const newFiles = new Map(next.files.map((/** @type {{stored_at:string,sha256:string}} */ file) => [file.stored_at, file.sha256]));

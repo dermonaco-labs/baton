@@ -48,35 +48,70 @@ Job conditions:
    - one of the fixed files: `baton.lock.json`, `docs/reference/upstream-diff.md`,
      `baton/upstream/specify-cli.requirements.in` or
      `baton/upstream/specify-cli.requirements.txt`; or
-   - a `stored_at` value found in the base lock (for `changed` or `deleted`) or in the
-     candidate lock (for `changed` only), and under one of `.github/agents/`,
-     `.github/skills/`, `.specify/` or `packs/<id>/files/`.
+   - a `stored_at` path under one of `.github/agents/`, `.github/skills/`, `.specify/` or
+     `packs/<id>/files/` whose owning `files[]` row has `upstream` equal to the
+     candidate's upstream. The owning row is the base-lock row for a deleted path or a
+     changed existing path, and the candidate-lock row for a new path.
 2. **Avoids forbidden paths** (these are always rejected):
    - anything under `.github/workflows/`, `src/`, `test/` or `.baton/`;
    - `package.json`, `package-lock.json`, `.npmrc`, `uv.toml`, `pip.conf`;
-   - any path containing `..`, starting with `/` or containing a backslash.
+   - any path containing `..`, starting with `/` or containing a backslash;
+   - any path with a character outside `A-Z`, `a-z`, `0-9` and `._/@+-`, so that
+     rendered paths stay inert in the PR body.
 
 Two further rules apply:
 
-- **FR-012:** apart from its own `upstreams.<id>` entry and its `files` and
-  `x-bump-summary` fields, the candidate lock must equal the base lock exactly.
+- **FR-012:** apart from its own `upstreams.<id>` entry, its own `files[]` rows and the
+  `x-bump-summary` field, the candidate lock must equal the base lock exactly.
   - Its own entry may change only the pin fields: `version`, `tag`, `ref`, `commit`,
     `tree`, `requirements_sha256`.
   - The ATV `note` is maintainer-owned and preserved.
+  - `files[]` rows are compared by `stored_at`. Every row owned by another upstream or by
+    an optional source (such as `optimize` or `token-budget`) must be present and
+    identical, and none may be added. No row may change its `upstream`. Only rows owned
+    by the candidate's upstream may be added, changed or removed.
 - **Requirements files:** only a Spec Kit candidate may change them.
+
+Violations of either the path policy or FR-012 are rejected with `E_PATH_POLICY`
+before any git object is written.
+
+## Candidate artifacts
+
+- Each `generate` leg exposes the job outputs `<id>_artifact` (the `artifact-id` of its
+  upload) and `<id>_digest` (the content digest its package step verified). Each output
+  expression is gated on `matrix.upstream == '<id>'`, so a leg can set only its own
+  upstream's outputs.
+- `publish` and `report` download each upstream's artifact by `artifact-ids` into a
+  separate directory per upstream, never by name or pattern. A missing id means the leg
+  produced no candidate.
+- `publish` accepts a candidate only if its verified content digest equals the leg's
+  `<id>_digest` output.
+
+## Check results trust boundary
+
+- The authoritative gate is the outcome of the `generate` leg's `sync --bump` and
+  `npm run check` steps. The package step writes a manifest only when both succeeded.
+- The manifest's `checks` list is attested by that read-only leg. `publish` verifies only
+  that it matches the fixed check schema; it does not re-run the checks.
+- The required PR checks, which start when a human marks the draft PR ready for review,
+  remain the backstop before merge. The PR body states this.
 
 ## Branch, commit and PR
 
 - **Branch:** `baton/upstream-upgrade/speckit` and `baton/upstream-upgrade/atv` (FR-013).
 - **Commit:** exactly one commit on `base`.
-  - Author and committer: `github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>`.
+  - Author and committer: the GitHub Actions bot identity, `BOT_NAME` (`github-actions[bot]`) and `BOT_EMAIL` (user id `41898282` at the GitHub noreply domain) in `src/lib/upstream-candidates.mjs`.
   - Subject: `chore(upstream): bump <id> to <pin>`.
   - Trailers: `Baton-Upstream`, `Baton-Pin`, `Baton-Base`, `Baton-Content`.
 - **Push:**
   - `git push --force-with-lease=refs/heads/<branch>:<observed-sha>`, or
     `--force-with-lease=refs/heads/<branch>:` when the branch does not exist.
   - Never push when the branch is human-edited (FR-020).
-  - A lease failure is reported as `E_LEASE`.
+  - Before pushing for an existing candidate PR, re-read the PR. It must still be open
+    with the head observed during detection. Otherwise report `E_PR_CHANGED` and write
+    nothing.
+  - A lease failure is reported as `E_LEASE`. A `[remote rejected]` push (for example a
+    branch protection rule) is reported as `E_PUSH` with the remote's reason.
 - **PR:**
   - Created as a draft against the default branch with title
     `Upstream: bump <id> to <pin>`.
@@ -93,7 +128,9 @@ Two further rules apply:
    from validated values.
 3. **Generated change summary**: the `x-bump-summary` text with changed, added and removed
    files.
-4. **Validation**: each check with its result and a link to the run.
+4. **Validation**: each check with its result and a link to the run, noting that the
+   results are attested by the generate job and that the required PR checks run after
+   the PR is marked ready for review.
 5. **Reviewer checklist**, with these items:
    - compatibility
    - licenses and `THIRD_PARTY_NOTICES.md`
@@ -115,6 +152,13 @@ For a `close-obsolete` plan, the automation does three things in this order:
 3. Close the PR.
 
 It does not delete the branch. `obsolete-human` plans are reported in the issue only.
+
+### Missing markers
+
+- An open PR on a bot-only candidate branch without a valid marker is `blocked` with
+  `E_PR_MARKER`. It is not reported as waiting on a human.
+- A closed, unmerged candidate PR without a valid marker still suppresses the pin named
+  by its title `Upstream: bump <id> to <pin>`.
 
 ## Tracking issue
 

@@ -3614,7 +3614,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 29354,
+      "bytes": 29360,
       "imports": [
         {
           "path": "node:fs",
@@ -5584,7 +5584,7 @@
           "bytesInOutput": 1660
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 15099
+          "bytesInOutput": 15031
         },
         "src/lib/phases.mjs": {
           "bytesInOutput": 7007
@@ -5653,7 +5653,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 427954
+      "bytes": 427886
     }
   }
 }

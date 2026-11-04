@@ -11,10 +11,10 @@ import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   BOT_EMAIL, BOT_NAME, CHECKS, ISSUE_LABEL, ISSUE_TITLE, UPSTREAMS, branchFor, buildRunUrl, classifyBranch,
-  commitMessage, contentTrailer, currentPin, makePin, parseMarker, planUpstream, policyOf, prTitle, renderIssue,
-  renderMarker, renderPrBody, selectAtv, selectSpeckit, trustedResult, verifyCandidate
+  commitMessage, contentTrailer, currentPin, isSha, makePin, parseMarker, planUpstream, policyOf, prTitle, renderIssue,
+  renderMarker, renderPrBody, selectAtv, selectSpeckit, titlePin, trustedResult, verifyCandidate
 } from '../lib/upstream-candidates.mjs';
-import { UpstreamError } from '../lib/upstream.mjs';
+import { ATV_REPO, SPECKIT_REPO, UpstreamError } from '../lib/upstream.mjs';
 
 /** @typedef {import('../lib/upstream-candidates.mjs').UpstreamPlan} UpstreamPlan */
 /** @typedef {import('../lib/upstream-candidates.mjs').CandidateResult} CandidateResult */
@@ -34,8 +34,8 @@ import { UpstreamError } from '../lib/upstream.mjs';
 /** @typedef {(path:string, options?:{method?:string,body?:unknown,allow404?:boolean}) => Promise<any>} Api */
 
 const API = 'https://api.github.com';
-const SPECKIT_API = '/repos/github/spec-kit';
-const ATV_API = '/repos/All-The-Vibes/ATV-StarterKit';
+const SPECKIT_API = `/repos${new URL(SPECKIT_REPO).pathname}`;
+const ATV_API = `/repos${new URL(ATV_REPO).pathname}`;
 const EXCERPT = 20000;
 const ZERO = '0'.repeat(40);
 const PR_PERMISSION = 'GitHub Actions is not permitted to create or approve pull requests';
@@ -128,7 +128,7 @@ async function tagCommit(api, repoApi, tag) {
   for (let depth = 0; object?.type === 'tag' && depth < 3; depth++) {
     object = (await api(`${repoApi}/git/tags/${object.sha}`))?.object;
   }
-  if (object?.type !== 'commit' || !/^[0-9a-f]{40}$/.test(object.sha)) {
+  if (object?.type !== 'commit' || !isSha(object.sha)) {
     throw fail('E_SOURCE_FORMAT', `${tag} does not resolve to a commit`);
   }
   return object.sha;
@@ -172,13 +172,14 @@ async function candidateState(id, repo, base, api) {
         number: /** @type {number} */ (pull.number),
         state: pull.state === 'open' ? /** @type {const} */ ('open') : /** @type {const} */ ('closed'),
         merged: Boolean(pull.merged_at),
-        marker: marker?.upstream === id ? marker : null
+        marker: marker?.upstream === id ? marker : null,
+        titlePin: titlePin(id, pull.title)
       };
     }).sort((a, b) => b.number - a.number);
   const ref = await api(`/repos/${repo}/git/ref/heads/${branch}`, { allow404: true });
   if (!ref) return { prs, branch: null };
   const sha = ref?.object?.sha;
-  if (typeof sha !== 'string' || !/^[0-9a-f]{40}$/.test(sha)) throw fail('E_SOURCE_FORMAT', `${branch}: invalid ref`);
+  if (!isSha(sha)) throw fail('E_SOURCE_FORMAT', `${branch}: invalid ref`);
   const compare = await api(`/repos/${repo}/compare/${base}...${sha}`);
   const commits = Array.isArray(compare?.commits) ? compare.commits : [];
   const complete = compare?.total_commits === commits.length;
@@ -246,8 +247,8 @@ function parsePlan(text) {
   } catch {
     throw fail('E_PLAN', 'Invalid watch plan');
   }
-  if (plan?.schema !== 1 || !Array.isArray(plan.plans) || typeof plan.base !== 'string' ||
-    !/^[0-9a-f]{40}$/.test(plan.base) || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(plan.repo)) {
+  if (plan?.schema !== 1 || !Array.isArray(plan.plans) || !isSha(plan.base) ||
+    typeof plan.repo !== 'string' || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(plan.repo)) {
     throw fail('E_PLAN', 'Invalid watch plan');
   }
   return plan;
@@ -316,7 +317,7 @@ export function packageCandidate(deps) {
       checks: CHECKS.map(check => ({ ...check }))
     };
     const baseLock = JSON.parse(gitText(git, ['show', `${plan.base}:baton.lock.json`]));
-    verifyCandidate({ plan: entry, manifest, files, baseLock });
+    const { digest } = verifyCandidate({ plan: entry, manifest, files, baseLock });
     for (const [path, { bytes }] of files) {
       const target = join(out, 'files', ...path.split('/'));
       mkdirSync(dirname(target), { recursive: true });
@@ -324,6 +325,7 @@ export function packageCandidate(deps) {
     }
     writeFileSync(join(out, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
     writeResult({ upstream: id, stage: 'validate', outcome: null, pr: null, blocker: null });
+    setOutput(env, 'digest', digest);
     return true;
   } catch (error) {
     return blocked(codeOf(error, 'E_CANDIDATE_VERIFY'), 'validate', messageOf(error));
@@ -408,7 +410,9 @@ function push(deps, repo, branch, commit, observed) {
   });
   if (result.status !== 0) {
     const text = `${result.stdout.toString('utf8')}${result.stderr.toString('utf8')}`;
-    if (/stale info|rejected|fetch first|non-fast-forward/.test(text)) {
+    const remote = /\[remote rejected\]\s*(?:\(([^)\r\n]{0,200})\))?/.exec(text);
+    if (remote) throw fail('E_PUSH', `remote rejected the push to ${branch}: ${remote[1] ?? 'no reason given'}`);
+    if (/stale info|\[rejected\]|fetch first|non-fast-forward/.test(text)) {
       throw fail('E_LEASE', `${branch} changed since detection; nothing was overwritten`);
     }
     throw fail('E_PUSH', `push to ${branch} failed`);
@@ -467,17 +471,27 @@ export async function publish(deps) {
         continue;
       }
       if (item.action !== 'generate') continue;
-      const root = join(env.ARTIFACTS_DIR ?? '', `candidate-${id}`);
+      const root = join(env.ARTIFACTS_DIR ?? '', id);
       const reported = existsSync(root) ? readResult(root) : null;
       if (!reported || reported.blocker) continue;
       const artifact = readArtifact(root);
       if (!artifact) continue;
       const { digest, manifest } = verifyCandidate({ plan: item, manifest: artifact.manifest, files: artifact.files, baseLock });
+      const attested = env[`DIGEST_${id.toUpperCase()}`];
+      if (!attested || attested !== digest) {
+        throw fail('E_CANDIDATE_VERIFY', `${id} artifact does not match the digest attested by the generate job`);
+      }
       const marker = item.pr?.marker;
       if (marker && marker.digest === digest && marker.base === plan.base && marker.pin === manifest.bump &&
         item.branch?.content === digest) {
         record('unchanged');
         continue;
+      }
+      if (item.pr) {
+        const current = await api(`/repos/${plan.repo}/pulls/${item.pr.number}`);
+        if (current?.state !== 'open' || current?.head?.sha !== item.branch?.sha) {
+          throw fail('E_PR_CHANGED', `#${item.pr.number} was closed or changed since detection; nothing was pushed`);
+        }
       }
       const branch = branchFor(id);
       const commit = buildCommit(deps.git, item, manifest, artifact.files, digest);
@@ -536,7 +550,7 @@ function collectResults(plan, env, runUrl) {
       continue;
     }
     const fromArtifact = env.ARTIFACTS_DIR ?
-      trustedResult(readResult(join(env.ARTIFACTS_DIR, `candidate-${id}`)), runUrl) : null;
+      trustedResult(readResult(join(env.ARTIFACTS_DIR, id)), runUrl) : null;
     const pr = item.pr?.number ?? null;
     if (fromArtifact?.blocker) results[id] = { ...fromArtifact, pr };
     else if (!fromArtifact) {

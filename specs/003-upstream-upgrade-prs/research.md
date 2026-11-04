@@ -91,7 +91,9 @@ The plan has no `NEEDS CLARIFICATION` items left open.
 ## R-4 Candidate transfer and integrity
 
 - **Decision**: After the full gate passes in `generate`, the job uploads the artifact
-  `candidate-<upstream>`.
+  `candidate-<upstream>` and exposes its `artifact-id` and verified content digest as
+  per-upstream job outputs. Downstream jobs download it by id, not by name
+  ([contracts](./contracts/upstream-watch.md#candidate-artifacts)).
   - Contents: `manifest.json` and the changed files. The manifest records the upstream,
     the pin, the base commit, `{path, sha256, mode}` for each added or modified file, and
     the list of deleted paths.
@@ -101,8 +103,8 @@ The plan has no `NEEDS CLARIFICATION` items left open.
        trusted `detect` job.
     2. Every file hash matches.
     3. Every path passes the candidate path policy ([contracts](./contracts/upstream-watch.md#candidate-path-policy)).
-    4. The candidate lock changes only its own upstream entry and the `files` rows
-       (FR-012).
+    4. The candidate lock changes only its own upstream entry, its own `files[]` rows
+       and `x-bump-summary` (FR-012).
     5. No symlinks are present and only modes 100644 and 100755 are used.
   - `publish` then builds a single commit on the base with git and does not execute any
     candidate file.

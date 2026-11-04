@@ -91,6 +91,12 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    # Each leg can set only its own upstream's outputs; empty values from the other leg do not override.
+    outputs:
+      speckit_artifact: ${{ matrix.upstream == 'speckit' && steps.upload.outputs.artifact-id || '' }}
+      speckit_digest: ${{ matrix.upstream == 'speckit' && steps.package.outputs.digest || '' }}
+      atv_artifact: ${{ matrix.upstream == 'atv' && steps.upload.outputs.artifact-id || '' }}
+      atv_digest: ${{ matrix.upstream == 'atv' && steps.package.outputs.digest || '' }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.detect.outputs.matrix) }}
@@ -122,6 +128,7 @@ jobs:
           set -o pipefail
           npm run check 2>&1 | tee "$RUNNER_TEMP/check.log"
       - name: Package the candidate
+        id: package
         if: always() && steps.checkout.outcome == 'success'
         env:
           PLAN: ${{ needs.detect.outputs.plan }}
@@ -132,6 +139,7 @@ jobs:
           BUMP_LOG="$RUNNER_TEMP/bump.log" CHECK_LOG="$RUNNER_TEMP/check.log" \
             CANDIDATE_DIR="$RUNNER_TEMP/candidate-$UPSTREAM" node src/maintainer/upstream-upgrade.mjs package
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        id: upload
         if: always() && steps.checkout.outcome == 'success'
         with:
           name: candidate-${{ matrix.upstream }}
@@ -159,17 +167,27 @@ jobs:
         with:
           node-version: '20'
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        if: needs.detect.outputs.generate == 'true'
+        if: needs.generate.outputs.speckit_artifact != ''
         continue-on-error: true
         with:
-          pattern: candidate-*
-          path: ${{ runner.temp }}/artifacts
+          artifact-ids: ${{ needs.generate.outputs.speckit_artifact }}
+          path: ${{ runner.temp }}/artifacts/speckit
+          merge-multiple: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        if: needs.generate.outputs.atv_artifact != ''
+        continue-on-error: true
+        with:
+          artifact-ids: ${{ needs.generate.outputs.atv_artifact }}
+          path: ${{ runner.temp }}/artifacts/atv
+          merge-multiple: true
       - name: Publish draft candidates
         id: publish
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PLAN: ${{ needs.detect.outputs.plan }}
           ARTIFACTS_DIR: ${{ runner.temp }}/artifacts
+          DIGEST_SPECKIT: ${{ needs.generate.outputs.speckit_digest }}
+          DIGEST_ATV: ${{ needs.generate.outputs.atv_digest }}
         run: node src/maintainer/upstream-upgrade.mjs publish
 
   report:
@@ -189,11 +207,19 @@ jobs:
         with:
           node-version: '20'
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        if: needs.detect.outputs.generate == 'true'
+        if: needs.generate.outputs.speckit_artifact != ''
         continue-on-error: true
         with:
-          pattern: candidate-*
-          path: ${{ runner.temp }}/artifacts
+          artifact-ids: ${{ needs.generate.outputs.speckit_artifact }}
+          path: ${{ runner.temp }}/artifacts/speckit
+          merge-multiple: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        if: needs.generate.outputs.atv_artifact != ''
+        continue-on-error: true
+        with:
+          artifact-ids: ${{ needs.generate.outputs.atv_artifact }}
+          path: ${{ runner.temp }}/artifacts/atv
+          merge-multiple: true
       - name: Update the single upstream tracking issue
         env:
           GITHUB_TOKEN: ${{ github.token }}

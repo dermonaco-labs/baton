@@ -29,7 +29,7 @@ Any other value still fails `E_USAGE` with exit code 2.
 - `lockFile` keeps the fields that maintainers own:
   - ATV `package` and `note`;
   - Spec Kit `init_args`.
-  
+
   It no longer hard-codes `ref: 'main'`.
 
 ## Guarantees (unchanged unless stated otherwise)

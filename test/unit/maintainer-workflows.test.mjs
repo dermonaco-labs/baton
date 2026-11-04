@@ -207,6 +207,14 @@ describe('upstream watch workflow', () => {
     assert.equal(upload.with['include-hidden-files'], true);
     assert.equal(upload.with.name, 'candidate-${{ matrix.upstream }}');
     assert.match(upload.if, /always\(\)/);
+    assert.equal(upload.id, 'upload');
+    assert.ok(steps(job).some(step => step.id === 'package'), 'package step exposes the verified digest');
+    assert.deepEqual(job.outputs, {
+      speckit_artifact: "${{ matrix.upstream == 'speckit' && steps.upload.outputs.artifact-id || '' }}",
+      speckit_digest: "${{ matrix.upstream == 'speckit' && steps.package.outputs.digest || '' }}",
+      atv_artifact: "${{ matrix.upstream == 'atv' && steps.upload.outputs.artifact-id || '' }}",
+      atv_digest: "${{ matrix.upstream == 'atv' && steps.package.outputs.digest || '' }}"
+    }, 'each leg may set only its own upstream outputs');
   });
 
   test('publish and report run only trusted Node code against downloaded artifacts', async () => {
@@ -216,10 +224,21 @@ describe('upstream watch workflow', () => {
       assert.doesNotMatch(script, /\b(npm|npx|uvx?|pip3?|python3?)\b|baton\.mjs|\bsync\b/, `${id}: forbidden tooling`);
       assert.equal(script.trim(), `node src/maintainer/upstream-upgrade.mjs ${id}`, `${id}: only the maintainer script`);
       assert.ok(!steps(watch.jobs[id]).some(step => step.uses?.startsWith('astral-sh/')), `${id}: uv`);
-      const download = steps(watch.jobs[id]).find(step => step.uses?.startsWith('actions/download-artifact@'));
-      assert.match(download?.uses ?? '', /@[0-9a-f]{40}$/);
-      assert.equal(download.with.pattern, 'candidate-*');
+      const downloads = steps(watch.jobs[id]).filter(step => step.uses?.startsWith('actions/download-artifact@'));
+      assert.equal(downloads.length, 2, `${id}: one download per upstream`);
+      for (const [download, upstream] of downloads.map((step, index) => [step, ['speckit', 'atv'][index]])) {
+        assert.match(download.uses, /@[0-9a-f]{40}$/);
+        assert.equal(download.if, `needs.generate.outputs.${upstream}_artifact != ''`, `${id}: never download everything`);
+        assert.deepEqual(download.with, {
+          'artifact-ids': `\${{ needs.generate.outputs.${upstream}_artifact }}`,
+          path: `\${{ runner.temp }}/artifacts/${upstream}`,
+          'merge-multiple': true
+        }, `${id}: ${upstream} downloads by id only`);
+      }
     }
+    const env = steps(watch.jobs.publish).find(step => step.id === 'publish')?.env;
+    assert.equal(env?.DIGEST_SPECKIT, '${{ needs.generate.outputs.speckit_digest }}');
+    assert.equal(env?.DIGEST_ATV, '${{ needs.generate.outputs.atv_digest }}');
     const text = await readFile(path('upstream-watch'), 'utf8');
     assert.doesNotMatch(text, /secrets\.|pull_request_target/);
     for (const job of Object.values(watch.jobs)) {

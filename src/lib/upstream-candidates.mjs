@@ -6,7 +6,7 @@ import { ATV_REPO, SPECKIT_REPO, UpstreamError } from './upstream.mjs';
 /** @typedef {{version:string|null,commit:string,tree:string|null,bump:string}} Pin */
 /** @typedef {{code:string,stage:string,excerpt:string,run:string}} Blocker */
 /** @typedef {{upstream:string,pin:string,base:string,digest:string,closed:'obsolete'|null}} Marker */
-/** @typedef {{number:number,state:'open'|'closed',merged:boolean,marker:Marker|null}} PrSnapshot */
+/** @typedef {{number:number,state:'open'|'closed',merged:boolean,marker:Marker|null,titlePin?:string|null}} PrSnapshot */
 /** @typedef {{sha:string,botOnly:boolean,content:string|null}} BranchSnapshot */
 /** @typedef {'none'|'generate'|'unchanged'|'suppressed'|'waiting-human'|'close-obsolete'|'obsolete-human'|'blocked'} Action */
 /** @typedef {{number:number,branch:string,state:'open-bot'|'open-human',marker:Marker|null}} CandidatePr */
@@ -41,6 +41,7 @@ const REQUIREMENTS = new Set(['baton/upstream/specify-cli.requirements.in',
 const FORBIDDEN_FILES = new Set(['package.json', 'package-lock.json', '.npmrc', 'uv.toml', 'pip.conf']);
 const FORBIDDEN_PREFIXES = ['.github/workflows/', 'src/', 'test/', '.baton/'];
 const STORED_PREFIX = /^(?:\.github\/agents\/|\.github\/skills\/|\.specify\/|packs\/[a-z0-9][a-z0-9-]*\/files\/)/;
+const SAFE_PATH = /^[A-Za-z0-9._/@+-]+$/;
 const MARKER = /<!-- baton-upstream-candidate upstream=(speckit|atv) pin=(\S+) base=([0-9a-f]{40}) digest=([0-9a-f]{64})( closed=obsolete)? -->/;
 
 /** @param {UpstreamId} id */
@@ -200,12 +201,16 @@ export function planUpstream({ id, base, publish, policy, current, latest, block
   if (blocker || !policy || !current) {
     return result('blocked', blocker ?? { code: 'E_UPSTREAM_VERIFY', stage: 'detect', excerpt: 'Detection failed', run: '' });
   }
+  if (open && !open.marker && branch?.botOnly) {
+    return result('blocked', { code: 'E_PR_MARKER', stage: 'detect', run: '',
+      excerpt: `#${open.number} on ${branchFor(id)} has no valid candidate marker; restore it or close the PR` });
+  }
   if (open?.marker && markerObsolete(policy, current, latest, open.marker.pin)) {
     return result(botOwned ? 'close-obsolete' : 'obsolete-human');
   }
   if (!latest || !isNewer(policy, current, latest)) return result('none');
-  const suppressed = prs.some(item => item.state === 'closed' && !item.merged && item.marker &&
-    item.marker.closed !== 'obsolete' && item.marker.pin === latest.bump);
+  const suppressed = prs.some(item => item.state === 'closed' && !item.merged &&
+    (item.marker ? item.marker.closed !== 'obsolete' && item.marker.pin === latest.bump : item.titlePin === latest.bump));
   if (suppressed) return result('suppressed');
   if ((open && !botOwned) || (!open && branch && !branch.botOnly)) return result('waiting-human');
   if (open?.marker && open.marker.pin === latest.bump && open.marker.base === base &&
@@ -239,6 +244,16 @@ export function parseMarker(text) {
   return valid ? { upstream, pin, base, digest, closed: closed ? 'obsolete' : null } : null;
 }
 
+/**
+ * The bump named by a candidate PR title, used only when its marker was removed.
+ * @param {UpstreamId} id @param {unknown} title @returns {string|null}
+ */
+export function titlePin(id, title) {
+  const match = typeof title === 'string' ? /^Upstream: bump (speckit|atv) to (\S+)$/.exec(title) : null;
+  if (!match || match[1] !== id) return null;
+  return isVersion(match[2]) || (id === 'atv' && isSha(match[2])) ? `${id}=${match[2]}` : null;
+}
+
 /** @param {unknown} value @returns {unknown} */
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
@@ -257,8 +272,18 @@ export function contentDigest(manifest) {
   return createHash('sha256').update(JSON.stringify(canonical(content))).digest('hex');
 }
 
+/** @param {any} lock @returns {Map<string,any>} */
+function rowsByPath(lock) {
+  const rows = new Map();
+  for (const row of Array.isArray(lock?.files) ? lock.files : []) {
+    if (typeof row?.stored_at === 'string') rows.set(row.stored_at, row);
+  }
+  return rows;
+}
+
 /**
- * Why a changed or deleted path is not an allowed regenerated output, or null.
+ * Why a changed or deleted path is not an allowed regenerated output, or null. A stored path is
+ * allowed only when its owning lock row belongs to the candidate's upstream (FR-012).
  * @param {string} path @param {'changed'|'deleted'} kind @param {UpstreamId} id
  * @param {{baseLock:any,candidateLock:any}} locks
  */
@@ -267,15 +292,15 @@ export function pathPolicyIssue(path, kind, id, { baseLock, candidateLock }) {
     /[\u0000-\u001f\u007f]/.test(path) || path.split('/').some(part => part === '' || part === '.' || part === '..')) {
     return `${JSON.stringify(path)} is not a normalized relative path`;
   }
+  if (!SAFE_PATH.test(path)) return `${JSON.stringify(path)} contains a character outside [A-Za-z0-9._/@+-]`;
   if (FORBIDDEN_FILES.has(path) || FORBIDDEN_PREFIXES.some(prefix => path.startsWith(prefix))) {
     return `${path} is outside the regenerated outputs`;
   }
   if (FIXED_PATHS.has(path)) return null;
   if (REQUIREMENTS.has(path)) return id === 'speckit' ? null : `${path} may change only in a Spec Kit candidate`;
-  /** @param {any} lock */
-  const stored = lock => Array.isArray(lock?.files) && lock.files.some((/** @type {any} */ file) => file?.stored_at === path);
-  if (STORED_PREFIX.test(path) && (stored(baseLock) || (kind === 'changed' && stored(candidateLock)))) return null;
-  return `${path} is not a locked upstream output`;
+  const owner = rowsByPath(baseLock).get(path) ?? (kind === 'changed' ? rowsByPath(candidateLock).get(path) : undefined);
+  if (!STORED_PREFIX.test(path) || !owner) return `${path} is not a locked upstream output`;
+  return owner.upstream === id ? null : `${path} is owned by ${JSON.stringify(owner.upstream)}, not ${id}`;
 }
 
 /**
@@ -287,6 +312,33 @@ function expectedPinFields(id, pin) {
   return pin.version === null ?
     { version: null, ref: 'main', commit: pin.commit, tree: pin.tree } :
     { version: pin.version, tag: `v${pin.version}`, ref: `v${pin.version}`, commit: pin.commit, tree: pin.tree };
+}
+
+/**
+ * files[] rows keyed by stored_at: other owners' rows are frozen and no row changes its owner (FR-012).
+ * @param {UpstreamId} id @param {any} base @param {any} candidate @returns {string[]}
+ */
+function fileRowIssues(id, base, candidate) {
+  const issues = [];
+  const keys = new Set();
+  candidate.files.forEach((/** @type {any} */ row, /** @type {number} */ index) => {
+    const key = row?.stored_at;
+    if (typeof key !== 'string') issues.push(`files[${index}] has no stored_at`);
+    else if (keys.has(key)) issues.push(`files ${key} is listed twice`);
+    else keys.add(key);
+  });
+  const before = rowsByPath(base);
+  const after = rowsByPath(candidate);
+  for (const key of new Set([...before.keys(), ...after.keys()])) {
+    const old = before.get(key);
+    const next = after.get(key);
+    if (old && next && old.upstream !== next.upstream) {
+      issues.push(`files ${key} changed upstream from ${JSON.stringify(old.upstream)} to ${JSON.stringify(next.upstream)}`);
+    } else if (old && old.upstream !== id && !next) issues.push(`files ${key} (${old.upstream}) removed`);
+    else if (old && old.upstream !== id && !same(old, next)) issues.push(`files ${key} (${old.upstream}) changed`);
+    else if (!old && next && next.upstream !== id) issues.push(`files ${key} (${JSON.stringify(next.upstream)}) added`);
+  }
+  return issues;
 }
 
 /**
@@ -302,6 +354,7 @@ export function lockDiffIssues(id, base, candidate, latest) {
     if (!same(base[key], candidate[key])) issues.push(`top-level ${key} changed`);
   }
   if (!Array.isArray(candidate.files)) issues.push('files is not a list');
+  else issues.push(...fileRowIssues(id, base, candidate));
   const upstreams = candidate.upstreams ?? {};
   for (const key of new Set([...Object.keys(base.upstreams), ...Object.keys(upstreams)])) {
     if (key !== id && !same(base.upstreams[key], upstreams[key])) issues.push(`upstreams.${key} changed`);
@@ -341,7 +394,7 @@ export function verifyCandidate({ plan, manifest, files, baseLock }) {
     !same(manifest.pin, { version: latest.version, commit: latest.commit, tree: latest.tree })) {
     throw reject('manifest does not match the plan');
   }
-  if (!same(manifest.checks, CHECKS)) throw reject('required checks did not pass');
+  if (!same(manifest.checks, CHECKS)) throw reject('manifest checks do not match the required check schema');
   if (!Array.isArray(manifest.changed) || !Array.isArray(manifest.deleted) || typeof manifest.summary !== 'string') {
     throw reject('malformed manifest');
   }
@@ -450,6 +503,9 @@ export function renderPrBody({ plan, manifest, digest, runUrl }) {
     '',
     ...manifest.checks.map(check => `- \`${check.name}\`: ${check.result}`),
     `- [Workflow run](${runUrl})`,
+    '',
+    'These results are attested by the read-only generate job. The required PR checks run after this PR is ' +
+      'marked ready for review and remain the gate before merge.',
     '',
     '## Reviewer checklist',
     '',

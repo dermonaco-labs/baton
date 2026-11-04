@@ -120,7 +120,7 @@ after merge.
 - [X] T012 [P] [US1] Create `test/integration/upstream-upgrade.test.mjs` (describe `upstream upgrade publish`). It uses a temporary local bare repository and a recording mock of the GitHub API, and covers these cases:
   - **Opening a candidate:**
     - `package` followed by `publish` opens one draft PR titled `Upstream: bump speckit to <ver>` on `baton/upstream-upgrade/speckit`;
-    - it contains exactly one commit whose author and committer are `github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>`, with the trailers `Baton-Upstream`, `Baton-Pin`, `Baton-Base` and `Baton-Content`;
+    - it contains exactly one commit whose author and committer are the GitHub Actions bot identity `BOT_NAME` / `BOT_EMAIL` (`github-actions[bot]`, user id `41898282` at the GitHub noreply domain), with the trailers `Baton-Upstream`, `Baton-Pin`, `Baton-Base` and `Baton-Content`;
     - git runs with `core.autocrlf=false`.
   - **Rejections:** a tampered hash, a symlink, a forbidden path, a mode outside the allowed set, or a manifest whose `base`/`bump` differs from the plan is rejected before any push.
   - **Preview / non-default ref:** publishing makes no push and no API write.
@@ -260,6 +260,53 @@ checks (FR-017 to FR-022, FR-029).
 
 ---
 
+## Phase 8: Review 1 fixes (review.json F01–F11, F13)
+
+Independent review 1 routed back to implement. The bound-contract amendment in
+contracts/upstream-watch.md, data-model.md and research.md R-4 aligns the contracts with
+the approved spec FR-010, FR-012 and FR-024 and does not change scope. New tests run
+under the existing acceptance selectors, so their acceptance counts rise. No registered
+command or assertion is weakened.
+
+- [X] T033 [US1] F01 (P1, FR-012) in `src/lib/upstream-candidates.mjs`:
+  - `lockDiffIssues` compares `files[]` rows by `stored_at`. Rows of other upstreams and optional sources must be present and identical, none may be added, and no row may change its `upstream`.
+  - `pathPolicyIssue` accepts a stored path only when its owning row (base for deleted or changed existing paths, candidate for new paths) has the candidate's upstream.
+  - Unit tamper cases in both directions (speckit→atv, speckit→optimize, atv→speckit, atv→token-budget) give `E_PATH_POLICY`. An integration case shows `publish` makes no push and no API write.
+- [X] T034 [US1] F06: `pathPolicyIssue` rejects any character outside `[A-Za-z0-9._/@+-]`, with a unit test using a backtick path.
+- [X] T035 [US1] F02, F05 in `src/maintainer/upstream-upgrade.mjs`:
+  - Before pushing for an existing PR, `publish` re-reads it and requires `state == open` and the detected head. Otherwise `E_PR_CHANGED` with no push or PATCH.
+  - `push` maps `[remote rejected]` to `E_PUSH` with the remote's reason, and only stale-lease rejections to `E_LEASE`.
+  - Integration cases: a PR closed between detect and publish, and a remote-rejected push.
+- [X] T036 [US1] F03 in `.github/workflows/upstream-watch.yml` and `publish`:
+  - Per-upstream `<id>_artifact` and `<id>_digest` generate outputs, gated on `matrix.upstream`.
+  - `artifact-ids` downloads into `artifacts/<id>`.
+  - `publish` rejects a verified digest that differs from the leg's output with `E_CANDIDATE_VERIFY`.
+  - Workflow unit assertions, and integration cases for a missing or mismatched digest.
+- [X] T037 [US3] F07 in `planUpstream` and `detect`:
+  - An open bot-only PR without a valid marker is `blocked` with `E_PR_MARKER`.
+  - A closed unmerged PR without a marker suppresses the pin in its `Upstream: bump <id> to <pin>` title.
+  - Unit cases for both.
+- [X] T038 [US1] F08: the `checks` rejection reads as a schema mismatch, and the PR body Validation section states the trust boundary. Unit assertions for both.
+- [X] T039 [US1] F04, F09 test coverage:
+  - `report` with an `E_DANGLING_REF` bump log gives exit 1, an `E_UPSTREAM_VERIFY (generate)` row, a Blockers entry and a fenced excerpt.
+  - A `manifest.pin` tamper case is rejected.
+  - Exact lock-diff issue strings are asserted.
+  - A compare with `total_commits > commits.length` is not bot-only.
+  - `report` fallbacks: a missing artifact gives `E_CHECK_FAILED`, an incomplete publish `E_PUBLISH`, and a malformed `PLAN` the failed-detection plan.
+- [X] T040 [P] F10, F11, F13:
+  - `docs/07-updating.md` names the issue title and `upstream-bump` label, explains the stage environment and the maintainer `note` edit needed to switch the ATV policy.
+  - Upstream repository slugs and SHA checks reuse `SPECKIT_REPO`, `ATV_REPO` and `isSha`.
+  - The trailing whitespace in `contracts/sync-bump.md` is removed.
+- [X] T041 Rerun the targeted selectors, then `npm run check` once on the corrected candidate, and update the acceptance evidence counts.
+
+Review 1 implementation notes:
+
+- F12 was dismissed by the reviewer as pre-existing behavior. It is documented in `docs/07-updating.md` but not changed.
+- The `docs/07-updating.md` note that the ATV `note` needs a maintainer edit closes F11's first half. The `note` stays maintainer-owned per the contract.
+- The final gate found that `test/unit/review-fix-docs.test.mjs` fails on the committed `ad5f4a6`. That test scans tracked `specs/**/*.md` for unlisted hosts. It passed during the first implementation only because the 003 files were still untracked. The literal bot email domain in the contract and T013 is now a reference to `BOT_NAME`/`BOT_EMAIL`. The identity is unchanged and the guard test is not modified.
+
+---
+
 ## Dependencies & Execution Order
 
 - **Setup (T001)** → **Foundational (T002–T004)**.
@@ -271,6 +318,8 @@ checks (FR-017 to FR-022, FR-029).
 - **US3 (T024–T029)** depends on US1. T026 and T028 (triggers) depend on nothing else and
   can be done at any time after Setup.
 - **Polish (T030–T032)** depends on every story.
+- **Review 1 fixes (T033–T041)** depend on the completed candidate. T033 and T034 come
+  before T036. T041 runs last.
 - Within each story, the tests come first and their red evidence is recorded before
   implementation.
 
@@ -338,9 +387,9 @@ Post-merge operational evidence, not claimed here (analysis C2, E1):
 | AC-US4-1 | Red: 1/1 failed because `parseBump` was not exported from `src/commands/sync.mjs` before T007; Green: 10 tests, 10 pass, 0 fail. |
 | AC-US4-2 | Red: on main `ae34a99`, `sync --bump atv=ac6d611…` wrote the lock, then `sync --check` exited 1 with `E_UPSTREAM_VERIFY` ("Lock pins differ from the vetted Spec Kit/ATV refs"); Green: on the feature tree the same bump, then `sync --check`, `lock verify` and `build --check` all exit 0, the diff touches only `baton.lock.json` and `docs/reference/upstream-diff.md` with no `src/` edit, and `atv=<unknown 40-hex>` (`E_UPSTREAM_VERIFY`) and `speckit=99.0.0` (unsatisfiable) both exit 1 with a clean `git status`. |
 | AC-US1-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, before that module existed (T014); Green: 15 tests, 15 pass, 0 fail. |
-| AC-US1-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 7 tests, 7 pass, 0 fail. |
+| AC-US1-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 10 tests, 10 pass, 0 fail (7 before review 1; adds remote-rejected push, report fallbacks and the `E_DANGLING_REF` report). |
 | AC-US1-3 | Red: 6 tests, 0 pass, 6 fail against the old workflow before T018; Green: 6 tests, 6 pass, 0 fail, including `runs-on: ubuntu-latest` per job. |
 | AC-US2-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, the same pre-module red run as AC-US1-1 (before T014, T023); Green: 4 tests, 4 pass, 0 fail. |
-| AC-US3-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, the same pre-module red run as AC-US1-1 (before T014, T027); Green: 6 tests, 6 pass, 0 fail. |
-| AC-US3-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 7 tests, 7 pass, 0 fail, including analysis C1 and C4 cases. |
+| AC-US3-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, the same pre-module red run as AC-US1-1 (before T014, T027); Green: 7 tests, 7 pass, 0 fail (6 before review 1; adds the `E_PR_MARKER` case). |
+| AC-US3-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 10 tests, 10 pass, 0 fail, including analysis C1 and C4 cases (7 before review 1; adds the truncated compare, the PR closed after detection, and the missing-marker and title-suppression cases). |
 | AC-US3-3 | Red: 1 test, 0 pass, 1 fail before T028; Green: 1 test, 1 pass, 0 fail. |
