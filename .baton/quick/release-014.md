@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: release-014
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Independent headless review of exact candidate 0b1a154 against pinned base 51d1f86 (20 tracked files, 12 CLI subjects) by 7 installed personas found no open findings: R014-1/P2 (own run artifact kept untracked), R014-2/P3 (changelog date vs future tag) and R014-3/P3 (historical work evidence count) dismissed with reasons. Product change is version metadata only. Ready for land; merge and tag/publication each need separate human approval."
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: Independent LAND received the exact reviewed v0.1.4 candidate 4228cd9 in a separate checkout. handoff receive ran the configured npm run check on the whole candidate with exit 0; global and scoped validate exit 0; all 49 tracked quick/context records are covered by cleanup. Opened a release-preparation PR against main. Only LAND bookkeeping is published after review; no subject changes. No merge, tag or workflow dispatch; PR acceptance and later tag/publication each require separate human approval. R014-2 changelog date is surfaced to the approver.
 read_first:
   - path: .baton/quick/release-014.md
     why: Release-preparation intent, pinned diff base and relay state
@@ -21,15 +21,9 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/release-014.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: "Reviewed exact CLI base 51d1f86 to 0b1a154: 20 tracked files cover all 12 CLI subjects. Source and tests change version identifiers only; the bundle equals base bytes with seven 0.1.3 strings replaced by 0.1.4 (SHA-256 c0709fd2d922c4d4d0ff0f0d4bcacd624479d722ade4e9ee958f0233b18921f9 matches sidecar); CHANGELOG promotes Unreleased verbatim with unchanged pins; manifest, lock and metafile changes are generated metadata; cleanup and a7 refresh are owner-approved bookkeeping. No user-facing behavior, public contract, upstream bytes or component versions change."
+    evidence: https://github.com/dermonaco-labs/baton/pull/56
 open_questions: []
 decisions:
   - id: D1
@@ -102,7 +96,7 @@ decisions:
     x-base-commit: 0b1a1548cf8ecdbf507acce8ef644301462bd910
     by: baton
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -134,8 +128,15 @@ history:
     x-worktree: b5a01a3b5998db3f5aa9a583fc85f8ab120cb17c265045fa17cde674c7ebea6e
     commit: 0b1a154
     x-action: write
-updated_at: 2026-11-04T08:09:40.276Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-11-04T08:24:47.535Z
+    by: baton
+    writer: 1406fb9d272be693b787799dd7fb21306b53cb2795722dcf79c844abb452a59f
+    x-worktree: b5a01a3b5998db3f5aa9a583fc85f8ab120cb17c265045fa17cde674c7ebea6e
+    commit: 4228cd9
+    x-action: write
+updated_at: 2026-11-04T08:24:47.525Z
+updated_by: baton-land
 risks:
   - id: R1
     text: Owner approval and merge must bind the exact final PR head. Only after merge may publication proceed through the pinned dry run and an owner-approved annotated v0.1.4 tag; neither action is performed by this release-preparation task.
@@ -146,6 +147,9 @@ x-implementation-cycle: ba98a0f20405a5d7fb381aeaf85771f4e93533da1027be8d6daf68c1
 review:
   findings_path: .baton/quick/release-014.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/56
+  number: 56
 ---
 ## Goal
 Prepare the bookkeeping-only Baton v0.1.4 release candidate for all merged
