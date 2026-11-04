@@ -2,34 +2,36 @@
 baton: 1
 lane: feature
 feature: 003-upstream-upgrade-prs
-phase_completed: review
-next_phase: implement
-next_owner: speckit-implement
+phase_completed: implement
+next_phase: review
+next_owner: baton-review
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Review 5 of be2b7ec (base ba529db): F26-F32 verified fixed. New P1 F33 (YAML-subset parser differential bypasses extensions.yml binding), P2 F34 (replaceable hook-skill heading), P2 F35 (FR-031 narrowing not reflected in spec), P3 F36. 94/94 targeted tests, AC 31/15/7, build --check, diff --check clean."
+model_role: review
+suggested_model: claude-opus-5.5
+summary: "Review 5 fixes: F33 root fix binds every trusted file (hooks config, .specify/extensions and .specify/presets trees, x-baton-source rows incl. wrappers) to exact base bytes and removes the YAML/frontmatter/registry interpretation; requirements limited to printable ASCII; F34 hostile heading stops; F35 owner boundary in FR-031, clarification and contract; F36 bounded causes, committed-tree and layout drift tests, docs. E_DANGLING_REF still upstream; live evidence pending."
 read_first:
   - path: specs/003-upstream-upgrade-prs/review.json
-    why: Review 4 findings F26-F32 being answered
+    why: Review 5 findings F33-F36 being answered
+  - path: specs/003-upstream-upgrade-prs/spec.md
+    why: FR-031 and review 5 clarification amended for the owner decision
   - path: specs/003-upstream-upgrade-prs/tasks.md
-    why: Phase 11 T053-T061 and red vs characterization evidence
+    why: Phase 12 T062-T067 and red vs characterization evidence
   - path: specs/003-upstream-upgrade-prs/contracts/upstream-watch.md
-    why: Trusted bindings inventory, enforced and deliberately unbound files
+    why: Trusted bindings now raw-byte, no parser
   - path: src/lib/candidate-bindings.mjs
-    why: Trusted binding verifier
+    why: Raw-byte trusted binding verifier
   - path: src/lib/upstream-candidates.mjs
-    why: verifyCandidate wiring, ROW_KEYS, case collisions, repair rule
-  - path: src/maintainer/upstream-upgrade.mjs
-    why: Base file reader passed to package and publish
+    why: PROTECTED_PATHS reuse and bounded error cause
+  - path: test/unit/upstream-candidates.test.mjs
+    why: Poison, committed-tree and layout drift tests
   - path: test/integration/upstream-upgrade.test.mjs
-    why: Coherent tamper cases with re-attested digest
+    why: Coherent poison cases with re-attested digest
   - path: docs/07-updating.md
-    why: Closed-marker template and no-bot-commit remedy
+    why: E_PATH_POLICY causes and manual remedy
 artifacts:
   - path: specs/003-upstream-upgrade-prs/spec.md
     role: source-of-truth
-    sha256: f0f26c69b8cdbff4cda4702044c44c3a7006861165a6e777e6bee02732b6e1fc
+    sha256: d13587172aa74b199bccecc5358b803382a67ef155c1d2c0951618a3bd8df20a
   - path: specs/003-upstream-upgrade-prs/plan.md
     role: source-of-truth
     sha256: 7c7e8f07641583a09f34fbbcd148afbe1e60054c875270baab5604c96f18fdc1
@@ -41,7 +43,7 @@ artifacts:
     sha256: 9a442e9010e2ca48a9f50144ba4743a938509800dc6ad491af13b9fe7c6ec247
   - path: specs/003-upstream-upgrade-prs/contracts/upstream-watch.md
     role: source-of-truth
-    sha256: 2703fc21c563506a94c7370215515427186341d454cb4d439a18593bfd74c378
+    sha256: 1745272af5308c4e55508e37407904bc1b49a17d454b050c4eb1404482d10f27
   - path: specs/003-upstream-upgrade-prs/contracts/sync-bump.md
     role: source-of-truth
     sha256: 812e6951ab8cad817a1d21b69b1183f30dbbc3ca3d8021228d4b5402e863902c
@@ -50,12 +52,90 @@ artifacts:
     sha256: e03b56f86f2cfe765d5ccdbc2a40b0dc1299ee79e2b13a44f588393ee3fafd7b
   - path: specs/003-upstream-upgrade-prs/tasks.md
     role: source-of-truth
-    sha256: fc63be399564e22ef7541d3b5afd9f863958f0e3b64fbab9c7de9fdd5abd0cf3
+    sha256: 8a17acc65e0bdcc441147099ea0e4bc78401198e90926369a527dd73c05b0994
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: tasks-all-checked-or-deferred
     met: true
-    evidence: specs/003-upstream-upgrade-prs/review.json
+    evidence: 0 outstanding tasks
+  - id: acceptance-evidence
+    met: true
+    evidence: 0 checks lack evidence
+  - id: local-checks-pass
+    met: true
+    evidence: |-
+      baton: 0
+      stdout (tail):
+      are the newest stable release; a moved main is informational only (0.5406ms)
+        ✔ any other tracked ref is an unsupported-ref blocker (1.1453ms)
+        ✔ upstream plans are independent and an ATV candidate cannot touch Spec Kit (7.4753ms)
+      ✔ upstream candidates atv (9.9976ms)
+      ▶ upstream candidates speckit and atv row ownership policy
+        ✔ the committed lock satisfies every owned-row invariant for both upstreams (6.3832ms)
+        ✔ a regenerated owned file under every owned stored root and a new .specify file are accepted (48.9245ms)
+        ✔ repair metadata is never added or altered; a written row keeps or drops its base repair (21.1289ms)
+        ✔ no upstream adds or removes rows outside its growth root, and protected paths never grow or shrink (111.061ms)
+        ✔ owned rows keep their install target, provenance, license and shape; hashes match the written bytes (828.6015ms)
+        ✔ new rows may not collide with each other or with kept rows in any letter case (4.5958ms)
+        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (1.5691ms)
+        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (5.9932ms)
+      ✔ upstream candidates speckit and atv row ownership policy (1028.7725ms)
+      ▶ upstream candidates lifecycle
+        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.295ms)
+        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (1.3536ms)
+        ✔ a human-edited candidate with a newer pin waits for the human (0.63ms)
+        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (2.4361ms)
+        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.5868ms)
+        ✔ a human close suppresses exactly that pin; a newer pin generates again (1.1612ms)
+        ✔ the automation obsolete close never suppresses (0.4805ms)
+        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (2.2391ms)
+      ✔ upstream candidates lifecycle (9.5478ms)
+      ✔ every feature phase and quick lane phase has a valid independent fixture (207.5261ms)
+      ✔ pre-existing feature baton without specify history or attachment still validates (87.6235ms)
+      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
+        ✔ E_ACTOR_FORMAT (58.3012ms)
+        ✔ E_ANALYSIS_CRITICAL (2.9261ms)
+        ✔ E_ANALYSIS_MISSING (2.7992ms)
+        ✔ E_APPROVER_FORMAT (2.957ms)
+        ✔ E_BLOCKING_OPEN (3.5635ms)
+        ✔ E_BODY_SECTIONS (2.5965ms)
+        ✔ E_BUDGET (4.4384ms)
+        ✔ E_DENYLIST (2.319ms)
+        ✔ E_EXIT_UNMET (2.0934ms)
+        ✔ E_GATE_PENDING (74.1424ms)
+        ✔ E_LANE_ESCALATE (796.2272ms)
+        ✔ E_LANE_MISMATCH (2.2425ms)
+        ✔ E_MISSING_ARTIFACT (2.8306ms)
+        ✔ E_MODEL_NOT_ALLOWED (4.2513ms)
+        ✔ E_MULTIPLE_BATONS (5.2335ms)
+        ✔ E_NO_PREREG (3.5593ms)
+        ✔ E_OWNER (2.655ms)
+        ✔ E_PR_MISSING (2.6161ms)
+        ✔ E_REVIEW_BLOCKING (178.604ms)
+        ✔ E_REVIEW_MISSING (4.1379ms)
+        ✔ E_SCHEMA (3.0112ms)
+        ✔ E_STALE_ARTIFACT (3.65ms)
+        ✔ E_TRANSITION (3.3882ms)
+      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1194.3967ms)
+      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (76.3332ms)
+      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (22.4564ms)
+      ▶ model allowlist warns in warn mode and errors in error mode
+        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (62.0248ms)
+        ✔ error mode emits E_MODEL_NOT_ALLOWED (7.2422ms)
+      ✔ model allowlist warns in warn mode and errors in error mode (89.8732ms)
+      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (77.0452ms)
+      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (1.4314ms)
+      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (19.0974ms)
+      ✔ ready with a blocking question is rejected (75.1829ms)
+      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (101.4638ms)
+      ℹ tests 673
+      ℹ suites 9
+      ℹ pass 671
+      ℹ fail 0
+      ℹ cancelled 0
+      ℹ skipped 2
+      ℹ todo 0
+      ℹ duration_ms 313081.8201
 open_questions: []
 decisions:
   - id: D-ATV-REF
@@ -409,25 +489,27 @@ decisions:
     tag: diff-base
     x-base-commit: be2b7ecb328428b42f16862c0f22e7ac788361ef
     by: baton
+  - id: D21
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "Records repository owner decision (relayed via control-plane delegation, by role): approve the conservative protected-file boundary and amend the spec (review 5, F35). Any change to .specify/extensions.yml, to any file under .specify/extensions/ or .specify/presets/ (including registries), or to a Baton hook skill wrapper stops that upstream for a manual reviewed update; ordinary upstream prompts still update automatically; registry installed_at/updated_at are normalized deterministically by sync and not tolerated by the verifier. Recorded as spec.md review 5 clarification, FR-031 and edge case, and the contract Trusted bindings section; no gate approval claimed."
+    by: implementation-session
+  - id: D-REVIEW5-RAWBYTES
+    decision: "The trusted verifier no longer interprets YAML, frontmatter or registry JSON: .specify/extensions.yml, every file under .specify/extensions/ and .specify/presets/, and every file with an x-baton-source row in the base or candidate lock must equal its base bytes read through git cat-file; new or deleted trusted paths are rejected; sourced rows still prove their base source hash. The requirements file is limited to printable ASCII and newlines. Other candidate-controlled comparisons (canonical lock bytes, rendered summary and diff document, marker and manifest read only by Baton code) were reassessed and need no parser."
+    rationale: "Review 5 F33/F34: any handwritten interpretation differs from Spec Kit's PyYAML and the yaml package; raw bytes are honest because sync already reproduces base bytes for unchanged registries. Poison cases (NBSP, FEFF, U+2003, U+2028, U+0085, __proto__, hostile heading) published at be2b7ec and now stop before any push."
+    by: speckit-implement
+  - id: D-REVIEW5-FR031
+    decision: "FR-031, its review 5 clarification, an edge case and the contract Trusted bindings section record the repository owner's approved conservative protected-file boundary: any change to the hook configuration, the Baton extension and preset trees including registries, or a Baton hook skill wrapper takes the manual reviewed route; ordinary upstream prompts still update automatically; registry timestamps are normalized by sync, not tolerated by the verifier."
+    rationale: Review 5 F35; owner decision relayed by role and recorded through handoff refresh. No gate approval claimed.
+    by: speckit-implement
+  - id: D-REVIEW5-EVIDENCE
+    decision: "Phase 12 records genuine red runs against be2b7ec (each of the three integration poison cases published: 1 push, exit 0, no blocker) separately from characterization unit tests written with the fix; acceptance counts are actual selector results (33/15/7/4/8/10/1/10)."
+    rationale: No invented red history; the unit tests import exports that did not exist at be2b7ec.
+    by: speckit-implement
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: analyze
-    at: 2026-11-04T12:56:18.333Z
-    by: human:repository-owner
-    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
-    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-    commit: ae34a99
-    x-action: approve
-  - phase: implement
-    at: 2026-11-04T13:04:36.199Z
-    by: baton
-    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
-    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-    commit: ae34a99
-    x-action: write
   - phase: implement
     at: 2026-11-04T13:11:53.669Z
     by: baton
@@ -554,8 +636,22 @@ history:
     x-worktree: 1120c1fe4b49f379216b96f088cabbbc8d3a3bc5e0a57f65923e9d5dbcc38de1
     commit: be2b7ec
     x-action: write
-updated_at: 2026-11-04T17:38:40.400Z
-updated_by: baton-review
+  - phase: review
+    at: 2026-11-04T18:04:17.376Z
+    by: implementation-session
+    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
+    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
+    commit: d2954e5
+    x-action: refresh
+  - phase: implement
+    at: 2026-11-04T18:17:05.992Z
+    by: baton
+    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
+    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
+    commit: d2954e5
+    x-action: write
+updated_at: 2026-11-04T18:11:33.727Z
+updated_by: speckit-implement
 risks:
   - id: R-UPSTREAM-EXEC
     text: Generation executes upstream Spec Kit code; it must run without write credentials and publication must not execute upstream content.
@@ -637,7 +733,7 @@ analysis:
   report_path: specs/003-upstream-upgrade-prs/analysis.md
 x-implementation-writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
 x-implementation-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-x-implementation-cycle: 6eb01f6dd524623bfbb8071b1f9f4cad0d16984b40eb96c5b5dcf1deb036a8cf
+x-implementation-cycle: 90210fa4edad817f9ef824509a55f3120ca66af725339222ddb526c987fea5da
 review:
   findings_path: specs/003-upstream-upgrade-prs/review.json
   blocking_findings: 1

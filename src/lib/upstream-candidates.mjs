@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { bindingIssues } from './candidate-bindings.mjs';
+import { BOUND_ROOTS, HOOKS_PATH, bindingIssues, errorCause } from './candidate-bindings.mjs';
 import { ATV_REPO, SPECKIT_REPO, UpstreamError, isSha, isVersion } from './upstream.mjs';
 
 /** @typedef {'speckit'|'atv'} UpstreamId */
@@ -58,7 +58,7 @@ const GROWTH_ROOTS = Object.freeze({ speckit: '.specify', atv: null });
  * Hook registration, the Baton extension and preset and the adopter's constitution keep their rows; no candidate adds
  * or drops one.
  */
-const PROTECTED_PATHS = ['.specify/extensions.yml', '.specify/extensions/', '.specify/presets/', '.specify/memory/'];
+const PROTECTED_PATHS = [HOOKS_PATH, ...BOUND_ROOTS, '.specify/memory/'];
 /** Install targets an upstream row may have; adopters receive every row at its `path`. */
 const INSTALL_PREFIX = /^(?:\.github\/agents\/|\.github\/skills\/|\.github\/hooks\/|\.specify\/)/;
 const CONSTITUTION = '.specify/memory/constitution.md';
@@ -653,8 +653,8 @@ export function verifyCandidate({ plan, manifest, files, baseLock, baseTree, bas
   let bindings;
   try {
     bindings = bindingIssues({ id, manifest, files, baseLock, lock, lockBytes: lockFile.bytes, version: latest.version, baseFile });
-  } catch {
-    bindings = ['candidate bindings cannot be checked'];
+  } catch (error) {
+    bindings = [`candidate bindings cannot be checked (${errorCause(error)})`];
   }
   if (bindings.length) throw fail('E_PATH_POLICY', `${id}: ${bindings.join('; ')}`);
   return { digest: contentDigest(manifest), manifest, lock };

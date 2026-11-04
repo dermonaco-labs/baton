@@ -49,6 +49,15 @@ forcing an upgrade through. Make `sync --bump` a consistent, validated operation
   or removes such files therefore blocks for manual action instead of opening a draft PR
   (FR-031). This narrows the behavior that the earlier FR-012 wording allowed; the repository
   owner explicitly approved the restricted boundary.
+- Q (review 5, F35): May a candidate change Baton-bound files such as the hook
+  configuration, the Baton extension and preset, their registries or the Baton hook skill
+  wrappers, if the meaning stays the same? → A: No. Any change to
+  `.specify/extensions.yml`, to any file under `.specify/extensions/` or
+  `.specify/presets/`, or to a Baton hook skill wrapper stops that upstream for a manual,
+  reviewed update. Ordinary upstream prompts still update automatically. Registry
+  timestamps are normalized by `sync`, not tolerated by the check (FR-031). The repository
+  owner explicitly approved this conservative boundary, which replaces the earlier
+  contract wording that allowed reformatting and timestamp differences.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -187,6 +196,9 @@ reproducibility check and the full local gate with no other edits.
 - An upstream release adds or removes a file outside Spec Kit's unprotected `.specify/`
   paths, for example a new ATV agent or skill: no draft PR; the upstream is reported as
   blocked (`E_PATH_POLICY`) for a manual, reviewed update (FR-031).
+- An upstream release changes the format of a Baton-bound file, such as the hook
+  configuration, a registry, the Baton preset or a hook skill wrapper: no draft PR; the
+  upstream is blocked (`E_PATH_POLICY`) for a manual, reviewed update (FR-031).
 - Upstream content adds an unlicensed file, an excluded component or a dangling
   reference: validation fails and the issue reports it.
 - Network or registry outages stop detection or generation: no branch or PR changes; the
@@ -295,11 +307,20 @@ reproducibility check and the full local gate with no other edits.
   close that PR, and MUST NOT infer a pin from editable fields such as the PR title. The
   upstream stays blocked until a maintainer restores the marker.
 - **FR-031**: A candidate MAY add or remove lock rows and files only for Spec Kit under
-  `.specify/`, excluding `.specify/extensions.yml`, `.specify/extensions/` and
-  `.specify/memory/`. Any other addition or removal, including ATV, pack and `.github`
-  agent, skill or hook files, MUST block that upstream for a manual, reviewed update and
-  be reported in the tracking issue. Existing owned rows MAY update their content only;
-  their install target, packs and provenance MUST NOT change.
+  `.specify/`, excluding `.specify/extensions.yml`, `.specify/extensions/`,
+  `.specify/presets/` and `.specify/memory/`. Any other addition or removal, including
+  ATV, pack and `.github` agent, skill or hook files, MUST block that upstream for a
+  manual, reviewed update and be reported in the tracking issue. Existing owned rows MAY
+  update their content only; their install target, packs and provenance MUST NOT change.
+  Trusted Baton-bound files MUST keep their exact base bytes: the hook configuration
+  `.specify/extensions.yml`, every file under `.specify/extensions/` and
+  `.specify/presets/` (including both `.registry` files), and the Baton hook skill
+  wrappers. Any change to them, including whitespace, reformatting or a registry
+  timestamp, MUST block that upstream for a manual, reviewed update. Registry
+  `installed_at` and `updated_at` timestamps are normalized deterministically by `sync`
+  to the base values, so an otherwise unchanged registry reproduces its base bytes; the
+  verifier tolerates no timestamp or other semantic difference. Ordinary upstream
+  prompts, skills and other owned files outside these paths still update automatically.
 
 #### Reporting
 

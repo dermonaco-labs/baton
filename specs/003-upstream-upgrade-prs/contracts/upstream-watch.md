@@ -149,27 +149,28 @@ result. A broken binding is `E_PATH_POLICY`:
   rendered from the candidate lock.
 - **Spec Kit requirements.** `baton/upstream/specify-cli.requirements.in` is exactly
   `specify-cli==<version>` and a newline. `baton/upstream/specify-cli.requirements.txt`
-  is written, has no carriage return, and its SHA-256 equals
-  `upstreams.speckit.requirements_sha256`. Each line is a requirement pinned with `==`
+  is written, contains only printable ASCII characters and newlines, and its SHA-256 equals
+  `upstreams.speckit.requirements_sha256`. Each line, with ASCII spaces trimmed, is a
+  requirement pinned with `==`
   (optionally with environment markers) and continued by `--hash=sha256:` lines, or a
   blank or comment line outside a requirement. It contains no URL or direct reference
   and pins `specify-cli==<version>`.
 - **Fixed outputs.** The lock, the upstream diff and both requirements files cannot be
   deleted.
 - **Baton-sourced files.** For each written row with `x-baton-source`, the source must
-  exist in the base with the recorded hash. A Spec Kit skill wrapper (`SKILL.md`) keeps
-  the base wrapper's frontmatter, names its directory, carries the source's description,
-  and has the source's body, optionally after one generated heading. Any other such file
-  equals its source byte for byte.
-- **Baton extension and preset.** Files under `.specify/extensions/baton/` and
-  `.specify/presets/baton-templates/` equal their sources in `baton/speckit-extension/`
-  (through their `x-baton-source` rows) and `baton/speckit-preset/`. The `.registry`
-  files equal the base apart from an
-  `installed_at` timestamp, and register the Baton entry with the hash of its trusted
-  manifest, enabled. Any other written file in `.specify/extensions/` or
-  `.specify/presets/` is rejected.
-- **Hook registration.** `.specify/extensions.yml` may be reformatted but must parse to
-  the base content.
+  exist in the base with the hash recorded in `x-baton-source-sha256`.
+- **Trusted files keep their base bytes.** The trusted files are
+  `.specify/extensions.yml`, everything under `.specify/extensions/` and
+  `.specify/presets/` (including both `.registry` files), and every file with an
+  `x-baton-source` row in the base or candidate lock, which includes the Baton hook skill
+  wrappers. A written trusted file must equal its base bytes exactly; a new file under a
+  trusted path and the deletion of a trusted path are rejected. No YAML, frontmatter or
+  registry content is interpreted, so whitespace, line-ending, comment, reformatting,
+  heading and timestamp changes are all rejected. `sync` keeps the base registry
+  `installed_at` and `updated_at` timestamps when the registry is otherwise unchanged, so
+  a legitimate candidate reproduces the base bytes.
+- **Error causes.** When a binding cannot be checked, the error keeps the failure's name
+  and message, reduced to printable ASCII and at most 200 characters.
 
 Some files are deliberately left unbound because they are upstream content or
 upstream-private state that the draft PR reviewer checks:
@@ -178,8 +179,8 @@ upstream-private state that the draft PR reviewer checks:
   `.specify/memory/.constitution-template.json`;
 - regenerated Spec Kit and ATV prompts.
 
-A legitimate upstream format change in a bound file therefore blocks the candidate and
-takes the manual route (FR-031).
+A legitimate upstream change to a trusted file, including a format change, therefore
+blocks the candidate and takes the manual route (FR-031).
 
 ## Candidate artifacts
 
