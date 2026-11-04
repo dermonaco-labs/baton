@@ -596,12 +596,12 @@ export function lockDiffIssues(id, base, candidate, latest, context = {}) {
 
 /**
  * Verify an untrusted candidate against the trusted plan, the base lock, the base tree's tracked paths and, through
- * `baseFile`, the base commit's bytes for every cross-file binding (see candidate-bindings).
+ * `baseFile` and `baseMode`, the base commit's bytes and git modes for every cross-file binding (see candidate-bindings).
  * @param {{plan:UpstreamPlan,manifest:any,files:Map<string,{bytes:Buffer,symlink:boolean}>,baseLock:any,
- *   baseTree:Iterable<string>,baseFile:(path:string)=>Buffer|null}} input
+ *   baseTree:Iterable<string>,baseFile:(path:string)=>Buffer|null,baseMode:(path:string)=>string|null}} input
  * @returns {{digest:string,manifest:Manifest,lock:any}}
  */
-export function verifyCandidate({ plan, manifest, files, baseLock, baseTree, baseFile }) {
+export function verifyCandidate({ plan, manifest, files, baseLock, baseTree, baseFile, baseMode }) {
   const reject = (/** @type {string} */ message) => fail('E_CANDIDATE_VERIFY', `${plan.upstream.id}: ${message}`);
   const latest = plan.upstream.latest;
   if (plan.action !== 'generate' || !latest) throw reject(`plan action ${plan.action} has no candidate`);
@@ -652,7 +652,8 @@ export function verifyCandidate({ plan, manifest, files, baseLock, baseTree, bas
   /** @type {string[]} */
   let bindings;
   try {
-    bindings = bindingIssues({ id, manifest, files, baseLock, lock, lockBytes: lockFile.bytes, version: latest.version, baseFile });
+    bindings = bindingIssues({ id, manifest, files, baseLock, lock, lockBytes: lockFile.bytes, version: latest.version, baseFile,
+      baseMode });
   } catch (error) {
     bindings = [`candidate bindings cannot be checked (${errorCause(error)})`];
   }

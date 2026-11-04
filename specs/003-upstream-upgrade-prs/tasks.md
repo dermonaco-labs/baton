@@ -416,6 +416,20 @@ Acceptance selectors are unchanged, and no registered command or assertion is we
 
 ---
 
+## Phase 13: Review 6 fixes (review.json F37–F39)
+
+Review 6 had no blockers. F37–F39 are fixed before the development PR without new scope:
+the [Trusted bindings](./contracts/upstream-watch.md#trusted-bindings) contract now states
+the base-tree mode binding and the exact cause bound. Acceptance selectors are unchanged,
+and no registered command or assertion is weakened.
+
+- [X] T068 [US1] F38 (FR-012, FR-031): `bindingIssues` and `verifyCandidate` take a required `baseMode` reader. `package` and `publish` read every base path and its git mode from one `git ls-tree -r -z <base>` listing, so a written trusted file must have its base tree mode, not the mode the manifest declares. A missing mode reader is rejected with `the trusted base mode reader is unavailable`. Red before the fix: the unit case for every trusted path with unchanged bytes and mode `100755` was not rejected, and the new integration case `trusted wrapper with unchanged bytes made executable` published (actual `undefined`, expected `E_PATH_POLICY`).
+- [X] T069 [US1] F37: direct `bindingIssues` tests for a missing base reader, a missing base mode reader, an unavailable Baton source and a recorded source hash mismatch, for a SKILL wrapper and a non-SKILL sourced copy. They assert the exact issue for every written row that shares the source, plus the exact trusted-bytes and trusted-mode issues for each copy, with no other issue. The source branches already existed, so those assertions are characterization; the combined test was red only for the new mode reader.
+- [X] T070 [US1] F39: a cause longer than 200 characters is cut to 197 characters and `...`, so it never exceeds 200 (red before the fix: the cause kept 200 characters before `...`). `docs/07-updating.md` lists the requirements grammar causes and the remedy: extend `requirementsIssue` with a test in a normal PR, then run `sync --bump`.
+- [X] T071 Rerun the targeted selectors, then `npm run check` once on the corrected candidate, and update the acceptance evidence counts.
+
+---
+
 ## Dependencies & Execution Order
 
 - **Setup (T001)** → **Foundational (T002–T004)**.
@@ -435,6 +449,7 @@ Acceptance selectors are unchanged, and no registered command or assertion is we
   T061 runs last.
 - **Review 5 fixes (T062–T067)** depend on review 4 fixes. T062 comes before T063–T066.
   T067 runs last.
+- **Review 6 fixes (T068–T071)** depend on review 5 fixes. T071 runs last.
 - Within each story, the tests come first and their red evidence is recorded before
   implementation.
 
@@ -525,8 +540,8 @@ Post-merge operational evidence, not claimed here (analysis C2, E1):
 |-------|---------------------|
 | AC-US4-1 | Red: 1/1 failed because `parseBump` was not exported from `src/commands/sync.mjs` before T007; Green: 10 tests, 10 pass, 0 fail. |
 | AC-US4-2 | Red: on main `ae34a99`, `sync --bump atv=ac6d611…` wrote the lock, then `sync --check` exited 1 with `E_UPSTREAM_VERIFY` ("Lock pins differ from the vetted Spec Kit/ATV refs"); Green: on the feature tree the same bump, then `sync --check`, `lock verify` and `build --check` all exit 0, the diff touches only `baton.lock.json` and `docs/reference/upstream-diff.md` with no `src/` edit, and `atv=<unknown 40-hex>` (`E_UPSTREAM_VERIFY`) and `speckit=99.0.0` (unsatisfiable) both exit 1 with a clean `git status`. |
-| AC-US1-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, before that module existed (T014); Green: 33 tests, 33 pass, 0 fail. There were 15 before review 2, which added the tracked-path claim and base-tree cases (17). Review 3 added the row ownership policy suite (22). Review 4 added 9 (31): requirements binding, canonical lock with summary and diff document, wrapper binding, extension, preset and registry binding, hook registration, the YAML subset parser, case collisions, the sync row-shape drift test and repair metadata. Review 5 removed the 4 interpreting binding tests (wrapper, extension/preset/registry, hook registration and the YAML subset parser) and added 6: exact base bytes, hook poison, wrapper and registry poison, trusted-path addition, deletion and bounded cause, the committed tree, and the sync layout drift test. |
-| AC-US1-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 15 tests, 15 pass, 0 fail. There were 7 before review 1, which added the remote-rejected push, report fallbacks and the `E_DANGLING_REF` report (10). Review 2 added per-upstream digests with an ATV draft PR, a PR opened after detection, and the generic `E_PUSH` (13). Review 3 brought the count to 15. Review 4 added the T054 coherent tamper cases inside the existing tamper test, so the count is unchanged. Review 5 added the T066 poison cases there too (red at `be2b7ec`: each published). |
+| AC-US1-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, before that module existed (T014); Green: 34 tests, 34 pass, 0 fail. There were 15 before review 2, which added the tracked-path claim and base-tree cases (17). Review 3 added the row ownership policy suite (22). Review 4 added 9 (31): requirements binding, canonical lock with summary and diff document, wrapper binding, extension, preset and registry binding, hook registration, the YAML subset parser, case collisions, the sync row-shape drift test and repair metadata. Review 5 removed the 4 interpreting binding tests (wrapper, extension/preset/registry, hook registration and the YAML subset parser) and added 6: exact base bytes, hook poison, wrapper and registry poison, trusted-path addition, deletion and bounded cause, the committed tree, and the sync layout drift test. Review 6 added the direct source and reader binding test (34). |
+| AC-US1-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 15 tests, 15 pass, 0 fail. There were 7 before review 1, which added the remote-rejected push, report fallbacks and the `E_DANGLING_REF` report (10). Review 2 added per-upstream digests with an ATV draft PR, a PR opened after detection, and the generic `E_PUSH` (13). Review 3 brought the count to 15. Review 4 added the T054 coherent tamper cases inside the existing tamper test, so the count is unchanged. Review 5 added the T066 poison cases there too (red at `be2b7ec`: each published). Review 6 added the T068 executable-wrapper case there (red before the fix: published). |
 | AC-US1-3 | Red: 6 tests, 0 pass, 6 fail against the old workflow before T018; Green: 7 tests, 7 pass, 0 fail, including `runs-on: ubuntu-latest` per job. Review 3 added the docs drift test, and review 4 extended it to the closed marker (red at `6733578`: 1 test, 0 pass, 1 fail). |
 | AC-US2-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, the same pre-module red run as AC-US1-1 (before T014, T023); Green: 4 tests, 4 pass, 0 fail. |
 | AC-US3-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, the same pre-module red run as AC-US1-1 (before T014, T027); Green: 8 tests, 8 pass, 0 fail (6 before review 1; adds the `E_PR_MARKER` case; 7 before review 2; adds the restored-marker case, and the marker case now covers closed PRs without title trust). |

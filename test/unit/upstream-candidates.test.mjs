@@ -6,7 +6,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { sourceRoot } from '../helpers/index.mjs';
 import * as candidates from '../../src/lib/upstream-candidates.mjs';
-import { BOUND_ROOTS, HOOKS_PATH, bindingIssues } from '../../src/lib/candidate-bindings.mjs';
+import { BOUND_ROOTS, HOOKS_PATH, bindingIssues, errorCause } from '../../src/lib/candidate-bindings.mjs';
 import { diffDocument, formatBumpSummary } from '../../src/lib/lock-report.mjs';
 import { isSha, isVersion } from '../../src/lib/upstream.mjs';
 
@@ -61,6 +61,10 @@ const baseFile = (/** @type {string} */ path) => {
     return null;
   }
 };
+/** Trusted base tree modes, read the way the trusted jobs read the base commit. */
+const baseModes = new Map(execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], { cwd: sourceRoot, maxBuffer: 64 * 1024 * 1024 })
+  .toString('utf8').split('\0').filter(Boolean).map(entry => [entry.slice(entry.indexOf('\t') + 1), entry.split(' ')[0]]));
+const baseMode = (/** @type {string} */ path) => baseModes.get(path) ?? null;
 const REQUIREMENTS_TXT = 'baton/upstream/specify-cli.requirements.txt';
 const REQUIREMENTS_IN = 'baton/upstream/specify-cli.requirements.in';
 const DIFF = 'docs/reference/upstream-diff.md';
@@ -86,7 +90,7 @@ function seal(c) {
 
 /** @param {{plan:any,manifest:any,files:any,base:any}} c @param {Record<string,any>} [extra] */
 const verify = (c, extra = {}) => verifyCandidate({ plan: c.plan, manifest: c.manifest, files: c.files, baseLock: c.base,
-  baseTree, baseFile, ...extra });
+  baseTree, baseFile, baseMode, ...extra });
 
 /** Build a valid Spec Kit candidate against the real lock, regenerating one plain template. */
 function speckitCandidate(overrides = {}) {
@@ -589,6 +593,10 @@ describe('upstream candidates speckit', () => {
       assert.ok(row, `${path} has a lock row`);
       const base = /** @type {Buffer} */ (baseFile(path));
       accepted(rewrite(speckitCandidate(), path, base));
+      assert.equal(baseMode(path), '100644', path);
+      const executable = rewrite(speckitCandidate(), path, base);
+      executable.manifest.changed.find((/** @type {any} */ item) => item.path === path).mode = '100755';
+      rejects(executable, `${path} mode 100755 differs from its trusted base mode 100644; ${MANUAL}`);
       for (const bytes of [Buffer.concat([base, Buffer.from('\n')]), Buffer.from(String(base).replace(/\n/g, '\r\n'))]) {
         rejects(rewrite(speckitCandidate(), path, bytes), row['x-baton-source'] && !path.endsWith('/SKILL.md') ?
           `files ${path} differs from its Baton source` : `${path} differs from its trusted base bytes; ${MANUAL}`);
@@ -656,8 +664,8 @@ describe('upstream candidates speckit', () => {
     const lockBytes = Buffer.from(`${JSON.stringify(lock, null, 2)}\n`);
     /** @param {{changed?:string[],deleted?:string[]}} manifest @param {string} path */
     const issuesFor = ({ changed = [], deleted = [] }, path) => bindingIssues({ id: 'atv',
-      manifest: { changed: changed.map(file => ({ path: file })), deleted }, files: new Map(changed.map(file => [file,
-        { bytes: Buffer.from('new\n') }])), baseLock: lock, lock, lockBytes, version: null, baseFile })
+      manifest: { changed: changed.map(file => ({ path: file, mode: '100644' })), deleted }, files: new Map(changed.map(file => [file,
+        { bytes: Buffer.from('new\n') }])), baseLock: lock, lock, lockBytes, version: null, baseFile, baseMode })
       .filter(issue => issue.startsWith(path));
     for (const path of ['.specify/presets/evil/preset.yml', '.specify/extensions/evil/extension.yml',
       '.specify/presets/baton-templates/templates/extra.md']) {
@@ -671,12 +679,15 @@ describe('upstream candidates speckit', () => {
     assert.throws(() => thrown('reader\u0007 failed\u202e at x'), { code: 'E_PATH_POLICY',
       message: 'E_PATH_POLICY speckit: candidate bindings cannot be checked (Error: reader failed at x)' });
     assert.throws(() => thrown('y'.repeat(500)), { code: 'E_PATH_POLICY',
-      message: `E_PATH_POLICY speckit: candidate bindings cannot be checked (Error: ${'y'.repeat(193)}...)` });
+      message: `E_PATH_POLICY speckit: candidate bindings cannot be checked (Error: ${'y'.repeat(190)}...)` });
+    assert.equal(errorCause(new Error('y'.repeat(500))).length, 200);
+    assert.equal(errorCause(new Error('y'.repeat(193))), `Error: ${'y'.repeat(193)}`);
+    assert.equal(errorCause(new Error('y'.repeat(194))), `Error: ${'y'.repeat(190)}...`);
   });
 
-  test('the committed tree satisfies every binding with its own bytes', () => {
+  /** The committed tree as a candidate: every trusted path, both requirements files, the lock and the diff document. */
+  const committed = () => {
     const lock = baseLock();
-    assert.equal(String(baseFile(DIFF)), diffDocument(lock));
     lock['x-bump-summary'] = formatBumpSummary(baseLock(), lock);
     const lockBytes = Buffer.from(`${JSON.stringify(lock, null, 2)}\n`);
     /** @type {Map<string,{bytes:Buffer}>} */
@@ -684,9 +695,46 @@ describe('upstream candidates speckit', () => {
       .map(path => [path, { bytes: /** @type {Buffer} */ (baseFile(path)) }]));
     files.set(DIFF, { bytes: Buffer.from(diffDocument(lock)) });
     files.set('baton.lock.json', { bytes: lockBytes });
-    const manifest = { changed: [...files.keys()].map(path => ({ path })), deleted: [] };
-    assert.deepEqual(bindingIssues({ id: 'speckit', manifest, files, baseLock: baseLock(), lock, lockBytes,
-      version: lock.upstreams.speckit.version, baseFile }), []);
+    const manifest = { changed: [...files.keys()].map(path => ({ path, mode: baseMode(path) ?? '100644' })), deleted: [] };
+    return { id: 'speckit', manifest, files, baseLock: baseLock(), lock, lockBytes,
+      version: lock.upstreams.speckit.version, baseFile, baseMode };
+  };
+
+  test('the committed tree satisfies every binding with its own bytes', () => {
+    assert.equal(String(baseFile(DIFF)), diffDocument(baseLock()));
+    assert.deepEqual(bindingIssues(committed()), []);
+  });
+
+  test('Baton sources are bound to the base and readers are required: each broken binding has its exact issue', () => {
+    assert.deepEqual(bindingIssues({ ...committed(), baseFile: undefined }), ['the trusted base file reader is unavailable']);
+    assert.deepEqual(bindingIssues({ ...committed(), baseMode: undefined }), ['the trusted base mode reader is unavailable']);
+    const rows = baseLock().files.filter((/** @type {any} */ file) => file['x-baton-source']);
+    const wrapper = rows.find((/** @type {any} */ row) => row.stored_at.endsWith('/SKILL.md'));
+    const copy = rows.find((/** @type {any} */ row) => !row.stored_at.endsWith('/SKILL.md'));
+    assert.ok(wrapper && copy);
+    for (const row of [wrapper, copy]) {
+      const path = row.stored_at;
+      const source = row['x-baton-source'];
+      const sharing = committed();
+      const users = rows.filter((/** @type {any} */ other) => other['x-baton-source'] === source &&
+        sharing.files.has(other.stored_at)).map((/** @type {any} */ other) => other.stored_at).sort();
+      assert.ok(users.includes(path));
+      /** @param {(bytes:Buffer)=>Buffer|null} change */
+      const withSource = change => bindingIssues({ ...committed(), baseFile: (/** @type {string} */ file) => {
+        const bytes = baseFile(file);
+        return file === source && bytes ? change(bytes) : bytes;
+      } }).sort();
+      assert.deepEqual(withSource(() => null),
+        users.map((/** @type {string} */ user) => `${user}: Baton source ${JSON.stringify(source)} is unavailable in the base`));
+      assert.deepEqual(withSource(bytes => Buffer.concat([bytes, Buffer.from('\n')])),
+        users.map((/** @type {string} */ user) => `${user}: x-baton-source-sha256 is not the base ${source}`));
+      const changed = committed();
+      changed.files.set(path, { bytes: Buffer.concat([/** @type {Buffer} */ (baseFile(path)), Buffer.from('\n')]) });
+      assert.deepEqual(bindingIssues(changed), [`${path} differs from its trusted base bytes; ${MANUAL}`]);
+      const executable = committed();
+      executable.manifest.changed.find((/** @type {any} */ item) => item.path === path).mode = '100755';
+      assert.deepEqual(bindingIssues(executable), [`${path} mode 100755 differs from its trusted base mode 100644; ${MANUAL}`]);
+    }
   });
 
   test('the trusted layout is the one sync generates', () => {

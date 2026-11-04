@@ -27,7 +27,7 @@ const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 export function errorCause(error) {
   const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
   const text = message.replace(/[^\x20-\x7e]+/g, ' ').replace(/ +/g, ' ').trim();
-  return text.length > 200 ? `${text.slice(0, 200)}...` : text || 'unknown error';
+  return text.length > 200 ? `${text.slice(0, 197)}...` : text || 'unknown error';
 }
 
 /**
@@ -76,14 +76,18 @@ function requirementsIssue(bytes, version) {
 /**
  * Bindings between candidate files and trusted base bytes that path and row ownership alone cannot express.
  * Trusted files (the hook registration, everything under BOUND_ROOTS and every lock row with `x-baton-source`)
- * are compared as raw bytes with the base commit; nothing in them is interpreted. Base bytes come only from
- * `baseFile`, which reads the trusted base commit; a missing reader or base file fails.
- * @param {{id:string,manifest:{changed:Array<{path:string}>,deleted:string[]},files:Map<string,{bytes:Buffer}>,
- *   baseLock:any,lock:any,lockBytes:Buffer,version:string|null,baseFile?:(path:string)=>Buffer|null}} input
+ * are compared as raw bytes and git mode with the base commit; nothing in them is interpreted. Base bytes and
+ * modes come only from `baseFile` and `baseMode`, which read the trusted base tree; a missing reader or base file
+ * fails.
+ * @param {{id:string,manifest:{changed:Array<{path:string,mode?:string}>,deleted:string[]},
+ *   files:Map<string,{bytes:Buffer}>,baseLock:any,lock:any,lockBytes:Buffer,version:string|null,
+ *   baseFile?:(path:string)=>Buffer|null,baseMode?:(path:string)=>string|null}} input
  * @returns {string[]}
  */
-export function bindingIssues({ id, manifest, files, baseLock, lock, lockBytes, version, baseFile }) {
+export function bindingIssues({ id, manifest, files, baseLock, lock, lockBytes, version, baseFile, baseMode }) {
   if (typeof baseFile !== 'function') return ['the trusted base file reader is unavailable'];
+  if (typeof baseMode !== 'function') return ['the trusted base mode reader is unavailable'];
+  const modes = new Map(manifest.changed.map(item => [item.path, item.mode]));
   /** @type {Map<string,Buffer|null>} */
   const cache = new Map();
   /** @param {string} path */
@@ -144,6 +148,9 @@ export function bindingIssues({ id, manifest, files, baseLock, lock, lockBytes, 
     const base = trusted(path);
     if (!base) issues.push(`${path} is new under a trusted path; ${MANUAL}`);
     else if (!bytes.equals(base)) issues.push(`${path} differs from its trusted base bytes; ${MANUAL}`);
+    else if (modes.get(path) !== baseMode(path)) {
+      issues.push(`${path} mode ${modes.get(path)} differs from its trusted base mode ${baseMode(path)}; ${MANUAL}`);
+    }
   }
   return issues;
 }

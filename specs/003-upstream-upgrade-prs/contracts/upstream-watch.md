@@ -163,14 +163,17 @@ result. A broken binding is `E_PATH_POLICY`:
   `.specify/extensions.yml`, everything under `.specify/extensions/` and
   `.specify/presets/` (including both `.registry` files), and every file with an
   `x-baton-source` row in the base or candidate lock, which includes the Baton hook skill
-  wrappers. A written trusted file must equal its base bytes exactly; a new file under a
-  trusted path and the deletion of a trusted path are rejected. No YAML, frontmatter or
+  wrappers. A written trusted file must equal its base bytes exactly, and its git mode must
+  equal its mode in the base tree (read with `git ls-tree`), not the mode the manifest
+  declares; unchanged bytes made executable are rejected. A new file under a trusted path
+  and the deletion of a trusted path are rejected. No YAML, frontmatter or
   registry content is interpreted, so whitespace, line-ending, comment, reformatting,
   heading and timestamp changes are all rejected. `sync` keeps the base registry
   `installed_at` and `updated_at` timestamps when the registry is otherwise unchanged, so
   a legitimate candidate reproduces the base bytes.
 - **Error causes.** When a binding cannot be checked, the error keeps the failure's name
-  and message, reduced to printable ASCII and at most 200 characters.
+  and message, reduced to printable ASCII. A cause longer than 200 characters is cut to
+  197 characters followed by `...`, so a cause never exceeds 200 characters.
 
 Some files are deliberately left unbound because they are upstream content or
 upstream-private state that the draft PR reviewer checks:
