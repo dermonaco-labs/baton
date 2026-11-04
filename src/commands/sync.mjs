@@ -5,8 +5,8 @@ import YAML from 'yaml';
 import { validatePackClosure } from '../lib/packs.mjs';
 import { assertFrontmatter, repairAtv } from '../lib/repairs.mjs';
 import {
-  ATV_COMMIT, ATV_TREE, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_COMMIT, SPECKIT_VERSION, UpstreamError,
-  fetchAtv, fetchSource, prepareSpeckit, regenerateRequirements, run as runTool, sha256, workspace
+  ATV_REPO, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_REPO, UpstreamError,
+  fetchAtv, fetchSource, prepareSpeckit, regenerateRequirements, resolveCommit, resolveTag, sha256, workspace
 } from '../lib/upstream.mjs';
 
 const lockedRequirements = 'baton/upstream/specify-cli.requirements.txt';
@@ -296,28 +296,55 @@ export function prepareEntries(root, generated, atv, packs, repairs, oldLock, bu
   return { vendored: values, authored };
 }
 
-/** @param {VendoredEntry[]} entries @param {string} requirementsHash @param {string} atvCommit @param {string} atvTree @param {string} version @param {string} speckitCommit @param {Record<string,{version:string,repo:string,tag:string,commit:string,tree:string,license:string}>} [optional] */
-export function lockFile(entries, requirementsHash, atvCommit, atvTree, version, speckitCommit, optional = {}) {
+/**
+ * @typedef {{version:string,commit:string,requirements_sha256:string}} SpeckitPin
+ * @typedef {{version:string|null,commit:string,tree:string}} AtvPin
+ */
+
+/**
+ * Build the lock from the base lock's maintainer-owned fields and the resolved pins. A
+ * non-null ATV version means release tracking (`ref: v<x.y.z>`); null means main tracking.
+ * @param {VendoredEntry[]} entries
+ * @param {{base:any,speckit:SpeckitPin,atv:AtvPin}} pins
+ * @param {Record<string,{version:string,repo:string,tag:string,commit:string,tree:string,license:string}>} [optional]
+ */
+export function lockFile(entries, { base, speckit, atv }, optional = {}) {
   const named = Object.fromEntries(Object.entries(optional).map(([id, pin]) =>
     [id, Object.fromEntries(OPTIONAL_PIN_FIELDS.map(field => [field, pin[field]]))]));
+  const baseSpeckit = base?.upstreams?.speckit ?? {};
+  const baseAtv = base?.upstreams?.atv ?? {};
+  const release = atv.version ? `v${atv.version}` : null;
   return {
     schema: 1, generated_by: 'baton sync 0.1.4',
     'x-bump-summary': /** @type {string|undefined} */ (undefined),
     upstreams: {
       speckit: {
-        package: 'specify-cli', version, repo: 'github/spec-kit', tag: `v${version}`,
-        commit: speckitCommit, requirements: lockedRequirements, requirements_sha256: requirementsHash,
-        license: 'MIT', init_args: ['--integration', 'copilot', '--script', 'sh']
+        package: baseSpeckit.package ?? 'specify-cli', version: speckit.version, repo: 'github/spec-kit',
+        tag: `v${speckit.version}`, commit: speckit.commit, requirements: lockedRequirements,
+        requirements_sha256: speckit.requirements_sha256, license: 'MIT',
+        init_args: baseSpeckit.init_args ?? ['--integration', 'copilot', '--script', 'sh']
       },
       atv: {
-        package: 'atv-starterkit', version: null, repo: 'All-The-Vibes/ATV-StarterKit',
-        ref: 'main', commit: atvCommit, tree: atvTree, license: 'MIT',
-        note: 'pinned to main: v2.6.3 ships corrupted agent templates (fixed in f0a86ef)'
+        package: baseAtv.package ?? 'atv-starterkit', version: atv.version, repo: 'All-The-Vibes/ATV-StarterKit',
+        ...(release ? { tag: release } : {}), ref: release ?? 'main', commit: atv.commit, tree: atv.tree, license: 'MIT',
+        ...(baseAtv.note === undefined ? {} : { note: baseAtv.note })
       },
       ...named
     },
     files: entries.map(({ bytes, ...entry }) => entry)
   };
+}
+
+/**
+ * Parse an immutable bump request; returns null for any other value.
+ * @param {string} value
+ * @returns {{upstream:'speckit'|'atv',kind:'version'|'commit',value:string}|null}
+ */
+export function parseBump(value) {
+  const match = /^(speckit|atv)=(?:([0-9a-f]{40})|(\d+\.\d+\.\d+))$/.exec(value);
+  if (!match || (match[1] === 'speckit' && match[2])) return null;
+  return { upstream: /** @type {'speckit'|'atv'} */ (match[1]),
+    kind: match[2] ? 'commit' : 'version', value: match[2] ?? match[3] };
 }
 
 /** @param {any} previous @param {any} next */
@@ -327,7 +354,8 @@ export function formatBumpSummary(previous, next) {
     pinLines.push(`- Spec Kit: ${previous.upstreams.speckit.version} (\`${previous.upstreams.speckit.commit}\`) → ${next.upstreams.speckit.version} (\`${next.upstreams.speckit.commit}\`). [Releases](https://github.com/github/spec-kit/releases).`);
   }
   if (previous.upstreams.atv.commit !== next.upstreams.atv.commit) {
-    pinLines.push(`- ATV: \`${previous.upstreams.atv.commit}\` → \`${next.upstreams.atv.commit}\`. [Compare](https://github.com/All-The-Vibes/ATV-StarterKit/compare/${previous.upstreams.atv.commit}...${next.upstreams.atv.commit}).`);
+    const label = (/** @type {{version?:string|null,commit:string}} */ pin) => pin.version ? `${pin.version} (\`${pin.commit}\`)` : `\`${pin.commit}\``;
+    pinLines.push(`- ATV: ${label(previous.upstreams.atv)} → ${label(next.upstreams.atv)}. [Compare](https://github.com/All-The-Vibes/ATV-StarterKit/compare/${previous.upstreams.atv.commit}...${next.upstreams.atv.commit}).`);
   }
   const oldFiles = new Map(previous.files.map((/** @type {{stored_at:string,sha256:string}} */ file) => [file.stored_at, file.sha256]));
   const newFiles = new Map(next.files.map((/** @type {{stored_at:string,sha256:string}} */ file) => [file.stored_at, file.sha256]));
@@ -335,7 +363,7 @@ export function formatBumpSummary(previous, next) {
   const changed = [...newFiles.keys()].filter(path => oldFiles.has(path) && oldFiles.get(path) !== newFiles.get(path)).sort();
   const removed = [...oldFiles.keys()].filter(path => !newFiles.has(path)).sort();
   const command = previous.upstreams.speckit.commit !== next.upstreams.speckit.commit ?
-    `speckit=${next.upstreams.speckit.version}` : `atv=${next.upstreams.atv.commit}`;
+    `speckit=${next.upstreams.speckit.version}` : `atv=${next.upstreams.atv.version || next.upstreams.atv.commit}`;
   const list = (/** @type {string[]} */ paths) => paths.length ? paths.map(path => `- \`${path}\``).join('\n') : '- None';
   return `### Upstream bump (PR summary)\n\n${pinLines.join('\n') || '- Pins unchanged (re-synced upstream payload).'}\n\n` +
     `**Added (${added.length})**\n${list(added)}\n\n**Changed (${changed.length})**\n${list(changed)}\n\n` +
@@ -367,71 +395,70 @@ export function snapshotDrift(root, expected, check) {
   return drift;
 }
 
-/** @param {{cwd?:string,check?:boolean,bump?:string|null}} [options] */
-export function sync({ cwd = process.cwd(), check = false, bump = null } = {}) {
+/**
+ * Injectable upstream operations; tests replace network and tool access.
+ * @typedef {{regenerateRequirements:typeof regenerateRequirements,resolveTag:typeof resolveTag,
+ *   resolveCommit:typeof resolveCommit,fetchAtv:typeof fetchAtv,fetchSource:typeof fetchSource,
+ *   prepareSpeckit:typeof prepareSpeckit}} SyncDeps
+ */
+
+/** @param {{cwd?:string,check?:boolean,bump?:string|null,deps?:Partial<SyncDeps>}} [options] */
+export function sync({ cwd = process.cwd(), check = false, bump = null, deps = {} } = {}) {
+  /** @type {SyncDeps} */
+  const use = { regenerateRequirements, resolveTag, resolveCommit, fetchAtv, fetchSource, prepareSpeckit, ...deps };
   const root = resolve(cwd);
   const { packs, repairs } = packDefinitions(root);
-  const lockPath = join(root, 'baton.lock.json');
-  const oldLock = existsSync(lockPath) ? JSON.parse(readFileSync(lockPath, 'utf8')) : null;
-  if (check && !oldLock) throw new UpstreamError('E_SYNC_DRIFT', 'Missing baton.lock.json');
   if (check && bump) throw new UpstreamError('E_USAGE', '--check and --bump cannot be combined');
+  const request = bump === null ? null : parseBump(bump);
+  if (bump !== null && !request) throw new UpstreamError('E_USAGE', `Invalid --bump value: ${bump}`);
+  const lockPath = join(root, 'baton.lock.json');
+  if (!existsSync(lockPath)) throw new UpstreamError('E_SYNC_DRIFT', 'baton.lock.json is required');
+  const oldLock = JSON.parse(readFileSync(lockPath, 'utf8'));
+  const bumpSpeckit = request?.upstream === 'speckit';
+  const bumpAtv = request?.upstream === 'atv' ? request : null;
   const requirementsPath = join(root, ...lockedRequirements.split('/'));
-  const previousRequirements = bump?.startsWith('speckit=') ? readFileSync(requirementsPath) : null;
   const requirementsInput = join(root, 'baton', 'upstream', 'specify-cli.requirements.in');
-  const previousInput = previousRequirements ? readFileSync(requirementsInput) : null;
-  const requirementsHash = bump?.startsWith('speckit=') ?
-    regenerateRequirements(root, bump.slice('speckit='.length)) :
-    sha256(readFileSync(requirementsPath));
-  if (!bump && oldLock && oldLock.upstreams.speckit.requirements_sha256 !== requirementsHash) {
-    throw new UpstreamError('E_UPSTREAM_VERIFY', 'Hash-locked requirements differ from baton.lock.json');
-  }
-  const version = bump?.startsWith('speckit=') ? bump.slice('speckit='.length) : oldLock?.upstreams.speckit.version || SPECKIT_VERSION;
-  const atvCommit = bump?.startsWith('atv=') ? bump.slice(4) : oldLock?.upstreams.atv.commit || ATV_COMMIT;
-  if (!bump && (version !== SPECKIT_VERSION || atvCommit !== ATV_COMMIT ||
-      (oldLock?.upstreams.atv.tree && oldLock.upstreams.atv.tree !== ATV_TREE) ||
-      (oldLock?.upstreams.speckit.commit && oldLock.upstreams.speckit.commit !== SPECKIT_COMMIT))) {
-    throw new UpstreamError('E_UPSTREAM_VERIFY', 'Lock pins differ from the vetted Spec Kit/ATV refs; require an explicit --bump');
-  }
+  const previousRequirements = bumpSpeckit ? readFileSync(requirementsPath) : null;
+  const previousInput = bumpSpeckit ? readFileSync(requirementsInput) : null;
+  const restore = () => {
+    if (previousRequirements && previousInput) {
+      writeFileSync(requirementsPath, previousRequirements);
+      writeFileSync(requirementsInput, previousInput);
+    }
+  };
+  const version = bumpSpeckit && request ? request.value : oldLock.upstreams?.speckit?.version;
   const optionalIds = Object.keys(OPTIONAL_SOURCES)
     .filter(id => packs.some(pack => pack.files.some(file => file.from === id)));
   for (const id of optionalIds) {
     const pin = OPTIONAL_SOURCES[id];
-    const locked = oldLock?.upstreams?.[id];
+    const locked = oldLock.upstreams?.[id];
     if (locked && OPTIONAL_PIN_FIELDS.some(field => locked[field] !== pin[field])) {
       throw new UpstreamError('E_UPSTREAM_VERIFY', `Lock pin for ${id} differs from the vetted ${pin.repo} ${pin.tag} ref`);
     }
   }
   const work = workspace(root);
   try {
-    let atvTree = oldLock?.upstreams.atv.tree || ATV_TREE;
-    let speckitCommit = oldLock?.upstreams.speckit.commit || SPECKIT_COMMIT;
-    if (bump?.startsWith('speckit=')) {
-      const probe = join(work.path, 'speckit-pin');
-      mkdirSync(probe, { recursive: true });
-      runTool('git', ['init', '-q', probe]);
-      runTool('git', ['-C', probe, 'fetch', '--depth', '1', 'https://github.com/github/spec-kit',
-        `refs/tags/v${version}`]);
-      speckitCommit = runTool('git', ['-C', probe, 'rev-parse', 'FETCH_HEAD^{commit}']);
-      if (!/^[a-f0-9]{40}$/.test(speckitCommit)) {
-        throw new UpstreamError('E_UPSTREAM_VERIFY', `Spec Kit v${version} tag is not an immutable commit`);
-      }
+    const requirementsHash = bumpSpeckit ? use.regenerateRequirements(root, version) : sha256(readFileSync(requirementsPath));
+    if (!bumpSpeckit && oldLock.upstreams?.speckit?.requirements_sha256 !== requirementsHash) {
+      throw new UpstreamError('E_UPSTREAM_VERIFY', 'Hash-locked requirements differ from baton.lock.json');
     }
-    if (bump?.startsWith('atv=')) {
-      if (!/^[a-f0-9]{40}$/.test(atvCommit)) throw new UpstreamError('E_USAGE', 'ATV bump requires full commit SHA');
-      const probe = join(work.path, 'pin');
-      mkdirSync(probe, { recursive: true });
-      runTool('git', ['init', '-q', probe]);
-      runTool('git', ['-C', probe, 'fetch', '--depth', '1', 'https://github.com/All-The-Vibes/ATV-StarterKit', atvCommit]);
-      if (runTool('git', ['-C', probe, 'rev-parse', 'FETCH_HEAD^{commit}']) !== atvCommit) {
-        throw new UpstreamError('E_UPSTREAM_VERIFY', 'Requested ATV commit did not resolve');
-      }
-      atvTree = runTool('git', ['-C', probe, 'rev-parse', 'FETCH_HEAD^{tree}']);
+    const speckitCommit = bumpSpeckit ?
+      use.resolveTag({ work: work.path, name: 'Spec Kit', repo: SPECKIT_REPO, tag: `v${version}` }).commit :
+      oldLock.upstreams?.speckit?.commit;
+    /** @type {AtvPin} */
+    let atvPin = { version: oldLock.upstreams?.atv?.version ?? null,
+      commit: oldLock.upstreams?.atv?.commit, tree: oldLock.upstreams?.atv?.tree };
+    if (bumpAtv?.kind === 'version') {
+      atvPin = { version: bumpAtv.value,
+        ...use.resolveTag({ work: work.path, name: 'ATV', repo: ATV_REPO, tag: `v${bumpAtv.value}` }) };
+    } else if (bumpAtv) {
+      atvPin = { version: null, ...use.resolveCommit({ work: work.path, name: 'ATV', repo: ATV_REPO, commit: bumpAtv.value }) };
     }
-    const atv = fetchAtv({ work: work.path, commit: atvCommit, tree: atvTree });
+    const atv = use.fetchAtv({ work: work.path, commit: atvPin.commit, tree: atvPin.tree });
     /** @type {Record<string,string>} */
     const sources = {};
-    for (const id of optionalIds) sources[id] = fetchSource({ work: work.path, id });
-    const project = prepareSpeckit({ root, work: work.path, version });
+    for (const id of optionalIds) sources[id] = use.fetchSource({ work: work.path, id });
+    const project = use.prepareSpeckit({ root, work: work.path, version });
     const extensions = readFileSync(join(project, '.specify', 'extensions.yml'), 'utf8');
     const config = /** @type {{hooks?:Record<string,Array<{extension:string,enabled:boolean,optional:boolean,condition?:unknown}>>}} */ (YAML.parse(extensions));
     for (const [event, hooks] of Object.entries(config.hooks || {})) {
@@ -443,10 +470,11 @@ export function sync({ cwd = process.cwd(), check = false, bump = null } = {}) {
       }
     }
     const { vendored: entries, authored } = prepareEntries(root, project, atv, packs, repairs, oldLock, Boolean(bump), sources);
-    const lock = lockFile(entries, requirementsHash, atvCommit, atvTree, version, speckitCommit,
-      Object.fromEntries(optionalIds.map(id => [id, OPTIONAL_SOURCES[id]])));
-    if (bump && oldLock) lock['x-bump-summary'] = formatBumpSummary(oldLock, lock);
-    else if (oldLock?.['x-bump-summary']) lock['x-bump-summary'] = oldLock['x-bump-summary'];
+    const lock = lockFile(entries, {
+      base: oldLock, speckit: { version, commit: speckitCommit, requirements_sha256: requirementsHash }, atv: atvPin
+    }, Object.fromEntries(optionalIds.map(id => [id, OPTIONAL_SOURCES[id]])));
+    if (bump) lock['x-bump-summary'] = formatBumpSummary(oldLock, lock);
+    else if (oldLock['x-bump-summary']) lock['x-bump-summary'] = oldLock['x-bump-summary'];
     const expected = [
       ...entries.map(entry => ({ path: entry.stored_at, bytes: entry.bytes })),
       ...authored.map(entry => ({ path: entry.stored_at, bytes: entry.bytes })),
@@ -461,10 +489,7 @@ export function sync({ cwd = process.cwd(), check = false, bump = null } = {}) {
     }
     return { files: entries.length, changed: drift, lock };
   } catch (error) {
-    if (previousRequirements && previousInput) {
-      writeFileSync(requirementsPath, previousRequirements);
-      writeFileSync(requirementsInput, previousInput);
-    }
+    restore();
     throw error;
   } finally {
     work.cleanup();
@@ -480,7 +505,7 @@ export function run(cwd, argv = []) {
     else if (argv[index] === '--bump' && argv[index + 1]) bump = argv[++index];
     else return { errors: [{ code: 'E_USAGE', message: `Unknown sync argument: ${argv[index]}` }], exitCode: 2 };
   }
-  if (bump && !/^(?:speckit=\d+\.\d+\.\d+|atv=[a-f0-9]{40})$/.test(bump)) {
+  if (bump !== null && !parseBump(bump)) {
     return { errors: [{ code: 'E_USAGE', message: `Invalid --bump value: ${bump}` }], exitCode: 2 };
   }
   try {

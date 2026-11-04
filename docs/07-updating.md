@@ -48,23 +48,58 @@ without writes (requires `uv`, reachable package and git sources).
 For a deliberate bump, run one of:
 
 ```sh
-node .baton/bin/baton.mjs sync --bump speckit=<version>
+node .baton/bin/baton.mjs sync --bump speckit=<x.y.z>
 node .baton/bin/baton.mjs sync --bump atv=<commit-sha>
+node .baton/bin/baton.mjs sync --bump atv=<x.y.z>
 ```
 
-`sync` uses a temporary environment and hash-locked `specify-cli`
-requirements; it fetches ATV by commit and verifies the tree. It never
-executes ATV code. Inspect `docs/reference/upstream-diff.md`, the lock and
-every changed vendored file; review licenses, reference closure and repairs
-before submitting a PR. A bump changes lock pins, but the current sync
-implementation also checks vetted constants in `src/lib/upstream.mjs`; the
-maintainer must review and update those constants for the new pins before
-the next `sync --check` can succeed. Do not hand-edit vendored content.
-Run the configured local gate and `lock verify`; release/tagging is a
-separate human-reviewed step. The weekly `upstream-watch` workflow reports
-new upstreams and `sync --check` drift in one tracking issue; it **does not
-push, open a PR or bump anything**. See [troubleshooting](08-troubleshooting.md)
-for restricted registries.
+`atv=<commit-sha>` tracks ATV `main` (40-hex commit); `atv=<x.y.z>` tracks
+the stable release tag `v<x.y.z>`. `sync` uses a temporary environment and
+hash-locked `specify-cli` requirements; it fetches ATV by commit and
+verifies the tree. It never executes ATV code. Pins live only in
+`baton.lock.json`: a bump is one operation and `sync --check` must pass
+immediately afterwards without editing source constants. An invalid pin or
+failed bump exits non-zero and leaves the working tree unchanged. Inspect
+`docs/reference/upstream-diff.md`, the lock and every changed vendored
+file; review licenses, reference closure and repairs before submitting a
+PR. Do not hand-edit vendored content. Run the configured local gate and
+`lock verify`; release/tagging is a separate human-reviewed step. See
+[troubleshooting](08-troubleshooting.md) for restricted registries.
+
+## Maintainer: automated upgrade PRs
+
+The weekly (and manually dispatched) `upstream-watch` workflow detects a
+newer stable Spec Kit release and a newer ATV pin for the lock's tracked
+ref (`main` commit or stable release). For each upstream it regenerates
+the snapshot with `sync --bump` on the default-branch base, runs the full
+`npm run check`, and opens or updates **one draft PR per upstream** on
+`baton/upstream-upgrade/<upstream>`. It opens draft candidate PRs only;
+it never merges, approves, tags, releases or pushes to the default branch.
+Generation and validation run with a read-only token; a separate job
+re-verifies the generated files against the detected pins before it
+commits them, and runs no upstream or build tooling.
+
+Repeated runs are idempotent: an unchanged candidate is not pushed again.
+A branch with any human commit is never overwritten; the newer pin waits
+in the tracking issue. Closing a candidate PR without merging suppresses
+that pin until a newer one appears. A bot-only candidate made obsolete by
+the default branch is closed with a comment; its branch is kept. Failed
+generation or validation, link failures and blocked candidates are
+reported in the single `upstream-watch` tracking issue with a run link,
+and the workflow run fails.
+
+To review a candidate: read the PR's check summary, compare the pins and
+upstream links, read every changed agent and skill prompt in full, review
+licenses and `docs/reference/upstream-diff.md`, then mark the PR **Ready
+for review** to start the standard PR checks. Merge and any release remain
+manual, human decisions under the normal Baton gates.
+
+Dispatch with `preview: true` to detect, generate and validate without
+any branch, PR or issue write; results appear in the run summary. Runs on
+a non-default ref behave the same way. Opening PRs requires the owner to
+enable **Allow GitHub Actions to create and approve pull requests**
+(repository Settings → Actions → General); without it the run reports
+`E_PR_PERMISSION` in the tracking issue. The workflow never approves PRs.
 
 ## Maintainer: prepare a release
 

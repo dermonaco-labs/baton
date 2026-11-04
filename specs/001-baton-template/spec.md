@@ -148,6 +148,8 @@ manifest is rewritten.
    human-readable upstream diff summary is written for the PR.
 2. **Given** the weekly `upstream-watch` finds a newer upstream release or commit, **When** it runs,
    **Then** it opens or updates a single tracking issue. It never pushes changes.
+   *(Superseded by `specs/003-upstream-upgrade-prs/contracts/upstream-watch.md`: the watcher also
+   opens validated draft upgrade PRs on candidate branches; it never merges, tags or releases.)*
 3. **Given** an adopter runs `baton update --to vNext`, **When** a managed file was edited locally,
    **Then** that file is skipped and listed, with a `.baton/conflicts/<path>.new` copy for manual merge.
 
@@ -339,6 +341,8 @@ run only for tags or manual dispatch, conserving PR runner minutes.
   and update from the previous fixture.
 - **FR-072**: A scheduled `upstream-watch` (weekly) MUST detect new upstream versions and run
   `sync --check`, and it reports the result through a single issue.
+  *(Extended by `specs/003-upstream-upgrade-prs/contracts/upstream-watch.md`: draft upgrade PRs per
+  upstream, with failures reported in the same issue.)*
 - **FR-073**: A tag-triggered `release` MUST build the assets, publish them with checksums and
   attestations, and fail if the CHANGELOG has no section for the tag.
 

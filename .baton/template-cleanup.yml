@@ -5,6 +5,7 @@ remove:
   - test/
   - specs/001-baton-template/
   - specs/002-context-optimization-packs/
+  - specs/003-upstream-upgrade-prs/
   - packs/
   - baton/
   - baton.lock.json

@@ -3551,7 +3551,7 @@
       "format": "esm"
     },
     "src/lib/upstream.mjs": {
-      "bytes": 9624,
+      "bytes": 11270,
       "imports": [
         {
           "path": "node:crypto",
@@ -3614,7 +3614,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 28604,
+      "bytes": 29354,
       "imports": [
         {
           "path": "node:fs",
@@ -3861,7 +3861,7 @@
       "format": "esm"
     },
     "src/lib/maintainer-workflows.mjs": {
-      "bytes": 913,
+      "bytes": 1695,
       "imports": [
         {
           "path": "node_modules/yaml/dist/index.js",
@@ -4301,7 +4301,7 @@
       "format": "esm"
     },
     "src/commands/init.mjs": {
-      "bytes": 20456,
+      "bytes": 20497,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -5575,7 +5575,7 @@
           "bytesInOutput": 1818
         },
         "src/lib/upstream.mjs": {
-          "bytesInOutput": 5800
+          "bytesInOutput": 6671
         },
         "src/commands/lock.mjs": {
           "bytesInOutput": 2857
@@ -5584,7 +5584,7 @@
           "bytesInOutput": 1660
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 15183
+          "bytesInOutput": 15099
         },
         "src/lib/phases.mjs": {
           "bytesInOutput": 7007
@@ -5605,7 +5605,7 @@
           "bytesInOutput": 11000
         },
         "src/lib/maintainer-workflows.mjs": {
-          "bytesInOutput": 515
+          "bytesInOutput": 865
         },
         "src/commands/validate.mjs": {
           "bytesInOutput": 8076
@@ -5638,7 +5638,7 @@
           "bytesInOutput": 740
         },
         "src/commands/init.mjs": {
-          "bytesInOutput": 10749
+          "bytesInOutput": 10785
         },
         "src/commands/update.mjs": {
           "bytesInOutput": 6053
@@ -5653,7 +5653,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 426781
+      "bytes": 427954
     }
   }
 }

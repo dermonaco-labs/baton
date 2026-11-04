@@ -6,6 +6,19 @@ All notable changes to Baton are documented here. This follows
 
 ## [Unreleased]
 
+### Added
+
+- `baton sync --bump atv=<x.y.z>` pins ATV to a stable release tag; `atv=<commit-sha>`
+  keeps tracking `main`. Pins live only in `baton.lock.json`, so `sync --check` passes
+  right after a bump without editing source constants.
+- The maintainer `upstream-watch` workflow prepares one validated draft upgrade PR per
+  upstream and reports failures in its tracking issue. It never merges, tags or releases.
+
+### Changed
+
+- The shipped `baton.yml` workflow also runs when a draft PR is marked ready for review
+  (`pull_request` types `opened`, `synchronize`, `reopened`, `ready_for_review`).
+
 ## [0.1.4] - 2026-11-03
 
 ### Added

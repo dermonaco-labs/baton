@@ -12,7 +12,7 @@ summary: "Compound recorded for feature 001 after PR #32 merged with repository-
 read_first:
   - path: specs/001-baton-template/spec.md
     why: Review scope and acceptance criteria
-    sha256: af38490d3093545c1ea3c533f24ba09311eafce04de57fc2d510ec60f0e4ca9d
+    sha256: aa56ca485267c14d5951e170d86478cdf0b648eb45126882ab6376279288ab94
   - path: specs/001-baton-template/plan.md
     why: Review architecture and technical constraints
     sha256: 84dd6fe310b5696ba5beb088aa74c450fa13c3778bfc763d64c32bcbead37079
@@ -24,7 +24,7 @@ read_first:
     sha256: 5f75801603a27b1115807dcf912350e3bfd2e8496fa16b592e36dcbdd1889539
   - path: specs/001-baton-template/contracts/ci.md
     why: Review F39 hosted verification and restored link check
-    sha256: d90ecc2e0839d0314ae4df5a4591c40b6ce538549db8fbca3fa5ef9d97791fb5
+    sha256: 7b02344269e2f599c1a98e030b5eecddf694a2d1564727d62a1d9c68aedb1226
 do_not_read:
   - path: specs/001-baton-template/roadmap.md
     why: Future release scope
@@ -34,7 +34,7 @@ artifacts:
     sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
   - path: specs/001-baton-template/spec.md
     role: source-of-truth
-    sha256: af38490d3093545c1ea3c533f24ba09311eafce04de57fc2d510ec60f0e4ca9d
+    sha256: aa56ca485267c14d5951e170d86478cdf0b648eb45126882ab6376279288ab94
   - path: specs/001-baton-template/research.md
     role: evidence
     sha256: afdc07d728b0eb6c412c427ef9c976268fe0337f0b376b7c0c96c262a1572bda
@@ -61,7 +61,7 @@ artifacts:
     sha256: 96a4eca544c8a9bf345ccad8da0b384efbd0a9994e0400169f3bd78ed78e1423
   - path: specs/001-baton-template/contracts/ci.md
     role: source-of-truth
-    sha256: d90ecc2e0839d0314ae4df5a4591c40b6ce538549db8fbca3fa5ef9d97791fb5
+    sha256: 7b02344269e2f599c1a98e030b5eecddf694a2d1564727d62a1d9c68aedb1226
   - path: specs/001-baton-template/quickstart.md
     role: derived
     sha256: 286706951ad3f80db0ebf81084d49690b6f01b92a906b0517c811d68656aff04
@@ -970,6 +970,10 @@ decisions:
     by: ce-compound
     rationale: Explicit owner request supersedes the do_not_read hint for roadmap.md (same precedent as the RM19 decision). RM21 stale land to review CLI route (F111 option b), RM22 template-cleanup guard test (F122), RM23 author- and cycle-aware quick scope (F124), RM24 two-phase update (F126), RM25 BOM-tolerant gitattributes block (F127). v0.1 scope, tasks and acceptance checks unchanged.
     id: D173
+  - id: D174
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "Owner authorized (direct approval) a metadata-only hash refresh: feature 003 task T021 added supersession notes pointing to specs/003-upstream-upgrade-prs/contracts/upstream-watch.md in spec.md (US upstream scenario 2, FR-072) and contracts/ci.md (upstream-watch row and section); original 001 requirements text is unchanged."
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -1023,13 +1027,6 @@ gate:
   approved_by: null
   approved_at: null
 history:
-  - phase: review
-    at: 2026-09-29T01:34:27.193Z
-    by: implementation-session
-    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
-    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
-    commit: fd83bfa
-    x-action: refresh
   - phase: review
     at: 2026-09-29T01:44:20.081Z
     by: baton
@@ -1163,8 +1160,15 @@ history:
     x-worktree: 1748b5d70f028f928cb325eb4dd562cd373730d493c87b23d75614efb229f82f
     commit: "2965744"
     x-action: write
-updated_at: 2026-09-29T09:47:56.912Z
-updated_by: ce-compound
+  - phase: compound
+    at: 2026-11-04T12:40:02.555Z
+    by: implementation-session
+    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
+    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
+    commit: ae34a99
+    x-action: refresh
+updated_at: 2026-11-04T12:40:02.554Z
+updated_by: implementation-session
 review:
   findings_path: specs/001-baton-template/review.json
   blocking_findings: 0
