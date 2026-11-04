@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 003-upstream-upgrade-prs
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Review 4 fixes: F26 trusted bindings (requirements bytes to requirements_sha256, canonical lock, rendered summary and diff doc, no deletion of fixed outputs, Baton wrapper/extension/preset/registry/hooks bound to base sources) enforced by package and publish from written bytes and git base; F28 case collisions; F29 repair only with written file; F30 no SKILL exemption; F31 ROW_KEYS drift test; F32 closed-marker remedy docs+test; F27 evidence counts. E_DANGLING_REF still upstream; live evidence pending."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Review 5 of be2b7ec (base ba529db): F26-F32 verified fixed. New P1 F33 (YAML-subset parser differential bypasses extensions.yml binding), P2 F34 (replaceable hook-skill heading), P2 F35 (FR-031 narrowing not reflected in spec), P3 F36. 94/94 targeted tests, AC 31/15/7, build --check, diff --check clean."
 read_first:
   - path: specs/003-upstream-upgrade-prs/review.json
     why: Review 4 findings F26-F32 being answered
@@ -53,87 +53,9 @@ artifacts:
     sha256: fc63be399564e22ef7541d3b5afd9f863958f0e3b64fbab9c7de9fdd5abd0cf3
 entry_checked: []
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
-    met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-       the newest stable release; a moved main is informational only (0.6359ms)
-        ✔ any other tracked ref is an unsupported-ref blocker (1.2586ms)
-        ✔ upstream plans are independent and an ATV candidate cannot touch Spec Kit (6.925ms)
-      ✔ upstream candidates atv (10.0627ms)
-      ▶ upstream candidates speckit and atv row ownership policy
-        ✔ the committed lock satisfies every owned-row invariant for both upstreams (5.6886ms)
-        ✔ a regenerated owned file under every owned stored root and a new .specify file are accepted (48.7512ms)
-        ✔ repair metadata is never added or altered; a written row keeps or drops its base repair (24.8416ms)
-        ✔ no upstream adds or removes rows outside its growth root, and protected paths never grow or shrink (118.0515ms)
-        ✔ owned rows keep their install target, provenance, license and shape; hashes match the written bytes (950.6364ms)
-        ✔ new rows may not collide with each other or with kept rows in any letter case (5.229ms)
-        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (2.4308ms)
-        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (6.2298ms)
-      ✔ upstream candidates speckit and atv row ownership policy (1162.3943ms)
-      ▶ upstream candidates lifecycle
-        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.3258ms)
-        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (1.4686ms)
-        ✔ a human-edited candidate with a newer pin waits for the human (0.693ms)
-        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (2.3815ms)
-        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.6915ms)
-        ✔ a human close suppresses exactly that pin; a newer pin generates again (1.1098ms)
-        ✔ the automation obsolete close never suppresses (0.3922ms)
-        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (1.3838ms)
-      ✔ upstream candidates lifecycle (8.8108ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (236.76ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (96.5449ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (65.6496ms)
-        ✔ E_ANALYSIS_CRITICAL (3.7648ms)
-        ✔ E_ANALYSIS_MISSING (2.9147ms)
-        ✔ E_APPROVER_FORMAT (2.9825ms)
-        ✔ E_BLOCKING_OPEN (4.5963ms)
-        ✔ E_BODY_SECTIONS (2.7592ms)
-        ✔ E_BUDGET (5.33ms)
-        ✔ E_DENYLIST (3.5014ms)
-        ✔ E_EXIT_UNMET (2.5678ms)
-        ✔ E_GATE_PENDING (85.9019ms)
-        ✔ E_LANE_ESCALATE (943.5195ms)
-        ✔ E_LANE_MISMATCH (2.7464ms)
-        ✔ E_MISSING_ARTIFACT (3.31ms)
-        ✔ E_MODEL_NOT_ALLOWED (4.9039ms)
-        ✔ E_MULTIPLE_BATONS (5.8783ms)
-        ✔ E_NO_PREREG (4.6046ms)
-        ✔ E_OWNER (3.8405ms)
-        ✔ E_PR_MISSING (3.5505ms)
-        ✔ E_REVIEW_BLOCKING (208.3819ms)
-        ✔ E_REVIEW_MISSING (5.1145ms)
-        ✔ E_SCHEMA (3.6869ms)
-        ✔ E_STALE_ARTIFACT (4.3676ms)
-        ✔ E_TRANSITION (2.8282ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1405.9936ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (83.4784ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (30.5821ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (69.8672ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (7.9066ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (101.2888ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (79.9542ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (2.4727ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (22.6325ms)
-      ✔ ready with a blocking question is rejected (78.4257ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (111.7674ms)
-      ℹ tests 671
-      ℹ suites 9
-      ℹ pass 669
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 2
-      ℹ todo 0
-      ℹ duration_ms 341924.3397
+    evidence: specs/003-upstream-upgrade-prs/review.json
 open_questions: []
 decisions:
   - id: D-ATV-REF
@@ -466,18 +388,32 @@ decisions:
     decision: Phase 11 records genuine red runs against 6733578 (docs drift test 1 fail; five coherent tamper cases each published) separately from characterization unit tests written with the fix, and the acceptance counts are the actual selector results (31/15/7/4/8/10/1/10).
     rationale: Review 4 F27; no invented red history.
     by: speckit-implement
+  - id: D-REVIEW5-SEVERITY
+    decision: Record the extensions.yml parser differential as P1 (F33)
+    rationale: It bypasses a trusted binding introduced by this correction with an edit invisible in the PR diff, matching the F14/F22 class; unlike pre-existing, visible F26 (D-REVIEW4-SEVERITY), draft-PR review cannot catch it.
+    by: review-session
+  - id: D-REVIEW5-PRESETS
+    decision: D-REVIEW4-PRESETS is a narrowing within the owner-approved FR-031 intent, not a broadening; spec alignment tracked as F35
+    rationale: The protection fails closed and keeps new or removed trusted scaffolding manual; spec text must state it. No approval invented.
+    by: review-session
+  - id: D19
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: f2bb324197c140f53cb013b755abc07442ecdad4c12c6625d369e9ffd23ebe72
+    x-base-commit: ba529dbcd939d8ccbbad2d6a217d5e456a10178f
+    by: baton
+  - id: D20
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: be2b7ecb328428b42f16862c0f22e7ac788361ef
+    by: baton
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: analyze
-    at: 2026-11-04T12:56:17.925Z
-    by: implementation-session
-    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
-    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-    commit: ae34a99
-    x-action: refresh
   - phase: analyze
     at: 2026-11-04T12:56:18.333Z
     by: human:repository-owner
@@ -611,8 +547,15 @@ history:
     x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
     commit: "6733578"
     x-action: write
-updated_at: 2026-11-04T17:14:40.996Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-11-04T17:38:40.406Z
+    by: baton
+    writer: fc349b629fe48de111a1050f706498a02e35d3cf47eddbe0bf86cb880e5efec5
+    x-worktree: 1120c1fe4b49f379216b96f088cabbbc8d3a3bc5e0a57f65923e9d5dbcc38de1
+    commit: be2b7ec
+    x-action: write
+updated_at: 2026-11-04T17:38:40.400Z
+updated_by: baton-review
 risks:
   - id: R-UPSTREAM-EXEC
     text: Generation executes upstream Spec Kit code; it must run without write credentials and publication must not execute upstream content.
@@ -697,7 +640,7 @@ x-implementation-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec0
 x-implementation-cycle: 6eb01f6dd524623bfbb8071b1f9f4cad0d16984b40eb96c5b5dcf1deb036a8cf
 review:
   findings_path: specs/003-upstream-upgrade-prs/review.json
-  blocking_findings: 0
+  blocking_findings: 1
 ---
 ## Goal
 
