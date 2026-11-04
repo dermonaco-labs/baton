@@ -3,14 +3,15 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/003-upstream-upgrade-prs-review3-20261104/report.md",
-    "x-scope": "Independent re-review (review 3) of corrected candidate 056edbe against base 6d505f9 (review-2 head). Pinned tracked diff 6d505f9..056edbe = 17 files, no untracked; handoff scope CLI subject set (8 files) is a strict subset. Generated .baton/bin bundle verified by build --check. Findings F01-F21 preserved with updated dispositions; new findings F22-F25.",
-    "x-checks": "Targeted only, no full suite rerun: node --test on test/unit/upstream-candidates.test.mjs, test/integration/upstream-upgrade.test.mjs, test/unit/maintainer-workflows.test.mjs, test/unit/sync-bump.test.mjs = 77 pass 0 fail; build --check OK; bundle sha256 matches; git diff --check 6d505f9 clean. Orchestrator probes at 056edbe against the real base tree and lock: F14 policy accepts genuinely new paths and rejects tracked/unlocked claims; F22 reproduced (atv rows added at packs/optimize/files/x.md, packs/token-budget/files/x.md, packs/issues/files/new/x.md -> pathPolicyIssue null, lockDiffIssues []; own atv row path retargeted to .github/workflows/ci.yml -> lockDiffIssues []). actionlint, Linux CI and live workflow not run.",
+    "run_artifact": ".context/compound-engineering/ce-review/003-upstream-upgrade-prs-review4-20261104/report.md",
+    "x-scope": "Independent re-review (review 4) of corrected candidate 52e61ae (code 96580ae, metadata 52e61ae) against CLI base 056edbe (review-3 head). Pinned tracked diff 056edbe..52e61ae = 11 files (includes the review-3 receipt 7743fe9), no untracked; handoff scope CLI subject set (6 files) is a strict subset. build --check OK, no bundle change. Findings F01-F25 preserved; new findings F26-F32.",
+    "x-checks": "Targeted only, no full suite rerun: node --test on test/unit/upstream-candidates.test.mjs, test/integration/upstream-upgrade.test.mjs, test/unit/maintainer-workflows.test.mjs, test/unit/sync-bump.test.mjs = 85 pass 0 fail; build --check OK; git diff --check 056edbe clean; baton validate warnings only. Orchestrator probes at 52e61ae against the real lock and base tree: review-3 F22 cases now rejected (atv rows under packs/optimize, packs/token-budget, packs/issues -> growth policy; own row path retargeted to .github/workflows/ci.yml -> changes path); identity [] for both upstreams; Spec Kit content update, new .specify/templates file, .specify removal and packs/issues row update pass; sha256 change without written file rejected. Adversarial probes reproduced F26 (requirements hash/file unbound), F28, F29. actionlint, Linux CI and live workflow not run.",
     "x-review1": "Review 1 receipt f49cef668bd57a042621b4a24542d75f57c74d27 (base ae34a99, head ad5f4a6).",
-    "x-review2": "Review 2 receipt ee68e37b517a96f2f3e2aebf780c963ce899e14d (base ad5f4a6, head 6d505f9)."
+    "x-review2": "Review 2 receipt ee68e37b517a96f2f3e2aebf780c963ce899e14d (base ad5f4a6, head 6d505f9).",
+    "x-review3": "Review 3 receipt 7743fe9f4e9cea8f385f0a7821b34f815ad5afbf (base 6d505f9, head 056edbe)."
   },
-  "base": "6d505f968a62c46757add43a6d60cb5829c7a458",
-  "head": "056edbe63ffcff4e5d6d833cffe1a7b9c3dc4864",
+  "base": "056edbe63ffcff4e5d6d833cffe1a7b9c3dc4864",
+  "head": "52e61ae1b9f898e9965b47d4697798c1abdd08ab",
   "personas": [
     "correctness-reviewer",
     "testing-reviewer",
@@ -317,8 +318,8 @@
       "persona": "adversarial-reviewer",
       "confidence": 0.85,
       "task": "T042",
-      "disposition": "open",
-      "reason": "spec.md FR-012 MUST: a candidate may change only its own upstream files. newPathIssue checks only direct files of the stored root and the new path ancestors, and pack roots have no direct files, so an atv candidate can add rows under packs/optimize, packs/token-budget or packs/issues (owned by other upstreams). fileRowIssues compares only foreign rows, so a candidate may change path and packs of its own rows (and set them freely on new rows); path is the adopter install target (init.mjs:183-189, update.mjs:124) and lock verify enforces path/stored_at only for optional sources (lock.mjs:66-85). The publish leg is the trust boundary against a compromised generate leg, the same class as F14 (P1). Mitigated only by draft status, human review and CI sync --check after ready_for_review.",
+      "disposition": "fixed",
+      "reason": "Verified at 52e61ae (T049): ownRowIssue/growthIssue/targetOf freeze path, packs, upstream, upstream_path, license and Baton provenance, derive install targets from stored_at, forbid protected targets and allow growth only for Spec Kit under unprotected .specify/ (owner-approved FR-031). Probes: cross-pack adds and own-row retarget rejected; identity and content-only bumps of the real lock pass. Residual metadata gaps tracked as F26, F28, F29, F30.",
       "x-evidence": "Probe at 056edbe against real base tree and lock: atv rows at packs/optimize/files/x.md, packs/token-budget/files/x.md, packs/issues/files/new/x.md -> pathPolicyIssue null, lockDiffIssues []; own atv row (.github/agents/adversarial-reviewer.agent.md) with path retargeted to .github/workflows/ci.yml -> lockDiffIssues []. Current lock satisfies the derivable invariant (core root: path === stored_at and packs [core]; packs/<p>/files/: stored_at === packs/<p>/files/ + path and packs [p]) with 0 violations. Own-row path/packs check pre-existing since ad5f4a6; cross-pack root gap remains after the F14 fix.",
       "x-fix": "For every candidate-owned new or changed row, require path/packs derived from stored_at by the invariant above; treat packs/<p>/files ownership as the upstreams with base rows under that prefix (core for core roots) and reject roots the candidate does not own; apply the forbidden-path list to path as well as stored_at. Add unit and integration tamper cases (cross-pack new row, own-row path retarget, packs change) with zero writes."
     },
@@ -331,8 +332,8 @@
       "persona": "agent-native-reviewer",
       "confidence": 0.75,
       "task": "T046",
-      "disposition": "open",
-      "reason": "FR-030 makes a missing marker a hard stop, but the remedy table gives no marker syntax or source for its values (Baton-Pin, Baton-Base, Baton-Content trailers on the candidate commit), so a maintainer or agent cannot restore it from docs. The table also omits E_UNSUPPORTED_REF, E_SOURCE_MISMATCH, E_SOURCE_FORMAT and E_PUBLISH emitted by the code/data model; \"Rerun\" for E_CANDIDATE_VERIFY is wrong for an empty digest (wiring fault); E_PATH_POLICY gives no path forward for a conservatively blocked legitimate new upstream file. Merged agent-native (0.75) and project-standards (0.6).",
+      "disposition": "fixed",
+      "reason": "Verified (T051): marker template matches MARKER and renderMarker, trailer source documented, closed=obsolete variant, every emitted blocker code has a remedy, drift test. Edge case tracked as F32.",
       "x-fix": "Document the marker block template and where to read its values; add rows for the missing codes; split empty-digest (workflow wiring) from mismatch (rerun); state the manual path for blocked new files."
     },
     {
@@ -344,8 +345,8 @@
       "persona": "testing-reviewer",
       "confidence": 0.68,
       "task": "T047",
-      "disposition": "open",
-      "reason": "F21 non-array 2xx response falls open and is untested, and the request query (owner:branch, state=open) and head.ref filter are not asserted; the closed-PR E_PR_MARKER leg never runs publish to assert zero writes; the generic E_PUSH test lacks a zero non-GET assertion and an anchored excerpt; the F14 case table and F16 messages use substring matches.",
+      "disposition": "fixed",
+      "reason": "Verified (T050): branchPulls fails closed on non-array responses (E_SOURCE_FORMAT inside the detect per-upstream try, E_PUBLISH before push), exact query and zero-write tests, detect blockers carry the run URL.",
       "x-fix": "Fail closed on a non-array list response and test it; assert the request URL and filter; run publish for the closed-marker case asserting zero non-GET calls; tighten E_PUSH and F14/F16 assertions to exact reasons."
     },
     {
@@ -357,9 +358,101 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.65,
       "task": "T046",
-      "disposition": "open",
-      "reason": "The F21 pre-push PR query duplicates candidateState query logic and branchFor(id) is computed three times in publish; upstream-candidates.mjs re-exports the shared validators, so they have two import paths.",
+      "disposition": "fixed",
+      "reason": "Verified (T051): single branchPulls helper; validators imported from src/lib/upstream.mjs only, no re-export.",
       "x-fix": "Extract one branch-PR listing helper used by detect and publish; compute the branch once; import validators from the shared module only."
+    },
+    {
+      "disposition": "open",
+      "id": "F26",
+      "severity": "P2",
+      "title": "Spec Kit requirements_sha256 is not bound to the written requirements.txt, and fixed/requirements outputs may be deleted",
+      "file": "src/lib/upstream-candidates.mjs",
+      "line": 562,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.8,
+      "task": "T049",
+      "reason": "lockDiffIssues only checks that a Spec Kit requirements_sha256 is a digest; pathPolicyIssue accepts any write or deletion of FIXED_PATHS and the requirements files. A candidate whose lock contradicts its own requirements.txt, or which deletes requirements.in/.txt or docs/reference/upstream-diff.md, passes the trusted package/publish verifier and reaches a draft PR; only CI lock verify / sync --check after ready_for_review catch it. Not a new bypass (pre-existing since ad5f4a6; generate-leg content is inherently untrusted and human-reviewed), so P2 rather than P1, but the trusted verifier should fail closed on an internally inconsistent lock. Merged adversarial A1 (P1 0.85, downgraded) and A4 (P3).",
+      "x-evidence": "Adversarial probe with real lock, base tree and full verifyCandidate: requirements.txt with an added --index-url line and unchanged requirements_sha256 -> PASS; random requirements_sha256 without writing the file -> PASS; both requirements files deleted -> PASS; docs/reference/upstream-diff.md deleted -> PASS. Unit fixture test/unit/upstream-candidates.test.mjs:59 uses a requirements_sha256 that does not match its reqBytes.",
+      "x-fix": "If requirements.txt is written require requirements_sha256 === its sha256, else require it unchanged; reject deletion of FIXED_PATHS and requirements files; optionally require requirements.in === specify-cli==<version>; fix the fixture and add negative tests."
+    },
+    {
+      "disposition": "open",
+      "id": "F27",
+      "severity": "P2",
+      "title": "Acceptance evidence not updated although T052 is checked, and tasks.md cites a non-existent decision D-REVIEW3-BOUNDARY",
+      "file": "specs/003-upstream-upgrade-prs/tasks.md",
+      "line": 457,
+      "persona": "testing-reviewer",
+      "confidence": 0.85,
+      "task": "T052",
+      "reason": "T052 says to update the acceptance evidence counts, but rows AC-US1-1/2/3 still read 17/13/6 while the selectors now run 22/15/7 (all pass), and no red evidence is recorded for the new F22/F23/F24 tests. tasks.md:342 names decision D-REVIEW3-BOUNDARY, which does not exist; the owner decision is recorded only inside D15 rationale (a hash-refresh entry). Bookkeeping only, owner decision content itself is honest and role-only. Merged testing (0.85) and project-standards (0.8, P2).",
+      "x-fix": "Update AC-US1-1/2/3 green counts with history and red runs for the new cases; either record the owner decision as its own decision entry (role only, without inventing a gate approval) or cite D15 in tasks.md."
+    },
+    {
+      "disposition": "open",
+      "id": "F28",
+      "severity": "P3",
+      "title": "New candidate rows differing only in letter case are not rejected against each other",
+      "file": "src/lib/upstream-candidates.mjs",
+      "line": 339,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.75,
+      "task": "T049",
+      "reason": "newPathIssue case-folds against the base tree only; two new Spec Kit rows .specify/newdir/A.md and .specify/newdir/a.md both pass verifyCandidate (probe), giving colliding install targets on case-insensitive adopter filesystems.",
+      "x-fix": "Reject case-folded duplicates across all candidate changed paths and new rows; add a test."
+    },
+    {
+      "disposition": "open",
+      "id": "F29",
+      "severity": "P3",
+      "title": "An unwritten owned row may add or alter repair metadata",
+      "file": "src/lib/upstream-candidates.mjs",
+      "line": 467,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.65,
+      "task": "T049",
+      "reason": "For an unwritten ATV row ownRowIssue binds only sha256; a candidate can attach or change a repair object (probe PASS), falsifying lock provenance and the upstream-diff report. A sha256_upstream change and dropping a repair are legitimate (upstream changed or fixed while repaired bytes stay equal), so only adding or altering a repair is a defect; CI sync --check catches it later. Adversarial A3 narrowed from P2.",
+      "x-fix": "Require repair to be null or deep-equal to the base row repair unless Baton repair definitions changed (they cannot in a candidate); add tests."
+    },
+    {
+      "disposition": "open",
+      "id": "F30",
+      "severity": "P3",
+      "title": "Baton-sourced SKILL.md rows (speckit-baton-receive/handoff hooks) may change without their Baton source changing, unflagged",
+      "file": "src/lib/upstream-candidates.mjs",
+      "line": 475,
+      "persona": "security-reviewer",
+      "confidence": 0.6,
+      "task": "T049",
+      "reason": "The x-baton-source-sha256 binding skips keys ending /SKILL.md, so a Spec Kit candidate can rewrite the mandatory Baton hook skills with any bytes (probe: lockDiffIssues []). Their regeneration by Spec Kit is legitimate, so this is defense in depth: the change mixes into ordinary upstream churn in the draft PR.",
+      "x-fix": "List regenerated Baton-sourced skills as a separate reviewer item in the PR body, or verify the body derives from the x-baton-source bytes."
+    },
+    {
+      "disposition": "open",
+      "id": "F31",
+      "severity": "P3",
+      "title": "Row-shape policy duplicates sync row construction without a drift test",
+      "file": "src/lib/upstream-candidates.mjs",
+      "line": 45,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.65,
+      "task": "T051",
+      "reason": "ROW_KEYS, targetOf and INSTALL_PREFIX restate sync.mjs add() and lock.mjs rules; a sync row-shape change would fail every Spec Kit candidate in production while unit tests keep passing (they hard-code the same list). Fails closed, so P3.",
+      "x-fix": "Share the key list/stored_at mapping with sync.mjs or add a test asserting the committed lock rows equal ROW_KEYS and satisfy targetOf."
+    },
+    {
+      "disposition": "open",
+      "id": "F32",
+      "severity": "P3",
+      "title": "E_PR_MARKER remedy has no path when the PR has no bot commit; closed=obsolete variant not drift-tested",
+      "file": "docs/07-updating.md",
+      "line": 124,
+      "persona": "agent-native-reviewer",
+      "confidence": 0.6,
+      "task": "T051",
+      "reason": "Docs derive marker values from github-actions[bot] commit trailers; a human-opened PR on the candidate branch has none, and the docs do not say what to do. Drift test covers only the open template.",
+      "x-fix": "Add the no-bot-commit instruction (close with or without closed=obsolete, or use the wanted pin and current base) and test the closed variant."
     }
   ]
 }
