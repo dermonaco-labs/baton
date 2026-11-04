@@ -8,14 +8,16 @@ next_owner: baton-review
 status: ready
 model_role: review
 suggested_model: claude-opus-5.5
-summary: "Bookkeeping-only v0.1.4 release preparation at base 51d1f86 (PR #55): version 0.1.3 -> 0.1.4 on the PR #51 surfaces, all Unreleased entries promoted verbatim to 0.1.4 (2026-11-03) with Upstream pins unchanged, version-only bundle rebuild and generated metadata. Frozen template-cleanup.yml unchanged (Q1). Acceptance checks preregistered in D5 before edits. No review, PR, merge, tag or dispatch performed; fresh independent review is next."
+summary: "Bookkeeping-only v0.1.4 release preparation at base 51d1f86 (PR #55): version 0.1.3 -> 0.1.4, all Unreleased entries promoted to 0.1.4 (2026-11-03), unchanged upstream pins, rebuilt bundle and generated metadata. Owner answered Q1 to include cleanup bookkeeping, authorized the historical checksum refresh and separately approved its fresh gate. Acceptance checks preregistered in D5. Fresh independent review is next; no PR, merge, tag or dispatch performed."
 read_first:
   - path: .baton/quick/release-014.md
     why: Release-preparation intent, pinned diff base and relay state
   - path: .baton/quick/release-014.work.json
     why: Bookkeeping-only scope, preregistered acceptance checks, validation evidence and publication boundary
+    sha256: a9eb3abc02a41b5e64e8b94e389e01c526c21c798eee958336d34d439d309f34
   - path: CHANGELOG.md
     why: Dated v0.1.4 release notes and unchanged upstream pins
+    sha256: f567395408bb768c02873e1d222795f335ff198b2360bb1bd8de523c9e593a13
 artifacts: []
 entry_checked: []
 exit_criteria:
@@ -97,15 +99,7 @@ exit_criteria:
       ℹ skipped 2
       ℹ todo 0
       ℹ duration_ms 300929.8279
-open_questions:
-  - id: Q1
-    blocking: false
-    owner: repository owner
-    question: "Pre-existing: .baton/template-cleanup.yml is frozen by the recorded a7 artifact hash, so tracked .baton/quick records for release-013, partial-feature-attach-013 and release-014 and the committed release-013-7e5eb2c CE report directory are not in its remove list, contrary to the F122 pre-tag guidance; they shipped in v0.1.3 and would ship in v0.1.4. Before tagging v0.1.4: fix in a separate approved quick lane (cleanup entries plus an approved a7 checksum refresh), include that in this release with explicit approval, or accept as in v0.1.3?"
-    options:
-      - Separate approved quick lane before tagging
-      - Include in this release with explicit approval
-      - Accept for v0.1.4 as in v0.1.3
+open_questions: []
 decisions:
   - id: D1
     decision: Start a quick lane
@@ -146,6 +140,14 @@ decisions:
     decision: Run the mandatory configured check once through the supported work write
     rationale: "First supported write attempt (same command and environment) exited 1 after about 29 s: lint:md, lint:yaml (warnings only), typecheck, build --check, sync --check and lock verify passed, then validate failed E_STALE_ARTIFACT .baton/template-cleanup.yml, so E_EXIT_UNMET local-checks-pass and npm test did not run; the baton was not modified. Cause was this lane's own edit (D8), reverted with git checkout; global validate then exited 0. One justified retry runs the unchanged configured npm run check with process-scoped UV_DEFAULT_INDEX=<approved internal PyPI feed>. Only a successful CLI-generated receipt attests the run; a further failure is reported, not bypassed. No independent review, PR, merge, tag or workflow dispatch is authorized by this author task."
     by: release-014-work
+  - id: D10
+    decision: Include in this release with explicit approval
+    rationale: "Pre-existing: .baton/template-cleanup.yml is frozen by the recorded a7 artifact hash, so tracked .baton/quick records for release-013, partial-feature-attach-013 and release-014 and the committed release-013-7e5eb2c CE report directory are not in its remove list, contrary to the F122 pre-tag guidance; they shipped in v0.1.3 and would ship in v0.1.4. Before tagging v0.1.4: fix in a separate approved quick lane (cleanup entries plus an approved a7 checksum refresh), include that in this release with explicit approval, or accept as in v0.1.3?"
+    by: human:repository-owner
+  - id: D11
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Owner answered Q1 to include cleanup bookkeeping, authorized the a7 checksum refresh, and separately selected Approve the fresh cleanup/checksum gate. Cleanup SHA-256 3393afa501a48e053be76683d8588ef7de90accc16e5613eb025ea2753078a1f. node --test test/integration/adopt.test.mjs passed 16/16; a YAML-based assertion verified all 48 tracked quick/review maintenance records are covered by cleanup remove entries; global validate and git diff --check passed. Original author work receipt preceded these metadata-only cleanup additions; independent review and mandatory land checks must cover this new candidate. No merge or publication approval inferred.
+    by: implementation-session
 gate:
   required: false
   approved_by: null
@@ -158,8 +160,22 @@ history:
     x-worktree: bbd5004f069d8ef5cf20933a5b03c083f1059183c9da9e1be7a4de6fdfb14e1b
     commit: 51d1f86
     x-action: write
-updated_at: 2026-11-03T19:13:58.895Z
-updated_by: ce-work
+  - phase: work
+    at: 2026-11-04T07:42:57.276Z
+    by: human:repository-owner
+    writer: 8e1a8d9ee98645a87426425344fb1fc5931903cbab39a61776b68ac48bf492c2
+    x-worktree: bbd5004f069d8ef5cf20933a5b03c083f1059183c9da9e1be7a4de6fdfb14e1b
+    commit: d2f3f51
+    x-action: answer
+  - phase: work
+    at: 2026-11-04T07:44:00.441Z
+    by: implementation-session
+    writer: 8e1a8d9ee98645a87426425344fb1fc5931903cbab39a61776b68ac48bf492c2
+    x-worktree: bbd5004f069d8ef5cf20933a5b03c083f1059183c9da9e1be7a4de6fdfb14e1b
+    commit: d2f3f51
+    x-action: refresh
+updated_at: 2026-11-04T07:44:00.440Z
+updated_by: implementation-session
 risks:
   - id: R1
     text: Owner approval and merge must bind the exact final PR head. Only after merge may publication proceed through the pinned dry run and an owner-approved annotated v0.1.4 tag; neither action is performed by this release-preparation task.
@@ -180,9 +196,14 @@ install hint, sync generated_by, version-bound init/update tests, generated
 .baton/manifest.json and baton.lock.json. CHANGELOG promotes all Unreleased
 entries verbatim to 0.1.4 (2026-11-03) with an Upstream subsection and
 comparison links. npm run build regenerated the bundle (version bytes only),
-SHA-256 sidecar and metafile. The frozen template-cleanup.yml is unchanged.
+SHA-256 sidecar and metafile. Following the owner's Q1 answer,
+template-cleanup.yml now removes release-014 and previously uncovered
+release-013/partial-feature-attach-013 maintenance records and the release-013
+review directory. The owner authorized the historical a7 checksum refresh
+and separately approved its fresh gate; both are recorded through the CLI.
 Acceptance checks were preregistered in D5 before edits; evidence is in the
-work receipt decisions.
+work receipt decisions. The original work payload preserves the pre-Q1
+state and is historical input, not the current cleanup decision.
 
 ## Next steps
 1. `/baton-review` in a separate fresh checkout with its own identity
@@ -192,7 +213,7 @@ work receipt decisions.
 
 ## Watch out for
 - Generic 0.1.3 schema/context test fixtures are intentionally unchanged.
-- template-cleanup.yml is frozen by the a7 recorded hash; release-013,
-  partial-feature-attach-013 and release-014 quick records are not in its
-  remove list (open question Q1); not changed here.
+- The refreshed a7 artifact binding covers the owner-approved cleanup
+  additions; do not edit the cleanup list again without refreshing that
+  binding and obtaining its fresh gate approval.
 - Package feeds are process-environment only; never commit feed addresses.
