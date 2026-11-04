@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import YAML from 'yaml';
 import { sourceRoot, runCli } from '../helpers/index.mjs';
 import { maintainerWorkflowIssues } from '../../src/lib/maintainer-workflows.mjs';
-import { UPSTREAMS } from '../../src/lib/upstream-candidates.mjs';
+import { UPSTREAMS, renderMarker } from '../../src/lib/upstream-candidates.mjs';
 import { run as validate } from '../../src/commands/validate.mjs';
 
 const names = ['ci', 'smoke', 'upstream-watch', 'release'];
@@ -326,4 +326,20 @@ test('malformed frontmatter emits a GitHub error annotation', async () => {
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+describe('upstream watch workflow maintainer documentation', () => {
+  test('documents a remedy for every blocker code and the exact marker template', async () => {
+    const docs = await readFile(join(sourceRoot, 'docs/07-updating.md'), 'utf8');
+    const sources = await Promise.all(['src/maintainer/upstream-upgrade.mjs', 'src/lib/upstream-candidates.mjs']
+      .map(file => readFile(join(sourceRoot, file), 'utf8')));
+    const stageOnly = new Set(['E_INTERNAL', 'E_OUTPUT', 'E_USAGE']);
+    const codes = new Set(sources.join('\n').match(/'E_[A-Z_]+'/g)?.map(code => code.slice(1, -1))
+      .filter(code => !stageOnly.has(code)));
+    const documented = new Set([...docs.matchAll(/^\| `(E_[A-Z_]+)` \| [^|]+ \| [^|]+ \|$/gm)].map(match => match[1]));
+    assert.deepEqual([...codes].filter(code => !documented.has(code)).sort(), []);
+    const marker = renderMarker(/** @type {any} */ ({ upstream: '<upstream>', pin: '<Baton-Pin>', base: '<Baton-Base>',
+      digest: '<Baton-Content>' }));
+    assert.ok(docs.includes(`\n${marker}\n`), marker);
+  });
 });

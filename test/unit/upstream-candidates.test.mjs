@@ -6,16 +6,22 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { sourceRoot } from '../helpers/index.mjs';
 import * as candidates from '../../src/lib/upstream-candidates.mjs';
+import { isSha, isVersion } from '../../src/lib/upstream.mjs';
 
 const {
   BOT_EMAIL, BOT_NAME, ISSUE_NOTICE, branchFor, buildRunUrl, classifyBranch, commitMessage, compareVersions,
-  contentDigest, contentTrailer, currentPin, isNewer, isSha, isTag, isVersion, lockDiffIssues, makePin,
+  contentDigest, contentTrailer, currentPin, isNewer, isTag, lockDiffIssues, makePin,
   parseMarker, pathPolicyIssue, planUpstream, policyOf, prTitle, renderIssue, renderMarker, renderPrBody,
   sanitizeExcerpt, selectAtv, selectSpeckit, verifyCandidate
 } = candidates;
 
 const sha = (/** @type {string} */ c) => c.repeat(40);
 const hex = (/** @type {Buffer|string} */ bytes) => createHash('sha256').update(bytes).digest('hex');
+/** A lock row of exactly the shape sync writes for a generated `.specify/` file. */
+const specifyRow = (/** @type {string} */ path, /** @type {Buffer|string} */ bytes) => ({
+  license: 'MIT', packs: ['core'], path, repair: null, sha256: hex(bytes), sha256_upstream: hex(bytes), stored_at: path,
+  upstream: 'speckit', upstream_path: path
+});
 const baseLock = () => JSON.parse(readFileSync(join(sourceRoot, 'baton.lock.json'), 'utf8'));
 /** The committed tree's tracked paths, read the way the trusted jobs read the base commit. */
 const baseTree = new Set(execFileSync('git', ['ls-tree', '-r', '-z', '--name-only', 'HEAD'], { cwd: sourceRoot })
@@ -53,8 +59,10 @@ function speckitCandidate(overrides = {}) {
     requirements_sha256: 'c'.repeat(64) });
   lock['x-bump-summary'] = 'Bump summary';
   const target = base.files.find((/** @type {any} */ file) => file.upstream === 'speckit').stored_at;
-  const lockBytes = Buffer.from(`${JSON.stringify(lock, null, 2)}\n`);
   const fileBytes = Buffer.from('regenerated\n');
+  const row = lock.files.find((/** @type {any} */ file) => file.stored_at === target);
+  row.sha256 = row.sha256_upstream = hex(fileBytes);
+  const lockBytes = Buffer.from(`${JSON.stringify(lock, null, 2)}\n`);
   const reqBytes = Buffer.from('specify-cli==9.9.9 --hash=sha256:00\n');
   /** @type {Map<string,{bytes:Buffer,symlink:boolean}>} */
   const files = new Map([
@@ -70,7 +78,8 @@ function speckitCandidate(overrides = {}) {
     checks: [{ name: 'sync --bump', result: 'pass' }, { name: 'npm run check', result: 'pass' }],
     ...overrides
   };
-  return { base, lock, files, manifest, target, plan: plan({ latest }) };
+  return { base, lock, files, manifest, target, plan: plan({ latest }),
+    written: new Map(manifest.changed.map(item => [item.path, item.sha256])) };
 }
 
 describe('upstream candidates formats', () => {
@@ -232,9 +241,13 @@ describe('upstream candidates speckit', () => {
   });
 
   test('a candidate lock may change only its own pin fields, files and bump summary', () => {
-    const { base, lock } = speckitCandidate();
+    const { base, lock, written } = speckitCandidate();
     const latest = speckitLatest();
-    assert.deepEqual(lockDiffIssues('speckit', base, lock, latest), []);
+    const context = { baseTree, written };
+    assert.deepEqual(lockDiffIssues('speckit', base, lock, latest, context), []);
+    assert.deepEqual(lockDiffIssues('speckit', base, lock, latest),
+      [`files ${base.files.find((/** @type {any} */ file) => file.upstream === 'speckit').stored_at} changes sha256 ` +
+        'without a changed file']);
     const cases = [
       (/** @type {any} */ l) => { l.upstreams.atv.commit = sha('1'); },
       (/** @type {any} */ l) => { l.upstreams.speckit.init_args = []; },
@@ -246,17 +259,21 @@ describe('upstream candidates speckit', () => {
     for (const mutate of cases) {
       const changed = structuredClone(lock);
       mutate(changed);
-      assert.notDeepEqual(lockDiffIssues('speckit', base, changed, latest), [], mutate.toString());
+      assert.notDeepEqual(lockDiffIssues('speckit', base, changed, latest, context), [], mutate.toString());
     }
     const row = (/** @type {any} */ l, /** @type {string} */ upstream) =>
       l.files.find((/** @type {any} */ file) => file.upstream === upstream);
     const key = (/** @type {string} */ upstream) => row(base, upstream).stored_at;
+    const fresh = '.specify/templates/new-template.md';
     /** @type {Array<[string[], (l:any)=>void]>} */
     const rows = [
-      [[], l => { row(l, 'speckit').sha256 = 'a'.repeat(64); }],
-      [[], l => { l.files = l.files.filter((/** @type {any} */ file) => file !== row(l, 'speckit')); }],
-      [['files .specify/templates/new-template.md added: .specify/templates/new-template.md: the base tree is unavailable'],
-        l => { l.files.push({ ...row(l, 'speckit'), stored_at: '.specify/templates/new-template.md' }); }],
+      [[`files ${key('speckit')} sha256 does not match the written file`],
+        l => { row(l, 'speckit').sha256 = row(l, 'speckit').sha256_upstream = 'a'.repeat(64); }],
+      [[`files ${key('speckit')} removed: speckit adds or removes files only under .specify/`],
+        l => { l.files = l.files.filter((/** @type {any} */ file) => file !== row(l, 'speckit')); }],
+      [[`files ${fresh} added with upstream_path ${JSON.stringify(key('speckit'))}, not ${fresh}`],
+        l => { l.files.push({ ...row(l, 'speckit'), stored_at: fresh }); }],
+      [[`files ${fresh} added without a changed file`], l => { l.files.push(specifyRow(fresh, 'new\n')); }],
       [[`files ${key('atv')} (atv) changed`], l => { row(l, 'atv').sha256 = 'a'.repeat(64); }],
       [[`files ${key('optimize')} (optimize) changed`], l => { row(l, 'optimize').mode = '100755'; }],
       [[`files ${key('token-budget')} (token-budget) removed`],
@@ -271,14 +288,14 @@ describe('upstream candidates speckit', () => {
     for (const [expected, mutate] of rows) {
       const changed = structuredClone(lock);
       mutate(changed);
-      assert.deepEqual(lockDiffIssues('speckit', base, changed, latest), expected, mutate.toString());
+      assert.deepEqual(lockDiffIssues('speckit', base, changed, latest, context), expected, mutate.toString());
     }
-    const fresh = '.specify/templates/new-template.md';
     const added = structuredClone(lock);
-    added.files.push({ ...row(added, 'speckit'), stored_at: fresh });
-    assert.deepEqual(lockDiffIssues('speckit', base, added, latest, { baseTree, changed: new Set([fresh]) }), []);
-    assert.deepEqual(lockDiffIssues('speckit', base, added, latest, { baseTree, changed: new Set() }),
-      [`files ${fresh} added without a changed file`]);
+    added.files.push(specifyRow(fresh, 'new\n'));
+    assert.deepEqual(lockDiffIssues('speckit', base, added, latest,
+      { baseTree, written: new Map([...written, [fresh, hex('new\n')]]) }), []);
+    assert.deepEqual(lockDiffIssues('speckit', base, added, latest, { written: new Map([...written, [fresh, hex('new\n')]]) }),
+      [`files ${fresh} added: ${fresh}: the base tree is unavailable`]);
   });
 
   test('a candidate row cannot claim a tracked path or a directory holding files its upstream does not own', () => {
@@ -303,53 +320,73 @@ describe('upstream candidates speckit', () => {
         assert.equal(pathPolicyIssue(path, 'deleted', id, { baseLock: base, candidateLock, baseTree }),
           `${path} is not a locked upstream output`, `${id} delete ${path}`);
         const pin = id === 'speckit' ? latest : makePin('atv', { version: null, commit: sha('a'), tree: sha('c') });
-        assert.ok(lockDiffIssues(id, base, candidateLock, pin, { baseTree, changed: new Set([path]) })
+        assert.ok(lockDiffIssues(id, base, candidateLock, pin, { baseTree, written: new Map([[path, hex('x')]]) })
           .includes(`files ${path} added: ${reason}`), `${id} row ${path}`);
       }
     }
+    const speckitGrowth = 'is new; speckit adds or removes files only under .specify/';
+    const atvGrowth = 'is new; atv adds or removes files only through a Baton pack definition';
     /** @type {Array<[import('../../src/lib/upstream-candidates.mjs').UpstreamId, string, string|null]>} */
     const cases = [
-      ['speckit', '.github/skills/speckit-new/SKILL.md', null],
       ['speckit', '.specify/templates/new-template.md', null],
       ['speckit', '.specify/new.json', null],
-      ['atv', '.github/agents/new.agent.md', null],
-      ['atv', '.github/skills/atv-new/SKILL.md', null],
-      ['speckit', '.specify/memory/new.md', 'with .specify/memory/constitution.md, which speckit does not own'],
-      ['speckit', '.specify/memory/deep/new.md', 'with .specify/memory/constitution.md, which speckit does not own'],
-      ['speckit', '.github/skills/baton/references/x.md', 'with .github/skills/baton/SKILL.md, which speckit does not own'],
-      ['atv', '.github/skills/baton-land/x.md', 'with .github/skills/baton-land/SKILL.md, which atv does not own'],
-      ['atv', 'packs/learning/files/.atv/new.md', 'with packs/learning/files/.atv/.gitignore, which atv does not own'],
-      ['speckit', 'packs/optimize/files/.github/skills/new/SKILL.md', 'which speckit does not own'],
-      ['speckit', '.github/agents/new.agent.md', 'which speckit does not own'],
-      ['atv', '.specify/new.json', 'which atv does not own'],
+      ['speckit', '.specify/extensions.yml.d/new.yml', null],
+      ['speckit', '.github/skills/speckit-new/SKILL.md', speckitGrowth],
+      ['speckit', '.github/agents/new.agent.md', speckitGrowth],
+      ['speckit', '.github/skills/baton/references/x.md', speckitGrowth],
+      ['speckit', 'packs/optimize/files/.github/skills/new/SKILL.md', speckitGrowth],
+      ['speckit', 'packs/issues/files/new/x.md', speckitGrowth],
+      ['speckit', 'packs/newpack/files/x.md', speckitGrowth],
+      ['atv', '.github/agents/new.agent.md', atvGrowth],
+      ['atv', '.github/skills/atv-new/SKILL.md', atvGrowth],
+      ['atv', '.github/skills/baton-land/x.md', atvGrowth],
+      ['atv', '.github/hooks/new.json', 'is not a locked upstream output'],
+      ['atv', 'packs/learning/files/.atv/new.md', atvGrowth],
+      ['atv', 'packs/optimize/files/x.md', atvGrowth],
+      ['atv', 'packs/token-budget/files/x.md', atvGrowth],
+      ['atv', 'packs/issues/files/new/x.md', atvGrowth],
+      ['atv', 'packs/design/files/.github/agents/new.agent.md', atvGrowth],
+      ['atv', '.specify/new.json', atvGrowth],
+      ['speckit', '.specify/memory/new.md', 'is new; .specify/memory/ is protected'],
+      ['speckit', '.specify/memory/deep/new.md', 'is new; .specify/memory/ is protected'],
+      ['speckit', '.specify/extensions/new.yml', 'is new; .specify/extensions/ is protected'],
+      ['speckit', '.specify/extensions/baton/commands/new.md', 'is new; .specify/extensions/ is protected'],
       ['speckit', '.specify/memory/Constitution.md', 'differs only in letter case from a tracked file'],
       ['speckit', '.github/skills/BATON/x.md', 'differs only in letter case from a tracked directory'],
       ['speckit', '.specify/Templates/x.md', 'differs only in letter case from a tracked directory'],
       ['speckit', '.specify/templates', 'is a tracked directory'],
-      ['speckit', '.specify/memory/constitution.md/x.md', 'is below the tracked file .specify/memory/constitution.md'],
-      ['speckit', 'packs/newpack/files/x.md', 'is not under a stored root the base tree tracks']
+      ['speckit', '.specify/memory/constitution.md/x.md', 'is below the tracked file .specify/memory/constitution.md']
     ];
     for (const [id, path, reason] of cases) {
       const issue = pathPolicyIssue(path, 'changed', id, { baseLock: base, candidateLock: claim(base, id, path), baseTree });
-      if (reason === null) assert.equal(issue, null, `${id} ${path}`);
-      else assert.ok(issue?.includes(reason), `${id} ${path}: ${issue}`);
+      assert.equal(issue, reason === null ? null : `${path} ${reason}`, `${id} ${path}`);
     }
+    for (const path of ['.specify/../.github/workflows/x.yml', '.specify/./x.md', '.specify/x y.md']) {
+      const issue = lockDiffIssues('speckit', base, claim(base, 'speckit', path), latest,
+        { baseTree, written: new Map([[path, hex('x')]]) });
+      assert.ok(issue.some(text => text.startsWith(`files ${path} added: ${JSON.stringify(path)} `)), `${path}: ${issue}`);
+    }
+    const synthetic = (/** @type {string[]} */ paths, /** @type {string} */ path) => pathPolicyIssue(path, 'changed', 'speckit',
+      { baseLock: base, candidateLock: claim(base, 'speckit', path), baseTree: new Set(paths) });
+    assert.equal(synthetic(['.specify/x/unlocked.md'], '.specify/x/new.md'),
+      '.specify/x/new.md would be added in a directory with .specify/x/unlocked.md, which speckit does not own');
+    assert.equal(synthetic(['README.md'], '.specify/new.md'), '.specify/new.md is not under a stored root the base tree tracks');
     const own = base.files.find((/** @type {any} */ file) => file.upstream === 'speckit');
     const renamed = structuredClone(base);
     renamed.files = renamed.files.filter((/** @type {any} */ file) => file.stored_at !== own.stored_at);
     renamed.files.push({ ...own, stored_at: '.specify/memory/constitution.md' });
     assert.ok(lockDiffIssues('speckit', base, renamed, latest,
-      { baseTree, changed: new Set(['.specify/memory/constitution.md']) })
+      { baseTree, written: new Map([['.specify/memory/constitution.md', own.sha256]]) })
       .includes('files .specify/memory/constitution.md added: .specify/memory/constitution.md is tracked in the base ' +
         'tree without a base lock row'));
   });
 
-  test('a candidate that writes a claimed tracked path is rejected while a genuinely new skill verifies', () => {
+  test('a candidate that writes a claimed tracked path is rejected while a genuinely new .specify file verifies', () => {
     const write = (/** @type {ReturnType<typeof speckitCandidate>} */ c, /** @type {string} */ path) => {
       const lock = structuredClone(c.lock);
-      lock.files.push({ ...lock.files.find((/** @type {any} */ file) => file.upstream === 'speckit'), stored_at: path });
-      const lockBytes = Buffer.from(`${JSON.stringify(lock, null, 2)}\n`);
       const bytes = Buffer.from('replaced\n');
+      lock.files.push(specifyRow(path, bytes));
+      const lockBytes = Buffer.from(`${JSON.stringify(lock, null, 2)}\n`);
       c.files.set('baton.lock.json', { bytes: lockBytes, symlink: false });
       c.files.set(path, { bytes, symlink: false });
       c.manifest.changed[0].sha256 = hex(lockBytes);
@@ -361,10 +398,10 @@ describe('upstream candidates speckit', () => {
       assert.throws(() => verifyCandidate({ plan: c.plan, manifest: c.manifest, files: c.files, baseLock: c.base, baseTree }),
         (/** @type {any} */ error) => error?.code === 'E_PATH_POLICY' && error.message.includes(path), path);
     }
-    const fresh = write(speckitCandidate(), '.github/skills/speckit-new/SKILL.md');
+    const fresh = write(speckitCandidate(), '.specify/templates/new-template.md');
     assert.match(verifyCandidate({ plan: fresh.plan, manifest: fresh.manifest, files: fresh.files, baseLock: fresh.base,
       baseTree }).digest, /^[0-9a-f]{64}$/);
-    const blind = write(speckitCandidate(), '.github/skills/speckit-new/SKILL.md');
+    const blind = write(speckitCandidate(), '.specify/templates/new-template.md');
     assert.throws(() => verifyCandidate({ plan: blind.plan, manifest: blind.manifest, files: blind.files,
       baseLock: blind.base, baseTree: /** @type {any} */ (undefined) }), fails('E_PATH_POLICY'));
   });
@@ -542,6 +579,232 @@ describe('upstream candidates atv', () => {
     assert.equal(speckit.action, 'generate');
     assert.equal(atv.action, 'blocked');
     assert.equal(branchFor('atv'), 'baton/upstream-upgrade/atv');
+  });
+});
+
+describe('upstream candidates speckit and atv row ownership policy', () => {
+  /** A bumped candidate lock for `id` and its expected pin. @param {'speckit'|'atv'} id */
+  const bumped = id => {
+    const base = baseLock();
+    const lock = structuredClone(base);
+    if (id === 'speckit') {
+      const latest = speckitLatest();
+      Object.assign(lock.upstreams.speckit, { version: latest.version, tag: `v${latest.version}`, commit: latest.commit });
+      return { base, lock, latest };
+    }
+    const latest = makePin('atv', { version: null, commit: sha('a'), tree: sha('c') });
+    Object.assign(lock.upstreams.atv, { commit: latest.commit, tree: latest.tree });
+    return { base, lock, latest };
+  };
+  /** @param {any} lock @param {string} path */
+  const at = (lock, path) => lock.files.find((/** @type {any} */ file) => file.stored_at === path);
+  /** Issues of a candidate `mutate` builds; each written path records the row's sha256 unless a hash is given. */
+  const issuesOf = (/** @type {'speckit'|'atv'} */ id,
+    /** @type {(lock:any) => {write?:Array<string|[string,string]>,delete?:string[]}|void} */ mutate) => {
+    const { base, lock, latest } = bumped(id);
+    const effect = mutate(lock) ?? {};
+    const written = new Map((effect.write ?? []).map(item => typeof item === 'string' ?
+      [item, at(lock, item)?.sha256 ?? hex(item)] : item));
+    return lockDiffIssues(id, base, lock, latest, { baseTree, written, deleted: new Set(effect.delete ?? []) });
+  };
+  /** One owned row per upstream and stored root (Baton-sourced extension files aside), so every install root is used. */
+  const ownedRoots = (/** @type {'speckit'|'atv'} */ id) => {
+    const seen = new Map();
+    for (const row of baseLock().files.filter((/** @type {any} */ file) => file.upstream === id &&
+      !(file['x-baton-source'] && !file.stored_at.endsWith('/SKILL.md')))) {
+      const parts = row.stored_at.split('/');
+      const root = parts.slice(0, row.stored_at.startsWith('packs/') ? 5 : 2).join('/');
+      if (!seen.has(root)) seen.set(root, row.stored_at);
+    }
+    return [...seen.values()];
+  };
+
+  test('the committed lock satisfies every owned-row invariant for both upstreams', () => {
+    const base = baseLock();
+    for (const row of base.files) {
+      const match = /^packs\/([a-z0-9-]+)\/files\/(.+)$/.exec(row.stored_at);
+      assert.deepEqual([row.path, row.packs], match ? [match[2], [match[1]]] : [row.stored_at, ['core']], row.stored_at);
+    }
+    for (const id of /** @type {const} */ (['speckit', 'atv'])) assert.deepEqual(issuesOf(id, () => {}), [], id);
+    assert.ok(ownedRoots('speckit').length >= 8 && ownedRoots('atv').length >= 10);
+  });
+
+  test('a regenerated owned file under every owned stored root and a new .specify file are accepted', () => {
+    for (const id of /** @type {const} */ (['speckit', 'atv'])) {
+      for (const path of ownedRoots(id)) {
+        assert.deepEqual(issuesOf(id, lock => {
+          at(lock, path).sha256 = at(lock, path).sha256_upstream = hex(`new ${path}`);
+          return { write: [path] };
+        }), [], `${id} ${path}`);
+      }
+    }
+    const dirs = [...new Set([...baseTree].filter(path => path.startsWith('.specify/'))
+      .map(path => path.slice(0, path.lastIndexOf('/'))))]
+      .filter(dir => !/^\.specify\/(?:memory|extensions)(?:\/|$)/.test(dir));
+    assert.ok(dirs.length >= 8, dirs.join());
+    for (const dir of dirs) {
+      const path = `${dir}/baton-new-upstream-file.md`;
+      assert.deepEqual(issuesOf('speckit', lock => { lock.files.push(specifyRow(path, path)); return { write: [path] }; }), [],
+        path);
+    }
+    const repaired = ownedRoots('atv')[0];
+    assert.deepEqual(issuesOf('atv', lock => {
+      Object.assign(at(lock, repaired), { sha256: hex('repaired'), sha256_upstream: hex('raw'),
+        repair: { id: 'r1', reason: 'fix', upstream_issue: 'https://github.com/All-The-Vibes/ATV-StarterKit/issues/1' } });
+      return { write: [repaired] };
+    }), []);
+  });
+
+  test('no upstream adds or removes rows outside its growth root, and protected paths never grow or shrink', () => {
+    const packRoots = [...new Set([...baseTree].filter(path => /^packs\/[^/]+\/files\//.test(path))
+      .map(path => path.split('/').slice(0, 3).join('/')))];
+    assert.ok(['packs/optimize/files', 'packs/token-budget/files', 'packs/issues/files', 'packs/learning/files']
+      .every(root => packRoots.includes(root)), packRoots.join());
+    const targets = [...packRoots.map(root => `${root}/new/x.md`), ...packRoots.map(root => `${root}/.github/skills/n/SKILL.md`),
+      '.github/agents/new.agent.md', '.github/skills/new/SKILL.md', '.github/hooks/new.json'];
+    for (const id of /** @type {const} */ (['speckit', 'atv'])) {
+      const growth = id === 'speckit' ? 'speckit adds or removes files only under .specify/' :
+        'atv adds or removes files only through a Baton pack definition';
+      for (const path of targets) {
+        const target = /^packs\/([a-z0-9-]+)\/files\/(.+)$/.exec(path);
+        const row = { ...specifyRow(path, path), upstream: id, path: target ? target[2] : path,
+          packs: target ? [target[1]] : ['core'] };
+        assert.deepEqual(issuesOf(id, lock => { lock.files.push(row); return { write: [path] }; }),
+          [`files ${path} added: ${path} is new; ${growth}`], `${id} ${path}`);
+      }
+      for (const path of ownedRoots(id).filter(stored => !stored.startsWith('.specify/'))) {
+        assert.deepEqual(issuesOf(id, lock => {
+          lock.files = lock.files.filter((/** @type {any} */ file) => file.stored_at !== path);
+          return { delete: [path] };
+        }), [`files ${path} removed: ${growth}`], `${id} remove ${path}`);
+      }
+    }
+    for (const path of ['.specify/extensions.yml', '.specify/extensions/.registry', '.specify/extensions/baton/extension.yml',
+      '.specify/memory/.constitution-template.json']) {
+      const guarded = path.startsWith('.specify/memory/') ? '.specify/memory/' :
+        path === '.specify/extensions.yml' ? '.specify/extensions.yml' : '.specify/extensions/';
+      assert.deepEqual(issuesOf('speckit', lock => {
+        lock.files = lock.files.filter((/** @type {any} */ file) => file.stored_at !== path);
+        return { delete: [path] };
+      }), [`files ${path} removed: ${guarded} is protected`], path);
+    }
+    const template = baseLock().files.find((/** @type {any} */ file) => file.stored_at.startsWith('.specify/templates/'))
+      .stored_at;
+    const drop = (/** @type {any} */ lock) => { lock.files = lock.files.filter((/** @type {any} */ f) => f.stored_at !== template); };
+    assert.deepEqual(issuesOf('speckit', lock => { drop(lock); return { delete: [template] }; }), []);
+    assert.deepEqual(issuesOf('speckit', lock => { drop(lock); }), [`files ${template} removed without deleting the file`]);
+    assert.deepEqual(issuesOf('speckit', () => ({ delete: [template] })),
+      [`files ${template} is still locked although the file is deleted`]);
+    const moved = template.replace(/[^/]+$/, 'moved-template.md');
+    assert.deepEqual(issuesOf('speckit', lock => {
+      lock.files.push({ ...specifyRow(moved, 'moved') });
+      drop(lock);
+      return { write: [moved], delete: [template] };
+    }), []);
+    const skill = ownedRoots('speckit').find(path => path.startsWith('.github/skills/'));
+    const renamedSkill = skill.replace(/speckit-[^/]+/, 'speckit-renamed');
+    assert.deepEqual(issuesOf('speckit', lock => {
+      const row = at(lock, skill);
+      lock.files = lock.files.filter((/** @type {any} */ file) => file !== row);
+      lock.files.push({ ...row, stored_at: renamedSkill, path: renamedSkill, upstream_path: renamedSkill });
+      return { write: [renamedSkill], delete: [skill] };
+    }), [`files ${skill} removed: speckit adds or removes files only under .specify/`,
+      `files ${renamedSkill} added: ${renamedSkill} is new; speckit adds or removes files only under .specify/`]);
+  });
+
+  test('owned rows keep their install target, provenance, license and shape; hashes match the written bytes', () => {
+    const forbidden = ['.github/workflows/ci.yml', '.specify/memory/constitution.md', '.specify/extensions.yml',
+      '.baton/config.yml', '.baton/bin/baton.mjs', 'specs/003-upstream-upgrade-prs/handoff.md', 'AGENTS.md', 'package.json',
+      'src/cli.mjs'];
+    for (const id of /** @type {const} */ (['speckit', 'atv'])) {
+      for (const path of ownedRoots(id)) {
+        const old = at(baseLock(), path);
+        for (const target of forbidden.filter(target => target !== old.path)) {
+          assert.deepEqual(issuesOf(id, lock => { at(lock, path).path = target; }),
+            [`files ${path} changes path from ${JSON.stringify(old.path)} to ${JSON.stringify(target)}`], `${path} -> ${target}`);
+        }
+        for (const packs of [['core'], ['optimize'], ['token-budget'], ['issues'], [...old.packs, 'learning'], []]) {
+          if (JSON.stringify(packs) === JSON.stringify(old.packs)) continue;
+          assert.deepEqual(issuesOf(id, lock => { at(lock, path).packs = packs; }),
+            [`files ${path} changes packs from ${JSON.stringify(old.packs)} to ${JSON.stringify(packs)}`], `${path} ${packs}`);
+        }
+        for (const [field, value] of /** @type {Array<[string, any]>} */ ([['upstream_path', 'evil/x.md'],
+          ['license', 'GPL-3.0'], ['x-baton-source', 'baton/evil.md'], ['x-baton-source-sha256', 'e'.repeat(64)]])) {
+          if (old[field] === undefined) {
+            assert.deepEqual(issuesOf(id, lock => { at(lock, path)[field] = value; }), [`files ${path} changes its field set`]);
+          } else {
+            assert.deepEqual(issuesOf(id, lock => { at(lock, path)[field] = value; }),
+              [`files ${path} changes ${field} from ${JSON.stringify(old[field])} to ${JSON.stringify(value)}`], field);
+          }
+        }
+        assert.deepEqual(issuesOf(id, lock => { delete at(lock, path).repair; }), [`files ${path} changes its field set`]);
+        assert.deepEqual(issuesOf(id, lock => { at(lock, path).sha256 = hex('x'); return { write: [path] }; }),
+          [`files ${path} has no repair but sha256 differs from sha256_upstream`]);
+        assert.deepEqual(issuesOf(id, lock => { at(lock, path).sha256 = at(lock, path).sha256_upstream = 'X'; }),
+          [`files ${path} has an invalid sha256 or sha256_upstream`]);
+        assert.deepEqual(issuesOf(id, lock => { at(lock, path).sha256 = at(lock, path).sha256_upstream = hex('y'); }),
+          [`files ${path} changes sha256 without a changed file`]);
+        assert.deepEqual(issuesOf(id, lock => {
+          at(lock, path).sha256 = at(lock, path).sha256_upstream = hex('y');
+          return { write: [[path, hex('other')]] };
+        }), [`files ${path} sha256 does not match the written file`]);
+      }
+    }
+    const fresh = '.specify/templates/fresh.md';
+    /** @type {Array<[string, (row:any) => void]>} */
+    const fresher = [
+      [`installs at ".github/workflows/ci.yml" for ["core"], not ${fresh} for ["core"]`,
+        row => { row.path = '.github/workflows/ci.yml'; }],
+      [`installs at ${JSON.stringify(fresh)} for ["optimize"], not ${fresh} for ["core"]`, row => { row.packs = ['optimize']; }],
+      [`added with upstream_path "templates/fresh.md", not ${fresh}`, row => { row.upstream_path = 'templates/fresh.md'; }],
+      ['added with fields other than license, packs, path, repair, sha256, sha256_upstream, stored_at, upstream, upstream_path',
+        row => { row['x-baton-source'] = 'baton/x.md'; }],
+      ['has license "GPL-3.0", not "MIT"', row => { row.license = 'GPL-3.0'; }],
+      ['has an invalid repair', row => { row.repair = { id: 'r', reason: 'x', upstream_issue: 'u' }; }],
+      ['has no repair but sha256 differs from sha256_upstream', row => { row.sha256_upstream = hex('raw'); }],
+      ['sha256 does not match the written file', row => { row.sha256 = row.sha256_upstream = hex('other'); }]
+    ];
+    for (const [issue, mutate] of fresher) {
+      assert.deepEqual(issuesOf('speckit', lock => {
+        const row = specifyRow(fresh, 'fresh');
+        lock.files.push(row);
+        mutate(row);
+        return { write: [[fresh, hex('fresh')]] };
+      }), [`files ${fresh} ${issue}`], issue);
+    }
+    const atv = ownedRoots('atv')[0];
+    for (const repair of [{ id: 'r' }, { id: 'r', reason: 'x', upstream_issue: '' }, [], 'r',
+      { id: 'r', reason: 'x', upstream_issue: 'u', extra: 'y' }]) {
+      assert.deepEqual(issuesOf('atv', lock => { at(lock, atv).repair = repair; }), [`files ${atv} has an invalid repair`],
+        JSON.stringify(repair));
+    }
+    const speckit = ownedRoots('speckit')[0];
+    assert.deepEqual(issuesOf('speckit', lock => { at(lock, speckit).repair = { id: 'r', reason: 'x', upstream_issue: 'u' }; }),
+      [`files ${speckit} has an invalid repair`]);
+    const provenance = baseLock().files.filter((/** @type {any} */ file) => file['x-baton-source'] &&
+      !file.stored_at.endsWith('/SKILL.md'));
+    assert.ok(provenance.length >= 4);
+    for (const row of provenance) {
+      assert.deepEqual(issuesOf('speckit', lock => {
+        at(lock, row.stored_at).sha256 = at(lock, row.stored_at).sha256_upstream = hex('forged');
+        return { write: [row.stored_at] };
+      }), [`files ${row.stored_at} differs from its Baton source ${row['x-baton-source']}`], row.stored_at);
+    }
+  });
+
+  test('install targets outside the upstream install roots are rejected even for a base-locked row', () => {
+    const base = baseLock();
+    const latest = speckitLatest();
+    for (const path of ['.github/workflows/x.yml', '.baton/x.md', 'specs/x.md', 'packs/optimize/files/.baton/vendor/x.md']) {
+      const target = /^packs\/([a-z0-9-]+)\/files\/(.+)$/.exec(path);
+      const row = { ...specifyRow(path, 'old'), path: target ? target[2] : path, packs: target ? [target[1]] : ['core'] };
+      const trusted = structuredClone(base);
+      trusted.files.push(row);
+      const lock = structuredClone(trusted);
+      Object.assign(lock.upstreams.speckit, { version: latest.version, tag: `v${latest.version}`, commit: latest.commit });
+      assert.deepEqual(lockDiffIssues('speckit', trusted, lock, latest, { baseTree }),
+        [`files ${path} installs at ${row.path}, outside the upstream install roots`], path);
+    }
   });
 });
 

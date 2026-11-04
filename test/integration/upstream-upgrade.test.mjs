@@ -68,6 +68,7 @@ function remoteRef(fx, branch) {
 function mockGitHub(fx) {
   const state = {
     speckit: '9.9.9', speckitCommit: sha('9'), pypiBroken: false, denyPr: false, truncateCompare: false, nextPr: 100, nextIssue: 1,
+    /** A PR list response that is not a JSON array. @type {unknown} */ prList: undefined,
     atvCommit: fx.lock.upstreams.atv.commit, atvTree: fx.lock.upstreams.atv.tree,
     /** @type {any[]} */ prs: [], /** @type {any[]} */ issues: [], /** @type {any[]} */ comments: [],
     /** @type {Set<string>} */ labels: new Set(),
@@ -107,6 +108,7 @@ function mockGitHub(fx) {
       return res(200, { sha: state.atvCommit, commit: { tree: { sha: state.atvTree } } });
     }
     if (p === `${own}/pulls` && method === 'GET') {
+      if (state.prList !== undefined) return res(200, state.prList);
       return res(200, state.prs.filter(pr => `dermonaco-labs:${pr.head.ref}` === u.searchParams.get('head')).map(view));
     }
     if (p === `${own}/pulls` && method === 'POST') {
@@ -198,8 +200,11 @@ function simulateBump(fx, version, commit, { summary = true } = {}) {
   const requirements = `specify-cli==${version} --hash=sha256:${'0'.repeat(64)}\n`;
   Object.assign(lock.upstreams.speckit, { version, tag: `v${version}`, commit, requirements_sha256: hex(requirements) });
   if (summary) lock['x-bump-summary'] = `Spec Kit ${version}: 1 file regenerated.`;
+  const regenerated = `regenerated ${version}\r\n`;
+  const row = lock.files.find((/** @type {any} */ file) => file.stored_at === fx.target);
+  row.sha256 = row.sha256_upstream = hex(regenerated);
   write(fx.work, 'baton.lock.json', `${JSON.stringify(lock, null, 2)}\n`);
-  write(fx.work, fx.target, `regenerated ${version}\r\n`);
+  write(fx.work, fx.target, regenerated);
   write(fx.work, REQUIREMENTS, requirements);
 }
 
@@ -381,7 +386,7 @@ describe('upstream upgrade publish', () => {
         editManifest(m => { m.changed.find((/** @type {any} */ item) => item.path === 'baton.lock.json').sha256 = hex(bytes); });
       };
       const atvRow = fx.lock.files.find((/** @type {any} */ file) => file.upstream === 'atv');
-      /** @type {Array<[string,string,()=>boolean|void|Record<string,string>,RegExp?]>} */
+      /** @type {Array<[string,string,()=>boolean|void|Record<string,string>,(RegExp|string)?]>} */
       const cases = [
         ['tampered hash', 'E_CANDIDATE_VERIFY', () => writeFileSync(join(dir, 'files', fx.target), 'tampered\n')],
         ['symlink', 'E_CANDIDATE_VERIFY', () => {
@@ -422,7 +427,25 @@ describe('upstream upgrade publish', () => {
             const own = lock.files.find((/** @type {any} */ row) => row.upstream === 'speckit');
             lock.files.push({ ...own, stored_at: '.specify/memory/extra.md', sha256: hex('injected\n') });
           });
-        }, /with \.specify\/memory\/constitution\.md, which speckit does not own/]
+        }, 'speckit: .specify/memory/extra.md is new; .specify/memory/ is protected; files .specify/memory/extra.md ' +
+          'added: .specify/memory/extra.md is new; .specify/memory/ is protected'],
+        ['row adding below a pack root', 'E_PATH_POLICY', () => {
+          const path = 'packs/issues/files/new/x.md';
+          addFile(path);
+          editLock(lock => {
+            const own = lock.files.find((/** @type {any} */ row) => row.upstream === 'speckit');
+            lock.files.push({ ...own, stored_at: path, path: 'new/x.md', upstream_path: path, packs: ['issues'],
+              sha256: hex('injected\n'), sha256_upstream: hex('injected\n') });
+          });
+        }, 'speckit: packs/issues/files/new/x.md is new; speckit adds or removes files only under .specify/; ' +
+          'files packs/issues/files/new/x.md added: packs/issues/files/new/x.md is new; speckit adds or removes files ' +
+          'only under .specify/'],
+        ['owned row retargeted to a workflow', 'E_PATH_POLICY', () => editLock(lock => {
+          lock.files.find((/** @type {any} */ row) => row.stored_at === fx.target).path = '.github/workflows/ci.yml';
+        }), `speckit: files ${fx.target} changes path from ${JSON.stringify(fx.target)} to ".github/workflows/ci.yml"`],
+        ['owned row moved to an optional pack', 'E_PATH_POLICY', () => editLock(lock => {
+          lock.files.find((/** @type {any} */ row) => row.stored_at === fx.target).packs = ['optimize'];
+        }), `speckit: files ${fx.target} changes packs from ["core"] to ["optimize"]`]
       ];
       for (const [name, code, tamper, excerpt] of cases) {
         await packageStage(fx, gh, outputs.plan);
@@ -435,11 +458,80 @@ describe('upstream upgrade publish', () => {
         const published = await publishStage(fx, gh, outputs.plan, typeof env === 'object' ? env : {});
         const result = JSON.parse(published.outputs.results).speckit;
         assert.equal(result.blocker?.code, code, name);
-        if (excerpt) assert.match(result.blocker.excerpt, excerpt, name);
+        if (typeof excerpt === 'string') assert.equal(result.blocker.excerpt, `${code} ${excerpt}`, name);
+        else if (excerpt) assert.match(result.blocker.excerpt, excerpt, name);
         assert.equal(published.exitCode, 1, name);
         assert.equal(published.pushes.length, 0, name);
         assert.equal(gh.calls.slice(before).filter(call => call.method !== 'GET').length, 0, name);
         assert.equal(remoteRef(fx, BRANCH), null, name);
+      }
+    } finally {
+      fx.cleanup();
+    }
+  });
+
+  test('an ATV candidate cannot add pack-root rows or retarget its rows', async () => {
+    const fx = fixture();
+    try {
+      const gh = mockGitHub(fx);
+      gh.speckit = '1.0.11';
+      gh.atvCommit = sha('a');
+      gh.atvTree = sha('c');
+      const { outputs } = await detectStage(fx, gh);
+      const dir = join(fx.artifacts, 'atv');
+      const manifestPath = join(dir, 'manifest.json');
+      /** @param {(m:any)=>void} edit */
+      const editManifest = edit => {
+        const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+        edit(manifest);
+        writeFileSync(manifestPath, JSON.stringify(manifest));
+      };
+      /** @param {(lock:any)=>void} edit */
+      const editLock = edit => {
+        const lockPath = join(dir, 'files', 'baton.lock.json');
+        const lock = JSON.parse(readFileSync(lockPath, 'utf8'));
+        edit(lock);
+        const bytes = Buffer.from(`${JSON.stringify(lock, null, 2)}\n`);
+        writeFileSync(lockPath, bytes);
+        editManifest(m => { m.changed.find((/** @type {any} */ item) => item.path === 'baton.lock.json').sha256 = hex(bytes); });
+      };
+      const atvRow = fx.lock.files.find((/** @type {any} */ file) => file.upstream === 'atv');
+      const injected = Buffer.from('injected\n');
+      /** @param {string} path @param {string} pack */
+      const addPackRow = (path, pack) => {
+        write(join(dir, 'files'), path, injected);
+        editManifest(m => m.changed.push({ path, sha256: hex(injected), mode: '100644' }));
+        editLock(lock => lock.files.push({ ...atvRow, stored_at: path, path: path.split('/').slice(3).join('/'),
+          upstream_path: path, packs: [pack], sha256: hex(injected), sha256_upstream: hex(injected) }));
+      };
+      const pinned = 'only through a Baton pack definition';
+      /** @type {Array<[string,()=>void,string]>} */
+      const cases = [
+        ['optional pack root', () => addPackRow('packs/optimize/files/x.md', 'optimize'),
+          `atv: packs/optimize/files/x.md is new; atv adds or removes files ${pinned}; files packs/optimize/files/x.md ` +
+          `added: packs/optimize/files/x.md is new; atv adds or removes files ${pinned}`],
+        ['token-budget pack root', () => addPackRow('packs/token-budget/files/x.md', 'token-budget'),
+          `atv: packs/token-budget/files/x.md is new; atv adds or removes files ${pinned}; files ` +
+          `packs/token-budget/files/x.md added: packs/token-budget/files/x.md is new; atv adds or removes files ${pinned}`],
+        ['Spec Kit pack root', () => addPackRow('packs/issues/files/new/x.md', 'issues'),
+          `atv: packs/issues/files/new/x.md is new; atv adds or removes files ${pinned}; files ` +
+          `packs/issues/files/new/x.md added: packs/issues/files/new/x.md is new; atv adds or removes files ${pinned}`],
+        ['row retargeted to a workflow', () => editLock(lock => {
+          lock.files.find((/** @type {any} */ row) => row.stored_at === atvRow.stored_at).path = '.github/workflows/ci.yml';
+        }), `atv: files ${atvRow.stored_at} changes path from ${JSON.stringify(atvRow.path)} to ".github/workflows/ci.yml"`]
+      ];
+      for (const [name, tamper, excerpt] of cases) {
+        await packageStage(fx, gh, outputs.plan, {}, 'atv');
+        tamper();
+        const before = gh.calls.length;
+        const published = await publishStage(fx, gh, outputs.plan);
+        const result = JSON.parse(published.outputs.results).atv;
+        assert.deepEqual(result, { upstream: 'atv', stage: 'publish', outcome: 'failed', pr: null,
+          blocker: { code: 'E_PATH_POLICY', stage: 'publish', excerpt: `E_PATH_POLICY ${excerpt}`, run: RUN_URL } }, name);
+        assert.equal(published.exitCode, 1, name);
+        assert.equal(published.pushes.length, 0, name);
+        assert.deepEqual(gh.calls.slice(before).filter(call => call.method !== 'GET'), [], name);
+        assert.equal(remoteRef(fx, 'baton/upstream-upgrade/atv'), null, name);
       }
     } finally {
       fx.cleanup();
@@ -506,14 +598,50 @@ describe('upstream upgrade publish', () => {
         head: { ref: BRANCH }, base: { ref: 'main' } });
       const before = gh.calls.length;
       const published = await publishStage(fx, gh, detected.outputs.plan);
-      const result = JSON.parse(published.outputs.results).speckit;
-      assert.equal(result.blocker?.code, 'E_PR_CHANGED');
-      assert.match(result.blocker.excerpt, /#55 was opened on baton\/upstream-upgrade\/speckit since detection; nothing was pushed/);
+      assert.deepEqual(JSON.parse(published.outputs.results).speckit, { upstream: 'speckit', stage: 'publish',
+        outcome: 'failed', pr: null, blocker: { code: 'E_PR_CHANGED', stage: 'publish',
+          excerpt: 'E_PR_CHANGED #55 was opened on baton/upstream-upgrade/speckit since detection; nothing was pushed', run: RUN_URL } });
+      assert.deepEqual(gh.calls.slice(before).filter(call => /\/pulls\?/.test(call.path)).map(call => `${call.method} ${call.path}`),
+        [`GET /repos/${REPO}/pulls?state=open&head=dermonaco-labs%3Abaton%2Fupstream-upgrade%2Fspeckit&per_page=100`]);
       assert.equal(published.exitCode, 1);
       assert.equal(published.pushes.length, 0);
-      assert.equal(gh.calls.slice(before).filter(call => call.method !== 'GET').length, 0);
+      assert.deepEqual(gh.calls.slice(before).filter(call => call.method !== 'GET'), []);
       assert.equal(remoteRef(fx, BRANCH), null);
       assert.equal(gh.prs.length, 1);
+    } finally {
+      fx.cleanup();
+    }
+  });
+
+  test('a pull request list that is not a JSON array fails closed in detect and publish', async () => {
+    const fx = fixture();
+    try {
+      const gh = mockGitHub(fx);
+      gh.prList = { message: 'not a list' };
+      const blocked = await detectStage(fx, gh);
+      assert.deepEqual(gh.calls.filter(call => /\/pulls\?/.test(call.path)).map(call => call.path), ['speckit', 'atv']
+        .map(id => `/repos/${REPO}/pulls?state=all&head=dermonaco-labs%3Abaton%2Fupstream-upgrade%2F${id}&per_page=100`));
+      for (const id of ['speckit', 'atv']) {
+        const leg = JSON.parse(blocked.outputs.plan).plans.find((/** @type {any} */ item) => item.upstream.id === id);
+        assert.equal(leg.action, 'blocked', id);
+        assert.deepEqual(leg.blocker, { code: 'E_SOURCE_FORMAT', stage: 'detect',
+          excerpt: `E_SOURCE_FORMAT baton/upstream-upgrade/${id}: the pull request list is not a JSON array`, run: RUN_URL }, id);
+      }
+      assert.equal(blocked.outputs.generate, 'false');
+      assert.deepEqual(writes(gh), []);
+      gh.prList = undefined;
+      const detected = await detectStage(fx, gh);
+      await packageStage(fx, gh, detected.outputs.plan);
+      gh.prList = null;
+      const before = gh.calls.length;
+      const published = await publishStage(fx, gh, detected.outputs.plan);
+      assert.deepEqual(JSON.parse(published.outputs.results).speckit, { upstream: 'speckit', stage: 'publish',
+        outcome: 'failed', pr: null, blocker: { code: 'E_PUBLISH', stage: 'publish',
+          excerpt: 'E_PUBLISH baton/upstream-upgrade/speckit: the pull request list is not a JSON array', run: RUN_URL } });
+      assert.equal(published.exitCode, 1);
+      assert.equal(published.pushes.length, 0);
+      assert.deepEqual(gh.calls.slice(before).filter(call => call.method !== 'GET'), []);
+      assert.equal(remoteRef(fx, BRANCH), null);
     } finally {
       fx.cleanup();
     }
@@ -527,13 +655,15 @@ describe('upstream upgrade publish', () => {
       const detected = await detectStage(fx, gh);
       await packageStage(fx, gh, detected.outputs.plan);
       renameSync(fx.remote, moved);
+      const before = gh.calls.length;
       const published = await publishStage(fx, gh, detected.outputs.plan);
       renameSync(moved, fx.remote);
-      const result = JSON.parse(published.outputs.results).speckit;
-      assert.equal(result.blocker?.code, 'E_PUSH');
-      assert.match(result.blocker.excerpt, /push to baton\/upstream-upgrade\/speckit failed$/);
+      assert.deepEqual(JSON.parse(published.outputs.results).speckit, { upstream: 'speckit', stage: 'publish',
+        outcome: 'failed', pr: null, blocker: { code: 'E_PUSH', stage: 'publish',
+          excerpt: 'E_PUSH push to baton/upstream-upgrade/speckit failed', run: RUN_URL } });
       assert.equal(published.exitCode, 1);
       assert.equal(published.pushes.length, 1);
+      assert.deepEqual(gh.calls.slice(before).filter(call => call.method !== 'GET'), []);
       assert.equal(gh.prs.length, 0);
       assert.equal(remoteRef(fx, BRANCH), null);
     } finally {
@@ -635,11 +765,16 @@ describe('upstream upgrade publish', () => {
       const gh = mockGitHub(fx);
       const hook = join(fx.remote, 'hooks', 'pre-receive');
       writeFileSync(hook, '#!/bin/sh\necho "protected branch" >&2\nexit 1\n', { mode: 0o755 });
-      const { published } = await openCandidate(fx, gh);
-      const result = JSON.parse(published.outputs.results).speckit;
-      assert.equal(result.blocker.code, 'E_PUSH');
-      assert.match(result.blocker.excerpt, /remote rejected the push to baton\/upstream-upgrade\/speckit: pre-receive hook declined/);
+      const detected = await detectStage(fx, gh);
+      await packageStage(fx, gh, detected.outputs.plan);
+      const before = gh.calls.length;
+      const published = await publishStage(fx, gh, detected.outputs.plan);
+      assert.deepEqual(JSON.parse(published.outputs.results).speckit, { upstream: 'speckit', stage: 'publish',
+        outcome: 'failed', pr: null, blocker: { code: 'E_PUSH', stage: 'publish',
+          excerpt: 'E_PUSH remote rejected the push to baton/upstream-upgrade/speckit: pre-receive hook declined', run: RUN_URL } });
       assert.equal(published.exitCode, 1);
+      assert.equal(published.pushes.length, 1);
+      assert.deepEqual(gh.calls.slice(before).filter(call => call.method !== 'GET'), []);
       assert.equal(gh.prs.length, 0);
       assert.equal(remoteRef(fx, BRANCH), null);
     } finally {
@@ -872,10 +1007,12 @@ describe('upstream upgrade lifecycle', () => {
       gh.prs[0].state = 'closed';
       const before = gh.calls.length;
       const published = await publishStage(fx, gh, detected.outputs.plan);
-      assert.equal(JSON.parse(published.outputs.results).speckit.blocker.code, 'E_PR_CHANGED');
+      assert.deepEqual(JSON.parse(published.outputs.results).speckit, { upstream: 'speckit', stage: 'publish',
+        outcome: 'failed', pr: 100, blocker: { code: 'E_PR_CHANGED', stage: 'publish',
+          excerpt: 'E_PR_CHANGED #100 was closed or changed since detection; nothing was pushed', run: RUN_URL } });
       assert.equal(published.exitCode, 1);
       assert.equal(published.pushes.length, 0);
-      assert.equal(gh.calls.slice(before).filter(call => call.method !== 'GET').length, 0);
+      assert.deepEqual(gh.calls.slice(before).filter(call => call.method !== 'GET'), []);
       assert.equal(remoteRef(fx, BRANCH), old);
     } finally {
       fx.cleanup();
@@ -894,16 +1031,17 @@ describe('upstream upgrade lifecycle', () => {
       gh.speckit = '9.9.10';
       gh.speckitCommit = sha('8');
       const branchSha = remoteRef(fx, BRANCH);
-      const excerpt = /^#100 \(open\) on baton\/upstream-upgrade\/speckit has no valid candidate marker; restore the marker in its description, then rerun$/;
+      const excerpt = (/** @type {string} */ state) => `#100 (${state}) on baton/upstream-upgrade/speckit has no valid ` +
+        'candidate marker; restore the marker in its description, then rerun';
       const blocked = await detectStage(fx, gh);
       assert.equal(action(blocked.outputs.plan, 'speckit'), 'blocked');
-      assert.equal(JSON.parse(blocked.outputs.plan).plans[0].blocker.code, 'E_PR_MARKER');
-      assert.match(JSON.parse(blocked.outputs.plan).plans[0].blocker.excerpt, excerpt);
+      assert.deepEqual(JSON.parse(blocked.outputs.plan).plans[0].blocker,
+        { code: 'E_PR_MARKER', stage: 'detect', excerpt: excerpt('open'), run: RUN_URL });
       assert.equal(blocked.outputs.generate, 'false');
       const before = gh.calls.length;
       const published = await publishStage(fx, gh, blocked.outputs.plan);
       assert.equal(published.pushes.length, 0);
-      assert.equal(gh.calls.slice(before).filter(call => call.method !== 'GET').length, 0);
+      assert.deepEqual(gh.calls.slice(before).filter(call => call.method !== 'GET'), []);
       assert.equal(remoteRef(fx, BRANCH), branchSha);
       assert.equal(gh.prs[0].body, 'Marker removed by a maintainer.');
       gh.speckit = '9.9.9';
@@ -912,8 +1050,16 @@ describe('upstream upgrade lifecycle', () => {
       assert.equal(gh.prs[0].title, title);
       const closed = await detectStage(fx, gh);
       assert.equal(action(closed.outputs.plan, 'speckit'), 'blocked', 'a title never stands in for the marker');
-      assert.equal(JSON.parse(closed.outputs.plan).plans[0].blocker.code, 'E_PR_MARKER');
-      assert.match(JSON.parse(closed.outputs.plan).plans[0].blocker.excerpt, /^#100 \(closed\) on /);
+      assert.deepEqual(JSON.parse(closed.outputs.plan).plans[0].blocker,
+        { code: 'E_PR_MARKER', stage: 'detect', excerpt: excerpt('closed'), run: RUN_URL });
+      assert.equal(closed.outputs.generate, 'false');
+      const closedBefore = gh.calls.length;
+      const closedPublished = await publishStage(fx, gh, closed.outputs.plan);
+      assert.deepEqual(JSON.parse(closedPublished.outputs.results), {});
+      assert.equal(closedPublished.pushes.length, 0);
+      assert.deepEqual(gh.calls.slice(closedBefore).filter(call => call.method !== 'GET'), []);
+      assert.equal(remoteRef(fx, BRANCH), branchSha);
+      assert.deepEqual([gh.prs[0].state, gh.prs[0].body], ['closed', 'Marker removed by a maintainer.']);
       gh.prs[0].body = renderMarker(/** @type {any} */ (marker));
       const suppressed = await detectStage(fx, gh);
       assert.equal(action(suppressed.outputs.plan, 'speckit'), 'suppressed');

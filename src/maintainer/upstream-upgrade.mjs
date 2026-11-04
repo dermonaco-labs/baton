@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Maintainer-only entry point for .github/workflows/upstream-watch.yml. Uses Node built-ins and
-// ../lib/upstream-candidates.mjs only; never imported by the Baton CLI and never executes artifact content.
+// Maintainer-only entry point for .github/workflows/upstream-watch.yml. Uses Node built-ins,
+// ../lib/upstream-candidates.mjs and ../lib/upstream.mjs only; never imported by the Baton CLI and never executes
+// artifact content.
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
@@ -11,10 +12,10 @@ import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   BOT_EMAIL, BOT_NAME, CHECKS, ISSUE_LABEL, ISSUE_TITLE, UPSTREAMS, branchFor, buildRunUrl, classifyBranch,
-  commitMessage, contentTrailer, currentPin, isSha, makePin, parseMarker, planUpstream, policyOf, prTitle, renderIssue,
-  renderMarker, renderPrBody, repoSlug, selectAtv, selectSpeckit, trustedResult, verifyCandidate
+  commitMessage, contentTrailer, currentPin, makePin, parseMarker, planUpstream, policyOf, prTitle, renderIssue,
+  renderMarker, renderPrBody, selectAtv, selectSpeckit, trustedResult, verifyCandidate
 } from '../lib/upstream-candidates.mjs';
-import { ATV_REPO, SPECKIT_REPO, UpstreamError } from '../lib/upstream.mjs';
+import { ATV_REPO, SPECKIT_REPO, UpstreamError, isSha, repoSlug } from '../lib/upstream.mjs';
 
 /** @typedef {import('../lib/upstream-candidates.mjs').UpstreamPlan} UpstreamPlan */
 /** @typedef {import('../lib/upstream-candidates.mjs').CandidateResult} CandidateResult */
@@ -164,13 +165,24 @@ async function detectLatest(id, entry, api, deps) {
   return { policy, current, latest: makePin('atv', { version: target.version, commit, tree }), info };
 }
 
+/**
+ * Pull requests whose head is `branch` in `repo`. GitHub's `head` filter also matches PRs whose branch was deleted,
+ * so the ref is rechecked; a response that is not a list fails closed with `code`.
+ * @param {Api} api @param {string} repo @param {string} branch @param {'all'|'open'} state @param {string} code
+ * @returns {Promise<any[]>}
+ */
+async function branchPulls(api, repo, branch, state, code) {
+  const head = encodeURIComponent(`${repo.split('/')[0]}:${branch}`);
+  const pulls = await api(`/repos/${repo}/pulls?state=${state}&head=${head}&per_page=100`);
+  if (!Array.isArray(pulls)) throw fail(code, `${branch}: the pull request list is not a JSON array`);
+  return pulls.filter(pull => pull?.head?.ref === branch && Number.isSafeInteger(pull.number) &&
+    (state === 'all' || pull.state === 'open'));
+}
+
 /** Candidate PRs and branch ownership for one upstream. @param {UpstreamId} id @param {string} repo @param {string} base @param {Api} api */
 async function candidateState(id, repo, base, api) {
   const branch = branchFor(id);
-  const owner = repo.split('/')[0];
-  const pulls = await api(`/repos/${repo}/pulls?state=all&head=${encodeURIComponent(`${owner}:${branch}`)}&per_page=100`);
-  const prs = (Array.isArray(pulls) ? pulls : [])
-    .filter(pull => pull?.head?.ref === branch && Number.isSafeInteger(pull.number))
+  const prs = (await branchPulls(api, repo, branch, 'all', 'E_SOURCE_FORMAT'))
     .map(pull => {
       const marker = parseMarker(pull.body);
       return {
@@ -218,7 +230,9 @@ export async function detect(deps) {
     } catch (error) {
       blocker = { code: codeOf(error), stage: 'detect', excerpt: messageOf(error), run: runUrl };
     }
-    plans.push(planUpstream({ id, base, publish, ...found, blocker, ...state }));
+    const planned = planUpstream({ id, base, publish, ...found, blocker, ...state });
+    if (planned.blocker && !planned.blocker.run) planned.blocker = { ...planned.blocker, run: runUrl };
+    plans.push(planned);
   }
   const links = env.LINKS_OUTCOME === 'success' && env.LINKS_RESULT === '0' ? 'pass' : 'fail';
   const sync = env.SYNC_RESULT === 'pass' ? 'pass' : 'fail';
@@ -476,6 +490,7 @@ export async function publish(deps) {
         continue;
       }
       if (item.action !== 'generate') continue;
+      const branch = branchFor(id);
       const root = join(env.ARTIFACTS_DIR ?? '', id);
       const reported = existsSync(root) ? readResult(root) : null;
       if (!reported || reported.blocker) continue;
@@ -502,16 +517,11 @@ export async function publish(deps) {
           throw fail('E_PR_CHANGED', `#${item.pr.number} was closed or changed since detection; nothing was pushed`);
         }
       } else {
-        const owner = plan.repo.split('/')[0];
-        const head = encodeURIComponent(`${owner}:${branchFor(id)}`);
-        const opened = await api(`/repos/${plan.repo}/pulls?state=open&head=${head}&per_page=100`);
-        const found = (Array.isArray(opened) ? opened : [])
-          .find(pull => pull?.state === 'open' && pull?.head?.ref === branchFor(id));
+        const [found] = await branchPulls(api, plan.repo, branch, 'open', 'E_PUBLISH');
         if (found) {
-          throw fail('E_PR_CHANGED', `#${found.number} was opened on ${branchFor(id)} since detection; nothing was pushed`);
+          throw fail('E_PR_CHANGED', `#${found.number} was opened on ${branch} since detection; nothing was pushed`);
         }
       }
-      const branch = branchFor(id);
       const commit = buildCommit(deps.git, item, manifest, artifact.files, digest);
       push(deps, plan.repo, branch, commit, item.branch?.sha ?? '');
       const body = renderPrBody({ plan: item, manifest, digest, runUrl: plan.runUrl });

@@ -69,8 +69,8 @@ Two further rules apply:
   - `files[]` rows are compared by `stored_at`. Every row owned by another upstream or by
     an optional source (such as `optimize` or `token-budget`) must be present and
     identical, and none may be added. No row may change its `upstream`. Only rows owned
-    by the candidate's upstream may be added, changed or removed. An added row must name
-    a changed new path (see above).
+    by the candidate's upstream may be added, changed or removed (see
+    [Owned rows](#owned-rows)).
 - **Requirements files:** only a Spec Kit candidate may change them.
 
 Violations of either the path policy or FR-012 are rejected with `E_PATH_POLICY`
@@ -89,8 +89,10 @@ path is rejected with `E_PATH_POLICY` when any of these holds:
   owns);
 - it names a tracked directory, lies below a tracked file, or spells a tracked directory
   in a different letter case;
-- its stored root (`.github/agents`, `.github/skills`, `.specify` or `packs/<id>/files`)
-  is not tracked in the base tree;
+- it is not a growth path of the candidate's upstream (see
+  [Owned rows](#owned-rows)); in particular no candidate adds files under
+  `.github/agents`, `.github/skills` or any `packs/<id>/files` root;
+- its stored root is not tracked in the base tree;
 - it is added directly in a stored root that holds a file not owned by the candidate's
   upstream in the base lock;
 - any of its directories below the stored root contains, at any depth, a tracked file
@@ -98,6 +100,34 @@ path is rejected with `E_PATH_POLICY` when any of these holds:
 
 The last two rules keep unlocked or foreign-owned trusted files, such as Baton's own
 skills, the constitution and pack files, in directories no candidate can extend.
+
+### Owned rows
+
+Every `files[]` row field the candidate controls is checked against trusted data, for new
+and existing rows alike:
+
+- **Growth paths.** Rows appear or disappear only on growth paths. A Spec Kit candidate
+  may add or remove rows under `.specify/` except `.specify/extensions.yml`,
+  `.specify/extensions/` and `.specify/memory/`, which are protected. An ATV candidate
+  has no growth path. Rows elsewhere come from Baton pack definitions, so new files there
+  take the manual route: a reviewed pack-definition change, then `sync --bump`. A
+  removed row needs its path in `deleted`, and a deleted path keeps no row.
+- **Existing rows** keep their field set and the frozen fields `path`, `packs`,
+  `upstream`, `upstream_path`, `license`, `x-baton-source` and `x-baton-source-sha256`.
+- **New rows** (new paths only) have exactly the fields `license`, `packs`, `path`,
+  `repair`, `sha256`, `sha256_upstream`, `stored_at`, `upstream` and `upstream_path`,
+  and `upstream_path` equals `stored_at`.
+- **Install target.** Every owned row installs where its `stored_at` implies:
+  `packs/<pack>/files/<path>` installs `<path>` for `[<pack>]`, and any other stored path
+  installs in place for `["core"]`. The target must lie under `.github/agents/`,
+  `.github/skills/`, `.github/hooks/` or `.specify/`, must not be
+  `.specify/memory/constitution.md`, and must avoid the forbidden paths.
+- **Content.** The license is `MIT`; `sha256` and `sha256_upstream` are 64 hexadecimal
+  digits; `repair` is `null` with equal hashes, or for ATV only an object with the
+  non-empty strings `id`, `reason` and `upstream_issue`. A row with a Baton source
+  (other than a `SKILL.md`) keeps both hashes equal to that source's hash. When the
+  candidate writes the file, `sha256` equals the written bytes' hash; otherwise it is
+  unchanged from the base row, and a new row must have a written file.
 
 ## Candidate artifacts
 
@@ -137,6 +167,10 @@ skills, the constitution and pack files, in directories no candidate can extend.
     nothing.
   - When detection saw no open PR, list open PRs whose head is the candidate branch just
     before pushing. If one exists, report `E_PR_CHANGED` and write nothing.
+  - Every PR list for a candidate branch (`head=<owner>:<branch>`, `per_page=100`;
+    `state=all` in `detect`, `state=open` before pushing) must be a JSON array.
+    Anything else fails closed with `E_SOURCE_FORMAT` in `detect` or `E_PUBLISH` in
+    `publish`, and nothing is written.
   - A lease failure is reported as `E_LEASE`. A `[remote rejected]` push (for example a
     branch protection rule) is reported as `E_PUSH` with the remote's reason. Any other
     push failure is reported as `E_PUSH` naming the branch.

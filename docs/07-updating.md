@@ -118,19 +118,42 @@ reads files only where noted:
 `publish` rejects a candidate whose verified digest differs from the
 attested one, or whose attested digest is empty.
 
+Every candidate PR description carries one hidden marker line; the
+workflow reads only this line, never the editable PR title:
+
+```text
+<!-- baton-upstream-candidate upstream=<upstream> pin=<Baton-Pin> base=<Baton-Base> digest=<Baton-Content> -->
+```
+
+`<upstream>` is `speckit` or `atv`. Take the other three values from the
+trailers of the latest `github-actions[bot]` commit on the PR's branch,
+the only authoritative source (for example
+`git fetch origin refs/pull/<number>/head` and
+`git log -1 --author='github-actions\[bot\]' --format=%B FETCH_HEAD`).
+For a closed PR whose pin should become eligible again, add
+`closed=obsolete` after the digest, separated by one space; without it
+the pin stays suppressed.
+
 Blockers in the tracking issue and what to do about them:
 
 | Code | Meaning | Remedy |
 |------|---------|--------|
+| `E_UNSUPPORTED_REF` | The lock pins an upstream ref the workflow does not track (only Spec Kit releases, ATV `main` and ATV releases) | Re-pin with a manual `sync --bump` in a normal PR, or keep upgrading that upstream by hand |
+| `E_SOURCE_MISMATCH` | The upstream's sources disagree (PyPI and the GitHub release for Spec Kit) or ATV has no stable release | Wait for the upstream to publish consistently; the next run retries |
+| `E_SOURCE_FORMAT` | A GitHub or upstream response was malformed (an invalid pin, ref, run environment or a pull request list that is not a list) | Rerun; a repeat points to an API change that needs a manual Baton fix |
 | `E_UPSTREAM_VERIFY` | Detection, or `sync --bump`, failed (for example `E_DANGLING_REF` in the excerpt) | Read the excerpt; an upstream incompatibility waits for a newer upstream or a manual Baton change |
 | `E_CHECK_FAILED` | `npm run check` failed on the candidate | Reproduce with `sync --bump` locally and fix or wait |
-| `E_CANDIDATE_VERIFY` | The artifact does not match the pins, manifest or attested digest | Rerun; a repeat points to a workflow wiring fault or a changed artifact |
-| `E_PATH_POLICY` | The candidate changes a path or lock row its upstream does not own | Treat as untrusted output; do not apply it by hand |
-| `E_PR_MARKER` | A candidate PR, open or closed, has lost its hidden marker | Restore the marker in the PR description: the closed PR's pin keeps it suppressed, `closed=obsolete` releases it |
+| `E_CANDIDATE_VERIFY` | The artifact does not match the pins or manifest, or the attested digest | An empty digest (`DIGEST_<UPSTREAM> is empty`) is a workflow wiring fault: fix the generate job's `digest` output and its use in `publish`; rerunning does not help. A digest or hash mismatch means the artifact changed between jobs: rerun, and treat a repeat as tampering |
+| `E_PATH_POLICY` | The candidate changes a path or lock row its upstream does not own, adds a row outside Spec Kit's `.specify/` growth paths, or changes a row's install target, packs, license, source or hashes | Treat the artifact as untrusted and never apply it by hand. If the upstream legitimately added, moved or relicensed files, review the upstream change, update the Baton pack definition (`packs/<pack>.yml`) in a normal PR, run `sync --bump` locally and merge it through the normal gates |
+| `E_PR_MARKER` | A candidate PR, open or closed, has no valid hidden marker | Restore the marker line above in the PR description; nothing is pushed or written for that upstream until then |
 | `E_PR_CHANGED` | The candidate PR was closed, moved or opened between detection and publish | Rerun the workflow |
 | `E_LEASE` | The candidate branch moved during the run | Rerun the workflow |
 | `E_PUSH` | The push was refused (for example by branch protection) or failed | Read the reason; fix the rule or retry |
 | `E_PR_PERMISSION` | The workflow token may not create PRs | Enable the repository setting below |
+| `E_PUBLISH` | Publishing did not complete, or the open pull request list was malformed | Read the excerpt and rerun; a repeat needs a manual check of the branch and PR |
+| `E_GITHUB_API` | A GitHub API request failed with the HTTP status in the excerpt | Rerun after a transient failure; a 403 or 404 points to the workflow's token permissions |
+| `E_GIT` | A git command failed while building or pushing the candidate commit | Read the excerpt and rerun; a repeat needs a manual check of the checkout and branch |
+| `E_PLAN` | The plan does not match the checkout (for example the default branch moved during the run) or a marker vanished mid-run | Rerun the workflow |
 
 Dispatch with `preview: true` to detect, generate and validate without
 any branch, PR or issue write; results appear in the run summary. Runs on

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { ATV_REPO, SPECKIT_REPO, UpstreamError, isSha, isVersion, repoSlug } from './upstream.mjs';
+import { ATV_REPO, SPECKIT_REPO, UpstreamError, isSha, isVersion } from './upstream.mjs';
 
 /** @typedef {'speckit'|'atv'} UpstreamId */
 /** @typedef {'release'|'main'} Policy */
@@ -42,11 +42,25 @@ const FORBIDDEN_FILES = new Set(['package.json', 'package-lock.json', '.npmrc', 
 const FORBIDDEN_PREFIXES = ['.github/workflows/', 'src/', 'test/', '.baton/'];
 const STORED_PREFIX = /^(?:\.github\/agents\/|\.github\/skills\/|\.specify\/|packs\/[a-z0-9][a-z0-9-]*\/files\/)/;
 const SAFE_PATH = /^[A-Za-z0-9._/@+-]+$/;
+/** Every lock row sync writes; Baton-authored extension rows add the two provenance keys. */
+const ROW_KEYS = ['license', 'packs', 'path', 'repair', 'sha256', 'sha256_upstream', 'stored_at', 'upstream', 'upstream_path'];
+/** Row fields a Baton pack definition, the fixed extension sources or the stored location decide; a bump never changes them. */
+const FROZEN_FIELDS = ['path', 'packs', 'upstream', 'upstream_path', 'license', 'x-baton-source', 'x-baton-source-sha256'];
+/**
+ * The only root where sync adds or drops rows by itself (generated `.specify/` files). Every other row comes from
+ * an explicit Baton pack definition item, which a candidate cannot change.
+ * @type {Readonly<Record<UpstreamId,string|null>>}
+ */
+const GROWTH_ROOTS = Object.freeze({ speckit: '.specify', atv: null });
+/** Hook registration, the Baton extension and the adopter's constitution keep their rows; no candidate adds or drops one. */
+const PROTECTED_PATHS = ['.specify/extensions.yml', '.specify/extensions/', '.specify/memory/'];
+/** Install targets an upstream row may have; adopters receive every row at its `path`. */
+const INSTALL_PREFIX = /^(?:\.github\/agents\/|\.github\/skills\/|\.github\/hooks\/|\.specify\/)/;
+const CONSTITUTION = '.specify/memory/constitution.md';
 const MARKER = /<!-- baton-upstream-candidate upstream=(speckit|atv) pin=(\S+) base=([0-9a-f]{40}) digest=([0-9a-f]{64})( closed=obsolete)? -->/;
 
 /** @param {UpstreamId} id */
 export const branchFor = id => `baton/upstream-upgrade/${id}`;
-export { isSha, isVersion, repoSlug };
 /** @param {unknown} value */
 export const isTag = value => typeof value === 'string' && /^v\d+\.\d+\.\d+$/.test(value);
 /** @param {unknown} value */
@@ -310,14 +324,31 @@ function indexTree(paths) {
 }
 
 /**
+ * Why `id` may not add or drop a row at a stored path, or null: only Spec Kit grows, only under `.specify/`, and
+ * never under the protected hook, extension or memory paths (FR-012).
+ * @param {string} path @param {UpstreamId} id
+ */
+function growthIssue(path, id) {
+  const root = GROWTH_ROOTS[id];
+  if (!root || !path.startsWith(`${root}/`)) {
+    return `${id} adds or removes files only ${root ? `under ${root}/` : 'through a Baton pack definition'}`;
+  }
+  const guarded = PROTECTED_PATHS.find(prefix => prefix.endsWith('/') ? path.startsWith(prefix) : path === prefix);
+  return guarded ? `${guarded} is protected` : null;
+}
+
+/**
  * Why a stored path the candidate lock claims as new may not be added, or null. The base tree, never the
  * candidate, decides: the path must not be tracked in any letter case, must not replace a tracked directory,
- * pass through a tracked file or spell a tracked directory differently, and must sit under an existing stored
- * root. Files beside it in a stored root, and every file below each of its directories under that root, must
- * have base-lock rows the candidate's upstream owns, so unlocked trusted files keep their directories (FR-012).
+ * pass through a tracked file or spell a tracked directory differently, must be a growth path of its upstream
+ * (see growthIssue) and must sit under an existing stored root. Files beside it in a stored root, and every file
+ * below each of its directories under that root, must have base-lock rows the candidate's upstream owns, so
+ * unlocked trusted files keep their directories (FR-012).
  * @param {string} path @param {UpstreamId} id @param {any} baseLock @param {Iterable<string>|undefined} baseTree
  */
 function newPathIssue(path, id, baseLock, baseTree) {
+  const form = pathFormIssue(path);
+  if (form) return form;
   if (!baseTree || typeof baseTree !== 'object') return `${path}: the base tree is unavailable`;
   const index = indexTree(baseTree);
   if (index.files.has(path)) return `${path} is tracked in the base tree without a base lock row`;
@@ -330,6 +361,8 @@ function newPathIssue(path, id, baseLock, baseTree) {
       return `${path} differs only in letter case from a tracked directory`;
     }
   }
+  const growth = growthIssue(path, id);
+  if (growth) return `${path} is new; ${growth}`;
   const root = (STORED_PREFIX.exec(path)?.[0] ?? '').slice(0, -1);
   if (!root || !index.dirs.has(root)) return `${path} is not under a stored root the base tree tracks`;
   const rows = rowsByPath(baseLock);
@@ -343,6 +376,15 @@ function newPathIssue(path, id, baseLock, baseTree) {
   return found ? `${path} would be added in a directory with ${found}, which ${id} does not own` : null;
 }
 
+/** Why `path` is not a normalized relative path of safe characters, or null. @param {unknown} path */
+function pathFormIssue(path) {
+  if (typeof path !== 'string' || !path || path.startsWith('/') || path.includes('\\') ||
+    /[\u0000-\u001f\u007f]/.test(path) || path.split('/').some(part => part === '' || part === '.' || part === '..')) {
+    return `${JSON.stringify(path)} is not a normalized relative path`;
+  }
+  return SAFE_PATH.test(path) ? null : `${JSON.stringify(path)} contains a character outside [A-Za-z0-9._/@+-]`;
+}
+
 /**
  * Why a changed or deleted path is not an allowed regenerated output, or null. A stored path is allowed
  * only when its owning lock row belongs to the candidate's upstream. The owner is the base-lock row; the
@@ -351,11 +393,8 @@ function newPathIssue(path, id, baseLock, baseTree) {
  * @param {{baseLock:any,candidateLock:any,baseTree?:Iterable<string>}} locks
  */
 export function pathPolicyIssue(path, kind, id, { baseLock, candidateLock, baseTree }) {
-  if (typeof path !== 'string' || !path || path.startsWith('/') || path.includes('\\') ||
-    /[\u0000-\u001f\u007f]/.test(path) || path.split('/').some(part => part === '' || part === '.' || part === '..')) {
-    return `${JSON.stringify(path)} is not a normalized relative path`;
-  }
-  if (!SAFE_PATH.test(path)) return `${JSON.stringify(path)} contains a character outside [A-Za-z0-9._/@+-]`;
+  const form = pathFormIssue(path);
+  if (form) return form;
   if (FORBIDDEN_FILES.has(path) || FORBIDDEN_PREFIXES.some(prefix => path.startsWith(prefix))) {
     return `${path} is outside the regenerated outputs`;
   }
@@ -382,12 +421,76 @@ function expectedPinFields(id, pin) {
 }
 
 /**
- * files[] rows keyed by stored_at: other owners' rows are frozen, no row changes its owner, and a row the
- * candidate adds must claim a genuinely new path that the candidate writes (FR-012).
- * @param {UpstreamId} id @param {any} base @param {any} candidate
- * @param {{baseTree?:Iterable<string>,changed?:Set<string>}} context @returns {string[]}
+ * The install target a stored path implies: core roots install in place, `packs/<pack>/files/<path>` installs
+ * `<path>` for that pack.
+ * @param {string} storedAt
  */
-function fileRowIssues(id, base, candidate, { baseTree, changed = new Set() }) {
+function targetOf(storedAt) {
+  const match = /^packs\/([a-z0-9][a-z0-9-]*)\/files\/(.+)$/.exec(storedAt);
+  return match ? { path: match[2], packs: [match[1]] } : { path: storedAt, packs: ['core'] };
+}
+
+/**
+ * Why a row the candidate's upstream owns in the candidate lock is not a regenerated output of the expected
+ * shape, or null. Existing rows keep their key set and FROZEN_FIELDS; new rows are growth paths of the exact
+ * shape sync writes. Every owned row installs at the location its stored path implies, inside the upstream
+ * install roots, with consistent hashes and repair, and its sha256 is that of the file the candidate writes or,
+ * when unwritten, the base row's (FR-012).
+ * @param {UpstreamId} id @param {any} old @param {any} row
+ * @param {{baseLock:any,baseTree?:Iterable<string>,written:Map<string,string>}} context
+ */
+function ownRowIssue(id, old, row, { baseLock, baseTree, written }) {
+  const key = row.stored_at;
+  const keys = Object.keys(row).sort().join();
+  if (old) {
+    if (keys !== Object.keys(old).sort().join()) return 'changes its field set';
+    const field = FROZEN_FIELDS.find(name => !same(old[name], row[name]));
+    if (field) return `changes ${field} from ${JSON.stringify(old[field])} to ${JSON.stringify(row[field])}`;
+  } else {
+    const fresh = newPathIssue(key, id, baseLock, baseTree);
+    if (fresh) return `added: ${fresh}`;
+    if (keys !== ROW_KEYS.join()) return `added with fields other than ${ROW_KEYS.join(', ')}`;
+    if (row.upstream_path !== key) return `added with upstream_path ${JSON.stringify(row.upstream_path)}, not ${key}`;
+  }
+  const target = targetOf(key);
+  if (row.path !== target.path || !same(row.packs, target.packs)) {
+    return `installs at ${JSON.stringify(row.path)} for ${JSON.stringify(row.packs)}, not ${target.path} for ` +
+      `${JSON.stringify(target.packs)}`;
+  }
+  if (!INSTALL_PREFIX.test(row.path) || row.path === CONSTITUTION || FORBIDDEN_FILES.has(row.path) ||
+    FORBIDDEN_PREFIXES.some(prefix => row.path.startsWith(prefix))) {
+    return `installs at ${row.path}, outside the upstream install roots`;
+  }
+  if (row.license !== 'MIT') return `has license ${JSON.stringify(row.license)}, not "MIT"`;
+  if (typeof row.upstream_path !== 'string' || !SAFE_PATH.test(row.upstream_path)) return 'has an invalid upstream_path';
+  if (!isDigest(row.sha256) || !isDigest(row.sha256_upstream)) return 'has an invalid sha256 or sha256_upstream';
+  const repair = row.repair;
+  if (repair === null) {
+    if (row.sha256 !== row.sha256_upstream) return 'has no repair but sha256 differs from sha256_upstream';
+  } else if (id !== 'atv' || !repair || typeof repair !== 'object' || Array.isArray(repair) ||
+    Object.keys(repair).sort().join() !== 'id,reason,upstream_issue' ||
+    Object.values(repair).some(value => typeof value !== 'string' || !value)) {
+    return 'has an invalid repair';
+  }
+  const source = row['x-baton-source-sha256'];
+  if (source !== undefined && !key.endsWith('/SKILL.md') && (row.sha256 !== source || row.sha256_upstream !== source)) {
+    return `differs from its Baton source ${row['x-baton-source']}`;
+  }
+  const hash = written.get(key);
+  if (hash !== undefined) return hash === row.sha256 ? null : 'sha256 does not match the written file';
+  if (!old) return 'added without a changed file';
+  return row.sha256 === old.sha256 ? null : 'changes sha256 without a changed file';
+}
+
+/**
+ * files[] rows keyed by stored_at: other owners' rows are frozen, no row changes its owner, owned rows satisfy
+ * ownRowIssue, and owned rows appear or disappear only on growth paths together with their written or deleted
+ * file (FR-012).
+ * @param {UpstreamId} id @param {any} base @param {any} candidate
+ * @param {{baseTree?:Iterable<string>,written?:Map<string,string>,deleted?:Set<string>}} context
+ * @returns {string[]}
+ */
+function fileRowIssues(id, base, candidate, { baseTree, written = new Map(), deleted = new Set() }) {
   const issues = [];
   const keys = new Set();
   candidate.files.forEach((/** @type {any} */ row, /** @type {number} */ index) => {
@@ -403,14 +506,22 @@ function fileRowIssues(id, base, candidate, { baseTree, changed = new Set() }) {
     const next = after.get(key);
     if (old && next && old.upstream !== next.upstream) {
       issues.push(`files ${key} changed upstream from ${JSON.stringify(old.upstream)} to ${JSON.stringify(next.upstream)}`);
-    } else if (old && old.upstream !== id && !next) issues.push(`files ${key} (${old.upstream}) removed`);
-    else if (old && old.upstream !== id && !same(old, next)) issues.push(`files ${key} (${old.upstream}) changed`);
-    else if (!old && next && next.upstream !== id) issues.push(`files ${key} (${JSON.stringify(next.upstream)}) added`);
-    else if (!old && next) {
-      const fresh = newPathIssue(key, id, base, baseTree);
-      if (fresh) issues.push(`files ${key} added: ${fresh}`);
-      else if (!changed.has(key)) issues.push(`files ${key} added without a changed file`);
+    } else if (old && old.upstream !== id) {
+      if (!next) issues.push(`files ${key} (${old.upstream}) removed`);
+      else if (!same(old, next)) issues.push(`files ${key} (${old.upstream}) changed`);
+    } else if (!old && next.upstream !== id) {
+      issues.push(`files ${key} (${JSON.stringify(next.upstream)}) added`);
+    } else if (!next) {
+      const growth = growthIssue(key, id);
+      if (growth) issues.push(`files ${key} removed: ${growth}`);
+      else if (!deleted.has(key)) issues.push(`files ${key} removed without deleting the file`);
+    } else {
+      const issue = ownRowIssue(id, old, next, { baseLock: base, baseTree, written });
+      if (issue) issues.push(`files ${key} ${issue}`);
     }
+  }
+  for (const path of deleted) {
+    if (after.has(path)) issues.push(`files ${path} is still locked although the file is deleted`);
   }
   return issues;
 }
@@ -418,7 +529,8 @@ function fileRowIssues(id, base, candidate, { baseTree, changed = new Set() }) {
 /**
  * Differences that a candidate lock may not contain (FR-012).
  * @param {UpstreamId} id @param {any} base @param {any} candidate @param {Pin} latest
- * @param {{baseTree?:Iterable<string>,changed?:Set<string>}} [context] the trusted base tree and the changed paths
+ * @param {{baseTree?:Iterable<string>,written?:Map<string,string>,deleted?:Set<string>}} [context] the trusted base
+ *   tree, the sha256 of each written path and the deleted paths
  * @returns {string[]}
  */
 export function lockDiffIssues(id, base, candidate, latest, context = {}) {
@@ -500,11 +612,12 @@ export function verifyCandidate({ plan, manifest, files, baseLock, baseTree }) {
   if ((lock?.['x-bump-summary'] ?? '') !== manifest.summary) throw reject('summary differs from the candidate lock');
   const id = /** @type {UpstreamId} */ (plan.upstream.id);
   const locks = { baseLock, candidateLock: lock, baseTree };
-  const changed = new Set(manifest.changed.map((/** @type {any} */ item) => item.path));
+  const written = new Map(manifest.changed.map((/** @type {any} */ item) => [item.path, item.sha256]));
+  const deleted = new Set(manifest.deleted);
   const policy = [
     ...manifest.changed.map((/** @type {any} */ item) => pathPolicyIssue(item.path, 'changed', id, locks)),
     ...manifest.deleted.map((/** @type {string} */ path) => pathPolicyIssue(path, 'deleted', id, locks)),
-    ...lockDiffIssues(id, baseLock, lock, latest, { baseTree, changed })
+    ...lockDiffIssues(id, baseLock, lock, latest, { baseTree, written, deleted })
   ].filter(Boolean);
   if (policy.length) throw fail('E_PATH_POLICY', `${id}: ${policy.join('; ')}`);
   return { digest: contentDigest(manifest), manifest, lock };

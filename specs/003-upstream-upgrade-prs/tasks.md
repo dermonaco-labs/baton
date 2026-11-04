@@ -331,6 +331,47 @@ acceptance selectors. No registered command or assertion is weakened.
 
 ---
 
+## Phase 10: Review 3 fixes (review.json F22–F25)
+
+Independent review 3 routed back to implement. F22 is a code fix against the approved
+FR-012 MUST ("only its own upstream's pins and the files regenerated from them"). The
+contract's `files[]` row rules now enumerate every candidate-controlled field
+([Owned rows](./contracts/upstream-watch.md#owned-rows)). This tightens the earlier
+contract wording to the spec; it does not change scope, a public interface or an
+acceptance selector. The tightening is disclosed in the handoff and is not presented as
+an approval. No registered command or assertion is weakened.
+
+- [X] T049 [US1] F22 (P1, FR-012) in `src/lib/upstream-candidates.mjs`. One row policy applies to every `files[]` row, and `package` and `publish` both reach it through `verifyCandidate`:
+  - **Growth paths.** Only Spec Kit adds or removes rows, only under `.specify/`, and never under `.specify/extensions.yml`, `.specify/extensions/` or `.specify/memory/`. ATV has no growth path. Rows outside `.specify/`, including every `packs/<id>/files/` root, come from Baton pack definitions; new files there take the manual reviewed route. A removed row needs its file in `deleted`.
+  - **Existing owned rows** keep their field set and `path`, `packs`, `upstream`, `upstream_path`, `license`, `x-baton-source` and `x-baton-source-sha256`.
+  - **New rows** have exactly the sync row fields, with `upstream_path` equal to `stored_at`.
+  - **Every owned row** installs at the target its `stored_at` implies (`packs/<p>/files/<x>` → `<x>` for `[p]`, otherwise in place for `["core"]`). The target is inside the upstream install roots, is not the constitution and is not a forbidden path. The row is MIT with valid hashes, and its `repair` is consistent. A Baton-sourced non-skill row keeps its source hash. `sha256` is the written file's hash or unchanged.
+  - **Evidence.**
+    - On the committed base tree and lock, identity candidates give no issues for both upstreams, and all 133 rows satisfy the target mapping (0 violations, verified rather than assumed).
+    - Unit cases in `upstream candidates speckit and atv row ownership policy` (selected by AC-US1-1):
+      - a valid regenerated file is accepted under every owned stored root (at least 8 Spec Kit and 10 ATV roots), along with a new file in every non-protected `.specify` directory and an ATV repair;
+      - every forbidden growth class is rejected for both upstreams: `.github/agents`, `.github/skills`, `.github/hooks`, each pack root including the optional `optimize` and `token-budget` (new subdirectory or nested `.github/skills` path), removals outside `.specify/`, the protected `.specify` paths and a Spec Kit skill rename;
+      - every owned root rejects a retarget of `path` to a workflow, the constitution, `.specify/extensions.yml`, `.baton/`, a feature handoff gate, `AGENTS.md`, `package.json` or `src/`; a `packs` move to `core`, `optimize`, `token-budget`, `issues`, an added pack or none; each other frozen field; and the hash, repair and written-byte mismatches;
+      - new rows reject a workflow target, a foreign pack, a wrong `upstream_path`, extra fields, a non-MIT license, a Spec Kit repair and hash mismatches, and every Baton-sourced row rejects a forged hash;
+      - base-locked rows installing under `.github/workflows/`, `.baton/` or `specs/`, or from a pack to `.baton/`, are rejected.
+    - Integration cases give `E_PATH_POLICY` with no push, no branch and no API write:
+      - ATV rows at `packs/optimize/files/x.md`, `packs/token-budget/files/x.md` and `packs/issues/files/new/x.md`;
+      - an owned ATV row retargeted to `.github/workflows/ci.yml` (`changes path from ".github/agents/adversarial-reviewer.agent.md" to ".github/workflows/ci.yml"`);
+      - an owned row moved to the `optimize` pack;
+      - a Spec Kit pack-root row.
+- [X] T050 [US3] F24: every PR list for a candidate branch must be a JSON array, or it fails closed: `E_SOURCE_FORMAT` in `detect`, `E_PUBLISH` before the push in `publish`, with no write. Integration tests assert the exact query paths (`state=all` in detect, `state=open` before the push). The closed-marker publish, both `E_PUSH` cases, the PR-closed race and the PR-opened race now assert the exact result object (`deepEqual`) and an empty non-GET call list. A detect-plan blocker now carries the run URL (`data-model.md` `run`).
+- [X] T051 [P] F23, F25:
+  - `docs/07-updating.md`:
+    - has the exact marker template, and says to take its values from the `Baton-Pin`, `Baton-Base` and `Baton-Content` trailers of the latest bot commit on the PR head;
+    - gives a remedy for every blocker code, including `E_UNSUPPORTED_REF`, `E_SOURCE_MISMATCH`, `E_SOURCE_FORMAT` and `E_PUBLISH`;
+    - separates an empty `DIGEST_<ID>` (workflow wiring) from a digest mismatch (rerun);
+    - gives the manual reviewed route for a blocked new upstream file.
+  - A unit test (selected by AC-US1-3) fails if the table misses a code emitted by the maintainer modules or if the template drifts from `renderMarker`.
+  - The duplicated branch-PR queries are now one `branchPulls` helper, and `upstream-candidates.mjs` no longer re-exports `isSha`, `isVersion` or `repoSlug`.
+- [X] T052 Rerun the targeted selectors, then `npm run check` once on the corrected candidate, and update the acceptance evidence counts.
+
+---
+
 ## Dependencies & Execution Order
 
 - **Setup (T001)** → **Foundational (T002–T004)**.
@@ -345,6 +386,7 @@ acceptance selectors. No registered command or assertion is weakened.
 - **Review 1 fixes (T033–T041)** depend on the completed candidate. T033 and T034 come
   before T036. T041 runs last.
 - **Review 2 fixes (T042–T048)** depend on review 1 fixes. T048 runs last.
+- **Review 3 fixes (T049–T052)** depend on review 2 fixes. T052 runs last.
 - Within each story, the tests come first and their red evidence is recorded before
   implementation.
 
