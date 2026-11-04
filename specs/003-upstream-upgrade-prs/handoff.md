@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 003-upstream-upgrade-prs
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: land
+next_owner: baton-land
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Review 6 fixes: F38 trusted files are bound to their base tree git mode from one git ls-tree read in package and publish, never the manifest mode; unchanged bytes made executable are E_PATH_POLICY and a missing mode reader fails. F37 direct bindingIssues tests for missing readers, unavailable Baton source and source hash mismatch with exact issues. F39 cause cap 197+... <=200 and requirements grammar remedy docs. E_DANGLING_REF still upstream; live evidence pending."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Review 7 of 2842437 (base 4504d15): F37-F39 verified fixed; trusted-mode binding accepts the committed-tree identity candidate and rejects unchanged-bytes 100755 at package and publish. No open findings. 71/71 targeted, AC 34/15/7."
 read_first:
   - path: specs/003-upstream-upgrade-prs/review.json
     why: Review 6 findings F37-F39 being answered
@@ -51,87 +51,12 @@ artifacts:
     sha256: 4eb06fb88cd1eb647ee4ad872cd56cbea5bc246eb806bfe60f36a8d4009c2b6e
 entry_checked: []
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
+    evidence: specs/003-upstream-upgrade-prs/review.json
+  - id: findings-mapped-to-tasks-or-dismissed
     met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      es are the newest stable release; a moved main is informational only (0.3572ms)
-        ✔ any other tracked ref is an unsupported-ref blocker (0.7463ms)
-        ✔ upstream plans are independent and an ATV candidate cannot touch Spec Kit (5.5582ms)
-      ✔ upstream candidates atv (7.2487ms)
-      ▶ upstream candidates speckit and atv row ownership policy
-        ✔ the committed lock satisfies every owned-row invariant for both upstreams (5.1102ms)
-        ✔ a regenerated owned file under every owned stored root and a new .specify file are accepted (39.7951ms)
-        ✔ repair metadata is never added or altered; a written row keeps or drops its base repair (18.045ms)
-        ✔ no upstream adds or removes rows outside its growth root, and protected paths never grow or shrink (99.2985ms)
-        ✔ owned rows keep their install target, provenance, license and shape; hashes match the written bytes (840.8109ms)
-        ✔ new rows may not collide with each other or with kept rows in any letter case (4.4429ms)
-        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (1.5767ms)
-        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (5.7793ms)
-      ✔ upstream candidates speckit and atv row ownership policy (1015.3058ms)
-      ▶ upstream candidates lifecycle
-        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.2221ms)
-        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (1.041ms)
-        ✔ a human-edited candidate with a newer pin waits for the human (0.9005ms)
-        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (2.5824ms)
-        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.5616ms)
-        ✔ a human close suppresses exactly that pin; a newer pin generates again (0.8464ms)
-        ✔ the automation obsolete close never suppresses (0.3563ms)
-        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (1.3811ms)
-      ✔ upstream candidates lifecycle (8.1552ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (197.1586ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (83.1833ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (60.7527ms)
-        ✔ E_ANALYSIS_CRITICAL (3.37ms)
-        ✔ E_ANALYSIS_MISSING (2.3706ms)
-        ✔ E_APPROVER_FORMAT (2.7359ms)
-        ✔ E_BLOCKING_OPEN (3.7504ms)
-        ✔ E_BODY_SECTIONS (3.5747ms)
-        ✔ E_BUDGET (8.2535ms)
-        ✔ E_DENYLIST (4.5478ms)
-        ✔ E_EXIT_UNMET (3.253ms)
-        ✔ E_GATE_PENDING (68.8972ms)
-        ✔ E_LANE_ESCALATE (939.1605ms)
-        ✔ E_LANE_MISMATCH (2.7846ms)
-        ✔ E_MISSING_ARTIFACT (3.0189ms)
-        ✔ E_MODEL_NOT_ALLOWED (4.8595ms)
-        ✔ E_MULTIPLE_BATONS (4.362ms)
-        ✔ E_NO_PREREG (3.3076ms)
-        ✔ E_OWNER (2.8616ms)
-        ✔ E_PR_MISSING (4.558ms)
-        ✔ E_REVIEW_BLOCKING (185.014ms)
-        ✔ E_REVIEW_MISSING (4.6334ms)
-        ✔ E_SCHEMA (2.7551ms)
-        ✔ E_STALE_ARTIFACT (3.3325ms)
-        ✔ E_TRANSITION (2.8683ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1350.7651ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (71.7119ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (23.6771ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (65.691ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (8.214ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (96.3912ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (70.2494ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (1.3903ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (16.6297ms)
-      ✔ ready with a blocking question is rejected (74.5852ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (97.0829ms)
-      ℹ tests 674
-      ℹ suites 9
-      ℹ pass 672
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 2
-      ℹ todo 0
-      ℹ duration_ms 300576.765
+    evidence: 0 findings unresolved
 open_questions: []
 decisions:
   - id: D-ATV-REF
@@ -542,18 +467,28 @@ decisions:
     decision: "Red before the fix: the unit mode case for every trusted path and the integration executable-wrapper case (published), the 200+... cause bound, and the missing mode reader. The source-unavailable and hash-mismatch assertions characterize branches that already existed. Counts are actual selector results (34/15/7/4/8/10/1/10)."
     rationale: Truthful red and characterization evidence as required by the review.
     by: speckit-implement
+  - id: D-REVIEW7-VERIFY
+    decision: F37-F39 fixed; no open findings, review routes to land
+    rationale: "All 8 installed reviewer personas report no findings for 2842437; targeted tests and selectors pass; legitimate candidates keep base modes. Accepted limitations unchanged: Spec Kit E_DANGLING_REF failure reporting, live SC-001/SC-007 evidence post-merge, Actions PR-creation setting not enabled. No PR, land or live operation performed."
+    by: review-session
+  - id: D25
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: c9b62a34b72ab0fe1c2ade334a87bc1bb6d787e916c5810628407c1f14ea7dbe
+    x-base-commit: 4504d1541a96d5c1e18a146456bbabeaac0c39aa
+    by: baton
+  - id: D26
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 28424374ab12ea1ddf3692ce8f289ac5f560c3b7
+    by: baton
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: review
-    at: 2026-11-04T13:57:10.409Z
-    by: implementation-session
-    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
-    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-    commit: f49cef6
-    x-action: refresh
   - phase: implement
     at: 2026-11-04T14:16:32.478Z
     by: baton
@@ -687,8 +622,15 @@ history:
     x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
     commit: 65b14d7
     x-action: write
-updated_at: 2026-11-04T18:42:04.839Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-11-04T18:57:20.509Z
+    by: baton
+    writer: fc349b629fe48de111a1050f706498a02e35d3cf47eddbe0bf86cb880e5efec5
+    x-worktree: 1120c1fe4b49f379216b96f088cabbbc8d3a3bc5e0a57f65923e9d5dbcc38de1
+    commit: "2842437"
+    x-action: write
+updated_at: 2026-11-04T18:57:20.502Z
+updated_by: baton-review
 risks:
   - id: R-UPSTREAM-EXEC
     text: Generation executes upstream Spec Kit code; it must run without write credentials and publication must not execute upstream content.

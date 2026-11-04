@@ -3,17 +3,18 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/003-upstream-upgrade-prs-review6-20261104/report.md",
-    "x-scope": "Independent re-review (review 6) of corrected candidate ad14439 against CLI base be2b7ec. Pinned tracked diff be2b7ec..ad14439 = 10 files (includes the review-5 receipt d2954e5), no untracked; handoff scope CLI subject set (5 files) is a strict subset; reviewed set equals pinned set. build --check OK. Findings F01-F36 preserved; new F37-F39.",
-    "x-checks": "Targeted only, no full suite: node --test test/unit/upstream-candidates.test.mjs test/integration/upstream-upgrade.test.mjs test/unit/maintainer-workflows.test.mjs test/unit/sync-bump.test.mjs = 96 pass 0 fail; AC-US1-1/2/3 selectors 33/15/7 pass (match tasks.md); git diff --check be2b7ec clean; build --check OK; validate exit 0 (W_QUICK_LARGE/W_PACK warnings only). Orchestrator probes with real base bytes via git cat-file: identity Spec Kit candidate (43 rows, requirements, recomputed summary and diff) -> bindingIssues []; ordinary upstream prompt update (.github/skills/speckit-plan/SKILL.md with row hashes) -> []; rejected: extensions.yml optional false+NBSP, U+2028 comment injection, hostile wrapper heading, dev wrapper byte change, registry installed_at change, new .specify/presets file, trusted wrapper deletion, requirements NBSP, --extra-index-url line. 14 of 43 Spec Kit rows are byte-bound; registries carry only Baton extension/preset data, and sync generatedStable keeps base timestamps, so unchanged registries reproduce base bytes. actionlint, Linux CI and live workflow not run.",
+    "run_artifact": ".context/compound-engineering/ce-review/003-upstream-upgrade-prs-review7-20261104/report.md",
+    "x-scope": "Focused independent re-review (review 7) of corrected candidate 2842437 against CLI base 4504d15. Pinned tracked diff 4504d15..2842437 = 9 files (docs/07-updating.md, contracts/upstream-watch.md, handoff.md, tasks.md, candidate-bindings.mjs, upstream-candidates.mjs, upstream-upgrade.mjs, integration and unit tests), no untracked; handoff scope CLI subject set (6 files) is a strict subset; reviewed set equals pinned set. Scope limited to F37-F39 verification and regressions from 2842437 per coordinator. Findings F01-F39 preserved; no new findings.",
+    "x-checks": "Targeted only, no full suite: node --test test/unit/upstream-candidates.test.mjs test/integration/upstream-upgrade.test.mjs = 71 pass 0 fail; AC-US1-1/2/3 selectors 34/15/7 pass (match tasks.md); git diff --check 65b14d7..2842437 clean; build --check OK; validate exit 0. Compatibility: committed-tree candidate with base bytes and base modes -> bindingIssues [] (unit test); every base tree entry is 100644 and package derives 100644 from a Linux checkout stat, so legitimate candidates keep base modes; integration identity publish passes. Poison: every trusted path with unchanged bytes and mode 100755 rejected (unit), executable wrapper rejected at publish with E_PATH_POLICY and no push (integration). Personas: correctness, security, adversarial, testing, maintainability, project-standards, agent-native, learnings all report no findings. actionlint, Linux CI and live workflow not run.",
     "x-review1": "Review 1 receipt f49cef668bd57a042621b4a24542d75f57c74d27 (base ae34a99, head ad5f4a6).",
     "x-review2": "Review 2 receipt ee68e37b517a96f2f3e2aebf780c963ce899e14d (base ad5f4a6, head 6d505f9).",
     "x-review3": "Review 3 receipt 7743fe9f4e9cea8f385f0a7821b34f815ad5afbf (base 6d505f9, head 056edbe).",
     "x-review4": "Review 4 receipt 00e71d9a77d07c6dfd485cc8db4c9c84100baeb8 (base 056edbe, head 52e61ae), routing corrected to implement at 6733578628704c8bf26da061affb3db679d399ee.",
-    "x-review5": "Review 5 receipt d2954e5b1c94e5c958bd1c364f40565f1bf6a375 (base ba529db, head be2b7ec), routed to implement with P1 F33."
+    "x-review5": "Review 5 receipt d2954e5b1c94e5c958bd1c364f40565f1bf6a375 (base ba529db, head be2b7ec), routed to implement with P1 F33.",
+    "x-review6": "Review 6 receipt 66c588c1858cebfe7e7a11aeda68014342e6db04 (base be2b7ec, head ad14439), routing corrected to implement at 65b14d7d0207bbdb9a5759d02619eb4564ddf829 (handoff-only restore 4504d15)."
   },
-  "base": "be2b7ecb328428b42f16862c0f22e7ac788361ef",
-  "head": "ad14439c3066dacd2b624b56e3fe78ccca6d93e1",
+  "base": "4504d1541a96d5c1e18a146456bbabeaac0c39aa",
+  "head": "28424374ab12ea1ddf3692ce8f289ac5f560c3b7",
   "personas": [
     "correctness-reviewer",
     "testing-reviewer",
@@ -510,7 +511,7 @@
       "x-fix": "Include the error message and path in the issue; add a test that bindingIssues over the committed tree with base HEAD returns []; extend the E_PATH_POLICY remedy for new paths under bound roots."
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F37",
       "severity": "P2",
       "title": "Base-source hash, missing-source and missing-reader binding branches lost all test coverage",
@@ -519,11 +520,11 @@
       "persona": "testing-reviewer",
       "confidence": 0.88,
       "task": "T062",
-      "reason": "ad14439 deleted the assertions for \"x-baton-source-sha256 is not the base <source>\", \"Baton source ... is unavailable in the base\" and \"the trusted base file reader is unavailable\"; none of these messages appears in any test, while the branches remain at candidate-bindings.mjs:86,140,141. Line 141 is the only place that binds a lock row's recorded source hash to the trusted base source (ownRowIssue only compares row hashes), and T062 claims it is still enforced. A regression that dropped it would pass the suite. Also, for the four non-SKILL sourced copies the exact-bytes test is satisfied by ownRowIssue first, so the byte binding is never shown on its own for them (P3 part).",
+      "reason": "ad14439 deleted the assertions for \"x-baton-source-sha256 is not the base <source>\", \"Baton source ... is unavailable in the base\" and \"the trusted base file reader is unavailable\"; none of these messages appears in any test, while the branches remain at candidate-bindings.mjs:86,140,141. Line 141 is the only place that binds a lock row's recorded source hash to the trusted base source (ownRowIssue only compares row hashes), and T062 claims it is still enforced. A regression that dropped it would pass the suite. Also, for the four non-SKILL sourced copies the exact-bytes test is satisfied by ownRowIssue first, so the byte binding is never shown on its own for them (P3 part). | Fixed in 2842437 (T069): direct bindingIssues test asserts exact single issues for missing baseFile and baseMode readers, and for an unavailable or changed Baton source the exact issue on every written row sharing the source, for a SKILL wrapper and a non-SKILL copy, plus the isolated trusted-bytes and trusted-mode issues per copy. Mutation reasoning (testing, correctness reviewers) shows removing any branch fails the test.",
       "x-fix": "Restore direct bindingIssues assertions with the committed-tree fixture: base source bytes changed (one SKILL wrapper and one non-SKILL copy), source unavailable, baseFile undefined; add a direct bindingIssues negative for a non-SKILL sourced copy."
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F38",
       "severity": "P3",
       "title": "Trusted-path binding ignores the git file mode taken from the candidate manifest",
@@ -532,11 +533,11 @@
       "persona": "security-reviewer",
       "confidence": 0.6,
       "task": "T062",
-      "reason": "verifyCandidate accepts mode 100644 or 100755 per manifest item and publish builds the commit with update-index using item.mode (src/maintainer/upstream-upgrade.mjs:414); bindingIssues compares only bytes. A candidate can publish a trusted file (for example under .specify/extensions/baton/) with identical bytes and the exec bit set, so trusted entries are not strictly \"base exactly\" as FR-031 now states. No trusted file is executable or executed by mode today and the mode change is visible in the PR diff, hence P3.",
+      "reason": "verifyCandidate accepts mode 100644 or 100755 per manifest item and publish builds the commit with update-index using item.mode (src/maintainer/upstream-upgrade.mjs:414); bindingIssues compares only bytes. A candidate can publish a trusted file (for example under .specify/extensions/baton/) with identical bytes and the exec bit set, so trusted entries are not strictly \"base exactly\" as FR-031 now states. No trusted file is executable or executed by mode today and the mode change is visible in the PR diff, hence P3. | Fixed in 2842437 (T068): package and publish read base paths and modes from one git ls-tree -r -z listing (parser takes everything after the first tab, unexpected entries throw E_GIT); bindingIssues requires a baseMode reader (missing -> E_PATH_POLICY) and rejects a written trusted path whose manifest mode differs from its base mode; buildCommit writes only that verified mode. Unit covers every trusted path at 100755, integration rejects an executable wrapper at publish with no write.",
       "x-fix": "Require the manifest mode of every written trusted path to equal its base tree mode (git ls-tree on plan.base), and add a same-bytes/100755 rejection test."
     },
     {
-      "disposition": "open",
+      "disposition": "fixed",
       "id": "F39",
       "severity": "P3",
       "title": "Requirements grammar blockers lack a remedy, and the bounded-cause limit is misstated",
@@ -545,7 +546,7 @@
       "persona": "agent-native-reviewer",
       "confidence": 0.6,
       "task": "T065",
-      "reason": "The E_PATH_POLICY row lists only the requirements hash mismatch and non-ASCII causes; the grammar messages (unsupported line, requirement without a hash, ends inside a requirement, does not pin specify-cli) have no remedy, and a legitimate uv output form the strict grammar rejects (markers containing - ~ [ or *, extras) would block every release until requirementsIssue is extended in a normal PR, which neither message nor doc says. Separately the contract (upstream-watch.md:173) and T065 say the cause is at most 200 characters, while errorCause appends \"...\" after 200 (test pins 203). Fail-closed; merged agent-native, correctness, adversarial and project-standards.",
+      "reason": "The E_PATH_POLICY row lists only the requirements hash mismatch and non-ASCII causes; the grammar messages (unsupported line, requirement without a hash, ends inside a requirement, does not pin specify-cli) have no remedy, and a legitimate uv output form the strict grammar rejects (markers containing - ~ [ or *, extras) would block every release until requirementsIssue is extended in a normal PR, which neither message nor doc says. Separately the contract (upstream-watch.md:173) and T065 say the cause is at most 200 characters, while errorCause appends \"...\" after 200 (test pins 203). Fail-closed; merged agent-native, correctness, adversarial and project-standards. | Fixed in 2842437 (T070): errorCause cuts to 197 characters plus \"...\" (<= 200) with boundary tests at 193/194/500; docs/07-updating.md lists every requirementsIssue grammar cause, the git mode cause and the remedy (extend requirementsIssue with a test in a normal PR, then sync --bump); contract states the mode binding and cause bound.",
       "x-fix": "List the grammar causes and the \"extend requirementsIssue with a test in a normal PR\" remedy; state the limit as 200 characters plus \"...\" (or cut to 197)."
     }
   ]
