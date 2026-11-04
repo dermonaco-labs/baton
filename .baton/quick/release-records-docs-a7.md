@@ -26,7 +26,7 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: .baton/template-cleanup.yml
     why: Source-only cleanup coverage for new docs lane and later canonical review artifacts
-    sha256: 232ee939153736600d8802e9be822ebdb5fe141135a9073d0146e0089c22df5d
+    sha256: 3393afa501a48e053be76683d8588ef7de90accc16e5613eb025ea2753078a1f
   - path: .baton/quick/release-records-docs-a7.work.json
     why: Actual judgment-only input to this new canonical WORK write
     sha256: de632df430c6cae373d42517f38b3d1bde768ad2f66a7923bcb449813cc449f4
@@ -124,10 +124,14 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Bind the intentional exact source002 cleanup retirement required by F01; retain the old lane's unapproved gate and do not land or authorize that legacy lane
     by: implementation-session
+  - id: D18
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "User explicitly selected: Include cleanup bookkeeping and authorize the checksum refresh; retain the fresh approval gate. Add removal entries for release-014 and previously uncovered release-013/partial-feature-attach-013 maintenance records and the release-013 review directory. Checksum refresh only; no sealed review receipt edits, merge approval or publication approval."
+    by: implementation-session
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via direct approval
+  approved_at: 2026-11-04
 history:
   - phase: work
     at: 2026-10-09T14:15:01.488Z
@@ -213,8 +217,22 @@ history:
     x-worktree: b5c3f3f5829684e8237780f9d60d4e0203a0e49021717a1a6f3f133966d35b65
     commit: fb17e9a
     x-action: refresh
-updated_at: 2026-11-02T17:29:22.377Z
-updated_by: implementation-session
+  - phase: land
+    at: 2026-11-04T07:42:57.555Z
+    by: implementation-session
+    writer: 8e1a8d9ee98645a87426425344fb1fc5931903cbab39a61776b68ac48bf492c2
+    x-worktree: bbd5004f069d8ef5cf20933a5b03c083f1059183c9da9e1be7a4de6fdfb14e1b
+    commit: d2f3f51
+    x-action: refresh
+  - phase: land
+    at: 2026-11-04T07:43:18.370Z
+    by: human:repository-owner
+    writer: 8e1a8d9ee98645a87426425344fb1fc5931903cbab39a61776b68ac48bf492c2
+    x-worktree: bbd5004f069d8ef5cf20933a5b03c083f1059183c9da9e1be7a4de6fdfb14e1b
+    commit: d2f3f51
+    x-action: approve
+updated_at: 2026-11-04T07:43:18.370Z
+updated_by: human:repository-owner
 do_not_read:
   - path: specs/001-baton-template/roadmap.md
     why: Future feature scope is not authorized by this docs-only lane

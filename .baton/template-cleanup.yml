@@ -46,6 +46,21 @@ remove:
   - .baton/quick/review-land-fixes-012.work.json
   - .baton/quick/review-land-fixes-012.review.json
   - .baton/quick/review-land-fixes-012.land.json
+  - .baton/quick/partial-feature-attach-013.md
+  - .baton/quick/partial-feature-attach-013.work.json
+  - .baton/quick/partial-feature-attach-013.review.json
+  - .baton/quick/partial-feature-attach-013.land.json
+  - .baton/quick/partial-feature-attach-013.f3-work.json
+  - .baton/quick/partial-feature-attach-013.f3-review-handoff.json
+  - .baton/quick/release-013.md
+  - .baton/quick/release-013.work.json
+  - .baton/quick/release-013.review.json
+  - .baton/quick/release-013.review.payload.json
+  - .baton/quick/release-014.md
+  - .baton/quick/release-014.work.json
+  - .baton/quick/release-014.review.json
+  - .baton/quick/release-014.land.json
+  - .context/compound-engineering/ce-review/release-013-7e5eb2c/
   - .context/compound-engineering/ce-review/review-land-fixes-012-independent-20261010/
   - .context/compound-engineering/ce-review/review-land-fixes-012-independent-r1-20261010/
   - .context/compound-engineering/ce-review/validate-command-docs-011-independent-20261010/
