@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/release-014-0b1a154/report.json"
+  },
+  "base": "51d1f86f85420ff93df7a90e2e98926a828daa0a",
+  "head": "0b1a1548cf8ecdbf507acce8ef644301462bd910",
+  "personas": ["correctness-reviewer", "testing-reviewer", "maintainability-reviewer", "project-standards-reviewer", "agent-native-reviewer", "learnings-researcher", "adversarial-reviewer"],
+  "findings": [
+    {
+      "id": "R014-1",
+      "severity": "P2",
+      "title": "Release-014 review run artifact and payload are not pre-covered by cleanup",
+      "file": ".baton/template-cleanup.yml",
+      "line": 62,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.75,
+      "disposition": "dismissed",
+      "reason": "Also raised by maintainability-reviewer. This lane keeps its CE run artifact untracked under gitignored .context/ (as release-013-65a2c12 was referenced but never tracked) and commits no review payload; review.json and land.json are already covered. Land re-verifies tracked .baton/quick and .context coverage at the final head."
+    },
+    {
+      "id": "R014-2",
+      "severity": "P3",
+      "title": "CHANGELOG 0.1.4 date may precede the eventual tag date",
+      "file": "CHANGELOG.md",
+      "line": 9,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.65,
+      "disposition": "dismissed",
+      "reason": "Also noted by learnings-researcher. The tag date depends on future separate human merge and tag approvals and cannot be known at review; no guard requires equality and v0.1.2 shipped with a one-day offset. Surfaced to the owner for the tag decision."
+    },
+    {
+      "id": "R014-3",
+      "severity": "P3",
+      "title": "Work exit evidence says 12 changed files while the candidate has 20",
+      "file": ".baton/quick/release-014.md",
+      "line": 26,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.6,
+      "disposition": "dismissed",
+      "reason": "The CLI-generated work receipt counts the 12 CLI subjects, which the .baton-only cleanup bookkeeping did not change; D11 and the body record the later cleanup, and this review write regenerates exit evidence."
+    }
+  ]
+}

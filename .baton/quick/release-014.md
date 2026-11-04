@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: release-014
-phase_completed: work
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: land
+next_owner: baton-land
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Bookkeeping-only v0.1.4 release preparation at base 51d1f86 (PR #55): version 0.1.3 -> 0.1.4, all Unreleased entries promoted to 0.1.4 (2026-11-03), unchanged upstream pins, rebuilt bundle and generated metadata. Owner answered Q1 to include cleanup bookkeeping, authorized the historical checksum refresh and separately approved its fresh gate. Acceptance checks preregistered in D5. Fresh independent review is next; no PR, merge, tag or dispatch performed."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Independent headless review of exact candidate 0b1a154 against pinned base 51d1f86 (20 tracked files, 12 CLI subjects) by 7 installed personas found no open findings: R014-1/P2 (own run artifact kept untracked), R014-2/P3 (changelog date vs future tag) and R014-3/P3 (historical work evidence count) dismissed with reasons. Product change is version metadata only. Ready for land; merge and tag/publication each need separate human approval."
 read_first:
   - path: .baton/quick/release-014.md
     why: Release-preparation intent, pinned diff base and relay state
@@ -21,84 +21,15 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: diff-nonempty
+  - id: findings-json-valid
     met: true
-    evidence: 12 changed files
-  - id: local-checks-pass
+    evidence: .baton/quick/release-014.review.json
+  - id: findings-fixed-or-dismissed
     met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      unchanged defaults (0.2303ms)
-      ✔ shipped phase template is valid and never weakens its built-in contracts (17.9172ms)
-      ✔ tracked Baton documentation contains no private feed hostnames (80.4034ms)
-      ✔ shipped troubleshooting names no concrete registry host beyond public or placeholder hosts (0.716ms)
-      ✔ adopter command table remains contiguous (0.5311ms)
-      ✔ review instructions explain the normalized handoff payload (baton/skills/baton-review/SKILL.md) (0.4629ms)
-      ✔ review instructions explain the normalized handoff payload (.github/skills/baton-review/SKILL.md) (0.2919ms)
-      ✔ every Baton-authored skill a pack installs is byte-identical to its baton/skills source (38.5421ms)
-      ✔ maintainer workflow list matches template-cleanup keep_dormant and every workflow is classified (2.6372ms)
-      ✔ compiles all draft 2020-12 schemas once (121.7199ms)
-      ✔ findings fixture validates and invalid fixture reports a JSON pointer (2.9384ms)
-      ✔ pack schema requires a classified reason for every optional reference (1.0008ms)
-      ✔ pack, lock and manifest schemas accept named optional sources without relaxing old shapes (6.869ms)
-      ✔ sync bump explains pin and file changes for a PR body (1.5401ms)
-      ✔ sync rejects unpinned bump values and check/bump combination (34.7632ms)
-      ✔ pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift (203.8153ms)
-      ✔ generated registry preserves verified bytes when only installation time changes (7.9867ms)
-      ✔ generated Spec Kit manifest preserves locked bytes when file keys are reordered (5.6563ms)
-      ✔ named optional sources keep raw provenance and refuse modified or misplaced payloads (17.7869ms)
-      ✔ lock and snapshot document label optional provenance by its named source (0.7486ms)
-      ✔ optional pin fields are one immutable list matching the locked projection order (0.178ms)
-      ✔ MIT license verifier keeps each source copyright requirement (0.321ms)
-      ✔ pack definitions require every original pack and accept additional optional packs (91.268ms)
-      ✔ F52 every in-tree mkdtemp root used by tests is gitignored (546.4402ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (216.7186ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (87.2677ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (75.3104ms)
-        ✔ E_ANALYSIS_CRITICAL (4.2499ms)
-        ✔ E_ANALYSIS_MISSING (2.7324ms)
-        ✔ E_APPROVER_FORMAT (3.1164ms)
-        ✔ E_BLOCKING_OPEN (2.7484ms)
-        ✔ E_BODY_SECTIONS (2.7638ms)
-        ✔ E_BUDGET (5.2119ms)
-        ✔ E_DENYLIST (3.844ms)
-        ✔ E_EXIT_UNMET (2.0431ms)
-        ✔ E_GATE_PENDING (91.8676ms)
-        ✔ E_LANE_ESCALATE (1004.6363ms)
-        ✔ E_LANE_MISMATCH (2.6474ms)
-        ✔ E_MISSING_ARTIFACT (2.6408ms)
-        ✔ E_MODEL_NOT_ALLOWED (5.1764ms)
-        ✔ E_MULTIPLE_BATONS (4.2752ms)
-        ✔ E_NO_PREREG (3.8783ms)
-        ✔ E_OWNER (2.8605ms)
-        ✔ E_PR_MISSING (4.8244ms)
-        ✔ E_REVIEW_BLOCKING (224.3248ms)
-        ✔ E_REVIEW_MISSING (5.2928ms)
-        ✔ E_SCHEMA (3.6278ms)
-        ✔ E_STALE_ARTIFACT (3.4209ms)
-        ✔ E_TRANSITION (2.6592ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1493.5978ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (114.0124ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (81.3517ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (78.2812ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (8.013ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (134.075ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (79.9405ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (1.4609ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (18.2935ms)
-      ✔ ready with a blocking question is rejected (74.8536ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (107.386ms)
-      ℹ tests 588
-      ℹ suites 0
-      ℹ pass 586
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 2
-      ℹ todo 0
-      ℹ duration_ms 300929.8279
+    evidence: 0 findings unresolved
+  - id: quick-scope-held
+    met: true
+    evidence: "Reviewed exact CLI base 51d1f86 to 0b1a154: 20 tracked files cover all 12 CLI subjects. Source and tests change version identifiers only; the bundle equals base bytes with seven 0.1.3 strings replaced by 0.1.4 (SHA-256 c0709fd2d922c4d4d0ff0f0d4bcacd624479d722ade4e9ee958f0233b18921f9 matches sidecar); CHANGELOG promotes Unreleased verbatim with unchanged pins; manifest, lock and metafile changes are generated metadata; cleanup and a7 refresh are owner-approved bookkeeping. No user-facing behavior, public contract, upstream bytes or component versions change."
 open_questions: []
 decisions:
   - id: D1
@@ -148,6 +79,28 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Owner answered Q1 to include cleanup bookkeeping, authorized the a7 checksum refresh, and separately selected Approve the fresh cleanup/checksum gate. Cleanup SHA-256 3393afa501a48e053be76683d8588ef7de90accc16e5613eb025ea2753078a1f. node --test test/integration/adopt.test.mjs passed 16/16; a YAML-based assertion verified all 48 tracked quick/review maintenance records are covered by cleanup remove entries; global validate and git diff --check passed. Original author work receipt preceded these metadata-only cleanup additions; independent review and mandatory land checks must cover this new candidate. No merge or publication approval inferred.
     by: implementation-session
+  - id: D12
+    decision: Verify candidate remains within quick scope
+    tag: quick-scope-held
+    rationale: "Reviewed exact CLI base 51d1f86 to 0b1a154: 20 tracked files cover all 12 CLI subjects. Source and tests change version identifiers only; the bundle equals base bytes with seven 0.1.3 strings replaced by 0.1.4 (SHA-256 c0709fd2d922c4d4d0ff0f0d4bcacd624479d722ade4e9ee958f0233b18921f9 matches sidecar); CHANGELOG promotes Unreleased verbatim with unchanged pins; manifest, lock and metafile changes are generated metadata; cleanup and a7 refresh are owner-approved bookkeeping. No user-facing behavior, public contract, upstream bytes or component versions change."
+    by: release-014-review
+  - id: D13
+    decision: Dismiss all findings with reasons and route to land
+    rationale: "R014-1 is dismissed because this lane keeps its CE run artifact untracked and commits no review payload; land must re-verify tracked .baton/quick and .context cleanup coverage at the final head. R014-2 is surfaced to the owner: the 2026-11-03 heading may precede the tag date, which depends on later human approvals. R014-3 refers to a historical CLI work receipt. No auto-fixes were applied. The first reviewer dispatch was lost to a tool interruption before results and was re-dispatched once unchanged. This receipt is not merge or publication approval."
+    by: release-014-review
+  - id: D14
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: aaa9c21865ede4438951a49893f87c988b8d3da72d3d77645f0f06b5fc55b5d1
+    x-base-commit: 51d1f86f85420ff93df7a90e2e98926a828daa0a
+    by: baton
+  - id: D15
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 0b1a1548cf8ecdbf507acce8ef644301462bd910
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -174,8 +127,15 @@ history:
     x-worktree: bbd5004f069d8ef5cf20933a5b03c083f1059183c9da9e1be7a4de6fdfb14e1b
     commit: d2f3f51
     x-action: refresh
-updated_at: 2026-11-04T07:44:00.440Z
-updated_by: implementation-session
+  - phase: review
+    at: 2026-11-04T08:09:40.285Z
+    by: baton
+    writer: 1406fb9d272be693b787799dd7fb21306b53cb2795722dcf79c844abb452a59f
+    x-worktree: b5a01a3b5998db3f5aa9a583fc85f8ab120cb17c265045fa17cde674c7ebea6e
+    commit: 0b1a154
+    x-action: write
+updated_at: 2026-11-04T08:09:40.276Z
+updated_by: baton-review
 risks:
   - id: R1
     text: Owner approval and merge must bind the exact final PR head. Only after merge may publication proceed through the pinned dry run and an owner-approved annotated v0.1.4 tag; neither action is performed by this release-preparation task.
@@ -183,6 +143,9 @@ risks:
 x-implementation-writer: 8e1a8d9ee98645a87426425344fb1fc5931903cbab39a61776b68ac48bf492c2
 x-implementation-worktree: bbd5004f069d8ef5cf20933a5b03c083f1059183c9da9e1be7a4de6fdfb14e1b
 x-implementation-cycle: ba98a0f20405a5d7fb381aeaf85771f4e93533da1027be8d6daf68c188f4394d
+review:
+  findings_path: .baton/quick/release-014.review.json
+  blocking_findings: 0
 ---
 ## Goal
 Prepare the bookkeeping-only Baton v0.1.4 release candidate for all merged
