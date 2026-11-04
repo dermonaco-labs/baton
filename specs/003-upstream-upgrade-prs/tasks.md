@@ -284,7 +284,7 @@ command or assertion is weakened.
   - Workflow unit assertions, and integration cases for a missing or mismatched digest.
 - [X] T037 [US3] F07 in `planUpstream` and `detect`:
   - An open bot-only PR without a valid marker is `blocked` with `E_PR_MARKER`.
-  - A closed unmerged PR without a marker suppresses the pin in its `Upstream: bump <id> to <pin>` title.
+  - A closed unmerged PR without a marker suppresses the pin in its `Upstream: bump <id> to <pin>` title. *Superseded by T043 (review 2, FR-030): titles are never trusted.*
   - Unit cases for both.
 - [X] T038 [US1] F08: the `checks` rejection reads as a schema mismatch, and the PR body Validation section states the trust boundary. Unit assertions for both.
 - [X] T039 [US1] F04, F09 test coverage:
@@ -307,6 +307,30 @@ Review 1 implementation notes:
 
 ---
 
+## Phase 9: Review 2 fixes (review.json F14–F21)
+
+Independent review 2 routed back to implement. F14 is a code fix against the existing
+FR-012 contract, which already limits candidate-row ownership to new paths. The contract
+now spells out how "new" is decided. F15 records a human decision as the new FR-030; it
+replaces the title-based suppression from T037. New tests run under the existing
+acceptance selectors. No registered command or assertion is weakened.
+
+- [X] T042 [US1] F14 (P1, FR-012) in `src/lib/upstream-candidates.mjs` and `src/maintainer/upstream-upgrade.mjs`:
+- `package` and `publish` read the trusted base tree with `git ls-tree -r -z --name-only <base>` and pass it to `verifyCandidate`. A missing base tree fails closed with `E_PATH_POLICY`.
+- A candidate-lock row owns a path only if the path is new: untracked in any letter case, not a tracked directory, not below a tracked file, under a tracked stored root, and in no directory that holds a tracked file another owner or no lock row owns. An added own `files[]` row must name such a changed path.
+- Unit cases: every tracked stored path without a base-lock row (13 at this base, including `.specify/memory/constitution.md` and Baton's skills) is rejected for both upstreams. A case-variant, directory, nested-path and ownership-rename table is rejected. Genuinely new paths in owned directories are accepted. An integration tamper case claims the constitution with a candidate row, then adds a file beside it; both give `E_PATH_POLICY` with no push and no API write.
+- [X] T043 [US3] F15, F18 (FR-030, human decision): any unmerged PR on the candidate branch without a valid marker, open or closed, blocks with `E_PR_MARKER` and an excerpt naming the PR, its state and the repair. `titlePin` is removed, so F18 no longer applies. Suppression reads only the marker. Unit cases cover open, closed and merged PRs, a restored marker (suppressed) and a restored `closed=obsolete` marker (released). An integration case asserts no push and no non-GET call, and that a closed PR's intact title does not suppress.
+- [X] T044 [US2] F16: the integration harness packages either upstream. For both speckit and ATV, an empty and a mismatched `DIGEST_<ID>` each give `E_CANDIDATE_VERIFY` with no push, write or branch, and the correct digest opens a draft PR on `baton/upstream-upgrade/<id>`. The workflow test checks, for every `UPSTREAMS` id, the gated outputs, one publish and one report download into `artifacts/<id>`, and `DIGEST_<ID>`.
+- [X] T045 [US1] F17: exact unit assertions for the check-schema message and the PR body attestation sentence. An integration case for an unclassified push failure gives `E_PUSH` naming the branch.
+- [X] T046 [P] F19, F20:
+- An empty attested digest has its own excerpt (`… has no digest attested by the generate job (DIGEST_<ID> is empty)`).
+- `docs/07-updating.md` describes each stage's actual inputs and adds a blocker remedy table.
+- `repoSlug`, `isVersion` and `isSha` live in `src/lib/upstream.mjs` and are used by `parseBump` and `upstream-upgrade.mjs`.
+- [X] T047 [US1] F21: when detection saw no open PR, `publish` lists open PRs for the candidate branch just before pushing. If one exists, it reports `E_PR_CHANGED` and writes nothing. Integration case included.
+- [X] T048 Rerun the targeted selectors, then `npm run check` once on the corrected candidate, and update the acceptance evidence counts.
+
+---
+
 ## Dependencies & Execution Order
 
 - **Setup (T001)** → **Foundational (T002–T004)**.
@@ -320,6 +344,7 @@ Review 1 implementation notes:
 - **Polish (T030–T032)** depends on every story.
 - **Review 1 fixes (T033–T041)** depend on the completed candidate. T033 and T034 come
   before T036. T041 runs last.
+- **Review 2 fixes (T042–T048)** depend on review 1 fixes. T048 runs last.
 - Within each story, the tests come first and their red evidence is recorded before
   implementation.
 
@@ -386,10 +411,10 @@ Post-merge operational evidence, not claimed here (analysis C2, E1):
 |-------|---------------------|
 | AC-US4-1 | Red: 1/1 failed because `parseBump` was not exported from `src/commands/sync.mjs` before T007; Green: 10 tests, 10 pass, 0 fail. |
 | AC-US4-2 | Red: on main `ae34a99`, `sync --bump atv=ac6d611…` wrote the lock, then `sync --check` exited 1 with `E_UPSTREAM_VERIFY` ("Lock pins differ from the vetted Spec Kit/ATV refs"); Green: on the feature tree the same bump, then `sync --check`, `lock verify` and `build --check` all exit 0, the diff touches only `baton.lock.json` and `docs/reference/upstream-diff.md` with no `src/` edit, and `atv=<unknown 40-hex>` (`E_UPSTREAM_VERIFY`) and `speckit=99.0.0` (unsatisfiable) both exit 1 with a clean `git status`. |
-| AC-US1-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, before that module existed (T014); Green: 15 tests, 15 pass, 0 fail. |
-| AC-US1-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 10 tests, 10 pass, 0 fail (7 before review 1; adds remote-rejected push, report fallbacks and the `E_DANGLING_REF` report). |
+| AC-US1-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, before that module existed (T014); Green: 17 tests, 17 pass, 0 fail (15 before review 2; adds the tracked-path claim and base-tree cases). |
+| AC-US1-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 13 tests, 13 pass, 0 fail (7 before review 1; adds remote-rejected push, report fallbacks and the `E_DANGLING_REF` report; 10 before review 2; adds per-upstream digests with an ATV draft PR, a PR opened after detection, and the generic `E_PUSH`). |
 | AC-US1-3 | Red: 6 tests, 0 pass, 6 fail against the old workflow before T018; Green: 6 tests, 6 pass, 0 fail, including `runs-on: ubuntu-latest` per job. |
 | AC-US2-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, the same pre-module red run as AC-US1-1 (before T014, T023); Green: 4 tests, 4 pass, 0 fail. |
-| AC-US3-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, the same pre-module red run as AC-US1-1 (before T014, T027); Green: 7 tests, 7 pass, 0 fail (6 before review 1; adds the `E_PR_MARKER` case). |
-| AC-US3-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 10 tests, 10 pass, 0 fail, including analysis C1 and C4 cases (7 before review 1; adds the truncated compare, the PR closed after detection, and the missing-marker and title-suppression cases). |
+| AC-US3-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, the same pre-module red run as AC-US1-1 (before T014, T027); Green: 8 tests, 8 pass, 0 fail (6 before review 1; adds the `E_PR_MARKER` case; 7 before review 2; adds the restored-marker case, and the marker case now covers closed PRs without title trust). |
+| AC-US3-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 10 tests, 10 pass, 0 fail, including analysis C1 and C4 cases (7 before review 1; adds the truncated compare, the PR closed after detection, and the missing-marker case, which review 2 rewrote for FR-030 marker restoration). |
 | AC-US3-3 | Red: 1 test, 0 pass, 1 fail before T028; Green: 1 test, 1 pass, 0 fail. |

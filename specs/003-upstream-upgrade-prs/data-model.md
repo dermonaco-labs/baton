@@ -42,14 +42,14 @@ Ordering:
 
 State selection, evaluated in order:
 
-1. Detection or format failure → `blocked`. This includes an open PR on a bot-only
-   candidate branch whose marker is missing or invalid (`E_PR_MARKER`).
+1. Detection or format failure → `blocked`. This includes any unmerged candidate PR,
+   open or closed, whose marker is missing or invalid (`E_PR_MARKER`, FR-030).
 2. An open PR whose pin is no newer than `current` (that is, already merged or
    superseded) → `close-obsolete` if the PR is bot-only, otherwise `obsolete-human`
    (FR-029).
 3. `latest` is null or not newer than `current` → `none`.
 4. `latest` was suppressed by a PR a human closed → `suppressed` (FR-021). The PR's
-   pin comes from its marker or, if the marker was removed, from its title.
+   pin comes only from its marker; a title is never trusted.
 5. An open PR that is human-edited → `waiting-human`. The newer pin is reported (FR-020).
 6. An open bot-only PR with the same pin, the same base and an unchanged content digest
    → `unchanged` (FR-018).

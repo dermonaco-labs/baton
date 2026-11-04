@@ -1,5 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -10,12 +11,21 @@ const {
   BOT_EMAIL, BOT_NAME, ISSUE_NOTICE, branchFor, buildRunUrl, classifyBranch, commitMessage, compareVersions,
   contentDigest, contentTrailer, currentPin, isNewer, isSha, isTag, isVersion, lockDiffIssues, makePin,
   parseMarker, pathPolicyIssue, planUpstream, policyOf, prTitle, renderIssue, renderMarker, renderPrBody,
-  sanitizeExcerpt, selectAtv, selectSpeckit, titlePin, verifyCandidate
+  sanitizeExcerpt, selectAtv, selectSpeckit, verifyCandidate
 } = candidates;
 
 const sha = (/** @type {string} */ c) => c.repeat(40);
 const hex = (/** @type {Buffer|string} */ bytes) => createHash('sha256').update(bytes).digest('hex');
 const baseLock = () => JSON.parse(readFileSync(join(sourceRoot, 'baton.lock.json'), 'utf8'));
+/** The committed tree's tracked paths, read the way the trusted jobs read the base commit. */
+const baseTree = new Set(execFileSync('git', ['ls-tree', '-r', '-z', '--name-only', 'HEAD'], { cwd: sourceRoot })
+  .toString('utf8').split('\0').filter(Boolean));
+/** Tracked stored paths with no lock row: the constitution, Baton skills and unlocked pack files. */
+const unlockedStored = () => {
+  const rows = new Set(baseLock().files.map((/** @type {any} */ file) => file.stored_at));
+  return [...baseTree].filter(path => /^(?:\.github\/agents\/|\.github\/skills\/|\.specify\/|packs\/[a-z0-9-]+\/files\/)/
+    .test(path) && !rows.has(path));
+};
 const BASE = sha('b');
 const bot = { name: BOT_NAME, email: BOT_EMAIL };
 const human = { name: 'Maintainer', email: 'maintainer@example.com' };
@@ -176,7 +186,7 @@ describe('upstream candidates speckit', () => {
 
   test('the path policy allows only regenerated outputs', () => {
     const base = baseLock();
-    const context = { baseLock: base, candidateLock: base };
+    const context = { baseLock: base, candidateLock: base, baseTree };
     const stored = (/** @type {string} */ prefix, upstream = 'speckit') => base.files.find((/** @type {any} */ file) =>
       file.stored_at.startsWith(prefix) && file.upstream === upstream).stored_at;
     for (const path of ['baton.lock.json', 'docs/reference/upstream-diff.md', 'baton/upstream/specify-cli.requirements.in',
@@ -211,8 +221,10 @@ describe('upstream candidates speckit', () => {
     const added = structuredClone(base);
     added.files.push({ ...base.files.find((/** @type {any} */ file) => file.upstream === 'speckit'),
       stored_at: '.specify/templates/new-template.md' });
-    const withNew = { baseLock: base, candidateLock: added };
+    const withNew = { baseLock: base, candidateLock: added, baseTree };
     assert.equal(pathPolicyIssue('.specify/templates/new-template.md', 'changed', 'speckit', withNew), null);
+    assert.equal(pathPolicyIssue('.specify/templates/new-template.md', 'changed', 'speckit',
+      { baseLock: base, candidateLock: added }), '.specify/templates/new-template.md: the base tree is unavailable');
     assert.equal(pathPolicyIssue('.specify/templates/new-template.md', 'changed', 'atv', withNew),
       '.specify/templates/new-template.md is owned by "speckit", not atv');
     assert.equal(pathPolicyIssue('.specify/templates/new-template.md', 'deleted', 'speckit', withNew),
@@ -243,7 +255,8 @@ describe('upstream candidates speckit', () => {
     const rows = [
       [[], l => { row(l, 'speckit').sha256 = 'a'.repeat(64); }],
       [[], l => { l.files = l.files.filter((/** @type {any} */ file) => file !== row(l, 'speckit')); }],
-      [[], l => { l.files.push({ ...row(l, 'speckit'), stored_at: '.specify/templates/new-template.md' }); }],
+      [['files .specify/templates/new-template.md added: .specify/templates/new-template.md: the base tree is unavailable'],
+        l => { l.files.push({ ...row(l, 'speckit'), stored_at: '.specify/templates/new-template.md' }); }],
       [[`files ${key('atv')} (atv) changed`], l => { row(l, 'atv').sha256 = 'a'.repeat(64); }],
       [[`files ${key('optimize')} (optimize) changed`], l => { row(l, 'optimize').mode = '100755'; }],
       [[`files ${key('token-budget')} (token-budget) removed`],
@@ -260,11 +273,106 @@ describe('upstream candidates speckit', () => {
       mutate(changed);
       assert.deepEqual(lockDiffIssues('speckit', base, changed, latest), expected, mutate.toString());
     }
+    const fresh = '.specify/templates/new-template.md';
+    const added = structuredClone(lock);
+    added.files.push({ ...row(added, 'speckit'), stored_at: fresh });
+    assert.deepEqual(lockDiffIssues('speckit', base, added, latest, { baseTree, changed: new Set([fresh]) }), []);
+    assert.deepEqual(lockDiffIssues('speckit', base, added, latest, { baseTree, changed: new Set() }),
+      [`files ${fresh} added without a changed file`]);
+  });
+
+  test('a candidate row cannot claim a tracked path or a directory holding files its upstream does not own', () => {
+    const base = baseLock();
+    const latest = speckitLatest();
+    const unlocked = unlockedStored();
+    for (const path of ['.specify/memory/constitution.md', '.github/skills/baton/SKILL.md',
+      '.github/skills/baton-land/SKILL.md', '.github/skills/baton-review/SKILL.md', 'packs/learning/files/.atv/.gitignore']) {
+      assert.ok(unlocked.includes(path), path);
+    }
+    assert.ok(unlocked.length >= 13, String(unlocked.length));
+    const claim = (/** @type {any} */ lock, /** @type {string} */ id, /** @type {string} */ path) => {
+      const copy = structuredClone(lock);
+      copy.files.push({ ...base.files.find((/** @type {any} */ file) => file.upstream === id), stored_at: path });
+      return copy;
+    };
+    for (const path of unlocked) {
+      for (const id of /** @type {const} */ (['speckit', 'atv'])) {
+        const candidateLock = claim(base, id, path);
+        const reason = `${path} is tracked in the base tree without a base lock row`;
+        assert.equal(pathPolicyIssue(path, 'changed', id, { baseLock: base, candidateLock, baseTree }), reason, `${id} ${path}`);
+        assert.equal(pathPolicyIssue(path, 'deleted', id, { baseLock: base, candidateLock, baseTree }),
+          `${path} is not a locked upstream output`, `${id} delete ${path}`);
+        const pin = id === 'speckit' ? latest : makePin('atv', { version: null, commit: sha('a'), tree: sha('c') });
+        assert.ok(lockDiffIssues(id, base, candidateLock, pin, { baseTree, changed: new Set([path]) })
+          .includes(`files ${path} added: ${reason}`), `${id} row ${path}`);
+      }
+    }
+    /** @type {Array<[import('../../src/lib/upstream-candidates.mjs').UpstreamId, string, string|null]>} */
+    const cases = [
+      ['speckit', '.github/skills/speckit-new/SKILL.md', null],
+      ['speckit', '.specify/templates/new-template.md', null],
+      ['speckit', '.specify/new.json', null],
+      ['atv', '.github/agents/new.agent.md', null],
+      ['atv', '.github/skills/atv-new/SKILL.md', null],
+      ['speckit', '.specify/memory/new.md', 'with .specify/memory/constitution.md, which speckit does not own'],
+      ['speckit', '.specify/memory/deep/new.md', 'with .specify/memory/constitution.md, which speckit does not own'],
+      ['speckit', '.github/skills/baton/references/x.md', 'with .github/skills/baton/SKILL.md, which speckit does not own'],
+      ['atv', '.github/skills/baton-land/x.md', 'with .github/skills/baton-land/SKILL.md, which atv does not own'],
+      ['atv', 'packs/learning/files/.atv/new.md', 'with packs/learning/files/.atv/.gitignore, which atv does not own'],
+      ['speckit', 'packs/optimize/files/.github/skills/new/SKILL.md', 'which speckit does not own'],
+      ['speckit', '.github/agents/new.agent.md', 'which speckit does not own'],
+      ['atv', '.specify/new.json', 'which atv does not own'],
+      ['speckit', '.specify/memory/Constitution.md', 'differs only in letter case from a tracked file'],
+      ['speckit', '.github/skills/BATON/x.md', 'differs only in letter case from a tracked directory'],
+      ['speckit', '.specify/Templates/x.md', 'differs only in letter case from a tracked directory'],
+      ['speckit', '.specify/templates', 'is a tracked directory'],
+      ['speckit', '.specify/memory/constitution.md/x.md', 'is below the tracked file .specify/memory/constitution.md'],
+      ['speckit', 'packs/newpack/files/x.md', 'is not under a stored root the base tree tracks']
+    ];
+    for (const [id, path, reason] of cases) {
+      const issue = pathPolicyIssue(path, 'changed', id, { baseLock: base, candidateLock: claim(base, id, path), baseTree });
+      if (reason === null) assert.equal(issue, null, `${id} ${path}`);
+      else assert.ok(issue?.includes(reason), `${id} ${path}: ${issue}`);
+    }
+    const own = base.files.find((/** @type {any} */ file) => file.upstream === 'speckit');
+    const renamed = structuredClone(base);
+    renamed.files = renamed.files.filter((/** @type {any} */ file) => file.stored_at !== own.stored_at);
+    renamed.files.push({ ...own, stored_at: '.specify/memory/constitution.md' });
+    assert.ok(lockDiffIssues('speckit', base, renamed, latest,
+      { baseTree, changed: new Set(['.specify/memory/constitution.md']) })
+      .includes('files .specify/memory/constitution.md added: .specify/memory/constitution.md is tracked in the base ' +
+        'tree without a base lock row'));
+  });
+
+  test('a candidate that writes a claimed tracked path is rejected while a genuinely new skill verifies', () => {
+    const write = (/** @type {ReturnType<typeof speckitCandidate>} */ c, /** @type {string} */ path) => {
+      const lock = structuredClone(c.lock);
+      lock.files.push({ ...lock.files.find((/** @type {any} */ file) => file.upstream === 'speckit'), stored_at: path });
+      const lockBytes = Buffer.from(`${JSON.stringify(lock, null, 2)}\n`);
+      const bytes = Buffer.from('replaced\n');
+      c.files.set('baton.lock.json', { bytes: lockBytes, symlink: false });
+      c.files.set(path, { bytes, symlink: false });
+      c.manifest.changed[0].sha256 = hex(lockBytes);
+      c.manifest.changed.push({ path, sha256: hex(bytes), mode: '100644' });
+      return c;
+    };
+    for (const path of unlockedStored()) {
+      const c = write(speckitCandidate(), path);
+      assert.throws(() => verifyCandidate({ plan: c.plan, manifest: c.manifest, files: c.files, baseLock: c.base, baseTree }),
+        (/** @type {any} */ error) => error?.code === 'E_PATH_POLICY' && error.message.includes(path), path);
+    }
+    const fresh = write(speckitCandidate(), '.github/skills/speckit-new/SKILL.md');
+    assert.match(verifyCandidate({ plan: fresh.plan, manifest: fresh.manifest, files: fresh.files, baseLock: fresh.base,
+      baseTree }).digest, /^[0-9a-f]{64}$/);
+    const blind = write(speckitCandidate(), '.github/skills/speckit-new/SKILL.md');
+    assert.throws(() => verifyCandidate({ plan: blind.plan, manifest: blind.manifest, files: blind.files,
+      baseLock: blind.base, baseTree: /** @type {any} */ (undefined) }), fails('E_PATH_POLICY'));
   });
 
   test('manifest verification binds plan, bytes, modes, paths and digest', () => {
     const valid = speckitCandidate();
-    const verified = verifyCandidate({ plan: valid.plan, manifest: valid.manifest, files: valid.files, baseLock: valid.base });
+    const verified = verifyCandidate({ plan: valid.plan, manifest: valid.manifest, files: valid.files, baseLock: valid.base,
+      baseTree });
     const { checks, ...withoutChecks } = valid.manifest;
     assert.equal(verified.digest, contentDigest(valid.manifest));
     assert.equal(verified.digest, contentDigest({ ...withoutChecks, checks: [] }));
@@ -300,8 +408,12 @@ describe('upstream candidates speckit', () => {
       const candidate = speckitCandidate();
       mutate(candidate);
       assert.throws(() => verifyCandidate({ plan: candidate.plan, manifest: candidate.manifest, files: candidate.files,
-        baseLock: candidate.base }), fails(code), mutate.toString());
+        baseLock: candidate.base, baseTree }), fails(code), mutate.toString());
     }
+    const schema = speckitCandidate();
+    schema.manifest.checks = [{ name: 'npm run check', result: 'fail' }];
+    assert.throws(() => verifyCandidate({ plan: schema.plan, manifest: schema.manifest, files: schema.files,
+      baseLock: schema.base, baseTree }), { message: 'E_CANDIDATE_VERIFY speckit: manifest checks do not match the required check schema' });
   });
 
   test('markers render and parse round-trip; malformed markers are ignored', () => {
@@ -331,6 +443,8 @@ describe('upstream candidates speckit', () => {
     assert.match(body, /ready for review/);
     assert.match(body, /Merging and release stay manual/);
     assert.match(body, /actions\/runs\/1/);
+    assert.ok(body.includes('These results are attested by the read-only generate job. The required PR checks run after ' +
+      'this PR is marked ready for review and remain the gate before merge.'));
     assert.equal(prTitle(p), 'Upstream: bump speckit to 9.9.9');
     const message = commitMessage(p, 'd'.repeat(64));
     assert.ok(message.startsWith('chore(upstream): bump speckit to 9.9.9\n\n'));
@@ -419,7 +533,7 @@ describe('upstream candidates atv', () => {
       row.sha256 = 'a'.repeat(64);
       assert.deepEqual(lockDiffIssues('atv', base, rowChanged, latest), [`files ${row.stored_at} (${other}) changed`]);
     }
-    const context = { baseLock: base, candidateLock: lock };
+    const context = { baseLock: base, candidateLock: lock, baseTree };
     assert.notEqual(pathPolicyIssue('baton/upstream/specify-cli.requirements.txt', 'changed', 'atv', context), null);
     const speckit = plan({});
     const atv = planUpstream({ id: 'atv', base: BASE, publish: true, policy: 'main', current: currentPin('atv', base.upstreams.atv),
@@ -457,14 +571,34 @@ describe('upstream candidates lifecycle', () => {
     assert.equal(waiting.action, 'waiting-human');
     assert.equal(waiting.pr?.state, 'open-human');
     assert.equal(plan({ prs: [], branch: branch({ botOnly: false }) }).action, 'waiting-human');
-    assert.equal(plan({ prs: [open(null)], branch: branch({ botOnly: false }) }).action, 'waiting-human');
   });
 
-  test('an open bot-only candidate PR without a valid marker is blocked, never adopted', () => {
-    const blocked = plan({ prs: [open(null)], branch: branch() });
-    assert.equal(blocked.action, 'blocked');
-    assert.equal(blocked.blocker?.code, 'E_PR_MARKER');
-    assert.match(blocked.blocker?.excerpt ?? '', /^#7 on baton\/upstream-upgrade\/speckit has no valid candidate marker/);
+  test('a candidate PR without a valid marker blocks for manual repair; its title is never trusted', () => {
+    const titled = { title: 'Upstream: bump speckit to 9.9.8' };
+    /** @type {Array<[any, any]>} */
+    const cases = [
+      [{ ...open(null), ...titled }, branch()],
+      [{ ...open(null), ...titled }, branch({ botOnly: false })],
+      [{ number: 7, state: 'closed', merged: false, marker: null, ...titled }, null],
+      [{ number: 7, state: 'closed', merged: false, marker: null, ...titled }, branch({ botOnly: false })]
+    ];
+    for (const [pr, head] of cases) {
+      for (const latest of [speckitLatest(), speckitLatest('9.9.8')]) {
+        const blocked = plan({ prs: [pr], branch: head, latest });
+        assert.equal(blocked.action, 'blocked', JSON.stringify(pr));
+        assert.equal(blocked.blocker?.code, 'E_PR_MARKER');
+        assert.equal(blocked.blocker?.excerpt, `#7 (${pr.state}) on baton/upstream-upgrade/speckit has no valid candidate ` +
+          'marker; restore the marker in its description, then rerun');
+      }
+    }
+    const merged = { number: 7, state: 'closed', merged: true, marker: null };
+    assert.equal(plan({ prs: [merged] }).action, 'generate', 'a merged PR never blocks');
+  });
+
+  test('a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it', () => {
+    const closed = { number: 7, state: 'closed', merged: false, marker: marker('speckit=9.9.9') };
+    assert.equal(plan({ prs: [closed] }).action, 'suppressed');
+    assert.equal(plan({ prs: [{ ...closed, marker: marker('speckit=9.9.9', { closed: 'obsolete' }) }] }).action, 'generate');
   });
 
   test('a human close suppresses exactly that pin; a newer pin generates again', () => {
@@ -472,16 +606,6 @@ describe('upstream candidates lifecycle', () => {
     assert.equal(plan({ prs: [closed] }).action, 'suppressed');
     assert.equal(plan({ prs: [closed], latest: speckitLatest('9.9.10') }).action, 'generate');
     assert.equal(plan({ prs: [{ ...closed, merged: true }] }).action, 'generate');
-    const titled = { number: 6, state: 'closed', merged: false, marker: null, titlePin: 'speckit=9.9.9' };
-    assert.equal(plan({ prs: [titled] }).action, 'suppressed', 'a removed marker falls back to the title pin');
-    assert.equal(plan({ prs: [{ ...titled, titlePin: null }] }).action, 'generate');
-    assert.equal(plan({ prs: [titled], latest: speckitLatest('9.9.10') }).action, 'generate');
-    assert.equal(titlePin('speckit', 'Upstream: bump speckit to 9.9.9'), 'speckit=9.9.9');
-    assert.equal(titlePin('atv', `Upstream: bump atv to ${sha('a')}`), `atv=${sha('a')}`);
-    for (const [id, title] of [['atv', 'Upstream: bump speckit to 9.9.9'], ['speckit', `Upstream: bump speckit to ${sha('a')}`],
-      ['speckit', 'Upstream: bump speckit to main'], ['speckit', 'Upstream: bump speckit to 9.9.9 now'], ['speckit', null]]) {
-      assert.equal(titlePin(/** @type {any} */ (id), title), null, String(title));
-    }
   });
 
   test('the automation obsolete close never suppresses', () => {

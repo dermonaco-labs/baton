@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
-import { ATV_REPO, SPECKIT_REPO, UpstreamError } from './upstream.mjs';
+import { ATV_REPO, SPECKIT_REPO, UpstreamError, isSha, isVersion, repoSlug } from './upstream.mjs';
 
 /** @typedef {'speckit'|'atv'} UpstreamId */
 /** @typedef {'release'|'main'} Policy */
 /** @typedef {{version:string|null,commit:string,tree:string|null,bump:string}} Pin */
 /** @typedef {{code:string,stage:string,excerpt:string,run:string}} Blocker */
 /** @typedef {{upstream:string,pin:string,base:string,digest:string,closed:'obsolete'|null}} Marker */
-/** @typedef {{number:number,state:'open'|'closed',merged:boolean,marker:Marker|null,titlePin?:string|null}} PrSnapshot */
+/** @typedef {{number:number,state:'open'|'closed',merged:boolean,marker:Marker|null}} PrSnapshot */
 /** @typedef {{sha:string,botOnly:boolean,content:string|null}} BranchSnapshot */
 /** @typedef {'none'|'generate'|'unchanged'|'suppressed'|'waiting-human'|'close-obsolete'|'obsolete-human'|'blocked'} Action */
 /** @typedef {{number:number,branch:string,state:'open-bot'|'open-human',marker:Marker|null}} CandidatePr */
@@ -46,10 +46,7 @@ const MARKER = /<!-- baton-upstream-candidate upstream=(speckit|atv) pin=(\S+) b
 
 /** @param {UpstreamId} id */
 export const branchFor = id => `baton/upstream-upgrade/${id}`;
-/** @param {unknown} value */
-export const isVersion = value => typeof value === 'string' && /^\d+\.\d+\.\d+$/.test(value);
-/** @param {unknown} value */
-export const isSha = value => typeof value === 'string' && /^[0-9a-f]{40}$/.test(value);
+export { isSha, isVersion, repoSlug };
 /** @param {unknown} value */
 export const isTag = value => typeof value === 'string' && /^v\d+\.\d+\.\d+$/.test(value);
 /** @param {unknown} value */
@@ -201,16 +198,19 @@ export function planUpstream({ id, base, publish, policy, current, latest, block
   if (blocker || !policy || !current) {
     return result('blocked', blocker ?? { code: 'E_UPSTREAM_VERIFY', stage: 'detect', excerpt: 'Detection failed', run: '' });
   }
-  if (open && !open.marker && branch?.botOnly) {
+  // Missing markers stop the upstream for manual repair; editable fields such as titles are never trusted (FR-030).
+  const unmarked = prs.find(item => !item.marker && !item.merged);
+  if (unmarked) {
     return result('blocked', { code: 'E_PR_MARKER', stage: 'detect', run: '',
-      excerpt: `#${open.number} on ${branchFor(id)} has no valid candidate marker; restore it or close the PR` });
+      excerpt: `#${unmarked.number} (${unmarked.state}) on ${branchFor(id)} has no valid candidate marker; ` +
+        'restore the marker in its description, then rerun' });
   }
   if (open?.marker && markerObsolete(policy, current, latest, open.marker.pin)) {
     return result(botOwned ? 'close-obsolete' : 'obsolete-human');
   }
   if (!latest || !isNewer(policy, current, latest)) return result('none');
   const suppressed = prs.some(item => item.state === 'closed' && !item.merged &&
-    (item.marker ? item.marker.closed !== 'obsolete' && item.marker.pin === latest.bump : item.titlePin === latest.bump));
+    item.marker?.closed !== 'obsolete' && item.marker?.pin === latest.bump);
   if (suppressed) return result('suppressed');
   if ((open && !botOwned) || (!open && branch && !branch.botOnly)) return result('waiting-human');
   if (open?.marker && open.marker.pin === latest.bump && open.marker.base === base &&
@@ -244,16 +244,6 @@ export function parseMarker(text) {
   return valid ? { upstream, pin, base, digest, closed: closed ? 'obsolete' : null } : null;
 }
 
-/**
- * The bump named by a candidate PR title, used only when its marker was removed.
- * @param {UpstreamId} id @param {unknown} title @returns {string|null}
- */
-export function titlePin(id, title) {
-  const match = typeof title === 'string' ? /^Upstream: bump (speckit|atv) to (\S+)$/.exec(title) : null;
-  if (!match || match[1] !== id) return null;
-  return isVersion(match[2]) || (id === 'atv' && isSha(match[2])) ? `${id}=${match[2]}` : null;
-}
-
 /** @param {unknown} value @returns {unknown} */
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
@@ -282,12 +272,85 @@ function rowsByPath(lock) {
 }
 
 /**
- * Why a changed or deleted path is not an allowed regenerated output, or null. A stored path is
- * allowed only when its owning lock row belongs to the candidate's upstream (FR-012).
- * @param {string} path @param {'changed'|'deleted'} kind @param {UpstreamId} id
- * @param {{baseLock:any,candidateLock:any}} locks
+ * @typedef {{files:Set<string>,dirs:Set<string>,lowerFiles:Set<string>,lowerDirs:Set<string>,
+ *   byDir:Map<string,string[]>,subtree:Map<string,string[]>}} TreeIndex
  */
-export function pathPolicyIssue(path, kind, id, { baseLock, candidateLock }) {
+/** @type {WeakMap<object,TreeIndex>} */
+const treeIndexes = new WeakMap();
+
+/**
+ * Index of the trusted base tree's tracked paths (`git ls-tree -r --name-only <base>`): exact and lower-case
+ * files and directories, each directory's own files, and every file below each directory.
+ * @param {Iterable<string>} paths @returns {TreeIndex}
+ */
+function indexTree(paths) {
+  const cached = treeIndexes.get(paths);
+  if (cached) return cached;
+  /** @type {TreeIndex} */
+  const index = { files: new Set(), dirs: new Set(), lowerFiles: new Set(), lowerDirs: new Set(), byDir: new Map(),
+    subtree: new Map() };
+  const push = (/** @type {Map<string,string[]>} */ map, /** @type {string} */ key, /** @type {string} */ path) => {
+    const list = map.get(key);
+    if (list) list.push(path);
+    else map.set(key, [path]);
+  };
+  for (const path of paths) {
+    index.files.add(path);
+    index.lowerFiles.add(path.toLowerCase());
+    push(index.byDir, path.slice(0, Math.max(path.lastIndexOf('/'), 0)), path);
+    for (let at = path.indexOf('/'); at !== -1; at = path.indexOf('/', at + 1)) {
+      const dir = path.slice(0, at);
+      index.dirs.add(dir);
+      index.lowerDirs.add(dir.toLowerCase());
+      push(index.subtree, dir, path);
+    }
+  }
+  treeIndexes.set(paths, index);
+  return index;
+}
+
+/**
+ * Why a stored path the candidate lock claims as new may not be added, or null. The base tree, never the
+ * candidate, decides: the path must not be tracked in any letter case, must not replace a tracked directory,
+ * pass through a tracked file or spell a tracked directory differently, and must sit under an existing stored
+ * root. Files beside it in a stored root, and every file below each of its directories under that root, must
+ * have base-lock rows the candidate's upstream owns, so unlocked trusted files keep their directories (FR-012).
+ * @param {string} path @param {UpstreamId} id @param {any} baseLock @param {Iterable<string>|undefined} baseTree
+ */
+function newPathIssue(path, id, baseLock, baseTree) {
+  if (!baseTree || typeof baseTree !== 'object') return `${path}: the base tree is unavailable`;
+  const index = indexTree(baseTree);
+  if (index.files.has(path)) return `${path} is tracked in the base tree without a base lock row`;
+  if (index.lowerFiles.has(path.toLowerCase())) return `${path} differs only in letter case from a tracked file`;
+  if (index.lowerDirs.has(path.toLowerCase())) return `${path} is a tracked directory`;
+  for (let at = path.indexOf('/'); at !== -1; at = path.indexOf('/', at + 1)) {
+    const dir = path.slice(0, at);
+    if (index.lowerFiles.has(dir.toLowerCase())) return `${path} is below the tracked file ${dir}`;
+    if (index.lowerDirs.has(dir.toLowerCase()) && !index.dirs.has(dir)) {
+      return `${path} differs only in letter case from a tracked directory`;
+    }
+  }
+  const root = (STORED_PREFIX.exec(path)?.[0] ?? '').slice(0, -1);
+  if (!root || !index.dirs.has(root)) return `${path} is not under a stored root the base tree tracks`;
+  const rows = rowsByPath(baseLock);
+  const foreign = (/** @type {string[]|undefined} */ files) => (files ?? []).find(file => rows.get(file)?.upstream !== id);
+  const dir = path.slice(0, path.lastIndexOf('/'));
+  /** @type {string|undefined} */
+  let found = dir === root ? foreign(index.byDir.get(root)) : undefined;
+  for (let at = path.indexOf('/', root.length + 1); !found && at !== -1; at = path.indexOf('/', at + 1)) {
+    found = foreign(index.subtree.get(path.slice(0, at)));
+  }
+  return found ? `${path} would be added in a directory with ${found}, which ${id} does not own` : null;
+}
+
+/**
+ * Why a changed or deleted path is not an allowed regenerated output, or null. A stored path is allowed
+ * only when its owning lock row belongs to the candidate's upstream. The owner is the base-lock row; the
+ * candidate-lock row owns only a genuinely new path (see newPathIssue) (FR-012).
+ * @param {string} path @param {'changed'|'deleted'} kind @param {UpstreamId} id
+ * @param {{baseLock:any,candidateLock:any,baseTree?:Iterable<string>}} locks
+ */
+export function pathPolicyIssue(path, kind, id, { baseLock, candidateLock, baseTree }) {
   if (typeof path !== 'string' || !path || path.startsWith('/') || path.includes('\\') ||
     /[\u0000-\u001f\u007f]/.test(path) || path.split('/').some(part => part === '' || part === '.' || part === '..')) {
     return `${JSON.stringify(path)} is not a normalized relative path`;
@@ -298,9 +361,13 @@ export function pathPolicyIssue(path, kind, id, { baseLock, candidateLock }) {
   }
   if (FIXED_PATHS.has(path)) return null;
   if (REQUIREMENTS.has(path)) return id === 'speckit' ? null : `${path} may change only in a Spec Kit candidate`;
-  const owner = rowsByPath(baseLock).get(path) ?? (kind === 'changed' ? rowsByPath(candidateLock).get(path) : undefined);
-  if (!STORED_PREFIX.test(path) || !owner) return `${path} is not a locked upstream output`;
-  return owner.upstream === id ? null : `${path} is owned by ${JSON.stringify(owner.upstream)}, not ${id}`;
+  if (!STORED_PREFIX.test(path)) return `${path} is not a locked upstream output`;
+  const base = rowsByPath(baseLock).get(path);
+  if (base) return base.upstream === id ? null : `${path} is owned by ${JSON.stringify(base.upstream)}, not ${id}`;
+  const claimed = kind === 'changed' ? rowsByPath(candidateLock).get(path) : undefined;
+  if (!claimed) return `${path} is not a locked upstream output`;
+  if (claimed.upstream !== id) return `${path} is owned by ${JSON.stringify(claimed.upstream)}, not ${id}`;
+  return newPathIssue(path, id, baseLock, baseTree);
 }
 
 /**
@@ -315,10 +382,12 @@ function expectedPinFields(id, pin) {
 }
 
 /**
- * files[] rows keyed by stored_at: other owners' rows are frozen and no row changes its owner (FR-012).
- * @param {UpstreamId} id @param {any} base @param {any} candidate @returns {string[]}
+ * files[] rows keyed by stored_at: other owners' rows are frozen, no row changes its owner, and a row the
+ * candidate adds must claim a genuinely new path that the candidate writes (FR-012).
+ * @param {UpstreamId} id @param {any} base @param {any} candidate
+ * @param {{baseTree?:Iterable<string>,changed?:Set<string>}} context @returns {string[]}
  */
-function fileRowIssues(id, base, candidate) {
+function fileRowIssues(id, base, candidate, { baseTree, changed = new Set() }) {
   const issues = [];
   const keys = new Set();
   candidate.files.forEach((/** @type {any} */ row, /** @type {number} */ index) => {
@@ -337,15 +406,22 @@ function fileRowIssues(id, base, candidate) {
     } else if (old && old.upstream !== id && !next) issues.push(`files ${key} (${old.upstream}) removed`);
     else if (old && old.upstream !== id && !same(old, next)) issues.push(`files ${key} (${old.upstream}) changed`);
     else if (!old && next && next.upstream !== id) issues.push(`files ${key} (${JSON.stringify(next.upstream)}) added`);
+    else if (!old && next) {
+      const fresh = newPathIssue(key, id, base, baseTree);
+      if (fresh) issues.push(`files ${key} added: ${fresh}`);
+      else if (!changed.has(key)) issues.push(`files ${key} added without a changed file`);
+    }
   }
   return issues;
 }
 
 /**
  * Differences that a candidate lock may not contain (FR-012).
- * @param {UpstreamId} id @param {any} base @param {any} candidate @param {Pin} latest @returns {string[]}
+ * @param {UpstreamId} id @param {any} base @param {any} candidate @param {Pin} latest
+ * @param {{baseTree?:Iterable<string>,changed?:Set<string>}} [context] the trusted base tree and the changed paths
+ * @returns {string[]}
  */
-export function lockDiffIssues(id, base, candidate, latest) {
+export function lockDiffIssues(id, base, candidate, latest, context = {}) {
   const issues = [];
   if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return ['candidate lock is not an object'];
   const topKeys = new Set([...Object.keys(base), ...Object.keys(candidate)]);
@@ -354,7 +430,7 @@ export function lockDiffIssues(id, base, candidate, latest) {
     if (!same(base[key], candidate[key])) issues.push(`top-level ${key} changed`);
   }
   if (!Array.isArray(candidate.files)) issues.push('files is not a list');
-  else issues.push(...fileRowIssues(id, base, candidate));
+  else issues.push(...fileRowIssues(id, base, candidate, context));
   const upstreams = candidate.upstreams ?? {};
   for (const key of new Set([...Object.keys(base.upstreams), ...Object.keys(upstreams)])) {
     if (key !== id && !same(base.upstreams[key], upstreams[key])) issues.push(`upstreams.${key} changed`);
@@ -379,11 +455,12 @@ export function lockDiffIssues(id, base, candidate, latest) {
 }
 
 /**
- * Verify an untrusted candidate against the trusted plan and the base lock.
- * @param {{plan:UpstreamPlan,manifest:any,files:Map<string,{bytes:Buffer,symlink:boolean}>,baseLock:any}} input
+ * Verify an untrusted candidate against the trusted plan, the base lock and the base tree's tracked paths.
+ * @param {{plan:UpstreamPlan,manifest:any,files:Map<string,{bytes:Buffer,symlink:boolean}>,baseLock:any,
+ *   baseTree:Iterable<string>}} input
  * @returns {{digest:string,manifest:Manifest,lock:any}}
  */
-export function verifyCandidate({ plan, manifest, files, baseLock }) {
+export function verifyCandidate({ plan, manifest, files, baseLock, baseTree }) {
   const reject = (/** @type {string} */ message) => fail('E_CANDIDATE_VERIFY', `${plan.upstream.id}: ${message}`);
   const latest = plan.upstream.latest;
   if (plan.action !== 'generate' || !latest) throw reject(`plan action ${plan.action} has no candidate`);
@@ -422,10 +499,12 @@ export function verifyCandidate({ plan, manifest, files, baseLock }) {
   }
   if ((lock?.['x-bump-summary'] ?? '') !== manifest.summary) throw reject('summary differs from the candidate lock');
   const id = /** @type {UpstreamId} */ (plan.upstream.id);
+  const locks = { baseLock, candidateLock: lock, baseTree };
+  const changed = new Set(manifest.changed.map((/** @type {any} */ item) => item.path));
   const policy = [
-    ...manifest.changed.map((/** @type {any} */ item) => pathPolicyIssue(item.path, 'changed', id, { baseLock, candidateLock: lock })),
-    ...manifest.deleted.map((/** @type {string} */ path) => pathPolicyIssue(path, 'deleted', id, { baseLock, candidateLock: lock })),
-    ...lockDiffIssues(id, baseLock, lock, latest)
+    ...manifest.changed.map((/** @type {any} */ item) => pathPolicyIssue(item.path, 'changed', id, locks)),
+    ...manifest.deleted.map((/** @type {string} */ path) => pathPolicyIssue(path, 'deleted', id, locks)),
+    ...lockDiffIssues(id, baseLock, lock, latest, { baseTree, changed })
   ].filter(Boolean);
   if (policy.length) throw fail('E_PATH_POLICY', `${id}: ${policy.join('; ')}`);
   return { digest: contentDigest(manifest), manifest, lock };

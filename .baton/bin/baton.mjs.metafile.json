@@ -3551,7 +3551,7 @@
       "format": "esm"
     },
     "src/lib/upstream.mjs": {
-      "bytes": 11270,
+      "bytes": 11801,
       "imports": [
         {
           "path": "node:crypto",
@@ -3614,7 +3614,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 29360,
+      "bytes": 29344,
       "imports": [
         {
           "path": "node:fs",
@@ -5575,7 +5575,7 @@
           "bytesInOutput": 1818
         },
         "src/lib/upstream.mjs": {
-          "bytesInOutput": 6671
+          "bytesInOutput": 6818
         },
         "src/commands/lock.mjs": {
           "bytesInOutput": 2857
@@ -5584,7 +5584,7 @@
           "bytesInOutput": 1660
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 15031
+          "bytesInOutput": 14971
         },
         "src/lib/phases.mjs": {
           "bytesInOutput": 7007
@@ -5653,7 +5653,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 427886
+      "bytes": 427973
     }
   }
 }

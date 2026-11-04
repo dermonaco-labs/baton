@@ -6,6 +6,13 @@ import { join, resolve } from 'node:path';
 export const ATV_REPO = 'https://github.com/All-The-Vibes/ATV-StarterKit';
 export const SPECKIT_REPO = 'https://github.com/github/spec-kit';
 
+/** `owner/name` of a GitHub repository URL. @param {string} url */
+export const repoSlug = url => new URL(url).pathname.slice(1);
+/** A stable semver release version without prefix or suffix. @param {unknown} value @returns {value is string} */
+export const isVersion = value => typeof value === 'string' && /^\d+\.\d+\.\d+$/.test(value);
+/** A full lowercase 40-hex commit or tree SHA. @param {unknown} value @returns {value is string} */
+export const isSha = value => typeof value === 'string' && /^[0-9a-f]{40}$/.test(value);
+
 export class UpstreamError extends Error {
   /** @param {string} code @param {string} message */
   constructor(code, message) {

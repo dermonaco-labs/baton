@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import YAML from 'yaml';
 import { sourceRoot, runCli } from '../helpers/index.mjs';
 import { maintainerWorkflowIssues } from '../../src/lib/maintainer-workflows.mjs';
+import { UPSTREAMS } from '../../src/lib/upstream-candidates.mjs';
 import { run as validate } from '../../src/commands/validate.mjs';
 
 const names = ['ci', 'smoke', 'upstream-watch', 'release'];
@@ -225,8 +226,8 @@ describe('upstream watch workflow', () => {
       assert.equal(script.trim(), `node src/maintainer/upstream-upgrade.mjs ${id}`, `${id}: only the maintainer script`);
       assert.ok(!steps(watch.jobs[id]).some(step => step.uses?.startsWith('astral-sh/')), `${id}: uv`);
       const downloads = steps(watch.jobs[id]).filter(step => step.uses?.startsWith('actions/download-artifact@'));
-      assert.equal(downloads.length, 2, `${id}: one download per upstream`);
-      for (const [download, upstream] of downloads.map((step, index) => [step, ['speckit', 'atv'][index]])) {
+      assert.equal(downloads.length, UPSTREAMS.length, `${id}: one download per upstream`);
+      for (const [download, upstream] of downloads.map((step, index) => [step, UPSTREAMS[index]])) {
         assert.match(download.uses, /@[0-9a-f]{40}$/);
         assert.equal(download.if, `needs.generate.outputs.${upstream}_artifact != ''`, `${id}: never download everything`);
         assert.deepEqual(download.with, {
@@ -237,8 +238,22 @@ describe('upstream watch workflow', () => {
       }
     }
     const env = steps(watch.jobs.publish).find(step => step.id === 'publish')?.env;
-    assert.equal(env?.DIGEST_SPECKIT, '${{ needs.generate.outputs.speckit_digest }}');
-    assert.equal(env?.DIGEST_ATV, '${{ needs.generate.outputs.atv_digest }}');
+    for (const upstream of UPSTREAMS) {
+      const key = upstream.toUpperCase();
+      assert.equal(env?.[`DIGEST_${key}`], `\${{ needs.generate.outputs.${upstream}_digest }}`, `DIGEST_${key}`);
+      assert.equal(watch.jobs.generate.outputs[`${upstream}_artifact`],
+        `\${{ matrix.upstream == '${upstream}' && steps.upload.outputs.artifact-id || '' }}`, `${upstream}_artifact`);
+      assert.equal(watch.jobs.generate.outputs[`${upstream}_digest`],
+        `\${{ matrix.upstream == '${upstream}' && steps.package.outputs.digest || '' }}`, `${upstream}_digest`);
+      for (const id of ['publish', 'report']) {
+        const matches = steps(watch.jobs[id]).filter(step => step.uses?.startsWith('actions/download-artifact@') &&
+          step.with?.path === `\${{ runner.temp }}/artifacts/${upstream}`);
+        assert.equal(matches.length, 1, `${id}: exactly one ${upstream} download`);
+        assert.equal(matches[0].if, `needs.generate.outputs.${upstream}_artifact != ''`, `${id}: ${upstream} gate`);
+      }
+    }
+    assert.deepEqual(Object.keys(env).filter(key => key.startsWith('DIGEST_')).sort(),
+      UPSTREAMS.map(upstream => `DIGEST_${upstream.toUpperCase()}`).sort(), 'no digest without an upstream');
     const text = await readFile(path('upstream-watch'), 'utf8');
     assert.doesNotMatch(text, /secrets\.|pull_request_target/);
     for (const job of Object.values(watch.jobs)) {

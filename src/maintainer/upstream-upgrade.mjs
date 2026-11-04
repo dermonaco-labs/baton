@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import {
   BOT_EMAIL, BOT_NAME, CHECKS, ISSUE_LABEL, ISSUE_TITLE, UPSTREAMS, branchFor, buildRunUrl, classifyBranch,
   commitMessage, contentTrailer, currentPin, isSha, makePin, parseMarker, planUpstream, policyOf, prTitle, renderIssue,
-  renderMarker, renderPrBody, selectAtv, selectSpeckit, titlePin, trustedResult, verifyCandidate
+  renderMarker, renderPrBody, repoSlug, selectAtv, selectSpeckit, trustedResult, verifyCandidate
 } from '../lib/upstream-candidates.mjs';
 import { ATV_REPO, SPECKIT_REPO, UpstreamError } from '../lib/upstream.mjs';
 
@@ -34,8 +34,8 @@ import { ATV_REPO, SPECKIT_REPO, UpstreamError } from '../lib/upstream.mjs';
 /** @typedef {(path:string, options?:{method?:string,body?:unknown,allow404?:boolean}) => Promise<any>} Api */
 
 const API = 'https://api.github.com';
-const SPECKIT_API = `/repos${new URL(SPECKIT_REPO).pathname}`;
-const ATV_API = `/repos${new URL(ATV_REPO).pathname}`;
+const SPECKIT_API = `/repos/${repoSlug(SPECKIT_REPO)}`;
+const ATV_API = `/repos/${repoSlug(ATV_REPO)}`;
 const EXCERPT = 20000;
 const ZERO = '0'.repeat(40);
 const PR_PERMISSION = 'GitHub Actions is not permitted to create or approve pull requests';
@@ -58,6 +58,11 @@ function gitText(git, args, options) {
   const result = git(args, options);
   if (result.status !== 0) throw fail('E_GIT', `git ${args[0]} failed: ${result.stderr.toString('utf8').trim()}`);
   return result.stdout.toString('utf8').trim();
+}
+
+/** Every path tracked by the trusted base commit, read from git objects. @param {GitRunner} git @param {string} base */
+function baseTreePaths(git, base) {
+  return new Set(gitText(git, ['ls-tree', '-r', '-z', '--name-only', base]).split('\0').filter(Boolean));
 }
 
 /** The token is only ever sent to the GitHub API origin. @param {Deps} deps @returns {Api} */
@@ -172,8 +177,7 @@ async function candidateState(id, repo, base, api) {
         number: /** @type {number} */ (pull.number),
         state: pull.state === 'open' ? /** @type {const} */ ('open') : /** @type {const} */ ('closed'),
         merged: Boolean(pull.merged_at),
-        marker: marker?.upstream === id ? marker : null,
-        titlePin: titlePin(id, pull.title)
+        marker: marker?.upstream === id ? marker : null
       };
     }).sort((a, b) => b.number - a.number);
   const ref = await api(`/repos/${repo}/git/ref/heads/${branch}`, { allow404: true });
@@ -317,7 +321,7 @@ export function packageCandidate(deps) {
       checks: CHECKS.map(check => ({ ...check }))
     };
     const baseLock = JSON.parse(gitText(git, ['show', `${plan.base}:baton.lock.json`]));
-    const { digest } = verifyCandidate({ plan: entry, manifest, files, baseLock });
+    const { digest } = verifyCandidate({ plan: entry, manifest, files, baseLock, baseTree: baseTreePaths(git, plan.base) });
     for (const [path, { bytes }] of files) {
       const target = join(out, 'files', ...path.split('/'));
       mkdirSync(dirname(target), { recursive: true });
@@ -455,6 +459,7 @@ export async function publish(deps) {
   }
   if (gitText(deps.git, ['rev-parse', 'HEAD']) !== plan.base) throw fail('E_PLAN', 'checkout is not the planned base');
   const baseLock = JSON.parse(gitText(deps.git, ['show', `${plan.base}:baton.lock.json`]));
+  const baseTree = baseTreePaths(deps.git, plan.base);
   for (const item of plan.plans) {
     const id = item.upstream.id;
     /** @param {string|null} outcome @param {number|null} [pr] */
@@ -476,9 +481,13 @@ export async function publish(deps) {
       if (!reported || reported.blocker) continue;
       const artifact = readArtifact(root);
       if (!artifact) continue;
-      const { digest, manifest } = verifyCandidate({ plan: item, manifest: artifact.manifest, files: artifact.files, baseLock });
+      const { digest, manifest } = verifyCandidate({ plan: item, manifest: artifact.manifest, files: artifact.files,
+        baseLock, baseTree });
       const attested = env[`DIGEST_${id.toUpperCase()}`];
-      if (!attested || attested !== digest) {
+      if (!attested) {
+        throw fail('E_CANDIDATE_VERIFY', `${id} has no digest attested by the generate job (DIGEST_${id.toUpperCase()} is empty)`);
+      }
+      if (attested !== digest) {
         throw fail('E_CANDIDATE_VERIFY', `${id} artifact does not match the digest attested by the generate job`);
       }
       const marker = item.pr?.marker;
@@ -491,6 +500,15 @@ export async function publish(deps) {
         const current = await api(`/repos/${plan.repo}/pulls/${item.pr.number}`);
         if (current?.state !== 'open' || current?.head?.sha !== item.branch?.sha) {
           throw fail('E_PR_CHANGED', `#${item.pr.number} was closed or changed since detection; nothing was pushed`);
+        }
+      } else {
+        const owner = plan.repo.split('/')[0];
+        const head = encodeURIComponent(`${owner}:${branchFor(id)}`);
+        const opened = await api(`/repos/${plan.repo}/pulls?state=open&head=${head}&per_page=100`);
+        const found = (Array.isArray(opened) ? opened : [])
+          .find(pull => pull?.state === 'open' && pull?.head?.ref === branchFor(id));
+        if (found) {
+          throw fail('E_PR_CHANGED', `#${found.number} was opened on ${branchFor(id)} since detection; nothing was pushed`);
         }
       }
       const branch = branchFor(id);

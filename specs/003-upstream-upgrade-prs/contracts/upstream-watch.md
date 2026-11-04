@@ -51,7 +51,7 @@ Job conditions:
    - a `stored_at` path under one of `.github/agents/`, `.github/skills/`, `.specify/` or
      `packs/<id>/files/` whose owning `files[]` row has `upstream` equal to the
      candidate's upstream. The owning row is the base-lock row for a deleted path or a
-     changed existing path, and the candidate-lock row for a new path.
+     changed existing path, and the candidate-lock row only for a **new path** (see below).
 2. **Avoids forbidden paths** (these are always rejected):
    - anything under `.github/workflows/`, `src/`, `test/` or `.baton/`;
    - `package.json`, `package-lock.json`, `.npmrc`, `uv.toml`, `pip.conf`;
@@ -69,11 +69,35 @@ Two further rules apply:
   - `files[]` rows are compared by `stored_at`. Every row owned by another upstream or by
     an optional source (such as `optimize` or `token-budget`) must be present and
     identical, and none may be added. No row may change its `upstream`. Only rows owned
-    by the candidate's upstream may be added, changed or removed.
+    by the candidate's upstream may be added, changed or removed. An added row must name
+    a changed new path (see above).
 - **Requirements files:** only a Spec Kit candidate may change them.
 
 Violations of either the path policy or FR-012 are rejected with `E_PATH_POLICY`
 before any git object is written.
+
+### New paths
+
+A stored path without a base-lock row is a **new path** only when the trusted base tree
+allows it. `publish` and `package` read that tree themselves with
+`git ls-tree -r -z --name-only <base>`; the candidate's declarations never decide it. The
+path is rejected with `E_PATH_POLICY` when any of these holds:
+
+- the base tree is unavailable;
+- it is tracked in the base tree, in any letter case (for example
+  `.specify/memory/constitution.md` or `.github/skills/baton/SKILL.md`, which no lock row
+  owns);
+- it names a tracked directory, lies below a tracked file, or spells a tracked directory
+  in a different letter case;
+- its stored root (`.github/agents`, `.github/skills`, `.specify` or `packs/<id>/files`)
+  is not tracked in the base tree;
+- it is added directly in a stored root that holds a file not owned by the candidate's
+  upstream in the base lock;
+- any of its directories below the stored root contains, at any depth, a tracked file
+  not owned by the candidate's upstream in the base lock.
+
+The last two rules keep unlocked or foreign-owned trusted files, such as Baton's own
+skills, the constitution and pack files, in directories no candidate can extend.
 
 ## Candidate artifacts
 
@@ -85,7 +109,8 @@ before any git object is written.
   separate directory per upstream, never by name or pattern. A missing id means the leg
   produced no candidate.
 - `publish` accepts a candidate only if its verified content digest equals the leg's
-  `<id>_digest` output.
+  `<id>_digest` output. An empty `DIGEST_<ID>` (a wiring fault) and a different digest
+  (a changed artifact) are reported as distinct `E_CANDIDATE_VERIFY` excerpts.
 
 ## Check results trust boundary
 
@@ -110,8 +135,11 @@ before any git object is written.
   - Before pushing for an existing candidate PR, re-read the PR. It must still be open
     with the head observed during detection. Otherwise report `E_PR_CHANGED` and write
     nothing.
+  - When detection saw no open PR, list open PRs whose head is the candidate branch just
+    before pushing. If one exists, report `E_PR_CHANGED` and write nothing.
   - A lease failure is reported as `E_LEASE`. A `[remote rejected]` push (for example a
-    branch protection rule) is reported as `E_PUSH` with the remote's reason.
+    branch protection rule) is reported as `E_PUSH` with the remote's reason. Any other
+    push failure is reported as `E_PUSH` naming the branch.
 - **PR:**
   - Created as a draft against the default branch with title
     `Upstream: bump <id> to <pin>`.
@@ -153,12 +181,17 @@ For a `close-obsolete` plan, the automation does three things in this order:
 
 It does not delete the branch. `obsolete-human` plans are reported in the issue only.
 
-### Missing markers
+### Missing markers (FR-030)
 
-- An open PR on a bot-only candidate branch without a valid marker is `blocked` with
-  `E_PR_MARKER`. It is not reported as waiting on a human.
-- A closed, unmerged candidate PR without a valid marker still suppresses the pin named
-  by its title `Upstream: bump <id> to <pin>`.
+- Any unmerged candidate PR on the upstream's branch, open or closed, without a valid
+  marker blocks that upstream with `E_PR_MARKER`. The excerpt is
+  `#<n> (<state>) on <branch> has no valid candidate marker; restore the marker in its description, then rerun`.
+- The automation does not push to, edit, comment on or close that PR, and it does not
+  generate a candidate for the upstream. It never infers a pin from an editable field
+  such as the title.
+- Recovery is manual. A maintainer restores the marker in the PR description (closed PR
+  descriptions stay editable). A marker with the closed PR's pin keeps that pin
+  suppressed; a marker with `closed=obsolete` releases it.
 
 ## Tracking issue
 

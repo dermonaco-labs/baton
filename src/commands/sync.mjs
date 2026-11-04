@@ -5,12 +5,11 @@ import YAML from 'yaml';
 import { validatePackClosure } from '../lib/packs.mjs';
 import { assertFrontmatter, repairAtv } from '../lib/repairs.mjs';
 import {
-  ATV_REPO, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_REPO, UpstreamError,
-  fetchAtv, fetchSource, prepareSpeckit, regenerateRequirements, resolveCommit, resolveTag, sha256, workspace
+  ATV_REPO, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_REPO, UpstreamError, fetchAtv, fetchSource, isSha, isVersion,
+  prepareSpeckit, regenerateRequirements, repoSlug, resolveCommit, resolveTag, sha256, workspace
 } from '../lib/upstream.mjs';
 
 const lockedRequirements = 'baton/upstream/specify-cli.requirements.txt';
-const slug = (/** @type {string} */ url) => new URL(url).pathname.slice(1);
 const forbidden = /(?:^|\/)(?:karpathy-guidelines|\.env(?:\..*)?|\.context|node_modules|\.git)(?:\/|$)/i;
 /** @typedef {{from:string,path:string,upstream_path?:string}} PackFile */
 /** @typedef {{id:string,requires:string[],conflicts:string[],files:PackFile[],optional_refs?:Array<{ref:string,reason:string,note:string}>}} PackDefinition */
@@ -320,13 +319,13 @@ export function lockFile(entries, { base, speckit, atv }, optional = {}) {
     'x-bump-summary': /** @type {string|undefined} */ (undefined),
     upstreams: {
       speckit: {
-        package: baseSpeckit.package ?? 'specify-cli', version: speckit.version, repo: slug(SPECKIT_REPO),
+        package: baseSpeckit.package ?? 'specify-cli', version: speckit.version, repo: repoSlug(SPECKIT_REPO),
         tag: `v${speckit.version}`, commit: speckit.commit, requirements: lockedRequirements,
         requirements_sha256: speckit.requirements_sha256, license: 'MIT',
         init_args: baseSpeckit.init_args ?? ['--integration', 'copilot', '--script', 'sh']
       },
       atv: {
-        package: baseAtv.package ?? 'atv-starterkit', version: atv.version, repo: slug(ATV_REPO),
+        package: baseAtv.package ?? 'atv-starterkit', version: atv.version, repo: repoSlug(ATV_REPO),
         ...(release ? { tag: release } : {}), ref: release ?? 'main', commit: atv.commit, tree: atv.tree, license: 'MIT',
         ...(baseAtv.note === undefined ? {} : { note: baseAtv.note })
       },
@@ -342,10 +341,11 @@ export function lockFile(entries, { base, speckit, atv }, optional = {}) {
  * @returns {{upstream:'speckit'|'atv',kind:'version'|'commit',value:string}|null}
  */
 export function parseBump(value) {
-  const match = /^(speckit|atv)=(?:([0-9a-f]{40})|(\d+\.\d+\.\d+))$/.exec(value);
-  if (!match || (match[1] === 'speckit' && match[2])) return null;
+  const match = /^(speckit|atv)=(.+)$/.exec(value);
+  const pin = match?.[2];
+  if (!match || !(isVersion(pin) || (match[1] === 'atv' && isSha(pin)))) return null;
   return { upstream: /** @type {'speckit'|'atv'} */ (match[1]),
-    kind: match[2] ? 'commit' : 'version', value: match[2] ?? match[3] };
+    kind: isSha(pin) ? 'commit' : 'version', value: /** @type {string} */ (pin) };
 }
 
 /** @param {any} previous @param {any} next */

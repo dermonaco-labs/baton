@@ -37,6 +37,10 @@ forcing an upgrade through. Make `sync --bump` a consistent, validated operation
 - Q: What happens to an open candidate PR that the default branch has made obsolete? → A:
   Close it with an explanatory comment if it has only automation commits. Leave
   human-edited PRs open and note them in the tracking issue.
+- Q (review 2, F15): What happens when a candidate PR has lost its hidden marker? → A:
+  Stop and report it for manual repair. Do not overwrite an open PR, and do not infer a
+  rejected pin from the editable title of a closed PR (FR-030). Decided by the repository
+  owner, who chose the recommended option.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -169,6 +173,9 @@ reproducibility check and the full local gate with no other edits.
   not open a second PR for the same upstream.
 - A maintainer bumps an upstream manually and merges it while a candidate PR for the same
   or an older pin is open: the candidate is obsolete and handled by FR-029.
+- A maintainer removes or breaks the hidden marker of a candidate PR, open or closed:
+  the upstream is blocked for manual repair (FR-030); nothing is pushed, edited or
+  closed, and no pin is inferred from the title.
 - Upstream content adds an unlicensed file, an excluded component or a dangling
   reference: validation fails and the issue reports it.
 - Network or registry outages stop detection or generation: no branch or PR changes; the
@@ -271,6 +278,11 @@ reproducibility check and the full local gate with no other edits.
   MUST be closed with a comment stating the reason and the default branch's pin. An
   obsolete human-edited PR MUST stay open and be listed as obsolete in the tracking issue.
   Closing an obsolete PR does not create a suppression under FR-021.
+- **FR-030**: A candidate PR, open or closed without merging, whose hidden marker is
+  missing or invalid MUST stop that upstream for manual repair and be reported as a
+  blocker in the tracking issue. The automation MUST NOT push to, edit, comment on or
+  close that PR, and MUST NOT infer a pin from editable fields such as the PR title. The
+  upstream stays blocked until a maintainer restores the marker.
 
 #### Reporting
 

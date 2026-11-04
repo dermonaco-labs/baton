@@ -105,19 +105,32 @@ manual, human decisions under the normal Baton gates.
 
 The workflow drives `node src/maintainer/upstream-upgrade.mjs <stage>`
 with these stages: `detect`, `package`, `publish` and `report`. Each stage
-reads only environment variables set by the workflow. They share
-`GITHUB_REPOSITORY`, `GITHUB_SERVER_URL`, `GITHUB_RUN_ID`, `GITHUB_REF` and
-`PREVIEW`. `detect` also reads the sync-check and link-check results
-(`SYNC_*`, `LINKS_*`) and emits the `PLAN` JSON that the later stages
-read. `package` reads `UPSTREAM`, `CANDIDATE_DIR` and the bump and check
-step outcomes and logs (`BUMP_*`, `CHECK_*`), and receives no token.
-`publish` and `report` read each upstream's downloaded artifact from
-`ARTIFACTS_DIR/<upstream>`. `publish` also requires `DIGEST_SPECKIT` and
-`DIGEST_ATV`, the digests attested by the generate job, and rejects a
-candidate whose verified digest differs. `report` also reads `RESULTS`
-and the job results. `detect` gets a read-only `GITHUB_TOKEN`; only
-`publish` (contents and pull requests) and `report` (issues) get write
-permissions.
+takes its settings from environment variables set by the workflow, and
+reads files only where noted:
+
+| Stage | Inputs |
+|-------|--------|
+| `detect` | The checkout's `baton.lock.json`; `GITHUB_REPOSITORY`, `GITHUB_SERVER_URL`, `GITHUB_RUN_ID`, `GITHUB_REF` and `PREVIEW`; the sync-check and link-check results and logs (`SYNC_*`, `LINKS_*`); a read-only `GITHUB_TOKEN`. It emits the `PLAN` JSON. |
+| `package` | `PLAN`, `UPSTREAM`, `CANDIDATE_DIR` and the bump and check outcomes and logs (`BUMP_*`, `CHECK_*`); the regenerated checkout and the base tree in git. No token. |
+| `publish` | `PLAN`, each upstream's downloaded artifact in `ARTIFACTS_DIR/<upstream>`, and `DIGEST_SPECKIT` and `DIGEST_ATV`, the digests attested by the generate job; the base tree in git; `GITHUB_TOKEN` with contents and pull-request write. |
+| `report` | `PLAN`, `RESULTS`, `ARTIFACTS_DIR`, `PREVIEW`, the job results (`*_RESULT`), and `GITHUB_REPOSITORY`, `GITHUB_SERVER_URL` and `GITHUB_RUN_ID`; `GITHUB_TOKEN` with issues write. |
+
+`publish` rejects a candidate whose verified digest differs from the
+attested one, or whose attested digest is empty.
+
+Blockers in the tracking issue and what to do about them:
+
+| Code | Meaning | Remedy |
+|------|---------|--------|
+| `E_UPSTREAM_VERIFY` | Detection, or `sync --bump`, failed (for example `E_DANGLING_REF` in the excerpt) | Read the excerpt; an upstream incompatibility waits for a newer upstream or a manual Baton change |
+| `E_CHECK_FAILED` | `npm run check` failed on the candidate | Reproduce with `sync --bump` locally and fix or wait |
+| `E_CANDIDATE_VERIFY` | The artifact does not match the pins, manifest or attested digest | Rerun; a repeat points to a workflow wiring fault or a changed artifact |
+| `E_PATH_POLICY` | The candidate changes a path or lock row its upstream does not own | Treat as untrusted output; do not apply it by hand |
+| `E_PR_MARKER` | A candidate PR, open or closed, has lost its hidden marker | Restore the marker in the PR description: the closed PR's pin keeps it suppressed, `closed=obsolete` releases it |
+| `E_PR_CHANGED` | The candidate PR was closed, moved or opened between detection and publish | Rerun the workflow |
+| `E_LEASE` | The candidate branch moved during the run | Rerun the workflow |
+| `E_PUSH` | The push was refused (for example by branch protection) or failed | Read the reason; fix the rule or retry |
+| `E_PR_PERMISSION` | The workflow token may not create PRs | Enable the repository setting below |
 
 Dispatch with `preview: true` to detect, generate and validate without
 any branch, PR or issue write; results appear in the run summary. Runs on
