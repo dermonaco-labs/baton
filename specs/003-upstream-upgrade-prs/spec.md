@@ -41,6 +41,14 @@ forcing an upgrade through. Make `sync --bump` a consistent, validated operation
   Stop and report it for manual repair. Do not overwrite an open PR, and do not infer a
   rejected pin from the editable title of a closed PR (FR-030). Decided by the repository
   owner, who chose the recommended option.
+- Q (review 3, F22): Which upstream files may a candidate add or remove on its own? → A:
+  Only files under `.specify/` from Spec Kit, outside the protected hook registration,
+  Baton extension and memory paths. Adding or removing ATV files, pack files or
+  `.github` agent, skill or hook files requires a manual, reviewed update. Existing files
+  each upstream owns still update automatically. A legitimate upstream release that adds
+  or removes such files therefore blocks for manual action instead of opening a draft PR
+  (FR-031). This narrows the behavior that the earlier FR-012 wording allowed; the repository
+  owner explicitly approved the restricted boundary.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -176,6 +184,9 @@ reproducibility check and the full local gate with no other edits.
 - A maintainer removes or breaks the hidden marker of a candidate PR, open or closed:
   the upstream is blocked for manual repair (FR-030); nothing is pushed, edited or
   closed, and no pin is inferred from the title.
+- An upstream release adds or removes a file outside Spec Kit's unprotected `.specify/`
+  paths, for example a new ATV agent or skill: no draft PR; the upstream is reported as
+  blocked (`E_PATH_POLICY`) for a manual, reviewed update (FR-031).
 - Upstream content adds an unlicensed file, an excluded component or a dangling
   reference: validation fails and the issue reports it.
 - Network or registry outages stop detection or generation: no branch or PR changes; the
@@ -283,6 +294,12 @@ reproducibility check and the full local gate with no other edits.
   blocker in the tracking issue. The automation MUST NOT push to, edit, comment on or
   close that PR, and MUST NOT infer a pin from editable fields such as the PR title. The
   upstream stays blocked until a maintainer restores the marker.
+- **FR-031**: A candidate MAY add or remove lock rows and files only for Spec Kit under
+  `.specify/`, excluding `.specify/extensions.yml`, `.specify/extensions/` and
+  `.specify/memory/`. Any other addition or removal, including ATV, pack and `.github`
+  agent, skill or hook files, MUST block that upstream for a manual, reviewed update and
+  be reported in the tracking issue. Existing owned rows MAY update their content only;
+  their install target, packs and provenance MUST NOT change.
 
 #### Reporting
 

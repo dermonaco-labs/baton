@@ -12,24 +12,32 @@ summary: "Review 3 fixes: F22 one FR-012 row policy (only Spec Kit grows, under 
 read_first:
   - path: specs/003-upstream-upgrade-prs/review.json
     why: Review 3 findings F22-F25 being answered
+    sha256: eb4c976373a973d17fa3cad3054805ee2e261e49e3c845f8ac8e8e0d1b79491f
   - path: specs/003-upstream-upgrade-prs/tasks.md
     why: Phase 10 T049-T052 and evidence
+    sha256: 7c23c0694a006a7b89d6f34d55f9cdeef193177d714633eec66b7e5520815939
   - path: specs/003-upstream-upgrade-prs/contracts/upstream-watch.md
     why: Owned rows section, new-path growth rule, PR-list fail-closed
+    sha256: fc4e7f39de53267c435036e989218484d9cf6dd5b4ccba95eba896452af2d25a
   - path: src/lib/upstream-candidates.mjs
     why: growthIssue, newPathIssue, targetOf, ownRowIssue, fileRowIssues
+    sha256: 1f40339eed110843e014cf9614b0a29dde8beae5d3c403453e8919ca5096d8ee
   - path: src/maintainer/upstream-upgrade.mjs
     why: branchPulls and detect blocker run URL
+    sha256: ea5d83a74b6d6c549ea023e001903e14cfae9ee54db6206533f776a397a95590
   - path: test/unit/upstream-candidates.test.mjs
     why: Row ownership policy matrix
+    sha256: 84aefd6fa72a2ea6cc14a6a340dab1f9f2f25befcac728807e6fd2dd83d7c6a3
   - path: test/integration/upstream-upgrade.test.mjs
     why: F22 publish cases, PR-list fail-closed, exact result assertions
+    sha256: 2eadc3010796ec8d9fdc01d3102aa6ea0bb5b0e55b95a1ddac4cdd94c245e7da
   - path: docs/07-updating.md
     why: Marker template and blocker remedies
+    sha256: 5c6fe608b39e7fa48702c61a5c83f15e8c509f239b2d922bba0994eb0570149c
 artifacts:
   - path: specs/003-upstream-upgrade-prs/spec.md
     role: source-of-truth
-    sha256: ba3b69f99be2dd5be5f7bde154edb09e3b26b2755fdf3be86a990d089b692a41
+    sha256: f0f26c69b8cdbff4cda4702044c44c3a7006861165a6e777e6bee02732b6e1fc
   - path: specs/003-upstream-upgrade-prs/plan.md
     role: source-of-truth
     sha256: 7c7e8f07641583a09f34fbbcd148afbe1e60054c875270baab5604c96f18fdc1
@@ -41,7 +49,7 @@ artifacts:
     sha256: 9a442e9010e2ca48a9f50144ba4743a938509800dc6ad491af13b9fe7c6ec247
   - path: specs/003-upstream-upgrade-prs/contracts/upstream-watch.md
     role: source-of-truth
-    sha256: e545778ac3577cea1d0fa9df2c9f4100e738afe83afc5afbc28be3be9b911c7d
+    sha256: fc4e7f39de53267c435036e989218484d9cf6dd5b4ccba95eba896452af2d25a
   - path: specs/003-upstream-upgrade-prs/contracts/sync-bump.md
     role: source-of-truth
     sha256: 812e6951ab8cad817a1d21b69b1183f30dbbc3ca3d8021228d4b5402e863902c
@@ -50,7 +58,7 @@ artifacts:
     sha256: e03b56f86f2cfe765d5ccdbc2a40b0dc1299ee79e2b13a44f588393ee3fafd7b
   - path: specs/003-upstream-upgrade-prs/tasks.md
     role: source-of-truth
-    sha256: 26888c4c3adf692ac844445a208751791cffc4c9fd55d2d28e817f52c691882d
+    sha256: 7c23c0694a006a7b89d6f34d55f9cdeef193177d714633eec66b7e5520815939
 entry_checked: []
 exit_criteria:
   - id: tasks-all-checked-or-deferred
@@ -415,25 +423,19 @@ decisions:
     decision: docs/07-updating.md gives the exact marker template with values from the latest bot commit's Baton-Pin, Baton-Base and Baton-Content trailers, and a remedy for every emitted blocker code; a unit test guards both.
     rationale: Review 3 F23.
     by: speckit-implement
+  - id: D14
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "Owner decision FR-031 (restricted automation boundary): spec clarification, edge case and FR-031; contract and tasks reference it"
+    by: implementation-session
+  - id: D15
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "Records repository owner decision (relayed via control-plane delegation, by role): approve the restricted automation boundary, recorded as spec.md review 3 clarification and FR-031. Automatic additions and removals only on Spec Kit's unprotected .specify/ paths; new or removed ATV, pack and .github agent, skill or hook files need a manual reviewed update; existing owned files still auto-update; a legitimate upstream release may block with E_PATH_POLICY instead of a draft PR. This narrows behavior the earlier FR-012 contract wording allowed and is an owner decision, not a pure spec interpretation; D-REVIEW3-ROWPOLICY's 'without scope or acceptance change' rationale is corrected accordingly. Code and acceptance selectors unchanged from 96580ae; no gate approval claimed."
+    by: implementation-session
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: clarify
-    at: 2026-11-04T11:34:56.756Z
-    by: human:repository-owner
-    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
-    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-    commit: ae34a99
-    x-action: approve
-  - phase: plan
-    at: 2026-11-04T11:47:07.872Z
-    by: speckit-plan
-    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
-    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-    commit: ae34a99
-    x-action: write
   - phase: tasks
     at: 2026-11-04T11:50:17.642Z
     by: speckit-tasks
@@ -560,8 +562,22 @@ history:
     x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
     commit: 7743fe9
     x-action: write
-updated_at: 2026-11-04T16:07:12.575Z
-updated_by: speckit-implement
+  - phase: implement
+    at: 2026-11-04T16:17:08.158Z
+    by: implementation-session
+    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
+    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
+    commit: 96580ae
+    x-action: refresh
+  - phase: implement
+    at: 2026-11-04T16:17:28.759Z
+    by: implementation-session
+    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
+    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
+    commit: 96580ae
+    x-action: refresh
+updated_at: 2026-11-04T16:17:28.757Z
+updated_by: implementation-session
 risks:
   - id: R-UPSTREAM-EXEC
     text: Generation executes upstream Spec Kit code; it must run without write credentials and publication must not execute upstream content.

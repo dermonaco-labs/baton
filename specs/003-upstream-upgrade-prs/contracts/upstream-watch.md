@@ -104,7 +104,7 @@ skills, the constitution and pack files, in directories no candidate can extend.
 ### Owned rows
 
 Every `files[]` row field the candidate controls is checked against trusted data, for new
-and existing rows alike:
+and existing rows alike (FR-012, FR-031):
 
 - **Growth paths.** Rows appear or disappear only on growth paths. A Spec Kit candidate
   may add or remove rows under `.specify/` except `.specify/extensions.yml`,

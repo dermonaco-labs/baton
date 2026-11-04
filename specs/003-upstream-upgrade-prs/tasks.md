@@ -333,15 +333,16 @@ acceptance selectors. No registered command or assertion is weakened.
 
 ## Phase 10: Review 3 fixes (review.json F22–F25)
 
-Independent review 3 routed back to implement. F22 is a code fix against the approved
-FR-012 MUST ("only its own upstream's pins and the files regenerated from them"). The
+Independent review 3 routed back to implement. F22 is a code fix under FR-012. The
 contract's `files[]` row rules now enumerate every candidate-controlled field
-([Owned rows](./contracts/upstream-watch.md#owned-rows)). This tightens the earlier
-contract wording to the spec; it does not change scope, a public interface or an
-acceptance selector. The tightening is disclosed in the handoff and is not presented as
-an approval. No registered command or assertion is weakened.
+([Owned rows](./contracts/upstream-watch.md#owned-rows)). The growth boundary they set
+narrows the earlier contract wording: only Spec Kit's unprotected `.specify/` paths grow
+or shrink automatically. The repository owner explicitly approved this restricted
+boundary, recorded as FR-031, a review 3 clarification and decision
+`D-REVIEW3-BOUNDARY`. Acceptance selectors are unchanged, and no registered command or
+assertion is weakened.
 
-- [X] T049 [US1] F22 (P1, FR-012) in `src/lib/upstream-candidates.mjs`. One row policy applies to every `files[]` row, and `package` and `publish` both reach it through `verifyCandidate`:
+- [X] T049 [US1] F22 (P1, FR-012, FR-031) in `src/lib/upstream-candidates.mjs`. One row policy applies to every `files[]` row, and `package` and `publish` both reach it through `verifyCandidate`:
   - **Growth paths.** Only Spec Kit adds or removes rows, only under `.specify/`, and never under `.specify/extensions.yml`, `.specify/extensions/` or `.specify/memory/`. ATV has no growth path. Rows outside `.specify/`, including every `packs/<id>/files/` root, come from Baton pack definitions; new files there take the manual reviewed route. A removed row needs its file in `deleted`.
   - **Existing owned rows** keep their field set and `path`, `packs`, `upstream`, `upstream_path`, `license`, `x-baton-source` and `x-baton-source-sha256`.
   - **New rows** have exactly the sync row fields, with `upstream_path` equal to `stored_at`.
