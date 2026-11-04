@@ -3,12 +3,13 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/003-upstream-upgrade-prs-review1-20261104/report.md",
-    "x-scope": "Independent first review of candidate ad5f4a6 against base ae34a99. Reviewed file set = pinned tracked diff ae34a99..ad5f4a6 (38 files, no untracked); the handoff scope CLI subject set (20 files) is a strict subset. Generated bundle .baton/bin/baton.mjs and its metafile excluded from persona diff and checked by sha256 equality with .baton/bin/baton.mjs.sha256.",
-    "x-checks": "Read-only. Persona-local runs: test/unit/upstream-candidates.test.mjs and test/integration/upstream-upgrade.test.mjs 39 pass, 1 Windows symlink skip. Remaining unit files not executed in this checkout (node_modules absent; no dependency restore needed for review). Orchestrator probe against HEAD reproduced F01: a Spec Kit candidate lock editing an ATV files[] row, changing an ATV-owned path, deleting another ATV-owned path and changing an optimize-owned path yields lockDiffIssues [] and pathPolicyIssue null for all three. actionlint not run; no Linux CI or live workflow run."
+    "run_artifact": ".context/compound-engineering/ce-review/003-upstream-upgrade-prs-review2-20261104/report.md",
+    "x-scope": "Independent re-review (review 2) of corrected candidate 6d505f9 against base ad5f4a6 (review-1 head). Pinned tracked diff ad5f4a6..6d505f9 = 18 files, no untracked; handoff scope CLI subject set (8 files) is a strict subset. Generated .baton/bin bundle and metafile verified by build --check, excluded from persona diff. Review-1 findings F01-F13 preserved with updated dispositions; new findings F14-F21.",
+    "x-checks": "Targeted only, no full suite rerun: node --test on test/unit/upstream-candidates.test.mjs, test/integration/upstream-upgrade.test.mjs, test/unit/maintainer-workflows.test.mjs, test/unit/sync-bump.test.mjs = 71 pass 0 fail; build --check OK; git diff --check ad5f4a6 clean. Orchestrator probe at 6d505f9 reproduced F14: Spec Kit candidate adding a files[] row (upstream speckit) for tracked-but-unlocked .specify/memory/constitution.md and changing it yields pathPolicyIssue null and lockDiffIssues []. Dependencies restored with npm ci (process-scoped registry). actionlint, Linux CI and live workflow not run.",
+    "x-review1": "Review 1 receipt f49cef668bd57a042621b4a24542d75f57c74d27 (base ae34a99, head ad5f4a6)."
   },
-  "base": "ae34a99201c6b3e6cbd9152253e36ab12ed47c87",
-  "head": "ad5f4a6c81600fb9e18a2195652370ed850c908b",
+  "base": "ad5f4a6c81600fb9e18a2195652370ed850c908b",
+  "head": "6d505f968a62c46757add43a6d60cb5829c7a458",
   "personas": [
     "correctness-reviewer",
     "testing-reviewer",
@@ -29,10 +30,11 @@
       "persona": "security-reviewer",
       "confidence": 0.95,
       "task": "T016",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "spec.md FR-012 MUST: a candidate changes only its own upstream's pins and regenerated files and MUST NOT change other upstreams or optional sources. verifyCandidate is the only trusted gate between the untrusted generate leg (which executes upstream code) and the write-token commit, and it does not enforce file ownership.",
       "x-evidence": "lockDiffIssues skips the files key entirely (upstream-candidates.mjs:301) and only checks Array.isArray(files). pathPolicyIssue (L276-277) accepts any STORED_PREFIX path whose stored_at is in the base lock or candidate lock without consulting the row's upstream field. baton.lock.json files rows carry upstream atv|speckit|optimize|token-budget. Reproduced at HEAD: speckit candidate changing ATV-owned .github/agents/adversarial-reviewer.agent.md, rewriting its lock row (license Proprietary, sha256), deleting ATV-owned .github/agents/agent-native-reviewer.agent.md and changing optimize-owned packs/optimize/files/... all pass. Correctness reviewer independently raised the same gap. contracts/upstream-watch.md:61 exempts files from the exact lock comparison, so the contract is weaker than spec FR-012 (spec takes precedence).",
-      "x-fix": "In lockDiffIssues, key base and candidate files[] by stored_at: rows whose upstream is not the candidate id (including optional sources) must be byte-identical, not added or removed, and no row may change its upstream. In pathPolicyIssue, accept a changed/deleted STORED_PREFIX path only when the owning lock row (base for deleted/changed-existing, candidate for new) has upstream === id. Amend contracts/upstream-watch.md FR-012 rule accordingly. Add unit and integration tamper cases for both directions (speckit->atv/optional, atv->speckit/optional) with exact E_PATH_POLICY/E_CANDIDATE_VERIFY codes and no writes."
+      "x-fix": "In lockDiffIssues, key base and candidate files[] by stored_at: rows whose upstream is not the candidate id (including optional sources) must be byte-identical, not added or removed, and no row may change its upstream. In pathPolicyIssue, accept a changed/deleted STORED_PREFIX path only when the owning lock row (base for deleted/changed-existing, candidate for new) has upstream === id. Amend contracts/upstream-watch.md FR-012 rule accordingly. Add unit and integration tamper cases for both directions (speckit->atv/optional, atv->speckit/optional) with exact E_PATH_POLICY/E_CANDIDATE_VERIFY codes and no writes.",
+      "x-review2": "Fixed at 6d505f9 for every row present in the base lock: lockDiffIssues keys files[] by stored_at and freezes other upstreams/optional sources, forbids owner changes and foreign additions; pathPolicyIssue checks base-row owner. Unit + 13 integration tamper cases with no writes. The residual unlocked-tracked-path gap is tracked separately as F14."
     },
     {
       "id": "F02",
@@ -43,9 +45,10 @@
       "persona": "adversarial-reviewer",
       "confidence": 0.7,
       "task": "T016",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "FR-021 suppresses only the exact pin a human closed. Publish pushes under a lease and PATCHes item.pr without re-reading PR state; unlike closeObsolete (L424) there is no state/head re-check. If a maintainer closes the PR mid-run with the branch untouched, the lease still holds, the closed PR body gets the new marker pin, and planUpstream (upstream-candidates.mjs:207) suppresses the new pin next run.",
-      "x-fix": "Before push and PATCH of an existing PR, re-fetch it and require state open and head.sha equal to item.branch.sha; otherwise record a non-writing outcome/blocker. Add an integration case closing the PR between detect and publish."
+      "x-fix": "Before push and PATCH of an existing PR, re-fetch it and require state open and head.sha equal to item.branch.sha; otherwise record a non-writing outcome/blocker. Add an integration case closing the PR between detect and publish.",
+      "x-review2": "Fixed: publish re-reads the PR (open, head == detected branch sha) before push and fails E_PR_CHANGED with no writes (upstream-upgrade.mjs:490-494); tests at upstream-upgrade.test.mjs 680/738. Null-PR race tracked as F21."
     },
     {
       "id": "F03",
@@ -56,9 +59,10 @@
       "persona": "security-reviewer",
       "confidence": 0.62,
       "task": "T018",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "Publish/report download pattern candidate-* and select by name; all generate legs share the run's Actions runtime token, so a compromised upstream leg could upload or pre-empt the other leg's candidate-<id> artifact. verifyCandidate binds only to public plan values. Impact after F01 is fixed is limited to allowlisted content attributed to the other upstream's PR, still reviewed as a draft; defense-in-depth.",
-      "x-fix": "Expose upload-artifact artifact-id/digest as per-leg outputs (or per-upstream jobs) and have publish/report download by artifact-ids and verify the digest; document in contracts/upstream-watch.md."
+      "x-fix": "Expose upload-artifact artifact-id/digest as per-leg outputs (or per-upstream jobs) and have publish/report download by artifact-ids and verify the digest; document in contracts/upstream-watch.md.",
+      "x-review2": "Fixed: per-leg <id>_artifact/<id>_digest outputs gated on matrix.upstream, downloads by artifact-ids into artifacts/<id>, publish compares DIGEST_<ID> to verified digest. verifyCandidate remains the real trust gate (digest is attested by the leg that ran upstream code). ATV-leg test gap tracked as F16; live matrix-output behavior pending post-merge."
     },
     {
       "id": "F04",
@@ -69,9 +73,10 @@
       "persona": "testing-reviewer",
       "confidence": 0.78,
       "task": "T017",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "The known R-SPECKIT-CLOSURE failure is the expected first live Spec Kit outcome. Code path verified by reading: BUMP_OUTCOME failure -> package blocker E_UPSTREAM_VERIFY (generate) with bump.log tail -> renderIssue row + Blockers fenced excerpt, issue stays open, report fails the run; this satisfies FR-024 and SC-001's 'names the blocker'. But the only bump-failure test stops at package/publish; report rendering and exit for that blocker are covered only via the shared E_CHECK_FAILED path.",
-      "x-fix": "Add a report test with BUMP_LOG containing an E_DANGLING_REF line asserting exit 1, row E_UPSTREAM_VERIFY (generate), Blockers entry and fenced excerpt containing E_DANGLING_REF."
+      "x-fix": "Add a report test with BUMP_LOG containing an E_DANGLING_REF line asserting exit 1, row E_UPSTREAM_VERIFY (generate), Blockers entry and fenced excerpt containing E_DANGLING_REF.",
+      "x-review2": "Fixed (simulated): E_DANGLING_REF log through package/publish/report asserts E_UPSTREAM_VERIFY (generate) row, fenced excerpt and no PR. Real Spec Kit bump remains the accepted upstream limitation."
     },
     {
       "id": "F05",
@@ -82,9 +87,10 @@
       "persona": "correctness-reviewer",
       "confidence": 0.6,
       "task": "T016",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "Regex /stale info|rejected|fetch first|non-fast-forward/ matches git porcelain '[remote rejected]'; a permanent configuration failure is reported as a transient race.",
-      "x-fix": "Map only stale-info/fetch-first/non-fast-forward [rejected] to E_LEASE; map [remote rejected] to E_PUSH with the reason. Add a test."
+      "x-fix": "Map only stale-info/fetch-first/non-fast-forward [rejected] to E_LEASE; map [remote rejected] to E_PUSH with the reason. Add a test.",
+      "x-review2": "Fixed: [remote rejected] maps to E_PUSH with reason, [rejected]/stale to E_LEASE; pre-receive hook test. Generic fallback untested (F17)."
     },
     {
       "id": "F06",
@@ -95,9 +101,10 @@
       "persona": "security-reviewer",
       "confidence": 0.65,
       "task": "T016",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "pathPolicyIssue rejects only control chars, backslash and non-normalized segments; a backtick-containing stored_at listed in the candidate lock closes the code span and allows mentions/links in a github-actions[bot] draft PR body.",
-      "x-fix": "Restrict paths to a conservative character set in pathPolicyIssue, or render file lists inside a fenced block via sanitizeExcerpt. Add a test."
+      "x-fix": "Restrict paths to a conservative character set in pathPolicyIssue, or render file lists inside a fenced block via sanitizeExcerpt. Add a test.",
+      "x-review2": "Fixed: SAFE_PATH [A-Za-z0-9._/@+-] enforced in pathPolicyIssue; all 133 current lock rows comply; backtick and space tests."
     },
     {
       "id": "F07",
@@ -108,9 +115,10 @@
       "persona": "adversarial-reviewer",
       "confidence": 0.6,
       "task": "T027",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "Removing the marker from an open bot-only PR body makes it waiting-human forever (never refreshed or closed obsolete); removing it from a closed unmerged PR body lifts FR-021 suppression and a new PR for the rejected pin is opened. Both are fail-safe or human-caused but are reported misleadingly. Merged from two adversarial findings (originally P2 and P3); downgraded because no data loss or write to human work occurs.",
-      "x-fix": "Report a specific marker blocker instead of waiting-human for bot-only branches with a missing marker, and fall back to the closed bot PR title/branch head trailer (Baton-Pin) for suppression."
+      "x-fix": "Report a specific marker blocker instead of waiting-human for bot-only branches with a missing marker, and fall back to the closed bot PR title/branch head trailer (Baton-Pin) for suppression.",
+      "x-review2": "Fixed in code: open bot-only marker-less PR blocks E_PR_MARKER; closed marker-less PR suppresses via titlePin. Spec traceability/human decision tracked as F15; title duplication as F18."
     },
     {
       "id": "F08",
@@ -121,9 +129,10 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.6,
       "task": "T016",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "packageCandidate always writes CHECKS after the BUMP/CHECK outcome early returns; an untrusted artifact can copy the constant. The authoritative gate is the generate step outcomes plus result.json blocker absence, which publish trusts from the same untrusted leg. Message 'required checks did not pass' overstates what is verified; the PR body validation claim is therefore attested by the read-only leg only (draft + ready_for_review CI is the backstop).",
-      "x-fix": "Rename the rejection to a schema check and document the trust boundary in contracts/upstream-watch.md and the PR body checklist."
+      "x-fix": "Rename the rejection to a schema check and document the trust boundary in contracts/upstream-watch.md and the PR body checklist.",
+      "x-review2": "Fixed in source: schema-mismatch wording, contentDigest excludes checks, PR body and contract state the trust boundary. Missing assertion of the new message tracked as F17."
     },
     {
       "id": "F09",
@@ -134,9 +143,10 @@
       "persona": "testing-reviewer",
       "confidence": 0.65,
       "task": "T011",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "Tamper lists never mutate manifest.pin; lock-diff mutation cases assert only non-empty issues; no case where compare total_commits exceeds listed commits (fail-closed human protection at upstream-upgrade.mjs:184); no report test for missing artifact (E_CHECK_FAILED), incomplete publish (E_PUBLISH) or malformed PLAN (failedPlan). Merged from four testing findings.",
-      "x-fix": "Add the four case groups with exact codes/messages and no-write assertions."
+      "x-fix": "Add the four case groups with exact codes/messages and no-write assertions.",
+      "x-review2": "Fixed: manifest pin tamper (unit+integration), exact lock-diff messages, truncated compare -> waiting-human with no writes, report fallbacks."
     },
     {
       "id": "F10",
@@ -147,9 +157,10 @@
       "persona": "agent-native-reviewer",
       "confidence": 0.65,
       "task": "T020",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "Agents and maintainers following the docs cannot find the issue by name or reproduce detect/package/report locally without reading the workflow; detect/report outputs are silent without GITHUB_OUTPUT/GITHUB_STEP_SUMMARY. Merged from three agent-native findings; local preview downgraded from P2 because FR-027 requires only hosted dispatch preview.",
-      "x-fix": "Name the exact issue title and label (gh issue list --label upstream-bump), and add a short maintainer note on stage env inputs or print plan/summary to stdout when the Actions files are unset."
+      "x-fix": "Name the exact issue title and label (gh issue list --label upstream-bump), and add a short maintainer note on stage env inputs or print plan/summary to stdout when the Actions files are unset.",
+      "x-review2": "Fixed: docs name title \"Upstream watch: releases and verification\", label upstream-bump and stage invocation. Residual wording inaccuracies tracked as F19."
     },
     {
       "id": "F11",
@@ -160,9 +171,10 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.6,
       "task": "T007",
-      "disposition": "open",
+      "disposition": "fixed",
       "reason": "The note is maintainer-owned by contract (contracts/upstream-watch.md:65), so preserving it is intended, but after sync --bump atv=<x.y.z> the 'pinned to main' note stays stale and automation cannot change it; docs do not say to edit it. Separately, owner/repo literals (upstream-upgrade.mjs:37-38, sync.mjs:322,328,354,358) and inline /^[0-9a-f]{40}$/ copies (upstream-upgrade.mjs:131,181,250) duplicate exported constants/helpers on the trust boundary. Merged maintainability findings; P2 note finding downgraded because it is contract-intended.",
-      "x-fix": "Document in docs/07-updating.md that switching ATV policy requires a maintainer note edit; derive API paths/lock repo/links from one slug and reuse isSha/isVersion."
+      "x-fix": "Document in docs/07-updating.md that switching ATV policy requires a maintainer note edit; derive API paths/lock repo/links from one slug and reuse isSha/isVersion.",
+      "x-review2": "Fixed in substance: ATV note preserved and documented as maintainer-owned; repo fields from SPECKIT_REPO/ATV_REPO; isSha reused in upstream-upgrade. Residual duplication tracked as F20."
     },
     {
       "id": "F12",
@@ -184,7 +196,116 @@
       "persona": "project-standards-reviewer",
       "confidence": 0.9,
       "disposition": "dismissed",
-      "reason": "Cosmetic and already disclosed by the author; markdown lint passes. The file is hash-bound by the approved pre-code gate, so editing it would require gate re-approval disproportionate to the impact. May be folded into any F01 contract amendment that already requires re-approval."
+      "reason": "Cosmetic and already disclosed by the author; markdown lint passes. The file is hash-bound by the approved pre-code gate, so editing it would require gate re-approval disproportionate to the impact. May be folded into any F01 contract amendment that already requires re-approval.",
+      "x-review2": "Author also normalized the whitespace while amending the contract; diff --check now clean. Disposition unchanged."
+    },
+    {
+      "id": "F14",
+      "severity": "P1",
+      "title": "FR-012 ownership still bypassable: a candidate can claim and overwrite tracked-but-unlocked stored paths by adding its own files[] row",
+      "file": "src/lib/upstream-candidates.mjs",
+      "line": 301,
+      "persona": "correctness-reviewer",
+      "confidence": 0.92,
+      "task": "T033",
+      "disposition": "open",
+      "reason": "spec.md FR-012 MUST and contracts/upstream-watch.md:51-54 allow the candidate-lock row as owner only for a NEW path. pathPolicyIssue falls back to the untrusted candidate-lock row for any changed path absent from the base lock, and fileRowIssues accepts added rows for the candidate own upstream, so existing tracked files that no lock row owns can be overwritten by a candidate whose generate leg ran upstream code.",
+      "x-evidence": "upstream-candidates.mjs:301 owner = base row ?? (kind changed ? candidate row). 13 tracked unlocked paths under STORED_PREFIX at 6d505f9 include .specify/memory/constitution.md, .github/skills/baton/SKILL.md, .github/skills/baton-review/SKILL.md, .github/skills/baton-land/SKILL.md, packs/learning/files/.atv/.gitignore and optimize/token-budget pack files. Orchestrator probe: speckit candidate adding {stored_at: .specify/memory/constitution.md, upstream: speckit} and changing it -> pathPolicyIssue null, lockDiffIssues []. Learnings (per-checkout-identity-self-review) and testing reviewers concur; no test covers it. Pre-existing at ad5f4a6, missed by review 1.",
+      "x-fix": "In verifyCandidate/publish, accept the candidate-lock row as owner only when the path does not exist in the base tree (pass the base tree path set from git ls-tree -r --name-only <base>, or check git cat-file -e <base>:<path>); otherwise require a base-lock row owned by the candidate. Add unit and integration tamper cases (tracked unlocked path change -> E_PATH_POLICY, no writes) and a genuinely new path acceptance case."
+    },
+    {
+      "id": "F15",
+      "severity": "P2",
+      "title": "D5/D-REVIEW1-GATE describe the amendment as pure FR-010/012/024 tightening, but marker-less blocking (E_PR_MARKER precedence) and title-based suppression are new FR-019/FR-021 lifecycle choices without a recorded human decision",
+      "file": "specs/003-upstream-upgrade-prs/handoff.md",
+      "line": 307,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.66,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "Constitution IV and the BATON preamble require a recorded human decision when a public contract changes. No gate was bypassed and no approval is claimed (review->implement is ungated; land gate remains), but the trace is inaccurate and the marker-less rules need explicit human acceptance.",
+      "x-evidence": "handoff.md:299-309 D5/D-REVIEW1-GATE; contracts/upstream-watch.md Missing markers section; upstream-candidates.mjs:205 E_PR_MARKER evaluated before obsolete/none so an unmarked bot PR blocks every run even when nothing is newer; :213 titlePin fallback is defeated if the PR is retitled before closing (adversarial). Neither rule is in spec FR-019/FR-021.",
+      "x-fix": "Correct D5, D-REVIEW1-GATE and the Phase 8 intro to cite FR-019/020/021/022 for F02/F07 changes, record that marker-less blocking and title suppression are new behavior, and either obtain a recorded human decision at the land gate or route a needs-human question. Consider evaluating none/obsolete before E_PR_MARKER and document E_PR_MARKER recovery (closing also suppresses)."
+    },
+    {
+      "id": "F16",
+      "severity": "P3",
+      "title": "ATV artifact/digest leg is not exercised end to end and the per-upstream workflow blocks are hand-repeated without a structural test",
+      "file": "test/integration/upstream-upgrade.test.mjs",
+      "line": 397,
+      "persona": "testing-reviewer",
+      "confidence": 0.65,
+      "task": "T039",
+      "disposition": "open",
+      "reason": "F03 correctness for atv rests only on YAML string assertions (maintainer-workflows.test.mjs:241); a wiring drift in publish or report download for one upstream silently degrades to no candidate.",
+      "x-evidence": "DIGEST_ATV/artifacts/atv absent from integration tests; workflow repeats outputs (96-99), downloads in publish (169-180) and report (209-220), env 189-190. Maintainability and testing reviewers concur.",
+      "x-fix": "Loop the missing/mismatched digest cases over speckit and atv with an atv happy-path publish; add a workflow test asserting, for each UPSTREAMS id, gated outputs, a download step in publish and report with path artifacts/<id>, and DIGEST_<ID>."
+    },
+    {
+      "id": "F17",
+      "severity": "P3",
+      "title": "Correction assertions missing: T038 claims unit assertions for the checks-schema message and attestation paragraph but none exist; E_PR_MARKER case lacks no-write check; generic E_PUSH fallback untested",
+      "file": "test/unit/upstream-candidates.test.mjs",
+      "line": 284,
+      "persona": "testing-reviewer",
+      "confidence": 0.7,
+      "task": "T038",
+      "disposition": "open",
+      "reason": "tasks.md T038 marked done with \"Unit assertions for both\"; grep finds neither \"required check schema\" nor \"attested by\" in test/. The fail-closed contract for E_PR_MARKER is no push and no API write, but only pushes are asserted.",
+      "x-evidence": "upstream-candidates.test.mjs:284 asserts only E_CANDIDATE_VERIFY code for checks tamper; renderPrBody test asserts /ready for review/ only; upstream-upgrade.test.mjs:772 E_PR_MARKER asserts pushes.length 0 without non-GET filter; upstream-upgrade.mjs:418 fallback E_PUSH unexercised.",
+      "x-fix": "Assert the exact checks-schema message and the attestation sentence; add non-GET zero-call assertion to the E_PR_MARKER case; add a push failure that is neither remote-rejected nor lease (e.g. nonexistent remote) expecting E_PUSH."
+    },
+    {
+      "id": "F18",
+      "severity": "P3",
+      "title": "titlePin duplicates the prTitle format and hardcodes (speckit|atv) without a round-trip test",
+      "file": "src/lib/upstream-candidates.mjs",
+      "line": 252,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.7,
+      "task": "T037",
+      "disposition": "open",
+      "reason": "Suppression of marker-less closed PRs depends on titlePin parsing exactly what prTitle (line 440) emits; a wording change silently disables suppression and reopens declined bumps.",
+      "x-fix": "Share one title prefix helper between prTitle and titlePin and add a round-trip test for speckit version, atv version and atv SHA."
+    },
+    {
+      "id": "F19",
+      "severity": "P3",
+      "title": "Operator docs: stage paragraph overstates \"reads only environment variables\" and the shared variable set; new blocker codes have no remedies; missing vs mismatched digest share one excerpt",
+      "file": "docs/07-updating.md",
+      "line": 108,
+      "persona": "agent-native-reviewer",
+      "confidence": 0.63,
+      "task": "T040",
+      "disposition": "open",
+      "reason": "detect/package read the checkout and lock and publish/report read ARTIFACTS_DIR; GITHUB_REF/PREVIEW are read by detect (and report), package needs PLAN. E_PR_MARKER/E_PR_CHANGED/E_PUSH/E_LEASE/E_CANDIDATE_VERIFY remedies are only in the spec contract, unlike docs/04-handoffs.md code table. upstream-upgrade.mjs:480-482 uses one message for an empty DIGEST_<ID> (wiring) and a mismatch (tamper).",
+      "x-fix": "Reword the stage paragraph per actual inputs, add a blocker-code remedy table, and distinguish an empty attested digest in the E_CANDIDATE_VERIFY excerpt with a test."
+    },
+    {
+      "id": "F20",
+      "severity": "P3",
+      "title": "F11 consolidation incomplete: parseBump keeps inline SHA/semver regex and the repo slug is derived in two places",
+      "file": "src/commands/sync.mjs",
+      "line": 345,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.62,
+      "task": "T040",
+      "disposition": "open",
+      "reason": "The CLI bump parser and the workflow pin validators (isSha/isVersion) can drift on the pin trust boundary; sync.mjs:12 slug() and upstream-upgrade.mjs:36-37 inline URL pathname duplicate the same derivation.",
+      "x-fix": "Export a repo slug helper and the pin predicates from one module and use them in parseBump and upstream-upgrade."
+    },
+    {
+      "id": "F21",
+      "severity": "P3",
+      "title": "PR opened on the bot branch after detect (item.pr null) is not re-checked: publish pushes into it, POST fails 422 and later runs block with E_PR_MARKER",
+      "file": "src/maintainer/upstream-upgrade.mjs",
+      "line": 490,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.6,
+      "task": "T035",
+      "disposition": "open",
+      "reason": "The F02 re-read runs only when item.pr is set; the lease still matches because the branch did not move. Narrow window requiring a maintainer to open a PR from the bot branch mid-run; recoverable by closing the PR, hence P3 (adversarial rated P2).",
+      "x-fix": "When item.pr is null, list open PRs for head owner:branch immediately before push and fail E_PR_CHANGED if one exists; test it."
     }
   ]
 }

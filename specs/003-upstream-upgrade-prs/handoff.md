@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 003-upstream-upgrade-prs
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Review 1 fixes on ad5f4a6 + receipt f49cef6: F01 cross-upstream file/files[] ownership (FR-012); F02 PR re-read; F03 artifact id+digest binding; F04/F09 tests; F05 E_PUSH; F06 path charset; F07 E_PR_MARKER/title-pin suppression; F08 wording; F10/F11 docs and reuse; F13 whitespace. F12 dismissed by review. Bound contracts amended to approved FR-010/012/024, no scope change. npm run check: 648 tests, 646 pass, 0 fail, 2 skipped. Spec Kit E_DANGLING_REF remains an unresolved upstream limitation."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Independent review 2 of corrected candidate 6d505f9 (base ad5f4a6): review-1 F01-F11 fixed (F12/F13 dismissed); 8 new findings: F14 P1 open (FR-012 ownership bypass for tracked-but-unlocked stored paths via candidate-added files[] row), F15 P2 open (marker-less lifecycle rules recorded as pure tightening; need human decision), F16-F21 P3 open. Route back to implement for F14 (T033). Targeted checks: 71 tests pass, build --check OK, diff --check clean; no full suite or live run."
 read_first:
   - path: specs/003-upstream-upgrade-prs/review.json
     why: Review 1 findings F01-F13 being answered
@@ -53,92 +53,9 @@ artifacts:
     sha256: 23e248a8040da24cc8d36d3b4c4a03656ca65aa0dcfbdc16bdf599d57a39bb42
 entry_checked: []
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
-    met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      ever imported by the CLI or bundled code (9.4848ms)
-      ✔ upstream candidates formats (19.8588ms)
-      ▶ upstream candidates speckit
-        ✔ selection takes the newest stable version published on PyPI and as a GitHub release (0.41ms)
-        ✔ a PyPI and GitHub release mismatch is a source mismatch (0.1607ms)
-        ✔ pins validate every external value and record the exact bump form (1.6986ms)
-        ✔ planning follows the documented state order (5.3239ms)
-        ✔ the path policy allows only regenerated outputs (3.1821ms)
-        ✔ a candidate lock may change only its own pin fields, files and bump summary (20.3846ms)
-        ✔ manifest verification binds plan, bytes, modes, paths and digest (29.142ms)
-        ✔ markers render and parse round-trip; malformed markers are ignored (0.5148ms)
-        ✔ PR body has sections 1-6 in order with validated links and no release notes (1.7306ms)
-        ✔ tracking issue states the draft-only boundary and one row per upstream (0.7941ms)
-      ✔ upstream candidates speckit (63.9825ms)
-      ▶ upstream candidates atv
-        ✔ main policy candidates are the main HEAD commit and tree (0.7821ms)
-        ✔ release policy candidates are the newest stable release; a moved main is informational only (0.5214ms)
-        ✔ any other tracked ref is an unsupported-ref blocker (0.8335ms)
-        ✔ upstream plans are independent and an ATV candidate cannot touch Spec Kit (5.8625ms)
-      ✔ upstream candidates atv (8.2312ms)
-      ▶ upstream candidates lifecycle
-        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.3122ms)
-        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (1.1626ms)
-        ✔ a human-edited candidate with a newer pin waits for the human (0.8938ms)
-        ✔ an open bot-only candidate PR without a valid marker is blocked, never adopted (0.4092ms)
-        ✔ a human close suppresses exactly that pin; a newer pin generates again (2.1207ms)
-        ✔ the automation obsolete close never suppresses (0.3919ms)
-        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (1.4901ms)
-      ✔ upstream candidates lifecycle (7.1071ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (226.8952ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (100.5154ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (70.0272ms)
-        ✔ E_ANALYSIS_CRITICAL (5.1845ms)
-        ✔ E_ANALYSIS_MISSING (3.3794ms)
-        ✔ E_APPROVER_FORMAT (2.8381ms)
-        ✔ E_BLOCKING_OPEN (3.6722ms)
-        ✔ E_BODY_SECTIONS (2.6025ms)
-        ✔ E_BUDGET (7.2568ms)
-        ✔ E_DENYLIST (2.7286ms)
-        ✔ E_EXIT_UNMET (2.1678ms)
-        ✔ E_GATE_PENDING (90.2541ms)
-        ✔ E_LANE_ESCALATE (1028.9845ms)
-        ✔ E_LANE_MISMATCH (3.1079ms)
-        ✔ E_MISSING_ARTIFACT (3.593ms)
-        ✔ E_MODEL_NOT_ALLOWED (4.9182ms)
-        ✔ E_MULTIPLE_BATONS (5.5981ms)
-        ✔ E_NO_PREREG (4.7477ms)
-        ✔ E_OWNER (2.8022ms)
-        ✔ E_PR_MISSING (2.8568ms)
-        ✔ E_REVIEW_BLOCKING (217.4147ms)
-        ✔ E_REVIEW_MISSING (4.8935ms)
-        ✔ E_SCHEMA (5.3997ms)
-        ✔ E_STALE_ARTIFACT (4.0478ms)
-        ✔ E_TRANSITION (2.9394ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1514.3223ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (87.4288ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (29.3961ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (70.7951ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (9.1665ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (104.2595ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (88.4181ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (1.983ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (19.7252ms)
-      ✔ ready with a blocking question is rejected (78.5444ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (111.4161ms)
-      ℹ tests 648
-      ℹ suites 7
-      ℹ pass 646
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 2
-      ℹ todo 0
-      ℹ duration_ms 334280.923
+    evidence: specs/003-upstream-upgrade-prs/review.json
 open_questions: []
 decisions:
   - id: D-ATV-REF
@@ -328,6 +245,27 @@ decisions:
     decision: The literal bot email in the contract and T013 is replaced by a reference to BOT_NAME/BOT_EMAIL; the tracked-docs host guard test is not modified.
     rationale: The guard failed on ad5f4a6 once the 003 specs were tracked; the identity itself is unchanged.
     by: speckit-implement
+  - id: D-REVIEW2-FR012-UNLOCKED
+    decision: Review 2 treats acceptance of a candidate-added files[] row as owner for an existing tracked path absent from the base lock as a blocking FR-012 violation (F14, P1); the candidate row may own a path only when the path is absent from the base tree.
+    rationale: spec.md FR-012 MUST and contracts/upstream-watch.md already limit candidate-row ownership to new paths; reproduced at 6d505f9 with .specify/memory/constitution.md. No contract change needed.
+    by: review-session
+  - id: D-REVIEW2-GATE
+    decision: "D-REVIEW1-GATE is not a gate bypass: the review->implement transition is ungated, no approval is claimed, and the land gate remains. The marker-less E_PR_MARKER blocking and title-based suppression are new FR-019/FR-021 lifecycle behavior and must be recorded as a human decision at or before the land gate (F15)."
+    rationale: Constitution IV and BATON preamble require recorded human decisions for public contract changes; the FR-010/012/024 tightening claim holds for F01/F03/F05/F06/F08 but not F07.
+    by: review-session
+  - id: D7
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 5c90a1833eb75bfbe930791bc50f832d39dd2b73ced55254ca32ebe02c3917de
+    x-base-commit: ad5f4a6c81600fb9e18a2195652370ed850c908b
+    by: baton
+  - id: D8
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 6d505f968a62c46757add43a6d60cb5829c7a458
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -438,8 +376,15 @@ history:
     x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
     commit: f49cef6
     x-action: write
-updated_at: 2026-11-04T14:10:34.593Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-11-04T14:31:26.857Z
+    by: baton
+    writer: fc349b629fe48de111a1050f706498a02e35d3cf47eddbe0bf86cb880e5efec5
+    x-worktree: 1120c1fe4b49f379216b96f088cabbbc8d3a3bc5e0a57f65923e9d5dbcc38de1
+    commit: 6d505f9
+    x-action: write
+updated_at: 2026-11-04T14:31:26.849Z
+updated_by: baton-review
 risks:
   - id: R-UPSTREAM-EXEC
     text: Generation executes upstream Spec Kit code; it must run without write credentials and publication must not execute upstream content.
