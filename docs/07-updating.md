@@ -132,7 +132,22 @@ the only authoritative source (for example
 `git log -1 --author='github-actions\[bot\]' --format=%B FETCH_HEAD`).
 For a closed PR whose pin should become eligible again, add
 `closed=obsolete` after the digest, separated by one space; without it
-the pin stays suppressed.
+the pin stays suppressed:
+
+```text
+<!-- baton-upstream-candidate upstream=<upstream> pin=<Baton-Pin> base=<Baton-Base> digest=<Baton-Content> closed=obsolete -->
+```
+
+A PR with no `github-actions[bot]` commit (for example one a person
+opened on the candidate branch) has no authoritative trailers and is never
+a bot candidate. Close it, then give it the closed marker with `pin` set
+to the pin it was meant to carry in Baton-Pin form (`speckit=<version>`,
+or `atv=<version>` or `atv=<commit>`), `base` set to the current
+default-branch commit (`git rev-parse origin/main`) and `digest` set to 64
+zeros; the workflow reads only the pin of a closed PR. Keep
+`closed=obsolete` to let the workflow propose that pin again, or omit it to
+suppress the pin. While such a PR stays open with a marker, the upstream
+waits for a human.
 
 Blockers in the tracking issue and what to do about them:
 
@@ -144,8 +159,8 @@ Blockers in the tracking issue and what to do about them:
 | `E_UPSTREAM_VERIFY` | Detection, or `sync --bump`, failed (for example `E_DANGLING_REF` in the excerpt) | Read the excerpt; an upstream incompatibility waits for a newer upstream or a manual Baton change |
 | `E_CHECK_FAILED` | `npm run check` failed on the candidate | Reproduce with `sync --bump` locally and fix or wait |
 | `E_CANDIDATE_VERIFY` | The artifact does not match the pins or manifest, or the attested digest | An empty digest (`DIGEST_<UPSTREAM> is empty`) is a workflow wiring fault: fix the generate job's `digest` output and its use in `publish`; rerunning does not help. A digest or hash mismatch means the artifact changed between jobs: rerun, and treat a repeat as tampering |
-| `E_PATH_POLICY` | The candidate changes a path or lock row its upstream does not own, adds a row outside Spec Kit's `.specify/` growth paths, or changes a row's install target, packs, license, source or hashes | Treat the artifact as untrusted and never apply it by hand. If the upstream legitimately added, moved or relicensed files, review the upstream change, update the Baton pack definition (`packs/<pack>.yml`) in a normal PR, run `sync --bump` locally and merge it through the normal gates |
-| `E_PR_MARKER` | A candidate PR, open or closed, has no valid hidden marker | Restore the marker line above in the PR description; nothing is pushed or written for that upstream until then |
+| `E_PATH_POLICY` | The candidate changes a path or lock row its upstream does not own, adds a row outside Spec Kit's `.specify/` growth paths, changes a row's install target, packs, license, source or hashes, or breaks a trusted binding: a lock that is not canonical, a bump summary or `docs/reference/upstream-diff.md` not derived from the lock, Spec Kit requirements that do not match `requirements_sha256`, a deleted lock, diff or requirements file, or a Baton hook skill, extension, preset, registry or hook registration that differs from its Baton source or the base | Treat the artifact as untrusted and never apply it by hand. If the upstream legitimately added, moved or relicensed files, or changed the format of a Baton-bound file, review the upstream change, update the Baton pack definition (`packs/<pack>.yml`) or the Baton source in a normal PR, run `sync --bump` locally and merge it through the normal gates |
+| `E_PR_MARKER` | A candidate PR, open or closed, has no valid hidden marker | Restore the marker line above in the PR description; for a PR with no `github-actions[bot]` commit, close it with the closed marker as described above. Nothing is pushed or written for that upstream until then |
 | `E_PR_CHANGED` | The candidate PR was closed, moved or opened between detection and publish | Rerun the workflow |
 | `E_LEASE` | The candidate branch moved during the run | Rerun the workflow |
 | `E_PUSH` | The push was refused (for example by branch protection) or failed | Read the reason; fix the rule or retry |

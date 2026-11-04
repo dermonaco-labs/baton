@@ -108,7 +108,8 @@ and existing rows alike (FR-012, FR-031):
 
 - **Growth paths.** Rows appear or disappear only on growth paths. A Spec Kit candidate
   may add or remove rows under `.specify/` except `.specify/extensions.yml`,
-  `.specify/extensions/` and `.specify/memory/`, which are protected. An ATV candidate
+  `.specify/extensions/`, `.specify/presets/` and `.specify/memory/`, which are
+  protected. An ATV candidate
   has no growth path. Rows elsewhere come from Baton pack definitions, so new files there
   take the manual route: a reviewed pack-definition change, then `sync --bump`. A
   removed row needs its path in `deleted`, and a deleted path keeps no row.
@@ -124,10 +125,61 @@ and existing rows alike (FR-012, FR-031):
   `.specify/memory/constitution.md`, and must avoid the forbidden paths.
 - **Content.** The license is `MIT`; `sha256` and `sha256_upstream` are 64 hexadecimal
   digits; `repair` is `null` with equal hashes, or for ATV only an object with the
-  non-empty strings `id`, `reason` and `upstream_issue`. A row with a Baton source
-  (other than a `SKILL.md`) keeps both hashes equal to that source's hash. When the
-  candidate writes the file, `sha256` equals the written bytes' hash; otherwise it is
-  unchanged from the base row, and a new row must have a written file.
+  non-empty strings `id`, `reason` and `upstream_issue`. A row may gain or change a
+  repair only together with a written file, and a row whose file is not written keeps
+  its hashes and repair unchanged. A row with a Baton source keeps
+  `x-baton-source-sha256` equal to that source's hash in the base, and a non-`SKILL.md`
+  row keeps both hashes equal to it. When the candidate writes the file, `sha256`
+  equals the written bytes' hash; otherwise it is unchanged from the base row, and a new
+  row must have a written file.
+- **Letter case.** No two rows may share a `stored_at` or an install target that differs
+  only in letter case.
+
+### Trusted bindings
+
+Some files are derived from other files. `package` and `publish` check each of these
+bindings themselves, from the candidate's written bytes and the base commit read through
+git (`git cat-file`), and never from a manifest claim, a log or the generate job's
+result. A broken binding is `E_PATH_POLICY`:
+
+- **Lock.** `baton.lock.json` is written in canonical form (two-space JSON and a final
+  newline). Its `x-bump-summary` is the summary `sync --bump` renders from the base and
+  candidate locks.
+- **Upstream diff.** `docs/reference/upstream-diff.md` is written and equals the document
+  rendered from the candidate lock.
+- **Spec Kit requirements.** `baton/upstream/specify-cli.requirements.in` is exactly
+  `specify-cli==<version>` and a newline. `baton/upstream/specify-cli.requirements.txt`
+  is written, has no carriage return, and its SHA-256 equals
+  `upstreams.speckit.requirements_sha256`. Each line is a requirement pinned with `==`
+  (optionally with environment markers) and continued by `--hash=sha256:` lines, or a
+  blank or comment line outside a requirement. It contains no URL or direct reference
+  and pins `specify-cli==<version>`.
+- **Fixed outputs.** The lock, the upstream diff and both requirements files cannot be
+  deleted.
+- **Baton-sourced files.** For each written row with `x-baton-source`, the source must
+  exist in the base with the recorded hash. A Spec Kit skill wrapper (`SKILL.md`) keeps
+  the base wrapper's frontmatter, names its directory, carries the source's description,
+  and has the source's body, optionally after one generated heading. Any other such file
+  equals its source byte for byte.
+- **Baton extension and preset.** Files under `.specify/extensions/baton/` and
+  `.specify/presets/baton-templates/` equal their sources in `baton/speckit-extension/`
+  (through their `x-baton-source` rows) and `baton/speckit-preset/`. The `.registry`
+  files equal the base apart from an
+  `installed_at` timestamp, and register the Baton entry with the hash of its trusted
+  manifest, enabled. Any other written file in `.specify/extensions/` or
+  `.specify/presets/` is rejected.
+- **Hook registration.** `.specify/extensions.yml` may be reformatted but must parse to
+  the base content.
+
+Some files are deliberately left unbound because they are upstream content or
+upstream-private state that the draft PR reviewer checks:
+
+- Spec Kit's own records, such as `.specify/integrations/*.manifest.json` and
+  `.specify/memory/.constitution-template.json`;
+- regenerated Spec Kit and ATV prompts.
+
+A legitimate upstream format change in a bound file therefore blocks the candidate and
+takes the manual route (FR-031).
 
 ## Candidate artifacts
 

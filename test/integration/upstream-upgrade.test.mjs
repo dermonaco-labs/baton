@@ -6,12 +6,15 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, s
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { sourceRoot } from '../helpers/index.mjs';
-import { BOT_EMAIL, BOT_NAME, ISSUE_NOTICE, ISSUE_TITLE, parseMarker, renderMarker } from '../../src/lib/upstream-candidates.mjs';
+import { diffDocument, formatBumpSummary } from '../../src/lib/lock-report.mjs';
+import { BOT_EMAIL, BOT_NAME, ISSUE_NOTICE, ISSUE_TITLE, contentDigest, parseMarker, renderMarker } from '../../src/lib/upstream-candidates.mjs';
 import { createGit, detect, packageCandidate, publish, report } from '../../src/maintainer/upstream-upgrade.mjs';
 
 const REPO = 'dermonaco-labs/baton';
 const BRANCH = 'baton/upstream-upgrade/speckit';
 const REQUIREMENTS = 'baton/upstream/specify-cli.requirements.txt';
+const REQUIREMENTS_IN = 'baton/upstream/specify-cli.requirements.in';
+const DIFF = 'docs/reference/upstream-diff.md';
 const RUN_URL = `https://github.com/${REPO}/actions/runs/42`;
 const sha = (/** @type {string} */ c) => c.repeat(40);
 const hex = (/** @type {Buffer|string} */ bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -45,7 +48,9 @@ function fixture() {
   const target = lock.files.find((/** @type {any} */ file) => file.upstream === 'speckit').stored_at;
   write(work, 'baton.lock.json', `${JSON.stringify(lock, null, 2)}\n`);
   write(work, target, 'base\n');
-  write(work, REQUIREMENTS, 'specify-cli==1.0.11\n');
+  write(work, REQUIREMENTS, readFileSync(join(sourceRoot, REQUIREMENTS)));
+  write(work, REQUIREMENTS_IN, readFileSync(join(sourceRoot, REQUIREMENTS_IN)));
+  write(work, DIFF, diffDocument(lock));
   write(work, '.specify/memory/constitution.md', 'trusted constitution\n');
   sh(work, ['add', '-A']);
   sh(work, ['-c', 'core.autocrlf=false', 'commit', '-q', '-m', 'base'], humanEnv);
@@ -194,26 +199,34 @@ async function stage(fn, fx, gh, env = {}) {
   }
 }
 
+/** Write the lock with what sync derives from it: bump summary, canonical bytes and the diff document. */
+function writeLock(/** @type {ReturnType<typeof fixture>} */ fx, /** @type {any} */ previous, /** @type {any} */ lock, summary = true) {
+  if (summary) lock['x-bump-summary'] = formatBumpSummary(previous, lock);
+  write(fx.work, 'baton.lock.json', `${JSON.stringify(lock, null, 2)}\n`);
+  write(fx.work, DIFF, diffDocument(lock));
+}
+
 /** Emulate a successful `sync --bump` in the work tree. @param {ReturnType<typeof fixture>} fx @param {string} version @param {string} commit */
 function simulateBump(fx, version, commit, { summary = true } = {}) {
-  const lock = JSON.parse(readFileSync(join(fx.work, 'baton.lock.json'), 'utf8'));
-  const requirements = `specify-cli==${version} --hash=sha256:${'0'.repeat(64)}\n`;
+  const previous = JSON.parse(readFileSync(join(fx.work, 'baton.lock.json'), 'utf8'));
+  const lock = structuredClone(previous);
+  const requirements = `specify-cli==${version} \\\n    --hash=sha256:${'0'.repeat(64)}\n`;
   Object.assign(lock.upstreams.speckit, { version, tag: `v${version}`, commit, requirements_sha256: hex(requirements) });
-  if (summary) lock['x-bump-summary'] = `Spec Kit ${version}: 1 file regenerated.`;
   const regenerated = `regenerated ${version}\r\n`;
   const row = lock.files.find((/** @type {any} */ file) => file.stored_at === fx.target);
   row.sha256 = row.sha256_upstream = hex(regenerated);
-  write(fx.work, 'baton.lock.json', `${JSON.stringify(lock, null, 2)}\n`);
+  writeLock(fx, previous, lock, summary);
   write(fx.work, fx.target, regenerated);
   write(fx.work, REQUIREMENTS, requirements);
+  write(fx.work, REQUIREMENTS_IN, `specify-cli==${version}\n`);
 }
 
 /** Emulate a successful ATV `sync --bump` that re-pins main. @param {ReturnType<typeof fixture>} fx @param {string} commit @param {string} tree */
 function simulateAtvBump(fx, commit, tree) {
-  const lock = JSON.parse(readFileSync(join(fx.work, 'baton.lock.json'), 'utf8'));
+  const previous = JSON.parse(readFileSync(join(fx.work, 'baton.lock.json'), 'utf8'));
+  const lock = structuredClone(previous);
   Object.assign(lock.upstreams.atv, { commit, tree });
-  lock['x-bump-summary'] = `ATV ${commit.slice(0, 7)}: lock re-pinned.`;
-  write(fx.work, 'baton.lock.json', `${JSON.stringify(lock, null, 2)}\n`);
+  writeLock(fx, previous, lock);
 }
 
 /** @param {ReturnType<typeof fixture>} fx */
@@ -385,6 +398,27 @@ describe('upstream upgrade publish', () => {
         writeFileSync(lockPath, bytes);
         editManifest(m => { m.changed.find((/** @type {any} */ item) => item.path === 'baton.lock.json').sha256 = hex(bytes); });
       };
+      /** Replace a written file and keep its manifest hash consistent. @param {string} path @param {string} text */
+      const rewriteFile = (path, text) => {
+        writeFileSync(join(dir, 'files', path), text);
+        editManifest(m => { m.changed.find((/** @type {any} */ item) => item.path === path).sha256 = hex(text); });
+      };
+      /** Turn a written file into a manifest deletion. @param {string} path */
+      const deleteFile = path => {
+        unlinkSync(join(dir, 'files', path));
+        editManifest(m => {
+          m.changed = m.changed.filter((/** @type {any} */ item) => item.path !== path);
+          m.deleted.push(path);
+        });
+      };
+      /**
+       * A coherent generate leg: tamper, then attest the tampered artifact's own digest, so only the trusted
+       * verifier's bindings can stop it. @param {()=>void} tamper
+       */
+      const coherent = tamper => {
+        tamper();
+        return { DIGEST_SPECKIT: contentDigest(JSON.parse(readFileSync(manifestPath, 'utf8'))) };
+      };
       const atvRow = fx.lock.files.find((/** @type {any} */ file) => file.upstream === 'atv');
       /** @type {Array<[string,string,()=>boolean|void|Record<string,string>,(RegExp|string)?]>} */
       const cases = [
@@ -414,6 +448,19 @@ describe('upstream upgrade publish', () => {
         ['base mismatch', 'E_CANDIDATE_VERIFY', () => editManifest(m => { m.base = sha('a'); })],
         ['bump mismatch', 'E_CANDIDATE_VERIFY', () => editManifest(m => { m.bump = 'speckit=9.9.8'; })],
         ['pin mismatch', 'E_CANDIDATE_VERIFY', () => editManifest(m => { m.pin.version = '9.9.8'; })],
+        ['requirements bytes not bound to requirements_sha256', 'E_PATH_POLICY',
+          () => coherent(() => rewriteFile(REQUIREMENTS, `specify-cli==9.9.9 \\\n    --hash=sha256:${'1'.repeat(64)}\n`)),
+          new RegExp(`${REQUIREMENTS.replaceAll('.', '\\.')} does not match upstreams\\.speckit\\.requirements_sha256`)],
+        ['requirements file deleted', 'E_PATH_POLICY', () => coherent(() => deleteFile(REQUIREMENTS)),
+          new RegExp(`${REQUIREMENTS.replaceAll('.', '\\.')} may not be deleted`)],
+        ['diff document deleted', 'E_PATH_POLICY', () => coherent(() => deleteFile(DIFF)),
+          /docs\/reference\/upstream-diff\.md may not be deleted/],
+        ['stale diff document', 'E_PATH_POLICY', () => coherent(() => rewriteFile(DIFF, 'stale\n')),
+          /docs\/reference\/upstream-diff\.md is not rendered from the candidate lock/],
+        ['summary not derived from the lock', 'E_PATH_POLICY', () => coherent(() => {
+          editLock(lock => { lock['x-bump-summary'] = 'All good.'; });
+          editManifest(m => { m.summary = 'All good.'; });
+        }), /x-bump-summary is not the summary of the lock change/],
         ['row claiming a tracked unlocked file', 'E_PATH_POLICY', () => {
           addFile('.specify/memory/constitution.md');
           editLock(lock => {
@@ -425,7 +472,8 @@ describe('upstream upgrade publish', () => {
           addFile('.specify/memory/extra.md');
           editLock(lock => {
             const own = lock.files.find((/** @type {any} */ row) => row.upstream === 'speckit');
-            lock.files.push({ ...own, stored_at: '.specify/memory/extra.md', sha256: hex('injected\n') });
+            lock.files.push({ ...own, stored_at: '.specify/memory/extra.md', path: '.specify/memory/extra.md',
+              upstream_path: '.specify/memory/extra.md', sha256: hex('injected\n'), sha256_upstream: hex('injected\n') });
           });
         }, 'speckit: .specify/memory/extra.md is new; .specify/memory/ is protected; files .specify/memory/extra.md ' +
           'added: .specify/memory/extra.md is new; .specify/memory/ is protected'],

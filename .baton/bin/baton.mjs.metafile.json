@@ -3597,6 +3597,17 @@
       ],
       "format": "esm"
     },
+    "src/lib/lock-report.mjs": {
+      "bytes": 3812,
+      "imports": [
+        {
+          "path": "src/lib/upstream.mjs",
+          "kind": "import-statement",
+          "original": "./upstream.mjs"
+        }
+      ],
+      "format": "esm"
+    },
     "src/lib/repairs.mjs": {
       "bytes": 2848,
       "imports": [
@@ -3614,7 +3625,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 29344,
+      "bytes": 25944,
       "imports": [
         {
           "path": "node:fs",
@@ -3635,6 +3646,11 @@
           "path": "node_modules/yaml/dist/index.js",
           "kind": "import-statement",
           "original": "yaml"
+        },
+        {
+          "path": "src/lib/lock-report.mjs",
+          "kind": "import-statement",
+          "original": "../lib/lock-report.mjs"
         },
         {
           "path": "src/lib/packs.mjs",
@@ -5580,11 +5596,14 @@
         "src/commands/lock.mjs": {
           "bytesInOutput": 2857
         },
+        "src/lib/lock-report.mjs": {
+          "bytesInOutput": 2365
+        },
         "src/lib/repairs.mjs": {
           "bytesInOutput": 1660
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 14971
+          "bytesInOutput": 12645
         },
         "src/lib/phases.mjs": {
           "bytesInOutput": 7007
@@ -5653,7 +5672,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 427973
+      "bytes": 428012
     }
   }
 }

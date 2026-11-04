@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import YAML from 'yaml';
 import { sourceRoot, runCli } from '../helpers/index.mjs';
 import { maintainerWorkflowIssues } from '../../src/lib/maintainer-workflows.mjs';
-import { UPSTREAMS, renderMarker } from '../../src/lib/upstream-candidates.mjs';
+import { UPSTREAMS, parseMarker, renderMarker } from '../../src/lib/upstream-candidates.mjs';
 import { run as validate } from '../../src/commands/validate.mjs';
 
 const names = ['ci', 'smoke', 'upstream-watch', 'release'];
@@ -341,5 +341,14 @@ describe('upstream watch workflow maintainer documentation', () => {
     const marker = renderMarker(/** @type {any} */ ({ upstream: '<upstream>', pin: '<Baton-Pin>', base: '<Baton-Base>',
       digest: '<Baton-Content>' }));
     assert.ok(docs.includes(`\n${marker}\n`), marker);
+    const closed = renderMarker(/** @type {any} */ ({ upstream: '<upstream>', pin: '<Baton-Pin>', base: '<Baton-Base>',
+      digest: '<Baton-Content>', closed: 'obsolete' }));
+    assert.ok(docs.includes(`\n${closed}\n`), closed);
+    // The documented no-bot-commit remedy (wanted pin, current base, 64 zeros) must parse as a closed marker.
+    assert.match(docs, /`digest` set to 64\s+zeros; the workflow reads only the pin of a closed PR/);
+    const remedy = renderMarker({ upstream: 'speckit', pin: 'speckit=9.9.9', base: 'a'.repeat(40), digest: '0'.repeat(64),
+      closed: 'obsolete' });
+    assert.deepEqual(parseMarker(`body\n${remedy}\n`), { upstream: 'speckit', pin: 'speckit=9.9.9', base: 'a'.repeat(40),
+      digest: '0'.repeat(64), closed: 'obsolete' });
   });
 });

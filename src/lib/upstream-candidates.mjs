@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { bindingIssues } from './candidate-bindings.mjs';
 import { ATV_REPO, SPECKIT_REPO, UpstreamError, isSha, isVersion } from './upstream.mjs';
 
 /** @typedef {'speckit'|'atv'} UpstreamId */
@@ -43,7 +44,8 @@ const FORBIDDEN_PREFIXES = ['.github/workflows/', 'src/', 'test/', '.baton/'];
 const STORED_PREFIX = /^(?:\.github\/agents\/|\.github\/skills\/|\.specify\/|packs\/[a-z0-9][a-z0-9-]*\/files\/)/;
 const SAFE_PATH = /^[A-Za-z0-9._/@+-]+$/;
 /** Every lock row sync writes; Baton-authored extension rows add the two provenance keys. */
-const ROW_KEYS = ['license', 'packs', 'path', 'repair', 'sha256', 'sha256_upstream', 'stored_at', 'upstream', 'upstream_path'];
+export const ROW_KEYS = Object.freeze(['license', 'packs', 'path', 'repair', 'sha256', 'sha256_upstream', 'stored_at',
+  'upstream', 'upstream_path']);
 /** Row fields a Baton pack definition, the fixed extension sources or the stored location decide; a bump never changes them. */
 const FROZEN_FIELDS = ['path', 'packs', 'upstream', 'upstream_path', 'license', 'x-baton-source', 'x-baton-source-sha256'];
 /**
@@ -52,8 +54,11 @@ const FROZEN_FIELDS = ['path', 'packs', 'upstream', 'upstream_path', 'license', 
  * @type {Readonly<Record<UpstreamId,string|null>>}
  */
 const GROWTH_ROOTS = Object.freeze({ speckit: '.specify', atv: null });
-/** Hook registration, the Baton extension and the adopter's constitution keep their rows; no candidate adds or drops one. */
-const PROTECTED_PATHS = ['.specify/extensions.yml', '.specify/extensions/', '.specify/memory/'];
+/**
+ * Hook registration, the Baton extension and preset and the adopter's constitution keep their rows; no candidate adds
+ * or drops one.
+ */
+const PROTECTED_PATHS = ['.specify/extensions.yml', '.specify/extensions/', '.specify/presets/', '.specify/memory/'];
 /** Install targets an upstream row may have; adopters receive every row at its `path`. */
 const INSTALL_PREFIX = /^(?:\.github\/agents\/|\.github\/skills\/|\.github\/hooks\/|\.specify\/)/;
 const CONSTITUTION = '.specify/memory/constitution.md';
@@ -398,8 +403,10 @@ export function pathPolicyIssue(path, kind, id, { baseLock, candidateLock, baseT
   if (FORBIDDEN_FILES.has(path) || FORBIDDEN_PREFIXES.some(prefix => path.startsWith(prefix))) {
     return `${path} is outside the regenerated outputs`;
   }
-  if (FIXED_PATHS.has(path)) return null;
-  if (REQUIREMENTS.has(path)) return id === 'speckit' ? null : `${path} may change only in a Spec Kit candidate`;
+  if (FIXED_PATHS.has(path) || REQUIREMENTS.has(path)) {
+    if (kind === 'deleted') return `${path} may not be deleted`;
+    return FIXED_PATHS.has(path) || id === 'speckit' ? null : `${path} may change only in a Spec Kit candidate`;
+  }
   if (!STORED_PREFIX.test(path)) return `${path} is not a locked upstream output`;
   const base = rowsByPath(baseLock).get(path);
   if (base) return base.upstream === id ? null : `${path} is owned by ${JSON.stringify(base.upstream)}, not ${id}`;
@@ -425,7 +432,7 @@ function expectedPinFields(id, pin) {
  * `<path>` for that pack.
  * @param {string} storedAt
  */
-function targetOf(storedAt) {
+export function targetOf(storedAt) {
   const match = /^packs\/([a-z0-9][a-z0-9-]*)\/files\/(.+)$/.exec(storedAt);
   return match ? { path: match[2], packs: [match[1]] } : { path: storedAt, packs: ['core'] };
 }
@@ -465,18 +472,17 @@ function ownRowIssue(id, old, row, { baseLock, baseTree, written }) {
   if (typeof row.upstream_path !== 'string' || !SAFE_PATH.test(row.upstream_path)) return 'has an invalid upstream_path';
   if (!isDigest(row.sha256) || !isDigest(row.sha256_upstream)) return 'has an invalid sha256 or sha256_upstream';
   const repair = row.repair;
+  const hash = written.get(key);
   if (repair === null) {
     if (row.sha256 !== row.sha256_upstream) return 'has no repair but sha256 differs from sha256_upstream';
-  } else if (id !== 'atv' || !repair || typeof repair !== 'object' || Array.isArray(repair) ||
-    Object.keys(repair).sort().join() !== 'id,reason,upstream_issue' ||
-    Object.values(repair).some(value => typeof value !== 'string' || !value)) {
-    return 'has an invalid repair';
+    if (hash === undefined && old && old.repair !== null) return 'drops its repair without a changed file';
+  } else if (!old || !same(old.repair, repair)) {
+    return old ? 'adds or changes a repair' : 'added with a repair';
   }
   const source = row['x-baton-source-sha256'];
   if (source !== undefined && !key.endsWith('/SKILL.md') && (row.sha256 !== source || row.sha256_upstream !== source)) {
     return `differs from its Baton source ${row['x-baton-source']}`;
   }
-  const hash = written.get(key);
   if (hash !== undefined) return hash === row.sha256 ? null : 'sha256 does not match the written file';
   if (!old) return 'added without a changed file';
   return row.sha256 === old.sha256 ? null : 'changes sha256 without a changed file';
@@ -501,6 +507,28 @@ function fileRowIssues(id, base, candidate, { baseTree, written = new Map(), del
   });
   const before = rowsByPath(base);
   const after = rowsByPath(candidate);
+  /** Lower-cased stored_at of every candidate row, and install path of new rows plus kept rows sharing one. */
+  const storedCase = new Map();
+  const pathCase = new Map();
+  const count = (/** @type {Map<string,number>} */ map, /** @type {unknown} */ value) => {
+    if (typeof value === 'string') map.set(value.toLowerCase(), (map.get(value.toLowerCase()) ?? 0) + 1);
+  };
+  for (const row of after.values()) {
+    count(storedCase, row.stored_at);
+    if (!before.has(row.stored_at)) count(pathCase, row.path);
+  }
+  for (const row of after.values()) {
+    if (before.has(row.stored_at) && typeof row.path === 'string' && pathCase.has(row.path.toLowerCase())) {
+      count(pathCase, row.path);
+    }
+  }
+  for (const [key, row] of after) {
+    if (before.has(key)) continue;
+    if ((storedCase.get(key.toLowerCase()) ?? 0) > 1) issues.push(`files ${key} differs only in letter case from another stored_at`);
+    if (typeof row.path === 'string' && (pathCase.get(row.path.toLowerCase()) ?? 0) > 1) {
+      issues.push(`files ${key} installs at ${row.path}, which another row also installs at in some letter case`);
+    }
+  }
   for (const key of new Set([...before.keys(), ...after.keys()])) {
     const old = before.get(key);
     const next = after.get(key);
@@ -567,12 +595,13 @@ export function lockDiffIssues(id, base, candidate, latest, context = {}) {
 }
 
 /**
- * Verify an untrusted candidate against the trusted plan, the base lock and the base tree's tracked paths.
+ * Verify an untrusted candidate against the trusted plan, the base lock, the base tree's tracked paths and, through
+ * `baseFile`, the base commit's bytes for every cross-file binding (see candidate-bindings).
  * @param {{plan:UpstreamPlan,manifest:any,files:Map<string,{bytes:Buffer,symlink:boolean}>,baseLock:any,
- *   baseTree:Iterable<string>}} input
+ *   baseTree:Iterable<string>,baseFile:(path:string)=>Buffer|null}} input
  * @returns {{digest:string,manifest:Manifest,lock:any}}
  */
-export function verifyCandidate({ plan, manifest, files, baseLock, baseTree }) {
+export function verifyCandidate({ plan, manifest, files, baseLock, baseTree, baseFile }) {
   const reject = (/** @type {string} */ message) => fail('E_CANDIDATE_VERIFY', `${plan.upstream.id}: ${message}`);
   const latest = plan.upstream.latest;
   if (plan.action !== 'generate' || !latest) throw reject(`plan action ${plan.action} has no candidate`);
@@ -589,8 +618,8 @@ export function verifyCandidate({ plan, manifest, files, baseLock, baseTree }) {
   }
   const seen = new Set();
   for (const path of [...manifest.changed.map((/** @type {any} */ item) => item?.path), ...manifest.deleted]) {
-    if (typeof path !== 'string' || seen.has(path)) throw reject(`duplicate or invalid path ${JSON.stringify(path)}`);
-    seen.add(path);
+    if (typeof path !== 'string' || seen.has(path.toLowerCase())) throw reject(`duplicate or invalid path ${JSON.stringify(path)}`);
+    seen.add(path.toLowerCase());
   }
   for (const item of manifest.changed) {
     if (Object.keys(item).sort().join() !== 'mode,path,sha256' || !['100644', '100755'].includes(item.mode)) {
@@ -620,6 +649,14 @@ export function verifyCandidate({ plan, manifest, files, baseLock, baseTree }) {
     ...lockDiffIssues(id, baseLock, lock, latest, { baseTree, written, deleted })
   ].filter(Boolean);
   if (policy.length) throw fail('E_PATH_POLICY', `${id}: ${policy.join('; ')}`);
+  /** @type {string[]} */
+  let bindings;
+  try {
+    bindings = bindingIssues({ id, manifest, files, baseLock, lock, lockBytes: lockFile.bytes, version: latest.version, baseFile });
+  } catch {
+    bindings = ['candidate bindings cannot be checked'];
+  }
+  if (bindings.length) throw fail('E_PATH_POLICY', `${id}: ${bindings.join('; ')}`);
   return { digest: contentDigest(manifest), manifest, lock };
 }
 

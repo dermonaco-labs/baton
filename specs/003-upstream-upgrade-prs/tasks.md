@@ -338,8 +338,9 @@ contract's `files[]` row rules now enumerate every candidate-controlled field
 ([Owned rows](./contracts/upstream-watch.md#owned-rows)). The growth boundary they set
 narrows the earlier contract wording: only Spec Kit's unprotected `.specify/` paths grow
 or shrink automatically. The repository owner explicitly approved this restricted
-boundary, recorded as FR-031, a review 3 clarification and decision
-`D-REVIEW3-BOUNDARY`. Acceptance selectors are unchanged, and no registered command or
+boundary. It is recorded as FR-031 and a review 3 clarification, and its rationale is
+recorded in handoff decision `D15` (first recorded with the refresh in `D14`). Acceptance
+selectors are unchanged, and no registered command or
 assertion is weakened.
 
 - [X] T049 [US1] F22 (P1, FR-012, FR-031) in `src/lib/upstream-candidates.mjs`. One row policy applies to every `files[]` row, and `package` and `publish` both reach it through `verifyCandidate`:
@@ -373,6 +374,32 @@ assertion is weakened.
 
 ---
 
+## Phase 11: Review 4 fixes (review.json F26–F32)
+
+Independent review 4 found no blocker. The reviewer routed the feature back to implement
+through the CLI (handoff decision `D-REVIEW4-ROUTE`). Each fix stays within FR-012 and
+FR-031. Before fixing, every derived file that a candidate writes was inventoried. The
+result is the [Trusted bindings](./contracts/upstream-watch.md#trusted-bindings) section
+of the contract, which also lists the files that are deliberately left unbound and why.
+Acceptance selectors are unchanged, and no registered command or assertion is weakened.
+
+- [X] T053 [US1] F26 (FR-012) in the new `src/lib/candidate-bindings.mjs`, called by `verifyCandidate` in `src/lib/upstream-candidates.mjs`, so both `package` and `publish` enforce it from the candidate's written bytes and from base files read through `git cat-file` (`src/maintainer/upstream-upgrade.mjs`). Generate claims, manifest fields, paths and logs are not evidence:
+  - the Spec Kit `requirements.txt` bytes hash to `upstreams.speckit.requirements_sha256`, follow the hash-locked line grammar with no URL or direct reference, and pin `specify-cli==<version>`; `requirements.in` is exactly that pin;
+  - the lock is canonical, `x-bump-summary` is the summary rendered from the base and candidate locks, and `docs/reference/upstream-diff.md` is rendered from the candidate lock. The renderers moved to the new `src/lib/lock-report.mjs`, which `sync` also uses;
+  - the lock, the upstream diff and both requirements files cannot be deleted;
+  - Baton-sourced files, the Baton extension and preset copies, both `.registry` files and `.specify/extensions.yml` stay bound to their trusted base sources. Other written files under `.specify/extensions/` or `.specify/presets/` are rejected, and `.specify/presets/` joins the protected growth paths;
+  - the unit fixture that wrote mismatched requirements bytes was repaired. Integration fixtures now write real requirements, the rendered summary and the diff document.
+- [X] T054 [US1] F26 integration cases in `tampered candidates are rejected before any push` (selected by AC-US1-2). Each case also re-attests the generate digest for the tampered artifact, modeling a coherent malicious generate leg, so only the trusted binding can catch it. Requirements bytes not bound to `requirements_sha256`, a deleted requirements file, a deleted or stale diff document, and a summary not derived from the lock each give `E_PATH_POLICY` with no push.
+- [X] T055 [P] F27 in `tasks.md`: the acceptance evidence counts are the actual selector results, and the FR-031 citation is handoff decision `D15` instead of the nonexistent `D-REVIEW3-BOUNDARY`. Red and characterization evidence for this phase are recorded separately under [Acceptance evidence](#acceptance-evidence).
+- [X] T056 [US1] F28: new rows may not collide in any letter case with each other or with kept rows, by stored path or by install target.
+- [X] T057 [US1] F29: `repair` is never added or altered. A written row keeps or drops its base `repair`, and an unwritten row keeps its hashes and `repair`.
+- [X] T058 [US1] F30: no Baton `SKILL.md` is exempt from its source binding. A Spec Kit skill wrapper keeps the base wrapper frontmatter, names its directory, carries the source description, and has the source body, optionally after one generated heading. Every other Baton-sourced file equals its source. The generated wrappers that the committed tree carries still verify.
+- [X] T059 [P] [US1] F31: the new-row field set is the exported `ROW_KEYS`, and a narrow drift test asserts that every committed lock row has the shape `sync` writes. `sync.mjs` is not refactored to share the policy.
+- [X] T060 [P] F32 in `docs/07-updating.md`: the literal closed-marker template, and the remedy when no bot commit exists (close the PR and add a closed marker with the wanted pin, `base` from `git rev-parse origin/main` and a 64-zero digest; keep `closed=obsolete` to propose the pin again or omit it to suppress the pin). The docs drift test (selected by AC-US1-3) asserts the closed template and the zero-digest remedy, and that `parseMarker` reads it.
+- [X] T061 Rerun the targeted selectors, then `npm run check` once on the corrected candidate, and update the acceptance evidence counts.
+
+---
+
 ## Dependencies & Execution Order
 
 - **Setup (T001)** → **Foundational (T002–T004)**.
@@ -388,6 +415,8 @@ assertion is weakened.
   before T036. T041 runs last.
 - **Review 2 fixes (T042–T048)** depend on review 1 fixes. T048 runs last.
 - **Review 3 fixes (T049–T052)** depend on review 2 fixes. T052 runs last.
+- **Review 4 fixes (T053–T061)** depend on review 3 fixes. T053 comes before T054.
+  T061 runs last.
 - Within each story, the tests come first and their red evidence is recorded before
   implementation.
 
@@ -445,6 +474,21 @@ its parent `ac6d611fe425308a9e47328f5708f6729b05af22`. Every Spec Kit release ne
 the `issues` pack closure. Each failure left the tree unchanged. That is an upstream
 compatibility blocker, which the workflow would report, not a defect in this feature.
 
+Review 4 evidence (F26–F32) separates red runs from characterization tests:
+
+- **Red against pre-fix `6733578`.** The updated tests were run in a detached scratch
+  worktree of `6733578`, together with `src/lib/lock-report.mjs`, which the new fixtures
+  import. The new unit tests are not part of this run.
+  - The docs drift test (AC-US1-3) gave 1 test, 0 pass, 1 fail.
+  - Each of the five new coherent tamper cases (T054) was run in isolation and was
+    published (1 push, exit 0, no blocker).
+  - Without the re-attested digest, the old code rejected these tampers only through the
+    generate leg's attested digest (`E_CANDIDATE_VERIFY`), not through a trusted binding.
+- **Characterization, not red.** The new unit tests for T053 and T056–T059 were written
+  together with the fix. They import `ROW_KEYS`, `targetOf` and
+  `src/lib/candidate-bindings.mjs`, none of which existed at `6733578`, so they cannot
+  run against the pre-fix code.
+
 Post-merge operational evidence, not claimed here (analysis C2, E1):
 
 - SC-007, a run finishing within 30 minutes;
@@ -454,9 +498,9 @@ Post-merge operational evidence, not claimed here (analysis C2, E1):
 |-------|---------------------|
 | AC-US4-1 | Red: 1/1 failed because `parseBump` was not exported from `src/commands/sync.mjs` before T007; Green: 10 tests, 10 pass, 0 fail. |
 | AC-US4-2 | Red: on main `ae34a99`, `sync --bump atv=ac6d611…` wrote the lock, then `sync --check` exited 1 with `E_UPSTREAM_VERIFY` ("Lock pins differ from the vetted Spec Kit/ATV refs"); Green: on the feature tree the same bump, then `sync --check`, `lock verify` and `build --check` all exit 0, the diff touches only `baton.lock.json` and `docs/reference/upstream-diff.md` with no `src/` edit, and `atv=<unknown 40-hex>` (`E_UPSTREAM_VERIFY`) and `speckit=99.0.0` (unsatisfiable) both exit 1 with a clean `git status`. |
-| AC-US1-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, before that module existed (T014); Green: 17 tests, 17 pass, 0 fail (15 before review 2; adds the tracked-path claim and base-tree cases). |
-| AC-US1-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 13 tests, 13 pass, 0 fail (7 before review 1; adds remote-rejected push, report fallbacks and the `E_DANGLING_REF` report; 10 before review 2; adds per-upstream digests with an ATV draft PR, a PR opened after detection, and the generic `E_PUSH`). |
-| AC-US1-3 | Red: 6 tests, 0 pass, 6 fail against the old workflow before T018; Green: 6 tests, 6 pass, 0 fail, including `runs-on: ubuntu-latest` per job. |
+| AC-US1-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, before that module existed (T014); Green: 31 tests, 31 pass, 0 fail. There were 15 before review 2, which added the tracked-path claim and base-tree cases (17). Review 3 added the row ownership policy suite (22). Review 4 added 9: requirements binding, canonical lock with summary and diff document, wrapper binding, extension, preset and registry binding, hook registration, the YAML subset parser, case collisions, the sync row-shape drift test and repair metadata. |
+| AC-US1-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 15 tests, 15 pass, 0 fail. There were 7 before review 1, which added the remote-rejected push, report fallbacks and the `E_DANGLING_REF` report (10). Review 2 added per-upstream digests with an ATV draft PR, a PR opened after detection, and the generic `E_PUSH` (13). Review 3 brought the count to 15. Review 4 added the T054 coherent tamper cases inside the existing tamper test, so the count is unchanged. |
+| AC-US1-3 | Red: 6 tests, 0 pass, 6 fail against the old workflow before T018; Green: 7 tests, 7 pass, 0 fail, including `runs-on: ubuntu-latest` per job. Review 3 added the docs drift test, and review 4 extended it to the closed marker (red at `6733578`: 1 test, 0 pass, 1 fail). |
 | AC-US2-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, the same pre-module red run as AC-US1-1 (before T014, T023); Green: 4 tests, 4 pass, 0 fail. |
 | AC-US3-1 | Red: the file failed with `ERR_MODULE_NOT_FOUND` for `src/lib/upstream-candidates.mjs`, the same pre-module red run as AC-US1-1 (before T014, T027); Green: 8 tests, 8 pass, 0 fail (6 before review 1; adds the `E_PR_MARKER` case; 7 before review 2; adds the restored-marker case, and the marker case now covers closed PRs without title trust). |
 | AC-US3-2 | Red: 1/1 failed with module-not-found for `src/maintainer/upstream-upgrade.mjs`, captured after implementation with the module moved aside; Green: 10 tests, 10 pass, 0 fail, including analysis C1 and C4 cases (7 before review 1; adds the truncated compare, the PR closed after detection, and the missing-marker case, which review 2 rewrote for FR-030 marker restoration). |

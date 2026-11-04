@@ -2,38 +2,30 @@
 baton: 1
 lane: feature
 feature: 003-upstream-upgrade-prs
-phase_completed: review
-next_phase: implement
-next_owner: speckit-implement
+phase_completed: implement
+next_phase: review
+next_owner: baton-review
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Review 4 of 52e61ae (base 056edbe): F22-F25 verified fixed; no P0/P1 open. New P2 F26 (requirements_sha256 unbound to requirements.txt; fixed/requirements outputs deletable), P2 F27 (stale AC counts with T052 checked; missing D-REVIEW3-BOUNDARY), P3 F28-F32. 85/85 targeted tests, build --check, diff --check clean."
+model_role: review
+suggested_model: claude-opus-5.5
+summary: "Review 4 fixes: F26 trusted bindings (requirements bytes to requirements_sha256, canonical lock, rendered summary and diff doc, no deletion of fixed outputs, Baton wrapper/extension/preset/registry/hooks bound to base sources) enforced by package and publish from written bytes and git base; F28 case collisions; F29 repair only with written file; F30 no SKILL exemption; F31 ROW_KEYS drift test; F32 closed-marker remedy docs+test; F27 evidence counts. E_DANGLING_REF still upstream; live evidence pending."
 read_first:
   - path: specs/003-upstream-upgrade-prs/review.json
-    why: Review 3 findings F22-F25 being answered
-    sha256: d3099b1d1086618015b549af98cb446dd1b764f058717532daf05dc2ad737d66
+    why: Review 4 findings F26-F32 being answered
   - path: specs/003-upstream-upgrade-prs/tasks.md
-    why: Phase 10 T049-T052 and evidence
-    sha256: 7c23c0694a006a7b89d6f34d55f9cdeef193177d714633eec66b7e5520815939
+    why: Phase 11 T053-T061 and red vs characterization evidence
   - path: specs/003-upstream-upgrade-prs/contracts/upstream-watch.md
-    why: Owned rows section, new-path growth rule, PR-list fail-closed
-    sha256: fc4e7f39de53267c435036e989218484d9cf6dd5b4ccba95eba896452af2d25a
+    why: Trusted bindings inventory, enforced and deliberately unbound files
+  - path: src/lib/candidate-bindings.mjs
+    why: Trusted binding verifier
   - path: src/lib/upstream-candidates.mjs
-    why: growthIssue, newPathIssue, targetOf, ownRowIssue, fileRowIssues
-    sha256: 1f40339eed110843e014cf9614b0a29dde8beae5d3c403453e8919ca5096d8ee
+    why: verifyCandidate wiring, ROW_KEYS, case collisions, repair rule
   - path: src/maintainer/upstream-upgrade.mjs
-    why: branchPulls and detect blocker run URL
-    sha256: ea5d83a74b6d6c549ea023e001903e14cfae9ee54db6206533f776a397a95590
-  - path: test/unit/upstream-candidates.test.mjs
-    why: Row ownership policy matrix
-    sha256: 84aefd6fa72a2ea6cc14a6a340dab1f9f2f25befcac728807e6fd2dd83d7c6a3
+    why: Base file reader passed to package and publish
   - path: test/integration/upstream-upgrade.test.mjs
-    why: F22 publish cases, PR-list fail-closed, exact result assertions
-    sha256: 2eadc3010796ec8d9fdc01d3102aa6ea0bb5b0e55b95a1ddac4cdd94c245e7da
+    why: Coherent tamper cases with re-attested digest
   - path: docs/07-updating.md
-    why: Marker template and blocker remedies
-    sha256: 5c6fe608b39e7fa48702c61a5c83f15e8c509f239b2d922bba0994eb0570149c
+    why: Closed-marker template and no-bot-commit remedy
 artifacts:
   - path: specs/003-upstream-upgrade-prs/spec.md
     role: source-of-truth
@@ -49,7 +41,7 @@ artifacts:
     sha256: 9a442e9010e2ca48a9f50144ba4743a938509800dc6ad491af13b9fe7c6ec247
   - path: specs/003-upstream-upgrade-prs/contracts/upstream-watch.md
     role: source-of-truth
-    sha256: fc4e7f39de53267c435036e989218484d9cf6dd5b4ccba95eba896452af2d25a
+    sha256: 2703fc21c563506a94c7370215515427186341d454cb4d439a18593bfd74c378
   - path: specs/003-upstream-upgrade-prs/contracts/sync-bump.md
     role: source-of-truth
     sha256: 812e6951ab8cad817a1d21b69b1183f30dbbc3ca3d8021228d4b5402e863902c
@@ -58,12 +50,90 @@ artifacts:
     sha256: e03b56f86f2cfe765d5ccdbc2a40b0dc1299ee79e2b13a44f588393ee3fafd7b
   - path: specs/003-upstream-upgrade-prs/tasks.md
     role: source-of-truth
-    sha256: 7c23c0694a006a7b89d6f34d55f9cdeef193177d714633eec66b7e5520815939
+    sha256: fc63be399564e22ef7541d3b5afd9f863958f0e3b64fbab9c7de9fdd5abd0cf3
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: tasks-all-checked-or-deferred
     met: true
-    evidence: specs/003-upstream-upgrade-prs/review.json
+    evidence: 0 outstanding tasks
+  - id: acceptance-evidence
+    met: true
+    evidence: 0 checks lack evidence
+  - id: local-checks-pass
+    met: true
+    evidence: |-
+      baton: 0
+      stdout (tail):
+       the newest stable release; a moved main is informational only (0.6359ms)
+        ✔ any other tracked ref is an unsupported-ref blocker (1.2586ms)
+        ✔ upstream plans are independent and an ATV candidate cannot touch Spec Kit (6.925ms)
+      ✔ upstream candidates atv (10.0627ms)
+      ▶ upstream candidates speckit and atv row ownership policy
+        ✔ the committed lock satisfies every owned-row invariant for both upstreams (5.6886ms)
+        ✔ a regenerated owned file under every owned stored root and a new .specify file are accepted (48.7512ms)
+        ✔ repair metadata is never added or altered; a written row keeps or drops its base repair (24.8416ms)
+        ✔ no upstream adds or removes rows outside its growth root, and protected paths never grow or shrink (118.0515ms)
+        ✔ owned rows keep their install target, provenance, license and shape; hashes match the written bytes (950.6364ms)
+        ✔ new rows may not collide with each other or with kept rows in any letter case (5.229ms)
+        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (2.4308ms)
+        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (6.2298ms)
+      ✔ upstream candidates speckit and atv row ownership policy (1162.3943ms)
+      ▶ upstream candidates lifecycle
+        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.3258ms)
+        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (1.4686ms)
+        ✔ a human-edited candidate with a newer pin waits for the human (0.693ms)
+        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (2.3815ms)
+        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.6915ms)
+        ✔ a human close suppresses exactly that pin; a newer pin generates again (1.1098ms)
+        ✔ the automation obsolete close never suppresses (0.3922ms)
+        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (1.3838ms)
+      ✔ upstream candidates lifecycle (8.8108ms)
+      ✔ every feature phase and quick lane phase has a valid independent fixture (236.76ms)
+      ✔ pre-existing feature baton without specify history or attachment still validates (96.5449ms)
+      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
+        ✔ E_ACTOR_FORMAT (65.6496ms)
+        ✔ E_ANALYSIS_CRITICAL (3.7648ms)
+        ✔ E_ANALYSIS_MISSING (2.9147ms)
+        ✔ E_APPROVER_FORMAT (2.9825ms)
+        ✔ E_BLOCKING_OPEN (4.5963ms)
+        ✔ E_BODY_SECTIONS (2.7592ms)
+        ✔ E_BUDGET (5.33ms)
+        ✔ E_DENYLIST (3.5014ms)
+        ✔ E_EXIT_UNMET (2.5678ms)
+        ✔ E_GATE_PENDING (85.9019ms)
+        ✔ E_LANE_ESCALATE (943.5195ms)
+        ✔ E_LANE_MISMATCH (2.7464ms)
+        ✔ E_MISSING_ARTIFACT (3.31ms)
+        ✔ E_MODEL_NOT_ALLOWED (4.9039ms)
+        ✔ E_MULTIPLE_BATONS (5.8783ms)
+        ✔ E_NO_PREREG (4.6046ms)
+        ✔ E_OWNER (3.8405ms)
+        ✔ E_PR_MISSING (3.5505ms)
+        ✔ E_REVIEW_BLOCKING (208.3819ms)
+        ✔ E_REVIEW_MISSING (5.1145ms)
+        ✔ E_SCHEMA (3.6869ms)
+        ✔ E_STALE_ARTIFACT (4.3676ms)
+        ✔ E_TRANSITION (2.8282ms)
+      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (1405.9936ms)
+      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (83.4784ms)
+      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (30.5821ms)
+      ▶ model allowlist warns in warn mode and errors in error mode
+        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (69.8672ms)
+        ✔ error mode emits E_MODEL_NOT_ALLOWED (7.9066ms)
+      ✔ model allowlist warns in warn mode and errors in error mode (101.2888ms)
+      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (79.9542ms)
+      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (2.4727ms)
+      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (22.6325ms)
+      ✔ ready with a blocking question is rejected (78.4257ms)
+      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (111.7674ms)
+      ℹ tests 671
+      ℹ suites 9
+      ℹ pass 669
+      ℹ fail 0
+      ℹ cancelled 0
+      ℹ skipped 2
+      ℹ todo 0
+      ℹ duration_ms 341924.3397
 open_questions: []
 decisions:
   - id: D-ATV-REF
@@ -380,25 +450,27 @@ decisions:
     tag: diff-base
     x-base-commit: ba529dbcd939d8ccbbad2d6a217d5e456a10178f
     by: baton
+  - id: D18
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "Bind review 4 F26-F32 fixes: trusted binding inventory in the upstream-watch contract, Phase 11 tasks with red vs characterization evidence and actual selector counts, binding verifier code, tests and closed-marker docs; review->implement is ungated and no gate approval is claimed"
+    by: implementation-session
+  - id: D-REVIEW4-BINDINGS
+    decision: package and publish verify every trusted cross-file binding inventoried in contracts/upstream-watch.md Trusted bindings from the candidate's written bytes and base files read through git cat-file, never from generate claims, manifests, paths or logs; broken bindings and deleted fixed outputs are E_PATH_POLICY. Spec Kit internal records and regenerated upstream prompts stay unbound and are reviewed in the draft PR.
+    rationale: Review 4 F26 under FR-012; the inventory stops serial rediscovery. Coherent tamper cases with a re-attested generate digest were published by pre-fix 6733578 and are now blocked before any push.
+    by: speckit-implement
+  - id: D-REVIEW4-PRESETS
+    decision: .specify/presets/ joins the protected growth paths, and the registries, .specify/extensions.yml and wrapper frontmatter must match the base, so an upstream format change in a bound file blocks and takes the manual FR-031 route.
+    rationale: Tightening required to bind the Baton preset and extension registration; consistent with the FR-031 owner boundary (D15) and recorded so review can confirm it.
+    by: speckit-implement
+  - id: D-REVIEW4-EVIDENCE
+    decision: Phase 11 records genuine red runs against 6733578 (docs drift test 1 fail; five coherent tamper cases each published) separately from characterization unit tests written with the fix, and the acceptance counts are the actual selector results (31/15/7/4/8/10/1/10).
+    rationale: Review 4 F27; no invented red history.
+    by: speckit-implement
 gate:
   required: false
   approved_by: null
   approved_at: null
 history:
-  - phase: analyze
-    at: 2026-11-04T11:53:25.608Z
-    by: speckit-analyze
-    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
-    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-    commit: ae34a99
-    x-action: write
-  - phase: analyze
-    at: 2026-11-04T11:56:07.123Z
-    by: human:repository-owner
-    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
-    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-    commit: ae34a99
-    x-action: approve
   - phase: analyze
     at: 2026-11-04T12:56:17.925Z
     by: implementation-session
@@ -525,8 +597,22 @@ history:
     x-worktree: 1120c1fe4b49f379216b96f088cabbbc8d3a3bc5e0a57f65923e9d5dbcc38de1
     commit: ba529db
     x-action: write
-updated_at: 2026-11-04T16:32:18.952Z
-updated_by: baton-review
+  - phase: review
+    at: 2026-11-04T17:14:40.527Z
+    by: implementation-session
+    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
+    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
+    commit: "6733578"
+    x-action: refresh
+  - phase: implement
+    at: 2026-11-04T17:20:41.601Z
+    by: baton
+    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
+    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
+    commit: "6733578"
+    x-action: write
+updated_at: 2026-11-04T17:14:40.996Z
+updated_by: speckit-implement
 risks:
   - id: R-UPSTREAM-EXEC
     text: Generation executes upstream Spec Kit code; it must run without write credentials and publication must not execute upstream content.
@@ -608,7 +694,7 @@ analysis:
   report_path: specs/003-upstream-upgrade-prs/analysis.md
 x-implementation-writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
 x-implementation-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-x-implementation-cycle: bafb6b8c01ef6a90e0b2eb6efb38a7ba8d580ced226f3c198fb74cdbcd6e3959
+x-implementation-cycle: 6eb01f6dd524623bfbb8071b1f9f4cad0d16984b40eb96c5b5dcf1deb036a8cf
 review:
   findings_path: specs/003-upstream-upgrade-prs/review.json
   blocking_findings: 0

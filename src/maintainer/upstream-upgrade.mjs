@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Maintainer-only entry point for .github/workflows/upstream-watch.yml. Uses Node built-ins,
-// ../lib/upstream-candidates.mjs and ../lib/upstream.mjs only; never imported by the Baton CLI and never executes
-// artifact content.
+// ../lib/upstream-candidates.mjs (with ../lib/candidate-bindings.mjs and ../lib/lock-report.mjs) and
+// ../lib/upstream.mjs only; never imported by the Baton CLI and never executes artifact content.
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
@@ -64,6 +64,17 @@ function gitText(git, args, options) {
 /** Every path tracked by the trusted base commit, read from git objects. @param {GitRunner} git @param {string} base */
 function baseTreePaths(git, base) {
   return new Set(gitText(git, ['ls-tree', '-r', '-z', '--name-only', base]).split('\0').filter(Boolean));
+}
+
+/**
+ * Reader of the trusted base commit's blob bytes; null when the path is not a tracked blob there.
+ * @param {GitRunner} git @param {string} base @returns {(path:string)=>Buffer|null}
+ */
+function baseFileReader(git, base) {
+  return path => {
+    const result = git(['cat-file', 'blob', `${base}:${path}`]);
+    return result.status === 0 ? result.stdout : null;
+  };
 }
 
 /** The token is only ever sent to the GitHub API origin. @param {Deps} deps @returns {Api} */
@@ -335,7 +346,8 @@ export function packageCandidate(deps) {
       checks: CHECKS.map(check => ({ ...check }))
     };
     const baseLock = JSON.parse(gitText(git, ['show', `${plan.base}:baton.lock.json`]));
-    const { digest } = verifyCandidate({ plan: entry, manifest, files, baseLock, baseTree: baseTreePaths(git, plan.base) });
+    const { digest } = verifyCandidate({ plan: entry, manifest, files, baseLock, baseTree: baseTreePaths(git, plan.base),
+      baseFile: baseFileReader(git, plan.base) });
     for (const [path, { bytes }] of files) {
       const target = join(out, 'files', ...path.split('/'));
       mkdirSync(dirname(target), { recursive: true });
@@ -474,6 +486,7 @@ export async function publish(deps) {
   if (gitText(deps.git, ['rev-parse', 'HEAD']) !== plan.base) throw fail('E_PLAN', 'checkout is not the planned base');
   const baseLock = JSON.parse(gitText(deps.git, ['show', `${plan.base}:baton.lock.json`]));
   const baseTree = baseTreePaths(deps.git, plan.base);
+  const baseFile = baseFileReader(deps.git, plan.base);
   for (const item of plan.plans) {
     const id = item.upstream.id;
     /** @param {string|null} outcome @param {number|null} [pr] */
@@ -497,7 +510,7 @@ export async function publish(deps) {
       const artifact = readArtifact(root);
       if (!artifact) continue;
       const { digest, manifest } = verifyCandidate({ plan: item, manifest: artifact.manifest, files: artifact.files,
-        baseLock, baseTree });
+        baseLock, baseTree, baseFile });
       const attested = env[`DIGEST_${id.toUpperCase()}`];
       if (!attested) {
         throw fail('E_CANDIDATE_VERIFY', `${id} has no digest attested by the generate job (DIGEST_${id.toUpperCase()} is empty)`);
