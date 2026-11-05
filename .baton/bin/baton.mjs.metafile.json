@@ -3800,7 +3800,7 @@
       "format": "esm"
     },
     "src/lib/local-checks.mjs": {
-      "bytes": 4055,
+      "bytes": 4526,
       "imports": [
         {
           "path": "node:child_process",
@@ -5618,7 +5618,7 @@
           "bytesInOutput": 7859
         },
         "src/lib/local-checks.mjs": {
-          "bytesInOutput": 1967
+          "bytesInOutput": 2137
         },
         "src/lib/checks.mjs": {
           "bytesInOutput": 11000
@@ -5672,7 +5672,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 430167
+      "bytes": 430337
     }
   }
 }

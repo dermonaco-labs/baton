@@ -6,6 +6,7 @@ export const DEFAULT_CHECK_TIMEOUT_MS = 300000;
 export const MAX_CHECK_TIMEOUT_MS = 3600000;
 const execFileAsync = promisify(execFile);
 const outputLimit = 1024 * 1024;
+const reapWaitMs = 2000;
 
 /** @param {{name:string,run:string,timeout_ms?:unknown}} check */
 export function checkTimeout(check) {
@@ -33,6 +34,17 @@ async function terminateTree(child) {
       { windowsHide: true, timeout: 10000 });
   } else {
     process.kill(-child.pid, 'SIGKILL');
+    // Killed orphans stay signalable as zombies until init reaps them; wait (bounded) for the group to vanish.
+    const deadline = Date.now() + reapWaitMs;
+    while (Date.now() < deadline) {
+      try {
+        process.kill(-child.pid, 0);
+      } catch (error) {
+        if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ESRCH') return;
+        throw error;
+      }
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
   }
 }
 
