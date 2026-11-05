@@ -17,7 +17,7 @@ read_first:
     sha256: a9eb3abc02a41b5e64e8b94e389e01c526c21c798eee958336d34d439d309f34
   - path: CHANGELOG.md
     why: Dated v0.1.4 release notes and unchanged upstream pins
-    sha256: 41438ebca2068c9f576a4a63be40729bb73ef9f59742ea27b098e10f4e3b6fa5
+    sha256: 9c7d3f203d95fbc6b7b4e1c24d3a46da55f6857704b1239583f311832a5ade44
 artifacts: []
 entry_checked: []
 exit_criteria:
@@ -99,6 +99,10 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: "Owner authorized (direct approval) a metadata-only hash refresh: feature 003 task T029 added Unreleased CHANGELOG entries (sync --bump atv=<x.y.z>, upstream-watch draft upgrade PRs, baton.yml ready_for_review trigger); the dated 0.1.4 section is unchanged."
     by: implementation-session
+  - id: D17
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Owner authorized (control-plane delegation) a metadata-only artifact hash refresh limited to feature 004 T027/T028 Spec Kit 1.3.0 documentation edits (version 1.0.11 -> 1.3.0 and the issues pack now shipping the github extension plus the /speckit-taskstoissues alias). No other content changes.
+    by: implementation-session
 gate:
   required: true
   approved_by: null
@@ -146,7 +150,14 @@ history:
     x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
     commit: ae34a99
     x-action: refresh
-updated_at: 2026-11-04T12:40:02.840Z
+  - phase: land
+    at: 2026-11-05T10:15:56.115Z
+    by: implementation-session
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 83d02b3
+    x-action: refresh
+updated_at: 2026-11-05T10:15:56.115Z
 updated_by: implementation-session
 risks:
   - id: R1

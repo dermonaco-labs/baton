@@ -137,5 +137,5 @@ alongside their skills; these are read by the skills, not run as commands.
 | `optimize` | `speckit-optimize-tokens` | Report governance token estimates | Maintainer review; mandatory rules remain |
 | `optimize` | `speckit-optimize-learn` | Propose evidence-backed session learnings without persistence | Human review; constitution flow for amendments |
 | `security` | `atv-security` | Deeper opt-in security audit | `baton-review` or human reviewer |
-| `issues` | `speckit-taskstoissues` | Create GitHub issues from tasks | Maintainer review of issues |
+| `issues` | `speckit-github-taskstoissues`, `speckit-taskstoissues` (alias) | Create GitHub issues from tasks | Maintainer review of issues |
 | `design` | `frontend-design` | Design frontend components | `speckit-implement` or `ce-work` under the chosen lane |
