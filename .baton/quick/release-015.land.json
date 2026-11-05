@@ -1,0 +1,7 @@
+{
+  "summary": "Independent LAND received the exact reviewed v0.1.5 candidate (review receipt 6c12e0b over candidate 843884e) in a separate fresh checkout. handoff receive ran the configured npm run check with exit 0; global validate and git diff --check exit 0. Opened a release-preparation PR against main titled chore(release): prepare v0.1.5. Only LAND bookkeeping is published after review; no subject changes. No merge, tag, release publication or workflow dispatch; PR acceptance and later tag/publication each require separate human approval.",
+  "pr": {
+    "url": "https://github.com/dermonaco-labs/baton/pull/59",
+    "number": 59
+  }
+}

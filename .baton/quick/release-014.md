@@ -17,7 +17,7 @@ read_first:
     sha256: a9eb3abc02a41b5e64e8b94e389e01c526c21c798eee958336d34d439d309f34
   - path: CHANGELOG.md
     why: Dated v0.1.4 release notes and unchanged upstream pins
-    sha256: 977f4d1d1410badce65c2ea06784307b538d5dcc4e50a6eb48f5bf62da8dd68c
+    sha256: 0d515bdbc6f1fc7ca4e8d7410c44d9a25e4e65de0c3aa71a672bcff26928a571
 artifacts: []
 entry_checked: []
 exit_criteria:
@@ -107,6 +107,10 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: "Metadata-only refresh, owner-authorized (option A) for feature 004 T027/T028 Spec Kit 1.3.0 documentation edits: corrects the CHANGELOG [Unreleased] Upstream entry's spec-kit v1.3.0 commit from the annotated tag object 91261fdcf1738cb095a31ff5bee145f502e3af91 to the peeled commit 34a0d388eac671d656eb05b125ad3ed6056168ed recorded in baton.lock.json. No other release-014 content changes; gate remains pending."
     by: implementation-session
+  - id: D19
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Repository owner authorized via control-plane delegation a metadata-only CHANGELOG binding refresh for v0.1.5 promotion and deferred F07 note; historical v0.1.4 record and gate remain unchanged
+    by: implementation-session
 gate:
   required: true
   approved_by: null
@@ -168,7 +172,14 @@ history:
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
     commit: ccdc665
     x-action: refresh
-updated_at: 2026-11-05T10:24:11.883Z
+  - phase: land
+    at: 2026-11-05T14:52:32.855Z
+    by: implementation-session
+    writer: 7eaa43b0f60faebc891a621528b92c2d8a7804de7e591f0d3e703093cdbb64aa
+    x-worktree: 2c2debb6cccf5bef661bd1eb4f4feb2d2eddebf4667460a974d77dc3acfaeb88
+    commit: 2c53a55
+    x-action: refresh
+updated_at: 2026-11-05T14:52:32.855Z
 updated_by: implementation-session
 risks:
   - id: R1

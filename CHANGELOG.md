@@ -6,6 +6,8 @@ All notable changes to Baton are documented here. This follows
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-11-05
+
 ### Added
 
 - `baton sync --bump atv=<x.y.z>` pins ATV to a stable release tag; `atv=<commit-sha>`
@@ -18,6 +20,14 @@ All notable changes to Baton are documented here. This follows
 
 - The shipped `baton.yml` workflow also runs when a draft PR is marked ready for review
   (`pull_request` types `opened`, `synchronize`, `reopened`, `ready_for_review`).
+- The macOS smoke job also runs the `local-checks` unit suite, exercising the
+  process-group cleanup checks alongside its existing scenarios.
+
+### Fixed
+
+- POSIX local-check cleanup waits up to two seconds after SIGKILL for a process
+  group to be reaped. Linux zombies are excluded when `ps` can list them; on
+  Darwin, EPERM counts as gone only after `ps` confirms no live members remain.
 
 ### Upstream
 
@@ -36,6 +46,10 @@ All notable changes to Baton are documented here. This follows
   `specify extension list` does not show `github`.
 - Adopters who installed the `github` extension themselves will see managed-file
   conflicts for those paths when adding the `issues` pack.
+- Baton extension and preset components remain `0.1.0`; the CLI and package
+  patch version is `0.1.5`. ATV Starter Kit remains pinned to `main` commit
+  `ad996736b879be87c7755df5c5017d5336203bbc`; optional token-budget v1.1.0
+  and optimize v1.0.0 pins are unchanged.
 
 ## [0.1.4] - 2026-11-03
 
@@ -155,7 +169,8 @@ All notable changes to Baton are documented here. This follows
 - Spec Kit `specify-cli` 1.0.11, installed from hash-locked requirements.
 - ATV Starter Kit pinned to commit `ad996736b879be87c7755df5c5017d5336203bbc`.
 
-[Unreleased]: https://github.com/dermonaco-labs/baton/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/dermonaco-labs/baton/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/dermonaco-labs/baton/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/dermonaco-labs/baton/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/dermonaco-labs/baton/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/dermonaco-labs/baton/compare/v0.1.1...v0.1.2
