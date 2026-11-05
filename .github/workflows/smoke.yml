@@ -83,7 +83,7 @@ jobs:
           node .baton/bin/baton.mjs doctor --strict
           node .baton/bin/baton.mjs validate
       - name: Overlay, handoff and update scenarios
-        run: node --test test/integration/adopt.test.mjs test/integration/init.test.mjs test/integration/relay.test.mjs test/integration/update.test.mjs test/unit/models.test.mjs
+        run: node --test test/integration/adopt.test.mjs test/integration/init.test.mjs test/integration/relay.test.mjs test/integration/update.test.mjs test/unit/models.test.mjs test/unit/local-checks.test.mjs
       - name: Reproduce pinned upstream only when inputs change
         shell: bash
         run: |

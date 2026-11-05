@@ -26,7 +26,7 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: .baton/template-cleanup.yml
     why: Source-only cleanup coverage for new docs lane and later canonical review artifacts
-    sha256: 364f0b7aaad1b13669466395b4852e700294db95d4001733be3aea28ad110d5e
+    sha256: 097945642deb6c53f73e09236a661803899884b4fb770af7a8dbae7cc8481463
   - path: .baton/quick/release-records-docs-a7.work.json
     why: Actual judgment-only input to this new canonical WORK write
     sha256: de632df430c6cae373d42517f38b3d1bde768ad2f66a7923bcb449813cc449f4
@@ -140,25 +140,15 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Owner authorized (control-plane delegation) a metadata-only artifact hash refresh limited to feature 004 T027/T028 Spec Kit 1.3.0 documentation edits (version 1.0.11 -> 1.3.0 and the issues pack now shipping the github extension plus the /speckit-taskstoissues alias). No other content changes.
     by: implementation-session
+  - id: D22
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Repository owner authorized via control-plane delegation release-015 cleanup entries and metadata-only a7 template-cleanup binding refresh; preserve historical evidence
+    by: implementation-session
 gate:
   required: true
   approved_by: repository owner via control-plane delegation
   approved_at: 2026-11-05
 history:
-  - phase: work
-    at: 2026-10-09T14:15:01.488Z
-    by: a7-docs-work-agent
-    writer: 0b229f581546aff693b376c07d0740127e70bbac5a6d93caea9955eecd43375d
-    x-worktree: 55d727a32430232c71490f659957444d0e3a80372a1d04b7db85def5eb8e1eab
-    commit: 60064bf
-    x-action: write
-  - phase: review
-    at: 2026-10-09T14:29:28.378Z
-    by: baton-a7-independent-review
-    writer: f61b23f0190eb1858f50279bf3ef15b4821673ed684d4150f734c7728973e903
-    x-worktree: f683e064bb29f95518588cf2cde3f00a3cf44c6114af3490b59f4eaf09102a98
-    commit: 60064bf
-    x-action: write
   - phase: land
     at: 2026-10-09T14:39:15.779Z
     by: baton-a7-independent-review
@@ -285,7 +275,21 @@ history:
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
     commit: 83d02b3
     x-action: approve
-updated_at: 2026-11-05T10:15:56.617Z
+  - phase: land
+    at: 2026-11-05T14:52:32.997Z
+    by: implementation-session
+    writer: 7eaa43b0f60faebc891a621528b92c2d8a7804de7e591f0d3e703093cdbb64aa
+    x-worktree: 2c2debb6cccf5bef661bd1eb4f4feb2d2eddebf4667460a974d77dc3acfaeb88
+    commit: 2c53a55
+    x-action: refresh
+  - phase: land
+    at: 2026-11-05T14:52:50.957Z
+    by: human:repository-owner
+    writer: 7eaa43b0f60faebc891a621528b92c2d8a7804de7e591f0d3e703093cdbb64aa
+    x-worktree: 2c2debb6cccf5bef661bd1eb4f4feb2d2eddebf4667460a974d77dc3acfaeb88
+    commit: 2c53a55
+    x-action: approve
+updated_at: 2026-11-05T14:52:50.957Z
 updated_by: human:repository-owner
 do_not_read:
   - path: specs/001-baton-template/roadmap.md

@@ -25,6 +25,8 @@ test('every smoke OS installs the same verified uv prerequisite before unconditi
     assert.equal(job.steps[scenarios]['continue-on-error'], undefined, `${os}: F39 must fail the job`);
     assert.match(job.steps[scenarios].run, /test\/integration\/init\.test\.mjs/);
     assert.doesNotMatch(job.steps[scenarios].run, /test-name-pattern|test-skip-pattern/);
+    if (os === 'macos') assert.match(job.steps[scenarios].run, /test\/unit\/local-checks\.test\.mjs/);
+    else assert.doesNotMatch(job.steps[scenarios].run, /test\/unit\/local-checks\.test\.mjs/);
   }
 });
 

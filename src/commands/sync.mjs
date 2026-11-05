@@ -358,7 +358,7 @@ export function lockFile(entries, { base, speckit, atv }, optional = {}) {
   const baseAtv = base?.upstreams?.atv ?? {};
   const release = atv.version ? `v${atv.version}` : null;
   return {
-    schema: 1, generated_by: 'baton sync 0.1.4',
+    schema: 1, generated_by: 'baton sync 0.1.5',
     'x-bump-summary': /** @type {string|undefined} */ (undefined),
     upstreams: {
       speckit: {

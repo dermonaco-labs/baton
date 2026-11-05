@@ -62,6 +62,10 @@ remove:
   - .baton/quick/release-014.work.json
   - .baton/quick/release-014.review.json
   - .baton/quick/release-014.land.json
+  - .baton/quick/release-015.md
+  - .baton/quick/release-015.work.json
+  - .baton/quick/release-015.review.json
+  - .baton/quick/release-015.land.json
   - .context/compound-engineering/ce-review/release-013-7e5eb2c/
   - .context/compound-engineering/ce-review/review-land-fixes-012-independent-20261010/
   - .context/compound-engineering/ce-review/review-land-fixes-012-independent-r1-20261010/
