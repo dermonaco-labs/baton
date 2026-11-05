@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: tasks
-next_phase: analyze
-next_owner: speckit-analyze
+phase_completed: analyze
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Tasks written: 31 test-first tasks across Setup, Foundational (schema, extension-tree sync, trust narrowing), US1 bump with issues repoint, US2 relay-hook and core-only guards, US3 wrapper/install/flavour/update/CRLF tests, and Polish (CHANGELOG, docs, SC-006 diff, npm run check, quickstart). Ten acceptance checks registered."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Analyze complete: 0 CRITICAL, 0 HIGH, 3 MEDIUM (C1 wrapper-vs-principle-VI rationale, I1 SC-006 reading of D12 narrowing-only trust, A1 T021 reference wording), 3 LOW (G1 FR-004 already met without task, U1 AC-US1-4 evidence form, E1 local mirror). Coverage 21/22. Ready for the human pre-code gate."
 read_first:
   - path: specs/004-speckit-1-3-0-migration/tasks.md
     why: T001-T031 in dependency order with the Acceptance Registry
@@ -55,15 +55,12 @@ artifacts:
     sha256: 1d8361a3dd6e63a8ad14f035f06109c4d26acd05d7b9b566d6e88f54dc8c51c5
 entry_checked: []
 exit_criteria:
-  - id: artifact-exists:tasks.md
+  - id: analysis-recorded
     met: true
-    evidence: tasks.md
-  - id: tasks-reference-stories
+    evidence: specs/004-speckit-1-3-0-migration/analysis.md
+  - id: no-critical-findings
     met: true
-    evidence: 17 story tasks
-  - id: acceptance-registered
-    met: true
-    evidence: "registered: 10, stories: 3"
+    evidence: report CRITICAL 0; baton CRITICAL 0
 open_questions: []
 decisions:
   - id: D1
@@ -142,8 +139,14 @@ decisions:
     id: D19
     decision: Update baton/templates/specify.gitignore by a dedicated task (T014)
     rationale: payload.mjs requires a byte-identical mirror of .specify/.gitignore and sync does not refresh it.
+  - id: D20
+    decision: Record reviewed implementation base
+    rationale: Implementation starts at this commit
+    tag: diff-base
+    x-base-commit: dea5807d5a7e343059837ddf67e85d8d3e55f79d
+    by: baton
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -189,8 +192,15 @@ history:
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
     commit: 0f68b07
     x-action: write
-updated_at: 2026-11-05T09:43:59.448Z
-updated_by: speckit-tasks
+  - phase: analyze
+    at: 2026-11-05T09:45:52.461Z
+    by: speckit-analyze
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: dea5807
+    x-action: write
+updated_at: 2026-11-05T09:45:52.454Z
+updated_by: speckit-analyze
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
@@ -268,6 +278,10 @@ acceptance_checks:
     check: git diff 0f68b07 -- test/unit/upstream-candidates.test.mjs shows only added lines (SC-006)
     kind: manual
     expect_initial: n/a
+analysis:
+  critical: 0
+  high: 0
+  report_path: specs/004-speckit-1-3-0-migration/analysis.md
 ---
 
 ## Goal
@@ -277,14 +291,13 @@ creation, relay hooks fire once, and feature 003's trusted-base bindings are unc
 
 ## What changed
 
-Planning and tasks are complete. `tasks.md` has 31 tasks, tests first, grouped by US1 (bump), US2 (relay hooks and
-core-only) and US3 (`issues` pack and wrapper), and ends with a 10-row Acceptance Registry. The `issues` repoint must
-land with the bump, because 1.0.11 has no `github` extension. No code has been written.
+Spec, plan, 31 tasks and the analysis are complete. `analysis.md` reports CRITICAL 0 and HIGH 0, with three MEDIUM
+and three LOW findings. No code has been written.
 
 ## Next steps
 
-1. `/speckit-analyze` checks spec, plan and tasks for consistency.
-2. Stop at the human pre-code gate.
+1. Human pre-code gate: the repository owner approves, and confirms the SC-006 reading of D12 (finding I1).
+2. After approval, run `/speckit-implement` in the generator environment for the bump (R6).
 
 ## Watch out for
 
