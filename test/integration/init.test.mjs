@@ -8,7 +8,7 @@ import YAML from 'yaml';
 import { sourceRoot, tempRepo } from '../helpers/index.mjs';
 import { makeBroken } from '../fixtures/make-broken.mjs';
 import { removeMarker } from '../../src/lib/markers.mjs';
-import { callsBashScripts, flavouredBytes } from '../../src/commands/init.mjs';
+import { callsBashScripts, flavouredBytes, isSpeckitScriptPath } from '../../src/commands/init.mjs';
 
 /** @param {string} root @param {string[]} args @param {Record<string,string>} [env] */
 async function cli(root, args, env = {}) {
@@ -343,6 +343,15 @@ test('F39 flavour-dependent Spec Kit payload comes from the generated project', 
     assert.equal(callsBashScripts(extensionLocked), true);
     assert.equal(callsBashScripts(Buffer.from(extensionGenerated)), false);
     assert.equal(callsBashScripts(Buffer.from('See `.specify/extensions/github/README.md`.\n')), false);
+    for (const script of ['.specify/scripts/bash/common.sh', '.specify/scripts/powershell/common.ps1',
+      '.specify/extensions/github/scripts/bash/resolve-tasks.sh',
+      '.specify/extensions/github/scripts/python/resolve_tasks.py']) {
+      assert.equal(isSpeckitScriptPath(script), true, script);
+    }
+    for (const other of ['.github/skills/speckit-plan/SKILL.md', '.specify/extensions/github/README.md',
+      '.baton/bin/baton.mjs', 'docs/.specify/scripts/bash/x.sh', '.specify/extensions/a/b/scripts/bash/x.sh']) {
+      assert.equal(isSpeckitScriptPath(other), false, other);
+    }
   } finally { await cleanup(); }
 });
 

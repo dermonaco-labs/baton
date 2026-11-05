@@ -4,8 +4,9 @@ import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/pr
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { diffDocument, formatBumpSummary, generatedStable, lockFile, packDefinitions, pinnedNames, prepareEntries, snapshotDrift } from '../../src/commands/sync.mjs';
-import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_REPO, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
+import { diffDocument, formatBumpSummary, generatedStable, lockFile, packDefinitions, pinnedNames, prepareEntries, snapshotDrift, sync, validatePackExtensions } from '../../src/commands/sync.mjs';
+import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_REPO, SPECKIT_REQUIREMENTS, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
+import { REQUIREMENTS_IN, REQUIREMENTS_TXT } from '../../src/lib/candidate-bindings.mjs';
 import { sourceRoot } from '../helpers/index.mjs';
 
 test('pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift', async () => {
@@ -174,15 +175,16 @@ test('Spec Kit github extension entries come only from the extension tree into t
 
     assert.throws(() => prepareEntries(root, generated, atv, packs, [], null, false, {}),
       error => error.code === 'E_UPSTREAM_VERIFY' && /extension github/.test(error.message));
+    validatePackExtensions(packs);
     for (const from of ['baton', 'atv']) {
       const misrouted = [packs[0], { ...packs[1], files: [{ from, extension: 'github', path: skill }] }];
-      assert.throws(() => prepareEntries(root, generated, atv, misrouted, [], null, false, {}, { github: extension }),
-        error => error.code === 'E_UPSTREAM_VERIFY');
+      assert.throws(() => validatePackExtensions(misrouted),
+        error => error.code === 'E_UPSTREAM_VERIFY' && /must come from speckit/.test(error.message));
     }
     const unsupported = [packs[0], { ...packs[1], files: [{ from: 'speckit', extension: 'gitlab', path: skill }] }];
-    assert.throws(() => prepareEntries(root, generated, atv, unsupported, [], null, false, {},
-      { github: extension, gitlab: extension }),
-    error => error.code === 'E_UPSTREAM_VERIFY' && /unsupported Spec Kit extension gitlab/.test(error.message));
+    assert.throws(() => validatePackExtensions(unsupported),
+      error => error.code === 'E_UPSTREAM_VERIFY' && /issues: unsupported Spec Kit extension gitlab/.test(error.message) &&
+        error.message.includes(skill));
     const readme = join(extension, '.specify/extensions/github/README.md');
     const original = await readFile(readme);
     await rm(readme);
@@ -402,6 +404,36 @@ test('MIT license verifier keeps each source copyright requirement', () => {
     { code: 'E_LICENSE', message: 'E_LICENSE Pinned optimize LICENSE is not the expected MIT license' });
   assert.throws(() => verifyMitLicense('Apache License\nCopyright (c) 2026 All The Vibes\n', 'Copyright (c) 2026 All The Vibes', 'ATV'),
     { code: 'E_LICENSE', message: 'E_LICENSE Pinned ATV LICENSE is not the expected MIT license' });
+});
+
+test('sync rejects an unsupported pack extension before preparing any upstream tree', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'baton-sync-extension-'));
+  try {
+    await cp(join(sourceRoot, 'packs'), join(root, 'packs'), { recursive: true });
+    const issues = join(root, 'packs', 'issues.yml');
+    await writeFile(issues, (await readFile(issues, 'utf8')).replace(
+      '{ from: speckit, extension: github, path: .specify/extensions/github/README.md }',
+      '{ from: speckit, extension: gitlab, path: .specify/extensions/gitlab/README.md }'));
+    /** @type {string[]} */
+    const called = [];
+    const spy = (/** @type {string} */ name) => () => { called.push(name); throw new Error(`${name} must not run`); };
+    const deps = Object.fromEntries(['regenerateRequirements', 'resolveTag', 'resolveCommit', 'fetchAtv', 'fetchSource',
+      'prepareSpeckit', 'prepareSpeckitExtension'].map(name => [name, spy(name)]));
+    for (const options of [{}, { check: true }, { bump: 'speckit=9.9.9' }]) {
+      assert.throws(() => sync({ cwd: root, ...options, deps: /** @type {any} */ (deps) }),
+        error => error.code === 'E_UPSTREAM_VERIFY' &&
+          error.message.includes('issues: unsupported Spec Kit extension gitlab: .specify/extensions/gitlab/README.md'));
+    }
+    assert.deepEqual(called, []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('requirements paths have one spelling shared by sync, lock and the trusted-base bindings', () => {
+  assert.equal(SPECKIT_REQUIREMENTS.input, REQUIREMENTS_IN);
+  assert.equal(SPECKIT_REQUIREMENTS.output, REQUIREMENTS_TXT);
+  assert.ok(Object.isFrozen(SPECKIT_REQUIREMENTS));
 });
 
 test('pack definitions require every original pack and accept additional optional packs', async () => {

@@ -5,6 +5,11 @@ import { join, resolve } from 'node:path';
 
 export const ATV_REPO = 'https://github.com/All-The-Vibes/ATV-StarterKit';
 export const SPECKIT_REPO = 'https://github.com/github/spec-kit';
+/** Root-relative, forward-slash paths of the hash-locked specify-cli requirements. */
+export const SPECKIT_REQUIREMENTS = Object.freeze({
+  input: 'baton/upstream/specify-cli.requirements.in',
+  output: 'baton/upstream/specify-cli.requirements.txt',
+});
 
 /** `owner/name` of a GitHub repository URL. @param {string} url */
 export const repoSlug = url => new URL(url).pathname.slice(1);
@@ -58,7 +63,7 @@ export function workspace(root) {
 export function prepareSpeckit({ root, work, script = 'sh', version }) {
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw new UpstreamError('E_UPSTREAM_VERIFY', `Invalid specify-cli version: ${version}`);
   if (!['sh', 'ps', 'py'].includes(script)) throw new UpstreamError('E_USAGE', `Unsupported script: ${script}`);
-  const requirements = join(root, 'baton', 'upstream', 'specify-cli.requirements.txt');
+  const requirements = join(root, ...SPECKIT_REQUIREMENTS.output.split('/'));
   if (!existsSync(requirements)) throw new UpstreamError('E_PREREQUISITE', `Missing ${requirements}`);
   const venv = join(work, 'venv');
   const project = join(work, 'project');
@@ -243,8 +248,8 @@ export function fetchSource({ work, id, pin = OPTIONAL_SOURCES[id] }) {
 /** @param {string} root @param {string} version */
 export function regenerateRequirements(root, version) {
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw new UpstreamError('E_USAGE', `Invalid specify-cli version: ${version}`);
-  const input = join(root, 'baton', 'upstream', 'specify-cli.requirements.in');
-  const output = join(root, 'baton', 'upstream', 'specify-cli.requirements.txt');
+  const input = join(root, ...SPECKIT_REQUIREMENTS.input.split('/'));
+  const output = join(root, ...SPECKIT_REQUIREMENTS.output.split('/'));
   if (!existsSync(input)) throw new UpstreamError('E_PREREQUISITE', `Missing ${input}`);
   const previousInput = readFileSync(input);
   const previousOutput = existsSync(output) ? readFileSync(output) : null;
@@ -252,10 +257,14 @@ export function regenerateRequirements(root, version) {
     writeFileSync(input, `specify-cli==${version}\n`);
     // Root-relative paths keep uv's generated header free of machine-local paths.
     run('uv', ['pip', 'compile', '--generate-hashes', '--python-version', '3.11',
-      'baton/upstream/specify-cli.requirements.in', '-o', 'baton/upstream/specify-cli.requirements.txt'], { cwd: root });
+      SPECKIT_REQUIREMENTS.input, '-o', SPECKIT_REQUIREMENTS.output], { cwd: root });
     const compiled = readFileSync(output, 'utf8');
     if (!compiled.includes(`specify-cli==${version} \\`) || !compiled.includes('--hash=sha256:')) {
       throw new UpstreamError('E_UPSTREAM_VERIFY', 'uv did not produce a hash-locked specify-cli requirements file');
+    }
+    const absolute = resolve(root);
+    if ([absolute, absolute.replaceAll('\\', '/')].some(path => compiled.includes(path))) {
+      throw new UpstreamError('E_UPSTREAM_VERIFY', 'uv recorded a machine-local path in the requirements file');
     }
     return sha256(Buffer.from(compiled));
   } catch (error) {

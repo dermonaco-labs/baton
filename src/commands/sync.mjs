@@ -6,14 +6,15 @@ import { diffDocument, formatBumpSummary } from '../lib/lock-report.mjs';
 import { validatePackClosure } from '../lib/packs.mjs';
 import { assertFrontmatter, repairAtv } from '../lib/repairs.mjs';
 import {
-  ATV_REPO, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_EXTENSIONS, SPECKIT_REPO, UpstreamError, fetchAtv, fetchSource,
+  ATV_REPO, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_EXTENSIONS, SPECKIT_REPO, SPECKIT_REQUIREMENTS, UpstreamError,
+  fetchAtv, fetchSource,
   isSha, isVersion, packExtensionIds, prepareSpeckit, prepareSpeckitExtension, regenerateRequirements, repoSlug,
   resolveCommit, resolveTag, sha256, workspace
 } from '../lib/upstream.mjs';
 
 export { diffDocument, formatBumpSummary };
 
-const lockedRequirements = 'baton/upstream/specify-cli.requirements.txt';
+const lockedRequirements = SPECKIT_REQUIREMENTS.output;
 const forbidden = /(?:^|\/)(?:karpathy-guidelines|\.env(?:\..*)?|\.context|node_modules|\.git)(?:\/|$)/i;
 /** @typedef {{from:string,path:string,upstream_path?:string,extension?:string}} PackFile */
 /** @typedef {{id:string,requires:string[],conflicts:string[],files:PackFile[],optional_refs?:Array<{ref:string,reason:string,note:string}>}} PackDefinition */
@@ -88,6 +89,27 @@ export function packDefinitions(root) {
   });
   const repairs = parseYaml(join(dir, 'repairs.yml'));
   return { packs, repairs: repairs?.repairs || [] };
+}
+
+/**
+ * Every pack extension entry must come from Spec Kit and name a supported bundled extension; checked once,
+ * before any upstream tree is prepared.
+ * @param {PackDefinition[]} packs
+ */
+export function validatePackExtensions(packs) {
+  for (const pack of packs) {
+    for (const item of pack.files) {
+      if (item.extension === undefined) continue;
+      if (item.from !== 'speckit') {
+        throw new UpstreamError('E_UPSTREAM_VERIFY',
+          `${pack.id}: extension ${item.extension} entries must come from speckit: ${item.path}`);
+      }
+      if (!SPECKIT_EXTENSIONS.includes(item.extension)) {
+        throw new UpstreamError('E_UPSTREAM_VERIFY',
+          `${pack.id}: unsupported Spec Kit extension ${item.extension}: ${item.path}`);
+      }
+    }
+  }
 }
 
 /** @param {PackFile} entry @param {string} generated @param {string} atv */
@@ -259,14 +281,6 @@ export function prepareEntries(root, generated, atv, packs, repairs, oldLock, bu
     for (const item of pack.files) {
       if (item.extension !== undefined) {
         const tree = Object.hasOwn(extensions, item.extension) ? extensions[item.extension] : undefined;
-        if (item.from !== 'speckit') {
-          throw new UpstreamError('E_UPSTREAM_VERIFY',
-            `${pack.id}: extension ${item.extension} entries must come from speckit: ${item.path}`);
-        }
-        if (!SPECKIT_EXTENSIONS.includes(item.extension)) {
-          throw new UpstreamError('E_UPSTREAM_VERIFY',
-            `${pack.id}: unsupported Spec Kit extension ${item.extension}: ${item.path}`);
-        }
         if (!tree || !existsSync(tree)) {
           throw new UpstreamError('E_UPSTREAM_VERIFY', `Spec Kit extension ${item.extension} tree has not been generated`);
         }
@@ -395,6 +409,7 @@ export function sync({ cwd = process.cwd(), check = false, bump = null, deps = {
     prepareSpeckitExtension, ...deps };
   const root = resolve(cwd);
   const { packs, repairs } = packDefinitions(root);
+  validatePackExtensions(packs);
   if (check && bump) throw new UpstreamError('E_USAGE', '--check and --bump cannot be combined');
   const request = bump === null ? null : parseBump(bump);
   if (bump !== null && !request) throw new UpstreamError('E_USAGE', `Invalid --bump value: ${bump}`);
@@ -404,7 +419,7 @@ export function sync({ cwd = process.cwd(), check = false, bump = null, deps = {
   const bumpSpeckit = request?.upstream === 'speckit';
   const bumpAtv = request?.upstream === 'atv' ? request : null;
   const requirementsPath = join(root, ...lockedRequirements.split('/'));
-  const requirementsInput = join(root, 'baton', 'upstream', 'specify-cli.requirements.in');
+  const requirementsInput = join(root, ...SPECKIT_REQUIREMENTS.input.split('/'));
   const previousRequirements = bumpSpeckit ? readFileSync(requirementsPath) : null;
   const previousInput = bumpSpeckit ? readFileSync(requirementsInput) : null;
   const restore = () => {

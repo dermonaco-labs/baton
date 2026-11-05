@@ -51,9 +51,21 @@ function options(args) {
   return result;
 }
 
+const scriptDirectory = String.raw`\.specify\/(?:extensions\/[^/]+\/)?scripts\/`;
+const bashScriptCall = new RegExp(`${scriptDirectory}bash\\/`);
+const scriptFile = new RegExp(`^${scriptDirectory}`);
+
 /** @param {Buffer} bytes */
 export function callsBashScripts(bytes) {
-  return /\.specify\/(?:extensions\/[^/]+\/)?scripts\/bash\//.test(bytes.toString('utf8'));
+  return bashScriptCall.test(bytes.toString('utf8'));
+}
+
+/**
+ * Core or extension script files of any flavour; they are payload, not script callers to flavour.
+ * @param {string} path
+ */
+export function isSpeckitScriptPath(path) {
+  return scriptFile.test(path);
 }
 
 /**

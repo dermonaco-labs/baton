@@ -78,6 +78,7 @@ export async function reapProcessGroup(pgid, deps = {}) {
         throw new Error(`process group ${pgid} still has live members after SIGKILL: ${live.join(', ')}`);
       }
       if (!live && denied) throw denied;
+      // Unverifiable without ps: SIGKILL reached the group and only zombies or exiting members stay signalable.
       if (expired) return;
     }
     signal = 0;

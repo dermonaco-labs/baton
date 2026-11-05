@@ -8,7 +8,7 @@ import { sourceRoot } from '../helpers/index.mjs';
 import * as candidates from '../../src/lib/upstream-candidates.mjs';
 import { BOUND_ROOTS, HOOKS_PATH, bindingIssues, errorCause } from '../../src/lib/candidate-bindings.mjs';
 import { diffDocument, formatBumpSummary } from '../../src/lib/lock-report.mjs';
-import { isSha, isVersion } from '../../src/lib/upstream.mjs';
+import { SPECKIT_REQUIREMENTS, isSha, isVersion } from '../../src/lib/upstream.mjs';
 
 const {
   BOT_EMAIL, BOT_NAME, ISSUE_NOTICE, ROW_KEYS, branchFor, buildRunUrl, classifyBranch, commitMessage, compareVersions,
@@ -745,7 +745,9 @@ describe('upstream candidates speckit', () => {
       .map((/** @type {any} */ file) => `${file.stored_at} <- ${file['x-baton-source']}`).sort();
     assert.equal(pairs.length, 8);
     assert.deepEqual(rows, pairs);
-    for (const literal of [HOOKS_PATH, REQUIREMENTS_TXT, DIFF]) assert.ok(sync.includes(`'${literal}'`), literal);
+    for (const literal of [HOOKS_PATH, DIFF]) assert.ok(sync.includes(`'${literal}'`), literal);
+    assert.ok(sync.includes('SPECKIT_REQUIREMENTS.output') && SPECKIT_REQUIREMENTS.output === REQUIREMENTS_TXT,
+      REQUIREMENTS_TXT);
     assert.ok(sync.includes('/\\.json$|\\.registry$/'), 'sync keeps install-time registry metadata');
   });
 

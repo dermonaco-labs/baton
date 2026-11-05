@@ -11,7 +11,12 @@ import { mergeAttributes } from '../lib/attributes.mjs';
 import { resolvePayload } from '../lib/payload.mjs';
 import { hashManaged } from '../lib/hash.mjs';
 import { UpstreamError } from '../lib/upstream.mjs';
-import { run as init, callsBashScripts, mergeHooks, mergeExtensions, protectedPath } from './init.mjs';
+import { run as init, callsBashScripts, isSpeckitScriptPath, mergeHooks, mergeExtensions, protectedPath } from './init.mjs';
+
+/** Baton-authored aliases whose skill only delegates; a fallback must not install one without its delegate. */
+const fallbackAliases = new Map([
+  ['.github/skills/speckit-taskstoissues/SKILL.md', '.github/skills/speckit-github-taskstoissues/SKILL.md'],
+]);
 
 const instructions = '.github/copilot-instructions.md';
 const batonSection = /<!-- BATON:START -->\r?\n([\s\S]*?)<!-- BATON:END -->/;
@@ -121,6 +126,13 @@ export async function run(root, args) {
       conflicts.push({ path, reason });
       if (!opts.dryRun) await putBytes(root, `.baton/conflicts/${path}.new`, bytes);
     };
+    /**
+     * In the sh fallback, Spec Kit files that call bash scripts keep their installed flavour; script files
+     * themselves are payload and are still refreshed.
+     * @param {{path:string,owner?:string}} entry @param {Buffer} bytes
+     */
+    const unrefreshed = (entry, bytes) => scriptFallback && entry.owner === 'speckit' &&
+      !isSpeckitScriptPath(entry.path) && callsBashScripts(bytes);
     const desiredPaths = new Set(next.files.map(entry => entry.path));
     for (const old of files.filter(file => !desiredPaths.has(file.path) && !protectedPath.test(file.path) &&
         !(scriptFallback && file.path.startsWith('.specify/scripts/')))) {
@@ -134,8 +146,15 @@ export async function run(root, args) {
       const current = await optionalBytes(root, entry.path);
       /** @type {Buffer} */
       let desired = await readFile(join(stage, entry.path));
-      if (scriptFallback && !/^\.specify\/(?:extensions\/[^/]+\/)?scripts\//.test(entry.path) &&
-          callsBashScripts(desired)) continue;
+      if (unrefreshed(entry, desired)) continue;
+      const delegate = fallbackAliases.get(entry.path);
+      const delegateEntry = scriptFallback && delegate ? next.files.find(file => file.path === delegate) : undefined;
+      if (delegate && delegateEntry && unrefreshed(delegateEntry, await readFile(join(stage, delegate))) &&
+          !await optionalBytes(root, delegate)) {
+        warnings.push({ code: 'W_SCRIPT_UNREFRESHED', file: entry.path,
+          message: `Not refreshed: its delegate ${delegate} cannot be generated for the ${script} scripts` });
+        continue;
+      }
       if (old && (!old.managed || !current || hashManaged(current) !== old.sha256)) {
         await conflict(entry.path, 'user-modified or missing managed file', desired);
         continue;

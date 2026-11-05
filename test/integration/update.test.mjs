@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, stat, rm } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import YAML from 'yaml';
@@ -392,6 +393,96 @@ for (const script of ['ps', 'py']) {
         'fallback must not replace the flavoured issues-pack skill with bash bytes');
       assert.equal(preserved.files.find(file => file.path === issuesSkill)?.sha256,
         digest(flavouredSkill), 'manifest must keep tracking the preserved issues-pack skill');
+    } finally { await cleanup(); }
+  });
+}
+
+/**
+ * An issues install switched to `script` without generating its payload; `UV_OFFLINE` then forces the sh fallback.
+ * @param {string} script
+ */
+async function fallbackRepo(script) {
+  const repo = await installedRepo(['--packs', 'issues']);
+  const manifestPath = join(repo.root, '.baton/manifest.json');
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  for (const [path, edit] of [
+    ['.specify/init-options.json', content => { content.script = script; }],
+    ['.specify/integration.json', content => { content.integration_settings.copilot.script = script; }],
+  ]) {
+    const content = JSON.parse(await readFile(join(repo.root, path), 'utf8'));
+    edit(content);
+    const bytes = JSON.stringify(content, null, 2) + '\n';
+    await writeFile(join(repo.root, path), bytes);
+    manifest.files.find(file => file.path === path).sha256 = digest(bytes);
+  }
+  manifest.script = script;
+  return { ...repo, manifest, manifestPath };
+}
+
+const offline = { UV_OFFLINE: '1', UV_NO_CACHE: '1' };
+
+for (const script of ['ps', 'py']) {
+  test(`F11 ${script} fallback keeps a 1.0.11 taskstoissues skill whose delegate cannot be generated`, async () => {
+    const wrapper = '.github/skills/speckit-taskstoissues/SKILL.md';
+    const delegate = '.github/skills/speckit-github-taskstoissues/SKILL.md';
+    const legacy = (await readFile(join(sourceRoot, 'test/fixtures/speckit-1.0.11/speckit-taskstoissues/SKILL.md'), 'utf8'))
+      .replace(/\.specify\/scripts\/bash\/([\w.-]+)\.sh\b/g, (_, name) =>
+        script === 'ps' ? `.specify/scripts/powershell/${name}.ps1` : `.specify/scripts/python/${name}.py`);
+    const extensionPaths = (await installedLockPaths('issues')).filter(path => path !== wrapper);
+    const { root, cleanup, manifest, manifestPath } = await fallbackRepo(script);
+    try {
+      await writeFile(join(root, wrapper), legacy);
+      const legacyRow = Object.assign(manifest.files.find(file => file.path === wrapper),
+        { owner: 'speckit', sha256: digest(legacy) });
+      for (const path of extensionPaths) await rm(join(root, path));
+      manifest.files = manifest.files.filter(file => !extensionPaths.includes(file.path));
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+
+      const result = await runCli(root, ['update', '--json'], offline);
+      assert.equal(result.code, 0, result.stdout + result.stderr);
+      const output = JSON.parse(result.stdout);
+      assert.ok(output.warnings.some(({ code, file, message }) => code === 'W_SCRIPT_UNREFRESHED' &&
+        file === wrapper && message.includes(delegate)), result.stdout);
+      assert.equal(await readFile(join(root, wrapper), 'utf8'), legacy, 'the working legacy skill must be preserved');
+      assert.equal(await exists(root, delegate), false);
+      assert.equal(await exists(root, `.baton/conflicts/${wrapper}.new`), false);
+      const after = JSON.parse(await readFile(manifestPath, 'utf8'));
+      assert.deepEqual(after.files.find(file => file.path === wrapper), legacyRow,
+        'the legacy row stays so the next online update replaces the skill');
+      assert.equal(after.files.some(file => file.path === delegate), false);
+    } finally { await cleanup(); }
+  });
+
+  test(`${script} fallback refreshes the Baton CLI with its hash and Spec Kit script payload files`, async () => {
+    const cli = '.baton/bin/baton.mjs';
+    const extensionScript = '.specify/extensions/github/scripts/bash/resolve-tasks.sh';
+    const { root, cleanup, manifest, manifestPath } = await fallbackRepo(script);
+    try {
+      const source = {
+        cli: await readFile(join(sourceRoot, cli)),
+        extensionScript: await readFile(join(root, extensionScript)),
+      };
+      assert.match(source.cli.toString('utf8'), /\.specify\/scripts\/bash\//, 'the bundle must contain a bash script path');
+      assert.match(source.extensionScript.toString('utf8'), /\.specify\/extensions\/github\/scripts\/bash\//,
+        'the extension script must reference its own bash directory');
+      for (const [path, bytes] of [[cli, '// older Baton CLI\n'], [extensionScript, '#!/usr/bin/env bash\n# older\n']]) {
+        await writeFile(join(root, path), bytes);
+        manifest.files.find(file => file.path === path).sha256 = digest(bytes);
+      }
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+
+      const result = await runCli(root, ['update', '--json'], offline);
+      assert.equal(result.code, 0, result.stdout + result.stderr);
+      assert.match(result.stdout, /W_SCRIPT_UNREFRESHED/);
+      const after = JSON.parse(await readFile(manifestPath, 'utf8'));
+      const installedCli = await readFile(join(root, cli));
+      assert.deepEqual(installedCli, source.cli, 'the Baton CLI is Baton-owned and must be refreshed');
+      const recorded = (await readFile(join(root, `${cli}.sha256`), 'utf8')).trim().split(/\s+/)[0];
+      assert.equal(recorded, createHash('sha256').update(installedCli).digest('hex'), 'CLI and its hash file must agree');
+      assert.equal(after.files.find(file => file.path === cli)?.sha256, digest(installedCli));
+      assert.deepEqual(await readFile(join(root, extensionScript)), source.extensionScript,
+        'script payload files are refreshed even though they name bash script paths');
+      assert.equal(after.files.find(file => file.path === extensionScript)?.sha256, digest(source.extensionScript));
     } finally { await cleanup(); }
   });
 }
