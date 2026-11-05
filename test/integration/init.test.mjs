@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir, readdir, stat } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import YAML from 'yaml';
 import { sourceRoot, tempRepo } from '../helpers/index.mjs';
 import { makeBroken } from '../fixtures/make-broken.mjs';
 import { removeMarker } from '../../src/lib/markers.mjs';
@@ -320,7 +322,7 @@ test('disabled Baton hooks in an existing Spec Kit install are conflicts, not si
   } finally { await cleanup(); }
 });
 
-const scriptReference = /\.specify\/scripts\/[\w-]+\/[\w.-]+\.(?:sh|ps1|py)\b/g;
+const scriptReference = /\.specify\/(?:extensions\/[\w-]+\/)?scripts\/[\w-]+\/[\w.-]+\.(?:sh|ps1|py)\b/g;
 
 test('F39 flavour-dependent Spec Kit payload comes from the generated project', async () => {
   const { root: project, cleanup } = await tempRepo();
@@ -353,9 +355,9 @@ test('F39 live init --script ps installs every script its Spec Kit skills refere
   try {
     const result = await cli(root, ['init', '--script', 'ps']);
     const unavailableOnMirror = result.result.errors?.some(({ code, message }) =>
-      code === 'E_PREREQUISITE' && /no version of specify-cli==1\.0\.11\b/i.test(message));
+      code === 'E_PREREQUISITE' && /no version of specify-cli==1\.3\.0\b/i.test(message));
     if (result.code !== 0 && unavailableOnMirror && process.env.GITHUB_ACTIONS !== 'true') {
-      t.skip('approved local registry lacks the pinned specify-cli==1.0.11 wheel');
+      t.skip('approved local registry lacks the pinned specify-cli==1.3.0 wheel');
       return;
     }
     assert.equal(result.code, 0, result.stdout + result.stderr);
@@ -363,6 +365,99 @@ test('F39 live init --script ps installs every script its Spec Kit skills refere
     assert.equal(manifest.script, 'ps');
     assert.deepEqual(missing, []);
   } finally { await cleanup(); }
+});
+
+test('F39 live init --script ps --packs issues installs the github extension scripts its skill references', async (t) => {
+  const { root, cleanup } = await tempRepo('repos/empty');
+  try {
+    const result = await cli(root, ['init', '--script', 'ps', '--packs', 'issues']);
+    const unavailableOnMirror = result.result.errors?.some(({ code, message }) =>
+      code === 'E_PREREQUISITE' && /no version of specify-cli==1\.3\.0\b/i.test(message));
+    if (result.code !== 0 && unavailableOnMirror && process.env.GITHUB_ACTIONS !== 'true') {
+      t.skip('approved local registry lacks the pinned specify-cli==1.3.0 wheel');
+      return;
+    }
+    assert.equal(result.code, 0, result.stdout + result.stderr);
+    const { manifest, missing } = await missingScriptReferences(root);
+    assert.equal(manifest.script, 'ps');
+    assert.deepEqual(missing, []);
+    const skill = await readFile(join(root, '.github/skills/speckit-github-taskstoissues/SKILL.md'), 'utf8');
+    assert.match(skill, /\.specify\/extensions\/github\/scripts\/powershell\/resolve-tasks\.ps1/);
+    assert.doesNotMatch(skill, /\.specify\/extensions\/github\/scripts\/bash\/resolve-tasks\.sh/);
+  } finally { await cleanup(); }
+});
+
+const issuesWrapper = '.github/skills/speckit-taskstoissues/SKILL.md';
+const issuesExtensionPaths = [
+  '.github/skills/speckit-github-taskstoissues/SKILL.md',
+  '.specify/extensions/github/extension.yml',
+  '.specify/extensions/github/README.md',
+  '.specify/extensions/github/commands/speckit.github.taskstoissues.md',
+  '.specify/extensions/github/scripts/bash/resolve-tasks.sh',
+  '.specify/extensions/github/scripts/powershell/resolve-tasks.ps1',
+  '.specify/extensions/github/scripts/python/resolve_tasks.py',
+];
+
+/** @param {string} root */
+async function hookRegistries(root) {
+  const extensions = YAML.parse(await readFile(join(root, '.specify/extensions.yml'), 'utf8'));
+  const registry = JSON.parse(await readFile(join(root, '.specify/extensions/.registry'), 'utf8'));
+  return { extensions, registry };
+}
+
+test('core-only install on Spec Kit 1.3.0 ships no issue-creation files and no github extension', async () => {
+  const { root, cleanup } = await tempRepo('repos/empty');
+  try {
+    const result = await cli(root, ['init']);
+    assert.equal(result.code, 0, result.stdout + result.stderr);
+    for (const path of ['.github/skills/speckit-taskstoissues', '.github/skills/speckit-github-taskstoissues',
+      '.specify/extensions/github']) {
+      assert.equal(await exists(root, path), false, path);
+    }
+    const { extensions, registry } = await hookRegistries(root);
+    assert.ok(!(extensions.installed ?? []).includes('github'));
+    assert.ok(!Object.values(extensions.hooks ?? {}).flat().some(hook => hook?.extension === 'github'));
+    assert.ok(!Object.hasOwn(registry.extensions ?? {}, 'github'));
+    const manifest = JSON.parse(await readFile(join(root, '.baton/manifest.json'), 'utf8'));
+    assert.ok(!manifest.files.some(file => file.pack === 'issues'));
+    const doctor = await cli(root, ['doctor']);
+    assert.equal(doctor.code, 0, doctor.stdout + doctor.stderr);
+    assert.deepEqual(doctor.result.errors ?? [], []);
+  } finally { await cleanup(); }
+});
+
+test('issues install ships the alias wrapper and the locked github extension files', async () => {
+  const core = await tempRepo('repos/empty');
+  const { root, cleanup } = await tempRepo('repos/empty');
+  try {
+    const plain = await cli(core.root, ['init']);
+    assert.equal(plain.code, 0, plain.stdout + plain.stderr);
+    const result = await cli(root, ['init', '--packs', 'issues']);
+    assert.equal(result.code, 0, result.stdout + result.stderr);
+    const manifest = JSON.parse(await readFile(join(root, '.baton/manifest.json'), 'utf8'));
+    const lock = JSON.parse(await readFile(join(sourceRoot, 'baton.lock.json'), 'utf8'));
+    const row = (/** @type {string} */ path) => manifest.files.find(file => file.path === path);
+    assert.equal(row(issuesWrapper)?.owner, 'baton');
+    assert.equal(row(issuesWrapper)?.pack, 'issues');
+    assert.equal(await readFile(join(root, issuesWrapper), 'utf8'),
+      await readFile(join(sourceRoot, 'baton/skills/speckit-taskstoissues/SKILL.md'), 'utf8'));
+    for (const path of issuesExtensionPaths) {
+      assert.equal(row(path)?.owner, 'speckit', path);
+      assert.equal(row(path)?.pack, 'issues', path);
+      const stored = `packs/issues/files/${path}`;
+      const bytes = await readFile(join(root, path));
+      assert.deepEqual(bytes, await readFile(join(sourceRoot, stored)), path);
+      const locked = lock.files.find((/** @type {any} */ entry) => entry.stored_at === stored);
+      assert.equal(locked?.['x-speckit-extension'], 'github', path);
+      assert.equal(createHash('sha256').update(bytes).digest('hex'), locked.sha256, path);
+    }
+    for (const path of ['.specify/extensions.yml', '.specify/extensions/.registry']) {
+      assert.deepEqual(await readFile(join(root, path)), await readFile(join(core.root, path)), path);
+    }
+  } finally {
+    await cleanup();
+    await core.cleanup();
+  }
 });
 test('optional context packs install pinned inert vendor bytes with their own provenance', async () => {
   const { root, cleanup } = await tempRepo('repos/empty');

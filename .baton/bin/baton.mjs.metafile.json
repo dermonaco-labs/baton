@@ -4317,7 +4317,7 @@
       "format": "esm"
     },
     "src/commands/init.mjs": {
-      "bytes": 20497,
+      "bytes": 21443,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -5657,7 +5657,7 @@
           "bytesInOutput": 740
         },
         "src/commands/init.mjs": {
-          "bytesInOutput": 10785
+          "bytesInOutput": 11186
         },
         "src/commands/update.mjs": {
           "bytesInOutput": 6053
@@ -5672,7 +5672,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 429692
+      "bytes": 430093
     }
   }
 }

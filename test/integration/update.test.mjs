@@ -50,6 +50,12 @@ async function assertScriptReferencesExist(root, manifest) {
   }
 }
 
+/** @param {string} pack */
+async function installedLockPaths(pack) {
+  const lock = JSON.parse(await readFile(join(sourceRoot, 'baton.lock.json'), 'utf8'));
+  return lock.files.filter(entry => entry.packs.includes(pack)).map(entry => entry.path);
+}
+
 async function installedRepo(args = []) {
   const repo = await tempRepo('repos/empty');
   const result = await runCli(repo.root, ['init', ...args]);
@@ -158,6 +164,85 @@ test('F99 core.autocrlf checkout keeps CRLF managed files owned through doctor, 
       code === 'W_AGENT_CORRUPTED' && paths.includes(file)), doctor.stdout);
     const models = await runCli(root, ['models', 'apply', '--force', '--dry-run', '--json']);
     assert.equal(models.code, 0, models.stdout || models.stderr);
+    const update = await runCli(root, ['update', '--dry-run', '--json']);
+    assert.equal(update.code, 0, update.stdout || update.stderr);
+    assert.ok(!JSON.parse(update.stdout).data.conflicts.some(({ path }) => paths.includes(path)), update.stdout);
+    const uninstall = await runCli(root, ['uninstall', '--json']);
+    assert.equal(uninstall.code, 0, uninstall.stdout || uninstall.stderr);
+    for (const path of paths) assert.equal(await exists(root, path), false, `${path} should be removed`);
+  } finally {
+    await clone.cleanup();
+    await installed.cleanup();
+  }
+});
+
+test('update from a 1.0.11 issues install replaces the taskstoissues skill in place or reports a conflict', async (t) => {
+  const wrapper = '.github/skills/speckit-taskstoissues/SKILL.md';
+  const fixture = await readFile(join(sourceRoot, 'test/fixtures/speckit-1.0.11/speckit-taskstoissues/SKILL.md'));
+  const extensionPaths = (await installedLockPaths('issues')).filter(path => path !== wrapper);
+  assert.equal(extensionPaths.length, 7);
+  for (const edited of [false, true]) {
+    await t.test(edited ? 'locally edited copy conflicts' : 'unmodified copy is replaced', async () => {
+      const { root, cleanup } = await installedRepo(['--packs', 'issues']);
+      try {
+        const manifestPath = join(root, '.baton/manifest.json');
+        const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+        await writeFile(join(root, wrapper), fixture);
+        Object.assign(manifest.files.find(file => file.path === wrapper), { owner: 'speckit', sha256: digest(fixture) });
+        for (const path of extensionPaths) await rm(join(root, path));
+        manifest.files = manifest.files.filter(file => !extensionPaths.includes(file.path));
+        await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+        const local = Buffer.concat([fixture, Buffer.from('\nLocal adopter note.\n')]);
+        if (edited) await writeFile(join(root, wrapper), local);
+
+        const result = await runCli(root, ['update', '--json']);
+        const output = JSON.parse(result.stdout || result.stderr);
+        assert.ok(!output.warnings.some(({ code, file }) => code === 'W_REMOVED_UPSTREAM' && file === wrapper), result.stdout);
+        const after = JSON.parse(await readFile(manifestPath, 'utf8'));
+        for (const path of extensionPaths) {
+          assert.ok(await exists(root, path), path);
+          assert.equal(after.files.find(file => file.path === path)?.owner, 'speckit', path);
+        }
+        assert.equal(after.files.filter(file => file.path.includes('taskstoissues')).length, 2, 'no orphan rows');
+        const source = await readFile(join(sourceRoot, 'baton/skills/speckit-taskstoissues/SKILL.md'));
+        if (edited) {
+          assert.equal(result.code, 4, result.stdout || result.stderr);
+          assert.deepEqual(output.data.conflicts.map(({ path }) => path), [wrapper]);
+          assert.deepEqual(await readFile(join(root, wrapper)), local);
+          assert.deepEqual(await readFile(join(root, `.baton/conflicts/${wrapper}.new`)), source);
+        } else {
+          assert.equal(result.code, 0, result.stdout || result.stderr);
+          assert.deepEqual(output.data.conflicts, []);
+          assert.deepEqual(await readFile(join(root, wrapper)), source);
+          const row = after.files.find(file => file.path === wrapper);
+          assert.equal(row.owner, 'baton');
+          assert.equal(row.sha256, digest(source));
+        }
+      } finally { await cleanup(); }
+    });
+  }
+});
+
+test('F99 core.autocrlf checkout keeps CRLF issues files owned through doctor, update and uninstall', async () => {
+  const installed = await installedRepo(['--packs', 'issues']);
+  const clone = await tempRepo();
+  try {
+    const { execFileSync } = await import('node:child_process');
+    execFileSync('git', ['init', '-q'], { cwd: installed.root });
+    execFileSync('git', ['add', '-A'], { cwd: installed.root });
+    execFileSync('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+      'commit', '-qm', 'installed files'], { cwd: installed.root });
+    await rm(clone.root, { recursive: true, force: true });
+    execFileSync('git', ['clone', '-q', '-c', 'core.autocrlf=true', installed.root, clone.root], { cwd: installed.root });
+    const root = clone.root;
+    const paths = ['.github/skills/speckit-taskstoissues/SKILL.md', '.github/skills/speckit-github-taskstoissues/SKILL.md'];
+    for (const path of paths) {
+      assert.match(await readFile(join(root, path), 'utf8'), /\r\n/, `${path} must check out as CRLF`);
+    }
+    const doctor = await runCli(root, ['doctor', '--json']);
+    assert.equal(doctor.code, 0, doctor.stdout || doctor.stderr);
+    assert.ok(!JSON.parse(doctor.stdout).warnings.some(({ code, file }) =>
+      ['W_MANIFEST_INTEGRITY', 'W_AGENT_CORRUPTED'].includes(code) && paths.includes(file)), doctor.stdout);
     const update = await runCli(root, ['update', '--dry-run', '--json']);
     assert.equal(update.code, 0, update.stdout || update.stderr);
     assert.ok(!JSON.parse(update.stdout).data.conflicts.some(({ path }) => paths.includes(path)), update.stdout);
