@@ -2,22 +2,18 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: land
-next_phase: compound
-next_owner: ce-compound
-status: ready
+phase_completed: compound
+next_phase: done
+next_owner: none
+status: done
 model_role: planning
 suggested_model: claude-opus-5.5
-summary: "Landed as PR #58 (https://github.com/dermonaco-labs/baton/pull/58), base main, head c46d950. Fresh independent checkout: handoff receive --phase land OK (exit 0) with the nested local-checks-pass. npm run check exit 0 (tests 717, pass 706, fail 0, skipped 11). baton validate exit 0 with only W_PACK_RECOMMENDED/W_QUICK_LARGE warnings. baton sync --check exit 0. .github/workflows is unchanged versus origin/main. F07 is deferred to release prep (D41/D48). Owner note for the PR gate: the D58/D70 macOS smoke local-checks deferral needs acknowledgement. Not merged."
+summary: "Compound recorded for feature 004 after the PR #58 review gate was approved by repository owner via control-plane delegation. Learning: docs/solutions/offline-script-flavour-fallback-2026-11-05.md documents the ps/py UV_OFFLINE script-flavour fallback bugs (F01 extension scripts root, F11 alias refreshed without its delegate, CLI-hash bundle skipped while its hash/version advanced, F18 untested alias branch) and the prevention tests. Not merged; no tag or release."
 read_first:
+  - path: docs/solutions/offline-script-flavour-fallback-2026-11-05.md
+    why: "Feature-004 compound learning: offline script-flavour fallback root causes, fix and regression tests"
   - path: specs/004-speckit-1-3-0-migration/review.json
-    why: "Review-4 verdict: F01-F06 and F08-F20 fixed; F07 open under the D41/D48 user deferral; D58/D70 owner note"
-  - path: specs/004-speckit-1-3-0-migration/tasks.md
-    why: T027 (F07 deferred), T029/T030/T031 landing evidence
-    sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
-  - path: specs/004-speckit-1-3-0-migration/spec.md
-    why: FR-015 PR-body upstream-diff summary and SC-006
-    sha256: b21abe7d51d9e2d68fede7bf6c1e5a140fd8d1c7264953bd3fcb8b4bceee0063
+    why: Source findings F01, F11, F18 and the CLI-hash finding
 artifacts:
   - path: specs/004-speckit-1-3-0-migration/spec.md
     role: source-of-truth
@@ -45,9 +41,16 @@ artifacts:
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
 entry_checked: []
 exit_criteria:
-  - id: pr-opened
+  - id: compound-recorded
     met: true
-    evidence: https://github.com/dermonaco-labs/baton/pull/58
+    evidence: "any_of: 1/2 met"
+    members:
+      - id: artifact-exists:docs/solutions/*.md
+        met: true
+        evidence: docs/solutions/*.md
+      - id: decision:skip-compound
+        met: false
+        evidence: No reasoned skip-compound decision
 open_questions: []
 decisions:
   - id: D1
@@ -376,18 +379,15 @@ decisions:
     decision: "Owner acknowledges D58/D70: local-checks stay out of the macOS smoke job for feature 004"
     rationale: "Answer from the repository owner, relayed by control-plane delegation, together with the PR-review gate approval for PR #58: 'Approve the gate and acknowledge D58/D70 now'. D58 was the implementer's own scope judgment (D61/D70). It is now acknowledged by the owner. No workflow edit, merge, tag, release, settings change or workflow dispatch."
     by: human:repository-owner
+  - id: D77
+    decision: Record the feature-004 learning in docs/solutions/offline-script-flavour-fallback-2026-11-05.md
+    rationale: "The review cycle's highest-value lesson is the update fallback's Spec Kit-ownership boundary: skip only .specify/(extensions/<id>/)?scripts/ entries, keep a working alias when its delegate is skipped, and never advance hashes/versions for skipped files (F01, F11, F18, CLI-hash). One bug-track doc with prevention tests compounds this for future update/flavour work."
+    by: ce-compound
 gate:
-  required: true
-  approved_by: repository owner via control-plane delegation
-  approved_at: 2026-11-05
+  required: false
+  approved_by: null
+  approved_at: null
 history:
-  - phase: specify
-    at: 2026-11-05T09:15:49.859Z
-    by: speckit-specify
-    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
-    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
-    commit: 9e5045e
-    x-action: write
   - phase: specify
     at: 2026-11-05T09:24:50.418Z
     by: human:repository-owner
@@ -521,8 +521,15 @@ history:
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
     commit: 99cf3e1
     x-action: approve
-updated_at: 2026-11-05T14:20:31.779Z
-updated_by: human:repository-owner
+  - phase: compound
+    at: 2026-11-05T14:30:45.858Z
+    by: ce-compound
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: a640dc1
+    x-action: write
+updated_at: 2026-11-05T14:30:45.848Z
+updated_by: ce-compound
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
