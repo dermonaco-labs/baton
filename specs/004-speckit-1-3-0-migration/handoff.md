@@ -12,22 +12,31 @@ summary: "Analyze complete: 0 CRITICAL, 0 HIGH, 3 MEDIUM (C1 wrapper-vs-principl
 read_first:
   - path: specs/004-speckit-1-3-0-migration/tasks.md
     why: T001-T031 in dependency order with the Acceptance Registry
+    sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
   - path: specs/004-speckit-1-3-0-migration/spec.md
     why: "Approved scope: FR-001..FR-015, SC-001..SC-007"
+    sha256: b21abe7d51d9e2d68fede7bf6c1e5a140fd8d1c7264953bd3fcb8b4bceee0063
   - path: specs/004-speckit-1-3-0-migration/plan.md
     why: Design summary, project structure, risks and complexity notes
+    sha256: 00ce00a456a9be36d8fdec1beb3e4b13a0e953402ae5c30c68884aafa4866419
   - path: specs/004-speckit-1-3-0-migration/research.md
     why: Decisions R1-R12 with evidence (1.3.0 delta, extension tree, trust narrowing, flavours, mirror)
+    sha256: 8d4d2f7283032ba4caf804e383d6becd3a46705aa68b3c82e02b681040e6be02
   - path: specs/004-speckit-1-3-0-migration/data-model.md
     why: Pack entry, lock row, wrapper and trusted-path rules
+    sha256: 38be196dbb6c61e37a466c196c686f078e9c74bd3849754e88c7d61b60c5b0de
   - path: specs/004-speckit-1-3-0-migration/contracts/issues-pack.md
     why: Install surface, wrapper behaviour, closure and update contract
+    sha256: 892c096f2958feb0790e9e1d1cb0f404cdc233360f77886859a58ce736945286
   - path: specs/004-speckit-1-3-0-migration/contracts/sync-github-extension.md
     why: Extension-tree generation and validation contract
+    sha256: aa5866e5883280e4d03cf393c0581b3fb0662f49c38327c4b343af5f211e3fe0
   - path: specs/004-speckit-1-3-0-migration/quickstart.md
     why: Bump, reproducibility and acceptance procedure
+    sha256: 25babcb745a8696818e702db90a334766f4ec014005a5640491aed6e52fec4d1
   - path: .specify/memory/constitution.md
     why: Principles I, II, VI and VIII constrain the bump, wrapper and checks
+    sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
 artifacts:
   - path: specs/004-speckit-1-3-0-migration/spec.md
     role: source-of-truth
@@ -52,7 +61,7 @@ artifacts:
     sha256: 25babcb745a8696818e702db90a334766f4ec014005a5640491aed6e52fec4d1
   - path: specs/004-speckit-1-3-0-migration/tasks.md
     role: derived
-    sha256: 1d8361a3dd6e63a8ad14f035f06109c4d26acd05d7b9b566d6e88f54dc8c51c5
+    sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
 entry_checked: []
 exit_criteria:
   - id: analysis-recorded
@@ -145,10 +154,14 @@ decisions:
     tag: diff-base
     x-base-commit: dea5807d5a7e343059837ddf67e85d8d3e55f79d
     by: baton
+  - id: D21
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "speckit-implement marked T002-T031 complete and added implementation and acceptance evidence to tasks.md; spec.md, plan.md, registered acceptance commands and approved scope are unchanged. Clears the pre-code gate; renewed approval is required before the implement handoff (precedent: 002 D8)."
+    by: implementation-session
 gate:
   required: true
-  approved_by: repository owner via control-plane delegation
-  approved_at: 2026-11-05
+  approved_by: null
+  approved_at: null
 history:
   - phase: specify
     at: 2026-11-05T09:15:49.859Z
@@ -206,8 +219,15 @@ history:
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
     commit: 17ff3ab
     x-action: approve
-updated_at: 2026-11-05T09:46:39.458Z
-updated_by: human:repository-owner
+  - phase: analyze
+    at: 2026-11-05T10:34:15.733Z
+    by: implementation-session
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 71ed8a8
+    x-action: refresh
+updated_at: 2026-11-05T10:34:15.732Z
+updated_by: implementation-session
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
