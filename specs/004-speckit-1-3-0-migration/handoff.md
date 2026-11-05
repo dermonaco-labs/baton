@@ -2,25 +2,22 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: review
-next_phase: implement
-next_owner: speckit-implement
+phase_completed: implement
+next_phase: review
+next_owner: baton-review
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Review 2 of the review-1 corrections at 729ecac (base ad64d19, D35): no P0/P1; F01-F06 and F08-F10 verified fixed; F07 stays open under the user-directed deferral D41. New P2 F11 (F01 fix regression on the offline ps/py 1.0.11 issues upgrade) and P3 F12-F16 are open and mapped. The user chose to fix F11 and return to implement, extending the fallback exception (D47)."
+model_role: review
+suggested_model: claude-opus-5.5
+summary: "Review-2 corrections at 66e4c97 (on receipt 88a31e3): F11 fixed under D47 (offline ps/py fallback keeps a 1.0.11 taskstoissues skill whose delegate cannot be generated); user-authorized CLI-hash fix narrows the fallback skip to Spec Kit-owned files so the Baton CLI and its .sha256 stay consistent; F12-F15 fixed with regression tests; F16 documented and pinned (R11); macOS-smoke local-checks P3 deferred to release prep; F07 stays deferred (D41/D48). tasks.md, spec.md and plan.md are unchanged."
 read_first:
   - path: specs/004-speckit-1-3-0-migration/review.json
-    why: "Review-2 findings: fix F11 under D47; F12-F16 open P3s mapped to T008/T025/T013/T030; F07 deferred (D41)"
+    why: Review-2 findings F11-F16 to verify against D51-D59; F07 deferred (D41/D48)
   - path: specs/004-speckit-1-3-0-migration/tasks.md
     why: T001-T031 and the Acceptance Registry (unchanged)
-    sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
   - path: specs/004-speckit-1-3-0-migration/spec.md
     why: Approved scope FR-001..FR-015, SC-001..SC-007
-    sha256: b21abe7d51d9e2d68fede7bf6c1e5a140fd8d1c7264953bd3fcb8b4bceee0063
   - path: specs/004-speckit-1-3-0-migration/plan.md
     why: Design, risks and D7/T026 update constraints
-    sha256: 00ce00a456a9be36d8fdec1beb3e4b13a0e953402ae5c30c68884aafa4866419
 artifacts:
   - path: specs/004-speckit-1-3-0-migration/spec.md
     role: source-of-truth
@@ -48,9 +45,86 @@ artifacts:
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: tasks-all-checked-or-deferred
     met: true
-    evidence: specs/004-speckit-1-3-0-migration/review.json
+    evidence: 0 outstanding tasks
+  - id: acceptance-evidence
+    met: true
+    evidence: 0 checks lack evidence
+  - id: local-checks-pass
+    met: true
+    evidence: |-
+      baton: 0
+      stdout (tail):
+       owned rows keep their install target, provenance, license and shape; hashes match the written bytes (963.190169ms)
+        ✔ new rows may not collide with each other or with kept rows in any letter case (6.841322ms)
+        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (1.269193ms)
+        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (7.049501ms)
+      ✔ upstream candidates speckit and atv row ownership policy (1201.081961ms)
+      ▶ upstream candidates lifecycle
+        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.308669ms)
+        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (0.728401ms)
+        ✔ a human-edited candidate with a newer pin waits for the human (0.524238ms)
+        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (1.638762ms)
+        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.566982ms)
+        ✔ a human close suppresses exactly that pin; a newer pin generates again (1.015817ms)
+        ✔ the automation obsolete close never suppresses (0.257262ms)
+        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (0.843231ms)
+      ✔ upstream candidates lifecycle (6.444803ms)
+      ▶ upstream candidates Spec Kit github extension trust (feature 004)
+        ✔ stored extension files under a pack install root are trusted like BOUND_ROOTS (17.382004ms)
+        ✔ a lock row carrying x-speckit-extension is trusted in either lock (10.090854ms)
+        ✔ x-speckit-extension is frozen on existing rows (9.075206ms)
+        ✔ the Baton wrapper may not become a Spec Kit lock row (8.681894ms)
+        ✔ regenerated ordinary core rows stay outside the narrowed trust (3.767301ms)
+        ✔ x-speckit-extension appears only on issues-pack extension rows, always as github (0.924362ms)
+      ✔ upstream candidates Spec Kit github extension trust (feature 004) (50.20524ms)
+      ✔ every feature phase and quick lane phase has a valid independent fixture (306.397218ms)
+      ✔ pre-existing feature baton without specify history or attachment still validates (106.530442ms)
+      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
+        ✔ E_ACTOR_FORMAT (126.662878ms)
+        ✔ E_ANALYSIS_CRITICAL (4.352699ms)
+        ✔ E_ANALYSIS_MISSING (2.401744ms)
+        ✔ E_APPROVER_FORMAT (4.339329ms)
+        ✔ E_BLOCKING_OPEN (3.081623ms)
+        ✔ E_BODY_SECTIONS (2.852192ms)
+        ✔ E_BUDGET (3.924574ms)
+        ✔ E_DENYLIST (4.442853ms)
+        ✔ E_EXIT_UNMET (2.827395ms)
+        ✔ E_GATE_PENDING (19.331807ms)
+        ✔ E_LANE_ESCALATE (95.171357ms)
+        ✔ E_LANE_MISMATCH (2.853224ms)
+        ✔ E_MISSING_ARTIFACT (1.861081ms)
+        ✔ E_MODEL_NOT_ALLOWED (6.757197ms)
+        ✔ E_MULTIPLE_BATONS (2.791723ms)
+        ✔ E_NO_PREREG (4.616611ms)
+        ✔ E_OWNER (2.849188ms)
+        ✔ E_PR_MISSING (3.184917ms)
+        ✔ E_REVIEW_BLOCKING (56.514542ms)
+        ✔ E_REVIEW_MISSING (7.168748ms)
+        ✔ E_SCHEMA (6.135094ms)
+        ✔ E_STALE_ARTIFACT (4.466467ms)
+        ✔ E_TRANSITION (2.497496ms)
+      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (388.593055ms)
+      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (74.400394ms)
+      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (9.812ms)
+      ▶ model allowlist warns in warn mode and errors in error mode
+        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (82.417806ms)
+        ✔ error mode emits E_MODEL_NOT_ALLOWED (8.515957ms)
+      ✔ model allowlist warns in warn mode and errors in error mode (105.967642ms)
+      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (76.290304ms)
+      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (0.585859ms)
+      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (9.074466ms)
+      ✔ ready with a blocking question is rejected (69.006314ms)
+      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (97.548959ms)
+      ℹ tests 712
+      ℹ suites 10
+      ℹ pass 701
+      ℹ fail 0
+      ℹ cancelled 0
+      ℹ skipped 11
+      ℹ todo 0
+      ℹ duration_ms 168282.106297
 open_questions: []
 decisions:
   - id: D1
@@ -265,6 +339,42 @@ decisions:
     tag: diff-base
     x-base-commit: 729ecac81e2d4369832f3f4ed19659c6debc2a70
     by: baton
+  - id: D51
+    decision: "F11 fixed: the unavailable-generator fallback keeps an existing alias skill whose delegate is skipped and absent"
+    rationale: "Within the D47 user-authorized extension of the D36/T026 exception. update.mjs maps the Baton alias .github/skills/speckit-taskstoissues/SKILL.md to its delegate .github/skills/speckit-github-taskstoissues/SKILL.md. When the delegate is skipped and missing during the sh fallback, the alias is not written. Its legacy row stays unchanged so the next online update replaces it, and a per-file W_SCRIPT_UNREFRESHED names the delegate. Regression: update.test.mjs 'F11 ps|py fallback keeps a 1.0.11 taskstoissues skill whose delegate cannot be generated'. It fails when the alias check is removed (mutation run)."
+    by: speckit-implement
+  - id: D52
+    decision: "CLI-hash fallback bug fixed: the sh-fallback skip of bash-calling files applies only to Spec Kit-owned entries"
+    rationale: "The user authorized narrowing update.mjs's fallback skip, relayed by the coordinator. Before the fix, .baton/bin/baton.mjs (owner baton) was skipped because its bundle contains the literal .specify/scripts/bash/, while the new .baton/bin/baton.mjs.sha256 and baton_version were still written. The skip now requires owner speckit, matching init, which only flavours speckit-upstream files. Regression: update.test.mjs 'ps|py fallback refreshes the Baton CLI with its hash and Spec Kit script payload files' asserts the bundle equals the source and agrees with its .sha256 and manifest row. It fails without the owner check (mutation run)."
+    by: speckit-implement
+  - id: D53
+    decision: "F13 and F14 fixed: one named Spec Kit script-path pattern, with the script-file exemption under test"
+    rationale: init.mjs builds callsBashScripts and the new exported isSpeckitScriptPath from one shared .specify/(extensions/<id>/)?scripts/ fragment, and update.mjs uses isSpeckitScriptPath instead of its unnamed copy (F14). The fallback test refreshes a modified .specify/extensions/github/scripts/bash/resolve-tasks.sh, which references its own bash directory, and records its hash. It fails when the exemption is removed (mutation run) (F13). init.test.mjs adds positive and negative isSpeckitScriptPath cases.
+    by: speckit-implement
+  - id: D54
+    decision: "F12 fixed: sync validates pack extension routing before preparing any upstream tree"
+    rationale: The new exported validatePackExtensions(packs) rejects extension entries not from speckit or not in SPECKIT_EXTENSIONS with E_UPSTREAM_VERIFY naming the pack and path. sync() calls it right after packDefinitions, before the lock, workspace or any dependency runs, and the unreachable duplicates in prepareEntries were removed. sync.test.mjs moves the misrouted and unsupported cases to validatePackExtensions. A new sync()-level test with spy dependencies covers default, --check and --bump runs and asserts that no upstream dependency, including prepareSpeckit and prepareSpeckitExtension, is called.
+    by: speckit-implement
+  - id: D55
+    decision: "F15 fixed: one SPECKIT_REQUIREMENTS spelling for sync, lock and upstream; trusted-base bindings untouched"
+    rationale: upstream.mjs exports the frozen SPECKIT_REQUIREMENTS {input, output} root-relative paths. They are used by prepareSpeckit, regenerateRequirements, sync (lockedRequirements and requirementsInput) and lock verify. candidate-bindings.mjs keeps REQUIREMENTS_IN and REQUIREMENTS_TXT unchanged (feature-003 trust module, narrowing-only D12), and sync.test.mjs pins them equal to SPECKIT_REQUIREMENTS. The upstream-candidates layout test now checks that sync uses SPECKIT_REQUIREMENTS.output, which equals REQUIREMENTS_TXT, instead of grepping for the literal. This check is equivalent.
+    by: speckit-implement
+  - id: D56
+    decision: F06 regression coverage added for the root-relative uv argv, with machine-local output refused
+    rationale: test/unit/requirements.test.mjs (POSIX; a fake uv on PATH) asserts uv runs with cwd equal to the root and argv 'pip compile --generate-hashes --python-version 3.11 baton/upstream/specify-cli.requirements.in -o baton/upstream/specify-cli.requirements.txt'. regenerateRequirements now also rejects compiled output that contains the absolute root path (E_UPSTREAM_VERIFY) and restores the previous input and output. The test covers this as well.
+    by: speckit-implement
+  - id: D57
+    decision: "F16 dispositioned: keep the silent deadline return when ps is unavailable; document it in code and as R11"
+    rationale: This behaviour is unchanged from 292d7b1 (D31). SIGKILL has already been delivered, and without ps a still-signalable group cannot be told apart from zombies awaiting an init reaper, so throwing would reintroduce the flakes seen in ps-less containers. local-checks.mjs now comments the return. local-checks.test.mjs 'the reap deadline settles zombie-only or unlisted groups and reports live members' pins it ('without ps the wait stays bounded and silent'). R11 records the residual risk that D37/R10 omitted.
+    by: speckit-implement
+  - id: D58
+    decision: Second-reviewer P3 (macOS smoke does not run local-checks) deferred to release preparation
+    rationale: .github/workflows/smoke.yml runs only on tags or dispatch. Workflow edits are outside the approved 004 scope, and this feature dispatches no workflows. The Darwin EPERM and ps confirmation path is covered deterministically on every platform by injected-dependency tests in local-checks.test.mjs. Release preparation should consider adding local-checks to the macOS smoke job together with the D41/D48 release notes.
+    by: speckit-implement
+  - id: D59
+    decision: "Review-2 corrections change no feature records: tasks.md, spec.md, plan.md, CHANGELOG.md and release-014 are untouched; F07 remains deferred (D41/D48)"
+    rationale: The fixes stay within the mapped tasks (T008, T013, T025, T026/D47, T030) and existing scope. No update behaviour changes beyond the authorized fallback narrowing (D47 and the CLI-hash authorization). No PR, merge, tag, release, settings change or workflow dispatch.
+    by: speckit-implement
 gate:
   required: false
   approved_by: null
@@ -368,8 +478,15 @@ history:
     x-worktree: a19401dbf164393d6cf7d3e8e6b82100e4c8bdf3a78f19d128a479b96abc39c7
     commit: 729ecac
     x-action: write
-updated_at: 2026-11-05T11:59:36.710Z
-updated_by: baton-review
+  - phase: implement
+    at: 2026-11-05T12:19:50.841Z
+    by: speckit-implement
+    writer: 5f00924a333f2145b5cc3d08b5263dc13be579de2a88786886896cbca9be8a7d
+    x-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
+    commit: 66e4c97
+    x-action: write
+updated_at: 2026-11-05T12:16:53.652Z
+updated_by: speckit-implement
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
@@ -400,6 +517,9 @@ risks:
     severity: low
   - id: R10
     text: Darwin zombie-group cleanup relies on ps; without ps an EPERM probe rethrows instead of assuming the group is gone (deliberately fail-safe per review). Linux ESRCH path is unaffected.
+    severity: low
+  - id: R11
+    text: Without ps, process-group reaping returns silently at the bounded deadline even if a member stays signalable; a non-zombie survivor of SIGKILL would go unreported on such hosts (D57).
     severity: low
 assumptions: []
 acceptance_checks:
@@ -459,7 +579,7 @@ analysis:
   report_path: specs/004-speckit-1-3-0-migration/analysis.md
 x-implementation-writer: 5f00924a333f2145b5cc3d08b5263dc13be579de2a88786886896cbca9be8a7d
 x-implementation-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
-x-implementation-cycle: 76215a35edb77b3713dd1697d8a5fda57fc5d7f75f019767bea8da36cf628506
+x-implementation-cycle: 71480559a8ec2684a792c8cff52644ed551799b54ed76ef925c80c5402929b4e
 review:
   findings_path: specs/004-speckit-1-3-0-migration/review.json
   blocking_findings: 0
