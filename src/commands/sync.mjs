@@ -6,15 +6,16 @@ import { diffDocument, formatBumpSummary } from '../lib/lock-report.mjs';
 import { validatePackClosure } from '../lib/packs.mjs';
 import { assertFrontmatter, repairAtv } from '../lib/repairs.mjs';
 import {
-  ATV_REPO, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_REPO, UpstreamError, fetchAtv, fetchSource, isSha, isVersion,
-  prepareSpeckit, prepareSpeckitExtension, regenerateRequirements, repoSlug, resolveCommit, resolveTag, sha256, workspace
+  ATV_REPO, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_EXTENSIONS, SPECKIT_REPO, UpstreamError, fetchAtv, fetchSource,
+  isSha, isVersion, packExtensionIds, prepareSpeckit, prepareSpeckitExtension, regenerateRequirements, repoSlug,
+  resolveCommit, resolveTag, sha256, workspace
 } from '../lib/upstream.mjs';
 
 export { diffDocument, formatBumpSummary };
 
 const lockedRequirements = 'baton/upstream/specify-cli.requirements.txt';
 const forbidden = /(?:^|\/)(?:karpathy-guidelines|\.env(?:\..*)?|\.context|node_modules|\.git)(?:\/|$)/i;
-/** @typedef {{from:string,path:string,upstream_path?:string,extension?:'github'}} PackFile */
+/** @typedef {{from:string,path:string,upstream_path?:string,extension?:string}} PackFile */
 /** @typedef {{id:string,requires:string[],conflicts:string[],files:PackFile[],optional_refs?:Array<{ref:string,reason:string,note:string}>}} PackDefinition */
 /** @typedef {{id:string,match:string,applies_to:string,reason:string,upstream_issue:string}} RepairRule */
 /** @typedef {{path:string,upstream:string,upstream_path:string,stored_at:string,sha256_upstream:string,sha256:string,license:string,repair:{id:string,reason:string,upstream_issue:string}|null,packs:string[],bytes:Buffer,'x-baton-source'?:string,'x-baton-source-sha256'?:string,'x-speckit-extension'?:string}} VendoredEntry */
@@ -258,9 +259,13 @@ export function prepareEntries(root, generated, atv, packs, repairs, oldLock, bu
     for (const item of pack.files) {
       if (item.extension !== undefined) {
         const tree = Object.hasOwn(extensions, item.extension) ? extensions[item.extension] : undefined;
-        if (item.from !== 'speckit' || item.extension !== 'github') {
+        if (item.from !== 'speckit') {
           throw new UpstreamError('E_UPSTREAM_VERIFY',
             `${pack.id}: extension ${item.extension} entries must come from speckit: ${item.path}`);
+        }
+        if (!SPECKIT_EXTENSIONS.includes(item.extension)) {
+          throw new UpstreamError('E_UPSTREAM_VERIFY',
+            `${pack.id}: unsupported Spec Kit extension ${item.extension}: ${item.path}`);
         }
         if (!tree || !existsSync(tree)) {
           throw new UpstreamError('E_UPSTREAM_VERIFY', `Spec Kit extension ${item.extension} tree has not been generated`);
@@ -411,8 +416,7 @@ export function sync({ cwd = process.cwd(), check = false, bump = null, deps = {
   const version = bumpSpeckit && request ? request.value : oldLock.upstreams?.speckit?.version;
   const optionalIds = Object.keys(OPTIONAL_SOURCES)
     .filter(id => packs.some(pack => pack.files.some(file => file.from === id)));
-  const extensionIds = [...new Set(packs.flatMap(pack => pack.files.flatMap(file =>
-    file.extension === undefined ? [] : [file.extension])))].sort();
+  const extensionIds = packExtensionIds(packs);
   for (const id of optionalIds) {
     const pin = OPTIONAL_SOURCES[id];
     const locked = oldLock.upstreams?.[id];

@@ -7,10 +7,110 @@ import childProcess from 'node:child_process';
 import { syncBuiltinESMExports } from 'node:module';
 import { promisify } from 'node:util';
 import {
-  checkTimeout, runLocalCheck, DEFAULT_CHECK_TIMEOUT_MS, MAX_CHECK_TIMEOUT_MS,
+  checkTimeout, runLocalCheck, reapProcessGroup, parseGroupMembers, liveGroupMembers,
+  DEFAULT_CHECK_TIMEOUT_MS, MAX_CHECK_TIMEOUT_MS,
 } from '../../src/lib/local-checks.mjs';
 import { loadSchemas, validateSchema } from '../../src/lib/schema.mjs';
 import { sourceRoot } from '../helpers/index.mjs';
+
+/** @param {string} code */
+const errno = code => Object.assign(new Error(`fixture ${code}`), { code });
+const noPs = async () => assert.fail('ps must not be consulted');
+
+test('process-group reaping returns on ESRCH from SIGKILL or a later probe', async () => {
+  const calls = [];
+  await reapProcessGroup(42, { kill: (pid, signal) => { calls.push([pid, signal]); throw errno('ESRCH'); }, members: noPs });
+  assert.deepEqual(calls, [[-42, 'SIGKILL']]);
+  calls.length = 0;
+  await reapProcessGroup(42, {
+    kill: (pid, signal) => { calls.push([pid, signal]); if (calls.length === 3) throw errno('ESRCH'); },
+    members: noPs, waitMs: 5000,
+  });
+  assert.deepEqual(calls, [[-42, 'SIGKILL'], [-42, 0], [-42, 0]]);
+});
+
+test('Darwin EPERM counts as reaped only when ps confirms no live group member remains', async () => {
+  for (const failOn of ['SIGKILL', 0]) {
+    const looked = [];
+    await reapProcessGroup(42, {
+      kill: (_, signal) => { if (signal === failOn) throw errno('EPERM'); },
+      members: async pgid => { looked.push(pgid); return []; }, waitMs: 5000,
+    });
+    assert.deepEqual(looked, [42], `EPERM on ${failOn} with a zombie-only group resolves`);
+  }
+  const answers = [[7, 8], []];
+  let looks = 0;
+  await reapProcessGroup(42, {
+    kill: (_, signal) => { if (signal === 0) throw errno('EPERM'); },
+    members: async () => { looks++; return answers.shift(); }, waitMs: 5000,
+  });
+  assert.equal(looks, 2, 'live members keep the bounded wait going');
+  await assert.rejects(reapProcessGroup(42, {
+    kill: (_, signal) => { if (signal === 0) throw errno('EPERM'); }, members: async () => undefined, waitMs: 5000,
+  }), { code: 'EPERM' }, 'unverifiable EPERM stays a cleanup failure');
+  const started = Date.now();
+  await assert.rejects(reapProcessGroup(42, {
+    kill: (_, signal) => { if (signal === 0) throw errno('EPERM'); }, members: async () => [7], waitMs: 60,
+  }), /process group 42 still has live members after SIGKILL: 7/);
+  assert.ok(Date.now() - started >= 60, 'live members fail only after the bounded wait');
+});
+
+test('the reap deadline settles zombie-only or unlisted groups and reports live members', async () => {
+  const signalable = { kill: () => true, waitMs: 60 };
+  let started = Date.now();
+  await reapProcessGroup(42, { ...signalable, members: async () => [] });
+  assert.ok(Date.now() - started >= 60);
+  started = Date.now();
+  await reapProcessGroup(42, { ...signalable, members: async () => undefined });
+  assert.ok(Date.now() - started >= 60, 'without ps the wait stays bounded and silent');
+  await assert.rejects(reapProcessGroup(42, { ...signalable, members: async () => [9, 10] }),
+    /process group 42 still has live members after SIGKILL: 9, 10/);
+  const other = errno('EINVAL');
+  await assert.rejects(reapProcessGroup(42, { kill: () => { throw other; }, members: noPs }), error => error === other);
+});
+
+test('ps listings keep only live members of the requested group', async (t) => {
+  assert.deepEqual(parseGroupMembers('  10    10 Ss\n  11    10 Z+\n  12    10 R+\n  13    99 S\n\n', 10), [10, 12]);
+  assert.deepEqual(parseGroupMembers('  11    10 Z\n', 10), []);
+  if (process.platform === 'win32') {
+    t.skip('POSIX process groups only');
+    return;
+  }
+  const sleeper = childProcess.spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'],
+    { detached: true, stdio: 'ignore' });
+  try {
+    await new Promise(resolve => sleeper.once('spawn', resolve));
+    assert.deepEqual(await liveGroupMembers(sleeper.pid), [sleeper.pid]);
+  } finally {
+    const closed = new Promise(resolve => sleeper.once('close', resolve));
+    process.kill(-sleeper.pid, 'SIGKILL');
+    await closed;
+  }
+});
+
+for (const [name, probe] of [
+  ['Darwin EPERM probe', () => { throw errno('EPERM'); }],
+  ['zombie-only group that stays signalable', () => true],
+]) {
+  test(`a timed-out check settles as a timeout for a ${name}`, { timeout: 15000 }, async (t) => {
+    if (process.platform === 'win32') {
+      t.skip('POSIX process groups only');
+      return;
+    }
+    const root = await mkdtemp(join(tmpdir(), 'baton-local-reap-'));
+    const realKill = process.kill.bind(process);
+    try {
+      t.mock.method(process, 'kill', (pid, signal) => signal === 0 && pid < 0 ? probe() : realKill(pid, signal));
+      const result = await runLocalCheck(root,
+        { name: 'reap', run: `"${process.execPath}" -e "setInterval(() => {}, 1000)"`, timeout_ms: 500 });
+      assert.equal(result.met, false);
+      assert.match(result.evidence, /^reap: timeout after 500ms/);
+    } finally {
+      t.mock.restoreAll();
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+}
 
 test('deadline defaults and finite bounds agree with config schema', async () => {
   const check = { name: 'fixture', run: 'node check.mjs' };

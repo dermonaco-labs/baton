@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
 import YAML from 'yaml';
 import { loadSchemas, validateSchema } from '../../src/lib/schema.mjs';
+import { SPECKIT_EXTENSIONS } from '../../src/lib/upstream.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -53,6 +54,9 @@ test('pack schema routes Spec Kit bundled-extension files only through extension
     const shipped = YAML.parse(await readFile(resolve(root, 'packs', name), 'utf8'));
     assert.deepEqual(validateSchema(registry, 'pack', shipped), [], name);
   }
+  const schema = JSON.parse(await readFile(resolve(root, 'baton/schemas/pack.schema.json'), 'utf8'));
+  assert.deepEqual(schema.$defs.file.properties.extension.enum, [...SPECKIT_EXTENSIONS],
+    'pack schema extension ids must match the bundled Spec Kit extensions sync can prepare');
 });
 
 test('pack, lock and manifest schemas accept named optional sources without relaxing old shapes', async () => {

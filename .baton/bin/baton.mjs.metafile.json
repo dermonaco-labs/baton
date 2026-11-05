@@ -3551,7 +3551,7 @@
       "format": "esm"
     },
     "src/lib/upstream.mjs": {
-      "bytes": 13516,
+      "bytes": 14133,
       "imports": [
         {
           "path": "node:crypto",
@@ -3625,7 +3625,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 27661,
+      "bytes": 27779,
       "imports": [
         {
           "path": "node:fs",
@@ -3800,7 +3800,7 @@
       "format": "esm"
     },
     "src/lib/local-checks.mjs": {
-      "bytes": 4526,
+      "bytes": 6411,
       "imports": [
         {
           "path": "node:child_process",
@@ -4317,7 +4317,7 @@
       "format": "esm"
     },
     "src/commands/init.mjs": {
-      "bytes": 21443,
+      "bytes": 21388,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4398,7 +4398,7 @@
       "format": "esm"
     },
     "src/commands/update.mjs": {
-      "bytes": 11970,
+      "bytes": 12050,
       "imports": [
         {
           "path": "node:fs",
@@ -5591,7 +5591,7 @@
           "bytesInOutput": 1818
         },
         "src/lib/upstream.mjs": {
-          "bytesInOutput": 7650
+          "bytesInOutput": 7859
         },
         "src/commands/lock.mjs": {
           "bytesInOutput": 2857
@@ -5603,7 +5603,7 @@
           "bytesInOutput": 1660
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 13494
+          "bytesInOutput": 13513
         },
         "src/lib/phases.mjs": {
           "bytesInOutput": 7007
@@ -5618,7 +5618,7 @@
           "bytesInOutput": 7859
         },
         "src/lib/local-checks.mjs": {
-          "bytesInOutput": 2137
+          "bytesInOutput": 2719
         },
         "src/lib/checks.mjs": {
           "bytesInOutput": 11000
@@ -5657,10 +5657,10 @@
           "bytesInOutput": 740
         },
         "src/commands/init.mjs": {
-          "bytesInOutput": 11186
+          "bytesInOutput": 11147
         },
         "src/commands/update.mjs": {
-          "bytesInOutput": 6053
+          "bytesInOutput": 6085
         },
         "src/commands/models.mjs": {
           "bytesInOutput": 2004
@@ -5672,7 +5672,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 430337
+      "bytes": 431140
     }
   }
 }

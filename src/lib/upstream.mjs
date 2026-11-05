@@ -92,11 +92,24 @@ export function prepareSpeckit({ root, work, script = 'sh', version }) {
 export const SPECKIT_EXTENSIONS = Object.freeze(['github']);
 
 /**
+ * Sorted, distinct Spec Kit extension ids that the given pack definitions route files through.
+ * @param {Iterable<{files?:Array<{extension?:string}>}|undefined>} definitions
+ * @returns {string[]}
+ */
+export function packExtensionIds(definitions) {
+  const ids = new Set();
+  for (const definition of definitions) {
+    for (const file of definition?.files ?? []) if (file.extension !== undefined) ids.add(file.extension);
+  }
+  return [...ids].sort();
+}
+
+/**
  * Derive the extension tree: a copy of the generated core project with one bundled Spec Kit extension added by the
  * verified `specify` from `work/venv`. The core project is left untouched; on failure nothing remains.
- * @param {{work:string,project:string,extension?:string}} options
+ * @param {{work:string,project:string,extension:string}} options
  */
-export function prepareSpeckitExtension({ work, project, extension = 'github' }) {
+export function prepareSpeckitExtension({ work, project, extension }) {
   if (!SPECKIT_EXTENSIONS.includes(extension)) throw new UpstreamError('E_USAGE', `Unsupported Spec Kit extension: ${extension}`);
   const bin = process.platform === 'win32' ? 'Scripts' : 'bin';
   const specify = join(work, 'venv', bin, process.platform === 'win32' ? 'specify.exe' : 'specify');
@@ -237,7 +250,9 @@ export function regenerateRequirements(root, version) {
   const previousOutput = existsSync(output) ? readFileSync(output) : null;
   try {
     writeFileSync(input, `specify-cli==${version}\n`);
-    run('uv', ['pip', 'compile', '--generate-hashes', '--python-version', '3.11', input, '-o', output], { cwd: root });
+    // Root-relative paths keep uv's generated header free of machine-local paths.
+    run('uv', ['pip', 'compile', '--generate-hashes', '--python-version', '3.11',
+      'baton/upstream/specify-cli.requirements.in', '-o', 'baton/upstream/specify-cli.requirements.txt'], { cwd: root });
     const compiled = readFileSync(output, 'utf8');
     if (!compiled.includes(`specify-cli==${version} \\`) || !compiled.includes('--hash=sha256:')) {
       throw new UpstreamError('E_UPSTREAM_VERIFY', 'uv did not produce a hash-locked specify-cli requirements file');

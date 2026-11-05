@@ -25,6 +25,66 @@ export function checkTimeout(check) {
   return timeout;
 }
 
+/**
+ * Live (non-zombie) members of a POSIX process group, or undefined when `ps` cannot list them.
+ * @param {number} pgid @returns {Promise<number[]|undefined>}
+ */
+export async function liveGroupMembers(pgid) {
+  try {
+    const { stdout } = await execFileAsync('ps', ['-A', '-o', 'pid=,pgid=,stat='], { timeout: 10000 });
+    return parseGroupMembers(stdout, pgid);
+  } catch {
+    return undefined;
+  }
+}
+
+/** @param {string} listing `ps -o pid=,pgid=,stat=` output @param {number} pgid */
+export function parseGroupMembers(listing, pgid) {
+  return listing.split('\n').map(line => line.trim().split(/\s+/))
+    .filter(([pid, group, stat]) => /^\d+$/.test(pid) && Number(group) === pgid && stat && !stat.startsWith('Z'))
+    .map(([pid]) => Number(pid));
+}
+
+/**
+ * SIGKILL a POSIX process group and wait (bounded) until it is gone. Killed orphans stay signalable as zombies
+ * until init reaps them (Linux), and Darwin reports EPERM for a group whose remaining members are all zombies,
+ * so EPERM counts as gone only when `ps` confirms that no live member remains.
+ * @param {number} pgid
+ * @param {{kill?:(pid:number,signal:string|number)=>unknown,members?:(pgid:number)=>Promise<number[]|undefined>,waitMs?:number}} [deps]
+ */
+export async function reapProcessGroup(pgid, deps = {}) {
+  const kill = deps.kill ?? ((pid, signal) => process.kill(pid, signal));
+  const members = deps.members ?? liveGroupMembers;
+  const deadline = Date.now() + (deps.waitMs ?? reapWaitMs);
+  /** @param {unknown} error */
+  const code = error => /** @type {NodeJS.ErrnoException} */ (error).code;
+  /** @type {string|number} */
+  let signal = 'SIGKILL';
+  for (;;) {
+    /** @type {unknown} */
+    let denied;
+    try {
+      kill(-pgid, signal);
+    } catch (error) {
+      if (code(error) === 'ESRCH') return;
+      if (code(error) !== 'EPERM') throw error;
+      denied = error;
+    }
+    const expired = Date.now() >= deadline;
+    if (denied || expired) {
+      const live = await members(pgid);
+      if (live && !live.length) return;
+      if (live && expired) {
+        throw new Error(`process group ${pgid} still has live members after SIGKILL: ${live.join(', ')}`);
+      }
+      if (!live && denied) throw denied;
+      if (expired) return;
+    }
+    signal = 0;
+    await new Promise(resolve => setTimeout(resolve, 20));
+  }
+}
+
 /** @param {import('node:child_process').ChildProcess} child */
 async function terminateTree(child) {
   if (!child.pid) throw new Error('Check process has no PID for cleanup');
@@ -33,18 +93,7 @@ async function terminateTree(child) {
     await execFileAsync('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'],
       { windowsHide: true, timeout: 10000 });
   } else {
-    process.kill(-child.pid, 'SIGKILL');
-    // Killed orphans stay signalable as zombies until init reaps them; wait (bounded) for the group to vanish.
-    const deadline = Date.now() + reapWaitMs;
-    while (Date.now() < deadline) {
-      try {
-        process.kill(-child.pid, 0);
-      } catch (error) {
-        if (/** @type {NodeJS.ErrnoException} */ (error).code === 'ESRCH') return;
-        throw error;
-      }
-      await new Promise(resolve => setTimeout(resolve, 20));
-    }
+    await reapProcessGroup(child.pid);
   }
 }
 

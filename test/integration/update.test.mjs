@@ -305,7 +305,10 @@ test('update does not conflict on a customized constitution', async () => {
 
 for (const script of ['ps', 'py']) {
   test(`update retains the installed ${script} script flavour`, async () => {
-    const { root, cleanup } = await installedRepo();
+    const { root, cleanup } = await installedRepo(['--packs', 'issues']);
+    const issuesSkill = '.github/skills/speckit-github-taskstoissues/SKILL.md';
+    const issuesScript = `.specify/extensions/github/scripts/${script === 'ps' ?
+      'powershell/resolve-tasks.ps1' : 'python/resolve_tasks.py'}`;
     try {
       const manifestPath = '.baton/manifest.json';
       const manifest = JSON.parse(await readFile(join(root, manifestPath), 'utf8'));
@@ -334,7 +337,8 @@ for (const script of ['ps', 'py']) {
       for (const file of manifest.files) {
         const original = await readFile(join(root, file.path), 'utf8');
         const flavoured = original.replace(/\.specify\/scripts\/bash\/([\w.-]+)\.sh\b/g,
-          (_, name) => `.specify/scripts/${directory}/${name}.${extension}`);
+          (_, name) => `.specify/scripts/${directory}/${name}.${extension}`)
+          .replaceAll('.specify/extensions/github/scripts/bash/resolve-tasks.sh', issuesScript);
         if (flavoured === original) continue;
         await writeFile(join(root, file.path), flavoured);
         file.sha256 = digest(flavoured);
@@ -373,6 +377,10 @@ for (const script of ['ps', 'py']) {
       assert.ok(skillReferences.length > 0, 'updated Spec Kit skills must call scripts');
       assert.ok(skillReferences.every(reference => reference.startsWith(`.specify/scripts/${directory}/`)),
         'update must keep every Spec Kit skill on the selected script flavour');
+      const flavouredSkill = await readFile(join(root, issuesSkill), 'utf8');
+      assert.ok(flavouredSkill.includes(issuesScript), 'update must flavour the issues-pack skill');
+      assert.ok(!flavouredSkill.includes('.specify/extensions/github/scripts/bash/'));
+      assert.ok(await exists(root, issuesScript));
 
       const fallback = await runCli(root, ['update', '--json'], { UV_OFFLINE: '1', UV_NO_CACHE: '1' });
       assert.equal(fallback.code, 0, fallback.stdout + fallback.stderr);
@@ -380,6 +388,10 @@ for (const script of ['ps', 'py']) {
       const preserved = JSON.parse(await readFile(join(root, manifestPath), 'utf8'));
       assert.equal(preserved.script, script);
       await assertScriptReferencesExist(root, preserved);
+      assert.equal(await readFile(join(root, issuesSkill), 'utf8'), flavouredSkill,
+        'fallback must not replace the flavoured issues-pack skill with bash bytes');
+      assert.equal(preserved.files.find(file => file.path === issuesSkill)?.sha256,
+        digest(flavouredSkill), 'manifest must keep tracking the preserved issues-pack skill');
     } finally { await cleanup(); }
   });
 }

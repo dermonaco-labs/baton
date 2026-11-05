@@ -134,6 +134,42 @@ test('sync bump verifies before writing and restores the requirements on an inje
   }
 });
 
+test('sync prepares each pack-routed Spec Kit extension from the core project and propagates its failure', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'baton-sync-extension-'));
+  try {
+    await fixture(root);
+    await cp(join(sourceRoot, 'baton.lock.json'), join(root, 'baton.lock.json'));
+    const project = join(root, 'generated-project');
+    await mkdir(join(project, '.specify'), { recursive: true });
+    writeFileSync(join(project, '.specify', 'extensions.yml'), 'hooks: {}\n');
+    const before = await snapshot(root);
+    /** @type {Array<{work:string,project:string,extension:string}>} */
+    const calls = [];
+    assert.throws(() => sync({ cwd: root, bump: 'speckit=9.9.9', deps: {
+      regenerateRequirements: (/** @type {string} */ dir, /** @type {string} */ version) => {
+        writeFileSync(join(dir, 'baton', 'upstream', 'specify-cli.requirements.in'), `specify-cli==${version}\n`);
+        return 'f'.repeat(64);
+      },
+      resolveTag: () => ({ commit: sha('1'), tree: sha('2') }),
+      resolveCommit: () => { throw new Error('ATV is not bumped'); },
+      fetchAtv: () => root,
+      fetchSource: () => root,
+      prepareSpeckit: () => project,
+      prepareSpeckitExtension: (/** @type {{work:string,project:string,extension:string}} */ options) => {
+        calls.push(options);
+        throw new upstream.UpstreamError('E_UPSTREAM_VERIFY', `injected ${options.extension} extension failure`);
+      },
+    } }), { code: 'E_UPSTREAM_VERIFY', message: /injected github extension failure/ });
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].extension, 'github');
+    assert.equal(calls[0].project, project);
+    assert.equal(typeof calls[0].work, 'string');
+    assert.deepEqual(await snapshot(root), before);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('sync bump explains pin and file changes for a PR body', () => {
   const before = {
     upstreams: { speckit: { version: '1.0.11', commit: 'a'.repeat(40) },

@@ -4,8 +4,8 @@ import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/pr
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { diffDocument, generatedStable, lockFile, packDefinitions, pinnedNames, prepareEntries, snapshotDrift } from '../../src/commands/sync.mjs';
-import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
+import { diffDocument, formatBumpSummary, generatedStable, lockFile, packDefinitions, pinnedNames, prepareEntries, snapshotDrift } from '../../src/commands/sync.mjs';
+import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_REPO, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
 import { sourceRoot } from '../helpers/index.mjs';
 
 test('pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift', async () => {
@@ -179,6 +179,10 @@ test('Spec Kit github extension entries come only from the extension tree into t
       assert.throws(() => prepareEntries(root, generated, atv, misrouted, [], null, false, {}, { github: extension }),
         error => error.code === 'E_UPSTREAM_VERIFY');
     }
+    const unsupported = [packs[0], { ...packs[1], files: [{ from: 'speckit', extension: 'gitlab', path: skill }] }];
+    assert.throws(() => prepareEntries(root, generated, atv, unsupported, [], null, false, {},
+      { github: extension, gitlab: extension }),
+    error => error.code === 'E_UPSTREAM_VERIFY' && /unsupported Spec Kit extension gitlab/.test(error.message));
     const readme = join(extension, '.specify/extensions/github/README.md');
     const original = await readFile(readme);
     await rm(readme);
@@ -356,6 +360,30 @@ test('lock and snapshot document label optional provenance by its named source',
   assert.match(document, /\| `packs\/optimize\/files\/\.baton\/vendor\/optimize\/LICENSE` \| optimize \| `LICENSE` \|/);
   const core = lockFile([], lockedPins());
   assert.deepEqual(Object.keys(core.upstreams), ['speckit', 'atv']);
+});
+
+test('snapshot document nests the bump summary under its h1 with blank-line-separated lists', () => {
+  const pins = (/** @type {string} */ version, /** @type {string} */ commit) => ({
+    speckit: { version, commit }, atv: { ref: 'main', version: null, commit: 'b'.repeat(40) } });
+  const before = { upstreams: pins('1.0.0', 'a'.repeat(40)), files: [{ stored_at: 'kept.md', sha256: '1'.repeat(64) }] };
+  const after = { upstreams: pins('1.1.0', 'c'.repeat(40)),
+    files: [{ stored_at: 'kept.md', sha256: '2'.repeat(64) }, { stored_at: 'new.md', sha256: '3'.repeat(64) }] };
+  const summary = formatBumpSummary(before, after);
+  assert.ok(summary.startsWith('### Upstream bump (PR summary)\n\n'));
+  assert.match(summary, /\*\*Added \(1\)\*\*\n- `new\.md`/);
+  const document = diffDocument({ ...after, 'x-bump-summary': summary });
+  const start = document.indexOf('## Upstream bump');
+  assert.ok(start > 0);
+  assert.equal(document.slice(start, document.indexOf('| Stored at |')), [
+    '## Upstream bump (PR summary)', '',
+    `- Spec Kit: 1.0.0 (\`${'a'.repeat(40)}\`) → 1.1.0 (\`${'c'.repeat(40)}\`). [Releases](${SPECKIT_REPO}/releases).`, '',
+    '**Added (1)**', '', '- `new.md`', '',
+    '**Changed (1)**', '', '- `kept.md`', '',
+    '**Removed (0)**', '', '- None', '',
+    'Reproduce: `baton sync --bump speckit=1.1.0`, then `baton sync --check`.', '', '',
+  ].join('\n'));
+  assert.doesNotMatch(document, /^### /m);
+  assert.equal(diffDocument(after).includes('Upstream bump'), false);
 });
 
 test('optional pin fields are one immutable list matching the locked projection order', () => {

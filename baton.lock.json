@@ -10,7 +10,7 @@
       "tag": "v1.3.0",
       "commit": "34a0d388eac671d656eb05b125ad3ed6056168ed",
       "requirements": "baton/upstream/specify-cli.requirements.txt",
-      "requirements_sha256": "d1a208ffbca96127df9d97c49c624c3a631da6dd391df8eb7a570b8072a50f58",
+      "requirements_sha256": "6b4fd91586cfa44f8dfbd496e00036928e87efac679d0d02bd2a5ba4c5d77b68",
       "license": "MIT",
       "init_args": [
         "--integration",

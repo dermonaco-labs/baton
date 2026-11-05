@@ -11,7 +11,7 @@ import { mergeAttributes } from '../lib/attributes.mjs';
 import { resolvePayload } from '../lib/payload.mjs';
 import { hashManaged } from '../lib/hash.mjs';
 import { UpstreamError } from '../lib/upstream.mjs';
-import { run as init, mergeHooks, mergeExtensions, protectedPath } from './init.mjs';
+import { run as init, callsBashScripts, mergeHooks, mergeExtensions, protectedPath } from './init.mjs';
 
 const instructions = '.github/copilot-instructions.md';
 const batonSection = /<!-- BATON:START -->\r?\n([\s\S]*?)<!-- BATON:END -->/;
@@ -134,7 +134,8 @@ export async function run(root, args) {
       const current = await optionalBytes(root, entry.path);
       /** @type {Buffer} */
       let desired = await readFile(join(stage, entry.path));
-      if (scriptFallback && desired.includes('.specify/scripts/bash/')) continue;
+      if (scriptFallback && !/^\.specify\/(?:extensions\/[^/]+\/)?scripts\//.test(entry.path) &&
+          callsBashScripts(desired)) continue;
       if (old && (!old.managed || !current || hashManaged(current) !== old.sha256)) {
         await conflict(entry.path, 'user-modified or missing managed file', desired);
         continue;

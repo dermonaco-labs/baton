@@ -8,7 +8,7 @@ import YAML from 'yaml';
 import { sourceRoot, tempRepo } from '../helpers/index.mjs';
 import { makeBroken } from '../fixtures/make-broken.mjs';
 import { removeMarker } from '../../src/lib/markers.mjs';
-import { flavouredBytes } from '../../src/commands/init.mjs';
+import { callsBashScripts, flavouredBytes } from '../../src/commands/init.mjs';
 
 /** @param {string} root @param {string[]} args @param {Record<string,string>} [env] */
 async function cli(root, args, env = {}) {
@@ -335,6 +335,14 @@ test('F39 flavour-dependent Spec Kit payload comes from the generated project', 
     const neutral = Buffer.from('No script reference.\n');
     assert.equal(await flavouredBytes(project, path, neutral), neutral);
     assert.equal(await flavouredBytes(project, '.github/skills/absent/SKILL.md', locked), locked);
+    const extensionPath = '.github/skills/speckit-github-taskstoissues/SKILL.md';
+    const extensionLocked = Buffer.from('Run `.specify/extensions/github/scripts/bash/resolve-tasks.sh`.\n');
+    const extensionGenerated = 'Run `.specify/extensions/github/scripts/powershell/resolve-tasks.ps1`.\n';
+    await put(project, extensionPath, extensionGenerated);
+    assert.equal((await flavouredBytes(project, extensionPath, extensionLocked)).toString(), extensionGenerated);
+    assert.equal(callsBashScripts(extensionLocked), true);
+    assert.equal(callsBashScripts(Buffer.from(extensionGenerated)), false);
+    assert.equal(callsBashScripts(Buffer.from('See `.specify/extensions/github/README.md`.\n')), false);
   } finally { await cleanup(); }
 });
 

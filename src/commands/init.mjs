@@ -10,7 +10,9 @@ import { mergeMarker } from '../lib/markers.mjs';
 import { mergeAttributes } from '../lib/attributes.mjs';
 import { hashManaged } from '../lib/hash.mjs';
 import { repairAtv } from '../lib/repairs.mjs';
-import { OPTIONAL_SOURCES, prepareSpeckit, prepareSpeckitExtension, UpstreamError } from '../lib/upstream.mjs';
+import {
+  OPTIONAL_SOURCES, packExtensionIds, prepareSpeckit, prepareSpeckitExtension, UpstreamError
+} from '../lib/upstream.mjs';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
@@ -49,13 +51,18 @@ function options(args) {
   return result;
 }
 
+/** @param {Buffer} bytes */
+export function callsBashScripts(bytes) {
+  return /\.specify\/(?:extensions\/[^/]+\/)?scripts\/bash\//.test(bytes.toString('utf8'));
+}
+
 /**
  * Locked Spec Kit files are generated with bash scripts; a ps/py install takes any file that
  * calls them from the flavour-specific generated project instead.
  * @param {string} project @param {string} path @param {Buffer} bytes @returns {Promise<Buffer>}
  */
 export async function flavouredBytes(project, path, bytes) {
-  if (!/\.specify\/(?:extensions\/[^/]+\/)?scripts\/bash\//.test(bytes.toString('utf8'))) return bytes;
+  if (!callsBashScripts(bytes)) return bytes;
   return await optionalBytes(project, path) ?? bytes;
 }
 
@@ -171,9 +178,7 @@ export async function run(root, args) {
       try {
         prepareSpeckit({ root: payload.root, work: directory, script, version: lock.upstreams.speckit.version });
         // Extension files that call bash scripts come from the same extension added to the flavour project.
-        const extensionIds = new Set(packs.flatMap(id => (definitions.get(id)?.files ?? [])
-          .flatMap((/** @type {{extension?:string}} */ file) => file.extension === undefined ? [] : [file.extension])));
-        for (const extension of [...extensionIds].sort()) {
+        for (const extension of packExtensionIds(packs.map(id => definitions.get(id)))) {
           generated.extensions[extension] = prepareSpeckitExtension({ work: directory, project: generated.project, extension });
         }
       } catch (error) {
