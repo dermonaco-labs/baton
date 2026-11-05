@@ -372,10 +372,14 @@ decisions:
     decision: "Open PR #58 against main from the reviewed head c46d950 without merging; PR review stays a human gate"
     rationale: "Repository owner authorized /baton-land to open a PR without merging. Evidence from a fresh unshallowed checkout at c46d9504367c9dce4ab85a44c65ad55e9f5363da: handoff receive --phase land exit 0 (no E_SELF_REVIEW, no blocking finding, no stale baton); npm run check exit 0 (tests 717, suites 10, pass 706, fail 0, cancelled 0, skipped 11, todo 0); baton validate exit 0 (known W_PACK_RECOMMENDED and W_QUICK_LARGE warnings only); baton sync --check exit 0; git diff origin/main -- .github/workflows is empty. The PR body follows .github/pull_request_template.md and includes the FR-015 upstream diff summary. The CHANGELOG item is left unticked because F07 is user-deferred (D41/D48). D58/D70 is flagged for explicit owner acknowledgement. The session note is written outside the repo. No subject changes, merge, tag, release, settings change or workflow dispatch."
     by: baton-land
+  - id: D76
+    decision: "Owner acknowledges D58/D70: local-checks stay out of the macOS smoke job for feature 004"
+    rationale: "Answer from the repository owner, relayed by control-plane delegation, together with the PR-review gate approval for PR #58: 'Approve the gate and acknowledge D58/D70 now'. D58 was the implementer's own scope judgment (D61/D70). It is now acknowledged by the owner. No workflow edit, merge, tag, release, settings change or workflow dispatch."
+    by: human:repository-owner
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-11-05
 history:
   - phase: specify
     at: 2026-11-05T09:15:49.859Z
@@ -510,8 +514,15 @@ history:
     x-worktree: 1e5ed9d4dbbb5a89336b8ff7f6099b2473315d9b3b232176bb319c2911197d46
     commit: c46d950
     x-action: write
-updated_at: 2026-11-05T14:10:15.475Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-11-05T14:20:31.780Z
+    by: human:repository-owner
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 99cf3e1
+    x-action: approve
+updated_at: 2026-11-05T14:20:31.779Z
+updated_by: human:repository-owner
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
