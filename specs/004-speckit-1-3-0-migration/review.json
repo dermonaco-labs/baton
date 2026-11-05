@@ -3,14 +3,28 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/004-speckit-1-3-0-migration-review3-20261105/report.md",
-    "x-scope": "Independent review 3 (fresh re-review of the review-2 corrections) of 87b1e9fe6c346a498ab949305c9f3aa1d128a6a9 in a separate worktree on its own branch; HEAD verified before start; receive OK, no E_SELF_REVIEW. The clone lacked the recorded base, so origin history was fetched; no merge-base was recomputed. handoff scope --json base = 729ecac81e2d4369832f3f4ed19659c6debc2a70 (D50); CLI subject set = 11 files; pinned tracked diff 729ecac..87b1e9f = 16 files (CLI set plus .baton/bin/baton.mjs{,.metafile.json,.sha256} and specs/004 handoff.md and review.json), no untracked files; CLI set is a strict subset. ce-review base = CLI base; reviewed file set = the 16-file pinned set (generated bundle verified by build --check and its .sha256 rather than line review). Effort focused on the correction diff 88a31e3..87b1e9f (66e4c97 code, 87b1e9f handoff only). No headless auto-fix was applied, so scope did not change.",
-    "x-checks": "Targeted only (full npm run check already green at 66e4c97 per handoff: 712 tests, 701 pass, 0 fail, 11 skipped): node src/commands/build.mjs --check exit 0; sha256(.baton/bin/baton.mjs) = .baton/bin/baton.mjs.sha256 = 3137404f...a93; lock verify OK; validate exit 0 (pre-existing W_QUICK_LARGE only); node --test test/unit/{requirements,sync,upstream-candidates,local-checks}.test.mjs = 77 pass, 0 fail; node --test --test-name-pattern=fallback test/integration/update.test.mjs = 4 pass (F11 ps/py, CLI-hash ps/py); node --test --test-name-pattern=F39 test/integration/init.test.mjs = 3 pass. Mutation runs in a throwaway worktree (removed afterwards): dropping the owner check, the alias guard or the script-path exemption each fails the fallback tests. git diff -U0 0f68b07 -- test/unit/upstream-candidates.test.mjs removes 3 lines (11, 748, 1148) -> F17.",
-    "x-personas": "Selected and dispatched once each, only from the installed .github/agents list: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher (always-on); adversarial (update fallback mutates adopter files). security-reviewer installed but not selected: the delta changes no trust binding, auth, permission or input boundary. repo-research-analyst is installed but is not a review persona. agent-native reported no gaps.",
-    "x-verdict": "Ready with fixes. No P0 or P1. F11, F12-F16 and the CLI-hash bug verified fixed. New open P2 F17 (unauthorized edits to the frozen feature-003 test, fixable by reverting without owner input) and P3 F18-F20 mapped to tasks. F07 remains open under the user deferral (D41/D48). Route to implement.",
-    "x-d58": "The macOS-smoke local-checks P3 deferral (D58) is consistent with approved scope (no task covers .github/workflows/smoke.yml) but is an implementer decision, not owner-directed, and D58 overstates D3 (D3 excludes dispatch, not edits). Not raised as a finding; needs owner acknowledgement at the PR-review gate.",
-    "x-residual-risks": "fallbackAliases is hand-maintained (no check that pack aliases are listed). Skipped alias/unrefreshed paths do not clear stale .baton/conflicts/*.new files. D56 adds an unregistered refusal in regenerateRequirements (plausibly within T013). Without ps, reaping returns silently at the deadline (R11).",
-    "x-testing-gaps": "No offline-then-online sequence test; no dry-run or user-modified-legacy test of the alias guard; Windows forward-slash root branch of the machine-local check untested; the sync() spy test would fail on the missing lock before reaching deps if validation were removed.",
+    "run_artifact": ".context/compound-engineering/ce-review/004-speckit-1-3-0-migration-review4-20261105/report.md",
+    "x-scope": "Independent review 4 (fresh re-review of the review-3 corrections) of 7187c11c6131e2bfe72b983b473078d96066e1be in a separate worktree on its own branch; HEAD verified equal to the implementation head before start; the shallow clone was unshallowed so the recorded base is reachable; receive OK, no E_SELF_REVIEW; no merge-base recomputed. handoff scope --json base = 87b1e9fe6c346a498ab949305c9f3aa1d128a6a9 (D63); CLI subject set = 7 files (src/commands/sync.mjs, src/lib/local-checks.mjs, src/lib/upstream.mjs, test/integration/update.test.mjs, test/unit/requirements.test.mjs, test/unit/sync.test.mjs, test/unit/upstream-candidates.test.mjs); pinned tracked diff 87b1e9f..7187c11 = 12 files (CLI set plus .baton/bin/baton.mjs{,.metafile.json,.sha256} and specs/004 handoff.md and review.json); no untracked files; CLI set is a strict subset. ce-review base (git merge-base HEAD 87b1e9f) = 87b1e9f = CLI base; reviewed file set = the 12-file pinned set (generated bundle verified by build --check and its .sha256 rather than line review). Effort focused on 8f2dd96..7187c11 (20f9c8f code/tests, 7187c11 handoff only). No headless auto-fix was applied, so scope did not change.",
+    "x-checks": "Targeted only (full npm run check per author cloud evidence: 717 tests, 706 pass, 0 fail, 11 skipped): npm ci (worktree lacked node_modules); node src/commands/build.mjs --check exit 0; sha256(.baton/bin/baton.mjs) = .baton/bin/baton.mjs.sha256 = 7bc794a3...aed3f; lock verify exit 0; validate exit 0 (W_QUICK_LARGE and W_PACK_RECOMMENDED advisories only, no errors); node --test test/unit/{requirements,sync,upstream-candidates,local-checks}.test.mjs = 80 pass, 0 fail; node --test --test-name-pattern=fallback test/integration/update.test.mjs = 6 pass (F11, F18 and CLI-hash, ps and py); git diff --check 87b1e9f clean. SC-006/AC-US3-4: git diff -U0 0f68b07 -- test/unit/upstream-candidates.test.mjs src/lib/candidate-bindings.mjs src/lib/upstream-candidates.mjs removes exactly three lines, each replaced in place (upstream-candidates.test.mjs:1148, the isTrusted return, FROZEN_FIELDS); lines 11 and 748 are byte-identical to 0f68b07. Testing persona mutation runs in a scratch copy: dropping the delegate-presence condition at update.mjs:152-153 fails both F18 tests while F11 passes; restoring the bare-substring check fails the new recordsMachineLocalPath test on Linux.",
+    "x-personas": "Selected and dispatched once each, only from the installed .github/agents list: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher (always-on). adversarial-reviewer installed but not selected: about 31 changed non-test, non-generated src lines with no auth, payment or data-mutation path. security-reviewer installed but not selected: no trust binding, permission or input boundary changes. repo-research-analyst is installed but is not a review persona. All six returned zero findings; agent-native reported no gaps.",
+    "x-verdict": "Ready to land. No P0, P1 or P2 open. F17 (P2) and F18-F20 (P3) verified fixed; D69 stopped-review P3s verified (no-ps reap comment reworded at local-checks.mjs:81-82; read_first hashes accepted by receive). F07 (P3) stays open under the user deferral to release prep (D41/D48) and is not reopened as a defect.",
+    "x-d58": "Owner note, not a defect: D58/D70 macOS smoke local-checks deferral is the implementer scope judgment and needs owner acknowledgement at the PR-review gate.",
+    "x-residual-risks": "recordsMachineLocalPath matches the project root only when followed by a separator, so a bare root (for example a trailing --directory /abs/root) is no longer detected; the current root-relative uv invocation does not emit it (correctness, testing). Windows matching is case-sensitive on the drive letter, as before. For a filesystem-root project only the two rooted requirements paths count, by design. lockedRequirements literal and SPECKIT_REQUIREMENTS.output must be renamed together; the sync.test.mjs pin catches drift. upstream-candidates.test.mjs lacks a trailing newline (additions only; no standard forbids it).",
+    "x-testing-gaps": "Filesystem-root case asserts only the rooted .in path, not the rooted .txt output. recordsMachineLocalPath forward-slash and drive-root branches are exercised only on the Windows smoke runner, not with path.win32 on POSIX. F18 relies on the F11 fixture making the delegate unrefreshable without asserting it.",
+    "x-learnings": "restricted-mirror-env-only, per-checkout-identity-self-review, crlf-normalized-ownership-hashing and quick-lane-scope-and-stranded-land all honoured; the F17 scope-discipline violation is resolved.",
+    "x-review3": {
+      "x-scope": "Independent review 3 (fresh re-review of the review-2 corrections) of 87b1e9fe6c346a498ab949305c9f3aa1d128a6a9 in a separate worktree on its own branch; HEAD verified before start; receive OK, no E_SELF_REVIEW. The clone lacked the recorded base, so origin history was fetched; no merge-base was recomputed. handoff scope --json base = 729ecac81e2d4369832f3f4ed19659c6debc2a70 (D50); CLI subject set = 11 files; pinned tracked diff 729ecac..87b1e9f = 16 files (CLI set plus .baton/bin/baton.mjs{,.metafile.json,.sha256} and specs/004 handoff.md and review.json), no untracked files; CLI set is a strict subset. ce-review base = CLI base; reviewed file set = the 16-file pinned set (generated bundle verified by build --check and its .sha256 rather than line review). Effort focused on the correction diff 88a31e3..87b1e9f (66e4c97 code, 87b1e9f handoff only). No headless auto-fix was applied, so scope did not change.",
+      "x-checks": "Targeted only (full npm run check already green at 66e4c97 per handoff: 712 tests, 701 pass, 0 fail, 11 skipped): node src/commands/build.mjs --check exit 0; sha256(.baton/bin/baton.mjs) = .baton/bin/baton.mjs.sha256 = 3137404f...a93; lock verify OK; validate exit 0 (pre-existing W_QUICK_LARGE only); node --test test/unit/{requirements,sync,upstream-candidates,local-checks}.test.mjs = 77 pass, 0 fail; node --test --test-name-pattern=fallback test/integration/update.test.mjs = 4 pass (F11 ps/py, CLI-hash ps/py); node --test --test-name-pattern=F39 test/integration/init.test.mjs = 3 pass. Mutation runs in a throwaway worktree (removed afterwards): dropping the owner check, the alias guard or the script-path exemption each fails the fallback tests. git diff -U0 0f68b07 -- test/unit/upstream-candidates.test.mjs removes 3 lines (11, 748, 1148) -> F17.",
+      "x-personas": "Selected and dispatched once each, only from the installed .github/agents list: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher (always-on); adversarial (update fallback mutates adopter files). security-reviewer installed but not selected: the delta changes no trust binding, auth, permission or input boundary. repo-research-analyst is installed but is not a review persona. agent-native reported no gaps.",
+      "x-verdict": "Ready with fixes. No P0 or P1. F11, F12-F16 and the CLI-hash bug verified fixed. New open P2 F17 (unauthorized edits to the frozen feature-003 test, fixable by reverting without owner input) and P3 F18-F20 mapped to tasks. F07 remains open under the user deferral (D41/D48). Route to implement.",
+      "x-d58": "The macOS-smoke local-checks P3 deferral (D58) is consistent with approved scope (no task covers .github/workflows/smoke.yml) but is an implementer decision, not owner-directed, and D58 overstates D3 (D3 excludes dispatch, not edits). Not raised as a finding; needs owner acknowledgement at the PR-review gate.",
+      "x-residual-risks": "fallbackAliases is hand-maintained (no check that pack aliases are listed). Skipped alias/unrefreshed paths do not clear stale .baton/conflicts/*.new files. D56 adds an unregistered refusal in regenerateRequirements (plausibly within T013). Without ps, reaping returns silently at the deadline (R11).",
+      "x-testing-gaps": "No offline-then-online sequence test; no dry-run or user-modified-legacy test of the alias guard; Windows forward-slash root branch of the machine-local check untested; the sync() spy test would fail on the missing lock before reaching deps if validation were removed.",
+      "x-pre-existing": "project-standards (P3, 0.65): handoff.md body 'What changed'/'Next steps' still describe the pre-code state ('No code has been written', '1. Human pre-code gate') while the frontmatter is past implement; stale since the first implement write, not introduced by this delta.",
+      "x-learnings": "restricted-mirror-env-only and crlf-normalized-ownership-hashing honoured; quick-lane-scope-and-stranded-land (scope discipline) violated by F17.",
+      "x-base": "729ecac81e2d4369832f3f4ed19659c6debc2a70",
+      "x-head": "87b1e9fe6c346a498ab949305c9f3aa1d128a6a9"
+    },
     "x-review2": {
       "x-scope": "Independent review 2 (fresh re-review of the review-1 corrections) of 729ecac81e2d4369832f3f4ed19659c6debc2a70 in a separate worktree on its own review branch; receive OK, no E_SELF_REVIEW. The depth-1 clone was unshallowed so the CLI-recorded diff-base ad64d197c9caa4f85c3d042bfb32060a0683c2c0 (decision D35, written by review 1) is a reachable ancestor; no merge-base was recomputed. handoff scope --json base = ad64d19; CLI subject set = 14 files; pinned tracked diff ad64d19..729ecac = 18 files (CLI set plus .baton/bin/baton.mjs{,.metafile.json,.sha256} and specs/004 handoff.md), no untracked files; CLI set is a strict subset. ce-review base = CLI base; reviewed file set = the 18-file pinned set (generated bundle verified against src by build --check rather than line review). No headless auto-fix was applied, so scope did not change. The governed full-feature scope dea5807..dba6cea (64 files) was covered by review 1 (reviewed-tree D34); this pass covers the D35 delta, which contains every correction commit (3b6c71e, 8099026, 729ecac).",
       "x-checks": "New checks only, no full-suite rerun (full npm run check at 8099026: 705 tests, 694 pass, 0 fail, 11 skipped, per handoff): build --check exit 0 (bundle matches src); lock verify OK; sha256 of baton/upstream/specify-cli.requirements.txt = 6b4fd91586cfa44f8dfbd496e00036928e87efac679d0d02bd2a5ba4c5d77b68 = lock requirements_sha256 and header has no absolute path; git diff --name-only ad64d19 shows CHANGELOG.md, .baton/quick/* and spec/plan/tasks untouched. F11 and F12 were confirmed by the orchestrator reading update.mjs:126-160, packs/issues.yml, the alias SKILL.md, and sync.mjs:460-462/505-511.",
@@ -22,20 +36,17 @@
       "x-checks": "Targeted only, no full suite and no CI or workflow dispatch: node --test on test/unit/{issues-wrapper,packs,relay-hooks,schema,sync,upstream-candidates,local-checks}.test.mjs and test/integration/{init,update,upstream-upgrade}.test.mjs = 151 pass, 0 fail, 0 skipped; build --check OK; sync --check OK (public PyPI reachable here); lock verify OK; validate exit 0 (pre-existing W_QUICK_LARGE warnings only); git diff --check dea5807 clean. Orchestrator verified F02 against Darwin killpg semantics (zombie-only group returns EPERM) and the macos-latest smoke job, and verified F01 by reading update.mjs:137 against the github skill bytes and the 1.0.11 fixture, which the old skip did match.",
       "x-personas": "Selected and dispatched only from the installed .github/agents list: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher (always-on); security (isTrusted/FROZEN_FIELDS trust change and new vendored scripts); adversarial (large diff touching trust, lock data and process cleanup). repo-research-analyst is installed but is not a review persona. Security, agent-native and learnings reported no findings.",
       "x-verdict": "Ready with fixes. No P0 or P1. Open P2 items: F01, F02 and F03."
-    },
-    "x-pre-existing": "project-standards (P3, 0.65): handoff.md body 'What changed'/'Next steps' still describe the pre-code state ('No code has been written', '1. Human pre-code gate') while the frontmatter is past implement; stale since the first implement write, not introduced by this delta.",
-    "x-learnings": "restricted-mirror-env-only and crlf-normalized-ownership-hashing honoured; quick-lane-scope-and-stranded-land (scope discipline) violated by F17."
+    }
   },
-  "base": "729ecac81e2d4369832f3f4ed19659c6debc2a70",
-  "head": "87b1e9fe6c346a498ab949305c9f3aa1d128a6a9",
+  "base": "87b1e9fe6c346a498ab949305c9f3aa1d128a6a9",
+  "head": "7187c11c6131e2bfe72b983b473078d96066e1be",
   "personas": [
     "correctness-reviewer",
     "testing-reviewer",
     "maintainability-reviewer",
     "project-standards-reviewer",
     "agent-native-reviewer",
-    "learnings-researcher",
-    "adversarial-reviewer"
+    "learnings-researcher"
   ],
   "findings": [
     {
@@ -144,7 +155,7 @@
       "confidence": 0.6,
       "task": "T027",
       "disposition": "open",
-      "reason": "User-directed deferral to release preparation (D41/D48), re-confirmed by the review-3 brief; CHANGELOG.md and release-014 untouched. Release prep should cover D31, D37 and consider D58.",
+      "reason": "User-directed deferral to release preparation (D41/D48), re-confirmed by the review-4 brief; not reopened as a defect. CHANGELOG.md and release-014 untouched in 87b1e9f..7187c11. Release prep should cover D31, D37 and consider D58.",
       "x-fix": "Add a '### Fixed' item under [Unreleased] for the bounded process-group reap wait after a timed-out local check (POSIX).",
       "x-review1-disposition": "open",
       "x-review1-reason": "CONTRIBUTING.md asks for a relevant changelog entry with each change. Commit 292d7b1 changes the bundled CLI's POSIX timeout cleanup (a bounded reap wait), but [Unreleased] covers only the Spec Kit bump."
@@ -291,8 +302,10 @@
       "persona": "correctness-reviewer, testing-reviewer, project-standards-reviewer, learnings-researcher",
       "confidence": 1,
       "task": "T029",
-      "disposition": "open",
-      "reason": "git diff -U0 0f68b07 -- test/unit/upstream-candidates.test.mjs removes lines 11 (import) and 748 (REQUIREMENTS_TXT literal pin replaced by a weaker SPECKIT_REQUIREMENTS.output token check) besides the authorized line 1148; both introduced by 66e4c97. Owner decision A, T009, T029 and AC-US3-4 allow only line 1148; D55/D59 self-assess equivalence without an owner decision (Constitution V). Fix without owner input: restore lines 11 and 748 byte-for-byte, keep the quoted literal in sync.mjs lockedRequirements, and pin lockedRequirements === SPECKIT_REQUIREMENTS.output with an added sync.test.mjs assertion; then re-run the T029 diff check. Amending decision A instead needs an explicit owner decision."
+      "disposition": "fixed",
+      "reason": "Verified in review 4: git diff -U0 0f68b07 -- test/unit/upstream-candidates.test.mjs removes only line 1148 (owner decision A); lines 11 and 748 are byte-identical to 0f68b07, SPECKIT_REQUIREMENTS is imported on a separate added line, sync.mjs exports the quoted literal lockedRequirements, pinned by sync.test.mjs:439-441 and upstream-candidates.test.mjs:1380 (D64/D65).",
+      "x-review3-disposition": "open",
+      "x-review3-reason": "git diff -U0 0f68b07 -- test/unit/upstream-candidates.test.mjs removes lines 11 (import) and 748 (REQUIREMENTS_TXT literal pin replaced by a weaker SPECKIT_REQUIREMENTS.output token check) besides the authorized line 1148; both introduced by 66e4c97. Owner decision A, T009, T029 and AC-US3-4 allow only line 1148; D55/D59 self-assess equivalence without an owner decision (Constitution V). Fix without owner input: restore lines 11 and 748 byte-for-byte, keep the quoted literal in sync.mjs lockedRequirements, and pin lockedRequirements === SPECKIT_REQUIREMENTS.output with an added sync.test.mjs assertion; then re-run the T029 diff check. Amending decision A instead needs an explicit owner decision."
     },
     {
       "id": "F18",
@@ -303,8 +316,10 @@
       "persona": "testing-reviewer, adversarial-reviewer, correctness-reviewer",
       "confidence": 0.8,
       "task": "T025",
-      "disposition": "open",
-      "reason": "Removing the on-disk delegate check would make every offline ps/py update skip the alias without failing any test. Add a fallbackRepo test with the delegate installed and an outdated managed alias: the alias is refreshed and no per-file W_SCRIPT_UNREFRESHED names it."
+      "disposition": "fixed",
+      "reason": "Verified in review 4: update.test.mjs:456-478 F18 ps/py tests refresh the outdated alias beside an installed delegate (6/6 fallback tests pass); testing-persona mutation removing the delegate-presence condition at update.mjs:152-153 fails F18 while F11 passes (D66).",
+      "x-review3-disposition": "open",
+      "x-review3-reason": "Removing the on-disk delegate check would make every offline ps/py update skip the alias without failing any test. Add a fallbackRepo test with the delegate installed and an outdated managed alias: the alias is refreshed and no per-file W_SCRIPT_UNREFRESHED names it."
     },
     {
       "id": "F19",
@@ -315,8 +330,10 @@
       "persona": "adversarial-reviewer",
       "confidence": 0.68,
       "task": "T013",
-      "disposition": "open",
-      "reason": "The root-relative header always contains '/upstream/specify-cli.requirements.in', so compiled.includes(resolve(root)) is true for root '/' or prefixes like '/spec', and sync --bump speckit can never succeed there. Match the root followed by a separator (skip or special-case the filesystem root) and add a unit case."
+      "disposition": "fixed",
+      "reason": "Verified in review 4: recordsMachineLocalPath (upstream.mjs:254-260) anchors at root+separator, special-cases the filesystem root, and is used by regenerateRequirements:279; requirements.test.mjs:8-24 covers /, /spec, a temp root, sibling prefix and both separators; the old substring check fails it (D67).",
+      "x-review3-disposition": "open",
+      "x-review3-reason": "The root-relative header always contains '/upstream/specify-cli.requirements.in', so compiled.includes(resolve(root)) is true for root '/' or prefixes like '/spec', and sync --bump speckit can never succeed there. Match the root followed by a separator (skip or special-case the filesystem root) and add a unit case."
     },
     {
       "id": "F20",
@@ -327,8 +344,10 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.62,
       "task": "T008",
-      "disposition": "open",
-      "reason": "The from/supported-id checks moved out of prepareEntries; only sync() calls validatePackExtensions. Document the precondition in the prepareEntries JSDoc or call the cheap validation at its top."
+      "disposition": "fixed",
+      "reason": "Verified in review 4: prepareEntries JSDoc (sync.mjs:205-209) states the validatePackExtensions precondition; sync() still validates first (D68).",
+      "x-review3-disposition": "open",
+      "x-review3-reason": "The from/supported-id checks moved out of prepareEntries; only sync() calls validatePackExtensions. Document the precondition in the prepareEntries JSDoc or call the cheap validation at its top."
     }
   ]
 }
