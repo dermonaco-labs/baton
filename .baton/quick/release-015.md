@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: release-015
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Independent single-pass ce-review headless of exact CLI base 2c53a55 to candidate 843884e: 22 tracked files reviewed (pinned set; the 14 CLI subjects are a subset). Versions are consistent at 0.1.5, the CHANGELOG promotion and F07 wording are faithful, all upstream pins are unchanged, and the bundle, sidecar, manifest and lock are consistent. Cleanup covers the release-015 records, and the smoke change is macOS-only. Two P3 findings were dismissed with reasons; no auto-fixes. Ready for land's separate human gate. No merge, tag, publication or dispatch is implied."
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: "Independent LAND received the exact reviewed v0.1.5 candidate (review receipt 6c12e0b over candidate 843884e) in a separate fresh checkout. handoff receive ran the configured npm run check with exit 0; global validate and git diff --check exit 0. Opened a release-preparation PR against main titled chore(release): prepare v0.1.5. Only LAND bookkeeping is published after review; no subject changes. No merge, tag, release publication or workflow dispatch; PR acceptance and later tag/publication each require separate human approval."
 read_first:
   - path: .baton/quick/release-015.md
     why: Release scope, decisions and review base
@@ -19,15 +19,9 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/release-015.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: "Reviewed exact CLI base 2c53a55 to 843884e: 22 tracked files cover all 14 CLI subjects. Source and tests change only version literals. The bundle equals the base bundle with seven 0.1.4 strings replaced by 0.1.5, and its SHA-256 02960c63952c11345410fe1a0004bc36e4867fae6ad9fc81349cced84f1c5acc matches the sidecar. The manifest and lock are identical to base apart from baton_version and generated_by, so the Spec Kit 1.3.0, ATV main ad99673, token-budget v1.1.0 and optimize v1.0.0 pins are unchanged. The CHANGELOG promotes every Unreleased bullet with a faithful F07 note for the already-merged reapProcessGroup, which is absent at v0.1.4. The 0.1.4 history is byte-identical. smoke.yml is maintainer-only (template cleanup removes it) and only its macos step changed. The release-014, a7 and cleanup changes are owner-authorized bookkeeping. No user-facing behavior, public contract or component version changes."
+    evidence: https://github.com/dermonaco-labs/baton/pull/59
 open_questions: []
 decisions:
   - id: D1
@@ -80,7 +74,7 @@ decisions:
     x-base-commit: 843884e862e13e4ff2779542a8a2d8b16df4fb5a
     by: baton
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -98,8 +92,15 @@ history:
     x-worktree: a8c6ef7ed2851dc84c200c494d28cc74cba6cbbb49d3ab67f4c0b5ab1424842c
     commit: 843884e
     x-action: write
-updated_at: 2026-11-05T15:05:23.493Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-11-05T15:16:22.368Z
+    by: baton
+    writer: 9cbe1430e26a0b53b803cce098c55db7ce994ffe7e27cb10d2e07e2591e85193
+    x-worktree: 940b7f9ce73a060e0ce44e5e270b75651d547264041189e9a0a78b3e43ec7bd4
+    commit: 6c12e0b
+    x-action: write
+updated_at: 2026-11-05T15:16:22.358Z
+updated_by: baton-land
 risks:
   - id: R1
     text: The macOS runner can exercise the real Darwin process-group behavior only after a separately approved tag or workflow dispatch; local Linux tests cover injected-dependency paths.
@@ -110,6 +111,9 @@ x-implementation-cycle: 01318e6574a449d831077e2a883524b791a1935774298bc1c3ad9c78
 review:
   findings_path: .baton/quick/release-015.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/59
+  number: 59
 ---
 ## Goal
 Keep the work in scope.
