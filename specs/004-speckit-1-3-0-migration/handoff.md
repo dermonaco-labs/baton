@@ -5,7 +5,7 @@ feature: 004-speckit-1-3-0-migration
 phase_completed: specify
 next_phase: plan
 next_owner: speckit-plan
-status: needs-human
+status: ready
 model_role: planning
 suggested_model: claude-opus-5.5
 summary: "Specified the Spec Kit 1.0.11 -> 1.3.0 migration per owner decisions A+/X: bump pin and lock, resolve the 1.1.3-1.3.0 E_DANGLING_REF closure by moving the opt-in issues pack to the bundled github extension plus a Baton-authored /speckit-taskstoissues compatibility wrapper, keep core and feature 003 trusted-base bindings unchanged, verify relay hooks fire once, add regression tests. Scope gate pending owner answers to Q1/Q2."
@@ -46,22 +46,7 @@ exit_criteria:
   - id: markers-bounded
     met: true
     evidence: at most three clarification markers
-open_questions:
-  - id: Q1
-    question: Spec Kit 1.3.0 removes core taskstoissues. How should the opt-in issues pack be handled?
-    blocking: true
-    owner: repository owner
-    options:
-      - "A+: repoint the issues pack to the bundled github extension and keep /speckit-taskstoissues as a thin Baton-authored compatibility wrapper backed by the extension command (owner-directed; spec assumes this)"
-      - "A: repoint the issues pack to the bundled github extension only; command becomes /speckit-github-taskstoissues"
-      - "B: retire the issues pack"
-  - id: Q2
-    question: How should files that leave the issues pack be handled on baton update?
-    blocking: true
-    owner: repository owner
-    options:
-      - "X: no update behavior change; document any residual manual removal in CHANGELOG/README (owner-directed; spec assumes this)"
-      - "Y: extend update to remove unmodified departed managed files and flag modified ones as conflicts"
+open_questions: []
 decisions:
   - id: D1
     decision: Run the migration in the feature lane
@@ -83,10 +68,18 @@ decisions:
     decision: No stale skill file remains for issues-pack adopters
     rationale: The compatibility wrapper occupies the same path as the 1.0.11 core taskstoissues skill (.github/skills/speckit-taskstoissues/SKILL.md), so existing update replaces unmodified copies and flags modified ones as conflicts; plan verifies no other residual file.
     by: speckit-specify
+  - id: D6
+    decision: "A+: repoint the issues pack to the bundled github extension and keep /speckit-taskstoissues as a thin Baton-authored compatibility wrapper backed by the extension command (owner-directed; spec assumes this)"
+    rationale: Spec Kit 1.3.0 removes core taskstoissues. How should the opt-in issues pack be handled?
+    by: human:repository-owner
+  - id: D7
+    decision: "X: no update behavior change; document any residual manual removal in CHANGELOG/README (owner-directed; spec assumes this)"
+    rationale: How should files that leave the issues pack be handled on baton update?
+    by: human:repository-owner
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-11-05
 history:
   - phase: specify
     at: 2026-11-05T09:15:49.859Z
@@ -95,8 +88,29 @@ history:
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
     commit: 9e5045e
     x-action: write
-updated_at: 2026-11-05T09:15:49.849Z
-updated_by: speckit-specify
+  - phase: specify
+    at: 2026-11-05T09:24:50.418Z
+    by: human:repository-owner
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 799faec
+    x-action: answer
+  - phase: specify
+    at: 2026-11-05T09:24:50.667Z
+    by: human:repository-owner
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 799faec
+    x-action: answer
+  - phase: specify
+    at: 2026-11-05T09:24:50.914Z
+    by: human:repository-owner
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 799faec
+    x-action: approve
+updated_at: 2026-11-05T09:24:50.914Z
+updated_by: human:repository-owner
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
