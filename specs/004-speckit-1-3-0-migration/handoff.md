@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Implement complete: Spec Kit 1.0.11 -> 1.3.0 (peeled commit 34a0d388eac671d656eb05b125ad3ed6056168ed); opt-in issues pack ships the github extension (7 locked rows, x-speckit-extension: github) plus the Baton alias wrapper /speckit-taskstoissues; core unchanged; init renders extension scripts for ps/py; narrowing-only trust additions. Hosted sandbox at 7cf28f3: npm run check exit 0 (694 tests, 683 pass, 0 fail, 11 skipped), sync --check clean. All 31 tasks checked with evidence in tasks.md. /speckit-converge: converged with 0 findings; tasks.md unchanged."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Review 1 of dba6cea vs CLI base dea5807 (64-file pinned diff, CLI subset 52; 8 installed personas). No P0/P1. Open P2: F01 update.mjs:137 fallback misses extension bash refs for ps/py issues adopters; F02 terminateTree rethrows Darwin EPERM (292d7b1); F03 prepareSpeckitExtension untested. P3 F04-F10. Targeted tests 151/151; build/sync --check, lock verify, validate OK."
 read_first:
   - path: specs/004-speckit-1-3-0-migration/tasks.md
     why: T001-T031 in dependency order with the Acceptance Registry
@@ -64,86 +64,9 @@ artifacts:
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
 entry_checked: []
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
-    met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-        ✔ owned rows keep their install target, provenance, license and shape; hashes match the written bytes (787.474412ms)
-        ✔ new rows may not collide with each other or with kept rows in any letter case (7.934544ms)
-        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (1.31407ms)
-        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (6.643698ms)
-      ✔ upstream candidates speckit and atv row ownership policy (970.968632ms)
-      ▶ upstream candidates lifecycle
-        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.221699ms)
-        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (0.72789ms)
-        ✔ a human-edited candidate with a newer pin waits for the human (0.582244ms)
-        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (2.296037ms)
-        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.611738ms)
-        ✔ a human close suppresses exactly that pin; a newer pin generates again (0.944241ms)
-        ✔ the automation obsolete close never suppresses (0.253997ms)
-        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (1.283144ms)
-      ✔ upstream candidates lifecycle (7.450005ms)
-      ▶ upstream candidates Spec Kit github extension trust (feature 004)
-        ✔ stored extension files under a pack install root are trusted like BOUND_ROOTS (9.883146ms)
-        ✔ a lock row carrying x-speckit-extension is trusted in either lock (8.522817ms)
-        ✔ x-speckit-extension is frozen on existing rows (5.053889ms)
-        ✔ the Baton wrapper may not become a Spec Kit lock row (8.847239ms)
-        ✔ regenerated ordinary core rows stay outside the narrowed trust (4.32003ms)
-        ✔ x-speckit-extension appears only on issues-pack extension rows, always as github (0.985563ms)
-      ✔ upstream candidates Spec Kit github extension trust (feature 004) (37.855675ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (264.887911ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (119.769698ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (85.124928ms)
-        ✔ E_ANALYSIS_CRITICAL (3.11327ms)
-        ✔ E_ANALYSIS_MISSING (2.098344ms)
-        ✔ E_APPROVER_FORMAT (3.274849ms)
-        ✔ E_BLOCKING_OPEN (2.435845ms)
-        ✔ E_BODY_SECTIONS (2.156981ms)
-        ✔ E_BUDGET (3.438032ms)
-        ✔ E_DENYLIST (2.376677ms)
-        ✔ E_EXIT_UNMET (1.902073ms)
-        ✔ E_GATE_PENDING (16.373237ms)
-        ✔ E_LANE_ESCALATE (104.485192ms)
-        ✔ E_LANE_MISMATCH (1.892017ms)
-        ✔ E_MISSING_ARTIFACT (3.3494ms)
-        ✔ E_MODEL_NOT_ALLOWED (5.378481ms)
-        ✔ E_MULTIPLE_BATONS (4.924673ms)
-        ✔ E_NO_PREREG (4.995713ms)
-        ✔ E_OWNER (2.565367ms)
-        ✔ E_PR_MISSING (5.117584ms)
-        ✔ E_REVIEW_BLOCKING (39.260349ms)
-        ✔ E_REVIEW_MISSING (4.697971ms)
-        ✔ E_SCHEMA (4.922935ms)
-        ✔ E_STALE_ARTIFACT (3.146018ms)
-        ✔ E_TRANSITION (3.417641ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (327.330231ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (89.376367ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (10.557507ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (89.253184ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (13.083295ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (119.798361ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (78.787835ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (0.760649ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (7.697653ms)
-      ✔ ready with a blocking question is rejected (66.710598ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (89.590675ms)
-      ℹ tests 694
-      ℹ suites 10
-      ℹ pass 683
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 11
-      ℹ todo 0
-      ℹ duration_ms 164297.832328
+    evidence: specs/004-speckit-1-3-0-migration/review.json
 open_questions: []
 decisions:
   - id: D1
@@ -272,6 +195,27 @@ decisions:
     decision: "Harden src/lib/local-checks.mjs terminateTree: after SIGKILL of the process group, wait up to 2s until process.kill(-pgid,0) reports ESRCH before runLocalCheck returns (292d7b1); tests unchanged."
     rationale: "Pre-existing local-checks.test.mjs:85/:105 failed 4/4 under the nested npm run check inside handoff write on the Linux sandbox: SIGKILLed orphans stay signalable as zombies until init (tini) reaps them. User-directed choice of the src hardening over test polling; outside the original 004 task list, recorded as a decision without editing tasks.md."
     by: speckit-implement
+  - id: D32
+    decision: Review 1 recorded against the exact CLI base dea5807 after unshallowing the review clone
+    rationale: The review checkout began as a depth-1 clone at dba6cea, so receive reported the D20 base as missing. git fetch --unshallow made dea5807 a reachable ancestor. No merge-base was recomputed. The ce-review base and reviewed file set match the CLI base and the 64-file pinned diff.
+    by: baton-review
+  - id: D33
+    decision: Review 1 routed to implement instead of land so the open findings F01-F10 can be addressed
+    rationale: "Receipt 7c4ff6b had routed to land. handoff write refuses a second review write from next_phase land with E_TRANSITION (Expected land, not review), and no CLI action reroutes land. The user authorized the history-preserving correction: handoff.md was restored to its dba6cea content in a labelled commit, review.json and 7c4ff6b are kept in history, and this write records --next implement. Findings and severities are unchanged."
+    by: baton-review
+  - id: D34
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 7380fcd7cfb7067f413aaec965602bd47fd849edba7667e6ef1e8781b7d981d0
+    x-base-commit: dea5807d5a7e343059837ddf67e85d8d3e55f79d
+    by: baton
+  - id: D35
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: ad64d197c9caa4f85c3d042bfb32060a0683c2c0
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -354,8 +298,15 @@ history:
     x-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
     commit: 292d7b1
     x-action: write
-updated_at: 2026-11-05T11:05:06.570Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-11-05T11:28:55.320Z
+    by: baton-review
+    writer: d7572f831ab8a8df18779f03ecf1a33e4ca3f9b1ba6c4702b95ba1c124ca004e
+    x-worktree: 3a89c9d1ee435b7c5e7b9076c65570e45b4bd6164d59351b51a934d0cbc2f86e
+    commit: ad64d19
+    x-action: write
+updated_at: 2026-11-05T11:28:55.310Z
+updated_by: baton-review
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
@@ -443,6 +394,9 @@ analysis:
 x-implementation-writer: 5f00924a333f2145b5cc3d08b5263dc13be579de2a88786886896cbca9be8a7d
 x-implementation-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
 x-implementation-cycle: f3818ec7e86915e958459653b87fbc41a64de460a7e7220f7345cb8a2a9ae8c3
+review:
+  findings_path: specs/004-speckit-1-3-0-migration/review.json
+  blocking_findings: 0
 ---
 
 ## Goal
