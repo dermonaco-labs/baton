@@ -2,26 +2,31 @@
 baton: 1
 lane: quick
 feature: release-015
-phase_completed: land
-next_phase: compound
-next_owner: ce-compound
-status: ready
+phase_completed: compound
+next_phase: done
+next_owner: none
+status: done
 model_role: planning
 suggested_model: claude-opus-5.5
-summary: "Independent LAND received the exact reviewed v0.1.5 candidate (review receipt 6c12e0b over candidate 843884e) in a separate fresh checkout. handoff receive ran the configured npm run check with exit 0; global validate and git diff --check exit 0. Opened a release-preparation PR against main titled chore(release): prepare v0.1.5. Only LAND bookkeeping is published after review; no subject changes. No merge, tag, release publication or workflow dispatch; PR acceptance and later tag/publication each require separate human approval."
+summary: "Compound recorded for release-015 after the PR #59 review gate was approved by repository owner via control-plane delegation. One durable learning was captured in docs/solutions: fresh-checkout land prerequisites (unshallow, npm ci, two nested full checks across receive and write, validate --path, receipt publication). PR #59 is still open and unmerged. No merge, tag, release publication or workflow dispatch is implied."
 read_first:
+  - path: docs/solutions/fresh-checkout-land-prerequisites-2026-11-05.md
+    why: Fresh-checkout land prerequisites and check budgeting learned from release-015
   - path: .baton/quick/release-015.md
-    why: Release scope, decisions and review base
-  - path: CHANGELOG.md
-    why: Promoted release notes and pinned upstream versions
-  - path: .github/workflows/smoke.yml
-    why: macOS-only local-checks coverage
+    why: Release scope, decisions and land receipt
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: pr-opened
+  - id: compound-recorded
     met: true
-    evidence: https://github.com/dermonaco-labs/baton/pull/59
+    evidence: "any_of: 1/2 met"
+    members:
+      - id: artifact-exists:docs/solutions/*.md
+        met: true
+        evidence: docs/solutions/*.md
+      - id: decision:skip-compound
+        met: false
+        evidence: No reasoned skip-compound decision
 open_questions: []
 decisions:
   - id: D1
@@ -73,10 +78,14 @@ decisions:
     tag: diff-base
     x-base-commit: 843884e862e13e4ff2779542a8a2d8b16df4fb5a
     by: baton
+  - id: D11
+    decision: Record release-015 learnings in docs/solutions
+    rationale: "Captured with ce-compound: docs/solutions/fresh-checkout-land-prerequisites-2026-11-05.md (knowledge track, workflow_issue). Related-doc overlap is low against quick-lane-scope-and-stranded-land and per-checkout-identity-self-review, so a new doc was created; no refresh is needed. Flat layout because the compound exit glob docs/solutions/*.md does not match category subdirectories. The AGENTS.md discoverability check does not apply because the repository has no AGENTS.md."
+    by: ce-compound
 gate:
-  required: true
-  approved_by: repository owner via control-plane delegation
-  approved_at: 2026-11-05
+  required: false
+  approved_by: null
+  approved_at: null
 history:
   - phase: work
     at: 2026-11-05T14:58:04.047Z
@@ -106,8 +115,15 @@ history:
     x-worktree: 940b7f9ce73a060e0ce44e5e270b75651d547264041189e9a0a78b3e43ec7bd4
     commit: 8aab337
     x-action: approve
-updated_at: 2026-11-05T15:21:58.805Z
-updated_by: human:repository-owner
+  - phase: compound
+    at: 2026-11-05T15:23:01.394Z
+    by: baton
+    writer: 9cbe1430e26a0b53b803cce098c55db7ce994ffe7e27cb10d2e07e2591e85193
+    x-worktree: 940b7f9ce73a060e0ce44e5e270b75651d547264041189e9a0a78b3e43ec7bd4
+    commit: cf1650b
+    x-action: write
+updated_at: 2026-11-05T15:23:01.388Z
+updated_by: ce-compound
 risks:
   - id: R1
     text: The macOS runner can exercise the real Darwin process-group behavior only after a separately approved tag or workflow dispatch; local Linux tests cover injected-dependency paths.
