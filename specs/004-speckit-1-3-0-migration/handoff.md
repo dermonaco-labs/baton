@@ -147,8 +147,8 @@ decisions:
     by: baton
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-11-05
 history:
   - phase: specify
     at: 2026-11-05T09:15:49.859Z
@@ -199,8 +199,15 @@ history:
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
     commit: dea5807
     x-action: write
-updated_at: 2026-11-05T09:45:52.454Z
-updated_by: speckit-analyze
+  - phase: analyze
+    at: 2026-11-05T09:46:39.458Z
+    by: human:repository-owner
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 17ff3ab
+    x-action: approve
+updated_at: 2026-11-05T09:46:39.458Z
+updated_by: human:repository-owner
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
