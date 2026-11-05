@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 003-upstream-upgrade-prs
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Review 7 of 2842437 (base 4504d15): F37-F39 verified fixed; trusted-mode binding accepts the committed-tree identity candidate and rejects unchanged-bytes 100755 at package and publish. No open findings. 71/71 targeted, AC 34/15/7."
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: "Opened development PR #57 (head dermonaco-review-upstream-upgrade-prs at a5a095c, base main) after clean review 7 (F01-F39 fixed). npm run check exit 0 (674 tests, 672 pass, 0 fail, 2 skipped on Windows) and validate 0. Not merged; human PR review required."
 read_first:
   - path: specs/003-upstream-upgrade-prs/review.json
     why: Review 6 findings F37-F39 being answered
@@ -51,12 +51,9 @@ artifacts:
     sha256: 4eb06fb88cd1eb647ee4ad872cd56cbea5bc246eb806bfe60f36a8d4009c2b6e
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: specs/003-upstream-upgrade-prs/review.json
-  - id: findings-mapped-to-tasks-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
+    evidence: https://github.com/dermonaco-labs/baton/pull/57
 open_questions: []
 decisions:
   - id: D-ATV-REF
@@ -484,18 +481,15 @@ decisions:
     tag: diff-base
     x-base-commit: 28424374ab12ea1ddf3692ce8f289ac5f560c3b7
     by: baton
+  - id: D-LAND-PR-OPEN
+    decision: Open the development PR against main without merging
+    rationale: The user selected opening the development PR after the clean review summary, relayed by the coordinator; this is not approval to merge, change settings, tag, release or dispatch workflows. The land-receive check first failed because uvx could not reach the public Python index; it passed with the configured package mirror and no source change.
+    by: land-session
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
-  - phase: implement
-    at: 2026-11-04T14:16:32.478Z
-    by: baton
-    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
-    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
-    commit: f49cef6
-    x-action: write
   - phase: review
     at: 2026-11-04T14:31:26.857Z
     by: baton
@@ -629,8 +623,15 @@ history:
     x-worktree: 1120c1fe4b49f379216b96f088cabbbc8d3a3bc5e0a57f65923e9d5dbcc38de1
     commit: "2842437"
     x-action: write
-updated_at: 2026-11-04T18:57:20.502Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-11-05T08:39:34.624Z
+    by: baton
+    writer: fc349b629fe48de111a1050f706498a02e35d3cf47eddbe0bf86cb880e5efec5
+    x-worktree: 1120c1fe4b49f379216b96f088cabbbc8d3a3bc5e0a57f65923e9d5dbcc38de1
+    commit: a5a095c
+    x-action: write
+updated_at: 2026-11-05T08:39:34.610Z
+updated_by: baton-land
 risks:
   - id: R-UPSTREAM-EXEC
     text: Generation executes upstream Spec Kit code; it must run without write credentials and publication must not execute upstream content.
@@ -716,6 +717,9 @@ x-implementation-cycle: 7c7c4252238c572fa48e5b40343a68c0d4f5a0d5520386ad93ee8cae
 review:
   findings_path: specs/003-upstream-upgrade-prs/review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/57
+  number: 57
 ---
 ## Goal
 
