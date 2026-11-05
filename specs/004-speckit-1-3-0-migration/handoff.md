@@ -2,16 +2,16 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Review-1 correction pass at 8099026 (FF from review head 3b6c71e). Fixed with regression tests: F01 (owner-approved narrow T026/D7 update.mjs fallback exception), F02/F05, F03, F04, F06, F08, F09, F10. F07 deferred to release preparation by user decision. No tasks/spec/plan edits; next is a fresh review of the corrections."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Review 2 of the review-1 corrections at 729ecac (base ad64d19, D35): no P0/P1; F01-F06 and F08-F10 verified fixed; F07 stays open under the user-directed deferral D41. New P2 F11 (F01 fix regression on the offline ps/py 1.0.11 issues upgrade) and P3 F12-F16 are open and mapped. The user chose to fix F11 and return to implement, extending the fallback exception (D47)."
 read_first:
   - path: specs/004-speckit-1-3-0-migration/review.json
-    why: Review-1 findings F01-F10 that this pass addresses; update dispositions against D36-D45
+    why: "Review-2 findings: fix F11 under D47; F12-F16 open P3s mapped to T008/T025/T013/T030; F07 deferred (D41)"
   - path: specs/004-speckit-1-3-0-migration/tasks.md
     why: T001-T031 and the Acceptance Registry (unchanged)
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
@@ -48,86 +48,9 @@ artifacts:
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
 entry_checked: []
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
-    met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      ned rows keep their install target, provenance, license and shape; hashes match the written bytes (827.229259ms)
-        ✔ new rows may not collide with each other or with kept rows in any letter case (9.038683ms)
-        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (1.455159ms)
-        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (7.187135ms)
-      ✔ upstream candidates speckit and atv row ownership policy (1061.011364ms)
-      ▶ upstream candidates lifecycle
-        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.246175ms)
-        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (0.68721ms)
-        ✔ a human-edited candidate with a newer pin waits for the human (0.896951ms)
-        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (2.673628ms)
-        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.546291ms)
-        ✔ a human close suppresses exactly that pin; a newer pin generates again (1.222404ms)
-        ✔ the automation obsolete close never suppresses (0.314416ms)
-        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (0.899414ms)
-      ✔ upstream candidates lifecycle (7.855337ms)
-      ▶ upstream candidates Spec Kit github extension trust (feature 004)
-        ✔ stored extension files under a pack install root are trusted like BOUND_ROOTS (10.52ms)
-        ✔ a lock row carrying x-speckit-extension is trusted in either lock (11.676006ms)
-        ✔ x-speckit-extension is frozen on existing rows (16.455078ms)
-        ✔ the Baton wrapper may not become a Spec Kit lock row (2.921555ms)
-        ✔ regenerated ordinary core rows stay outside the narrowed trust (6.049487ms)
-        ✔ x-speckit-extension appears only on issues-pack extension rows, always as github (1.065952ms)
-      ✔ upstream candidates Spec Kit github extension trust (feature 004) (49.019091ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (371.949783ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (121.089808ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (95.016146ms)
-        ✔ E_ANALYSIS_CRITICAL (3.300998ms)
-        ✔ E_ANALYSIS_MISSING (2.380012ms)
-        ✔ E_APPROVER_FORMAT (3.764406ms)
-        ✔ E_BLOCKING_OPEN (2.31839ms)
-        ✔ E_BODY_SECTIONS (2.373492ms)
-        ✔ E_BUDGET (4.217789ms)
-        ✔ E_DENYLIST (2.487542ms)
-        ✔ E_EXIT_UNMET (2.088809ms)
-        ✔ E_GATE_PENDING (22.360591ms)
-        ✔ E_LANE_ESCALATE (112.278762ms)
-        ✔ E_LANE_MISMATCH (6.689937ms)
-        ✔ E_MISSING_ARTIFACT (4.103449ms)
-        ✔ E_MODEL_NOT_ALLOWED (6.376072ms)
-        ✔ E_MULTIPLE_BATONS (5.052467ms)
-        ✔ E_NO_PREREG (6.352637ms)
-        ✔ E_OWNER (2.509373ms)
-        ✔ E_PR_MISSING (3.876793ms)
-        ✔ E_REVIEW_BLOCKING (45.509833ms)
-        ✔ E_REVIEW_MISSING (6.372386ms)
-        ✔ E_SCHEMA (14.10444ms)
-        ✔ E_STALE_ARTIFACT (3.026121ms)
-        ✔ E_TRANSITION (5.268899ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (401.863152ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (100.900188ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (22.731882ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (78.776708ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (10.314937ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (105.609365ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (87.984211ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (0.591047ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (7.437898ms)
-      ✔ ready with a blocking question is rejected (79.349848ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (135.781749ms)
-      ℹ tests 705
-      ℹ suites 10
-      ℹ pass 694
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 11
-      ℹ todo 0
-      ℹ duration_ms 170079.518263
+    evidence: specs/004-speckit-1-3-0-migration/review.json
 open_questions: []
 decisions:
   - id: D1
@@ -317,6 +240,31 @@ decisions:
     decision: No tasks.md, spec.md or plan.md edits for the correction pass
     rationale: Findings map to existing tasks (T025, T030, T004, T022, T013, T027, T008, T016); editing hashed artifacts would reset the approved pre-code gate. Dispositions are recorded as decisions D36-D44 for the next review.
     by: speckit-implement
+  - id: D46
+    decision: Review 2 recorded against the exact CLI base ad64d19 (D35) after unshallowing the review clone
+    rationale: "Independent worktree at 729ecac; receive OK, no E_SELF_REVIEW. The depth-1 clone was unshallowed so ad64d19, dba6cea and dea5807 are reachable; no merge-base was recomputed. handoff scope reports 14 CLI subjects, a strict subset of the 18-file pinned tracked diff ad64d19..729ecac; ce-review base and reviewed file set equal the CLI base and the 18-file set. The full 64-file feature scope was covered by review 1 (D32/D34). Installed personas only: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher, adversarial."
+    by: baton-review
+  - id: D47
+    decision: Fix F11 and route review 2 to implement; the update fallback exception (D36) is extended to preserve the adopter's existing working skill when its script-calling delegate is skipped and missing
+    rationale: "User decision relayed by the coordinator, choosing to fix F11 before landing and explicitly authorizing this extension of the narrow T026/D7 fallback exception. Scope stays limited to the unavailable-generator fallback: when the issues-pack delegate .github/skills/speckit-github-taskstoissues/SKILL.md is skipped and absent, keep the existing .github/skills/speckit-taskstoissues/SKILL.md rather than overwriting it with the alias, with a UV_OFFLINE ps/py 1.0.11 issues upgrade regression test. F12-F16 are open P3s for the implementer's discretion within their mapped tasks."
+    by: baton-review
+  - id: D48
+    decision: F07 remains deferred to release preparation (D41)
+    rationale: User-directed deferral preserved; review 2 judged the recorded disposition adequate. CHANGELOG.md and .baton/quick/release-014.md stay untouched; release prep should cover both the bounded reap wait (D31) and the Darwin EPERM/ps confirmation (D37).
+    by: baton-review
+  - id: D49
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: bd76e8e34f6d3cea187416fdfd96b95bd90f3ad5ea2ad8772e6ba323547215d1
+    x-base-commit: ad64d197c9caa4f85c3d042bfb32060a0683c2c0
+    by: baton
+  - id: D50
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 729ecac81e2d4369832f3f4ed19659c6debc2a70
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -413,8 +361,15 @@ history:
     x-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
     commit: "8099026"
     x-action: write
-updated_at: 2026-11-05T11:43:14.477Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-11-05T11:59:36.718Z
+    by: baton-review
+    writer: 158e1476ecedc36637831c971d650850d2e4b522f18f4f32db46ad0fd4df23b1
+    x-worktree: a19401dbf164393d6cf7d3e8e6b82100e4c8bdf3a78f19d128a479b96abc39c7
+    commit: 729ecac
+    x-action: write
+updated_at: 2026-11-05T11:59:36.710Z
+updated_by: baton-review
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
