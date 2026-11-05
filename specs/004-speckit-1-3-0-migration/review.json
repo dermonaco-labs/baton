@@ -3,11 +3,20 @@
   "source": {
     "engine": "ce-review",
     "mode": "headless",
-    "run_artifact": ".context/compound-engineering/ce-review/004-speckit-1-3-0-migration-review2-20261105/report.md",
-    "x-scope": "Independent review 2 (fresh re-review of the review-1 corrections) of 729ecac81e2d4369832f3f4ed19659c6debc2a70 in a separate worktree on its own review branch; receive OK, no E_SELF_REVIEW. The depth-1 clone was unshallowed so the CLI-recorded diff-base ad64d197c9caa4f85c3d042bfb32060a0683c2c0 (decision D35, written by review 1) is a reachable ancestor; no merge-base was recomputed. handoff scope --json base = ad64d19; CLI subject set = 14 files; pinned tracked diff ad64d19..729ecac = 18 files (CLI set plus .baton/bin/baton.mjs{,.metafile.json,.sha256} and specs/004 handoff.md), no untracked files; CLI set is a strict subset. ce-review base = CLI base; reviewed file set = the 18-file pinned set (generated bundle verified against src by build --check rather than line review). No headless auto-fix was applied, so scope did not change. The governed full-feature scope dea5807..dba6cea (64 files) was covered by review 1 (reviewed-tree D34); this pass covers the D35 delta, which contains every correction commit (3b6c71e, 8099026, 729ecac).",
-    "x-checks": "New checks only, no full-suite rerun (full npm run check at 8099026: 705 tests, 694 pass, 0 fail, 11 skipped, per handoff): build --check exit 0 (bundle matches src); lock verify OK; sha256 of baton/upstream/specify-cli.requirements.txt = 6b4fd91586cfa44f8dfbd496e00036928e87efac679d0d02bd2a5ba4c5d77b68 = lock requirements_sha256 and header has no absolute path; git diff --name-only ad64d19 shows CHANGELOG.md, .baton/quick/* and spec/plan/tasks untouched. F11 and F12 were confirmed by the orchestrator reading update.mjs:126-160, packs/issues.yml, the alias SKILL.md, and sync.mjs:460-462/505-511.",
-    "x-personas": "Selected and dispatched only from the installed .github/agents list: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher (always-on); adversarial (>=50 changed src lines in process cleanup and the update fallback). security-reviewer installed but not selected: the delta changes no trust binding, auth, permission or input boundary. repo-research-analyst is installed but is not a review persona. agent-native and learnings reported no findings.",
-    "x-verdict": "Ready with fixes. No P0 or P1. F01-F06 and F08-F10 verified fixed. New open P2 F11 (regression introduced by the F01 fix on the 1.0.11 offline ps/py issues upgrade path); its fix extends update behaviour beyond the owner's narrow T026/D7 exception, so routing needs an owner decision. New P3 F12-F16 open and mapped. F07 remains open under the owner's deferral D41.",
+    "run_artifact": ".context/compound-engineering/ce-review/004-speckit-1-3-0-migration-review3-20261105/report.md",
+    "x-scope": "Independent review 3 (fresh re-review of the review-2 corrections) of 87b1e9fe6c346a498ab949305c9f3aa1d128a6a9 in a separate worktree on its own branch; HEAD verified before start; receive OK, no E_SELF_REVIEW. The clone lacked the recorded base, so origin history was fetched; no merge-base was recomputed. handoff scope --json base = 729ecac81e2d4369832f3f4ed19659c6debc2a70 (D50); CLI subject set = 11 files; pinned tracked diff 729ecac..87b1e9f = 16 files (CLI set plus .baton/bin/baton.mjs{,.metafile.json,.sha256} and specs/004 handoff.md and review.json), no untracked files; CLI set is a strict subset. ce-review base = CLI base; reviewed file set = the 16-file pinned set (generated bundle verified by build --check and its .sha256 rather than line review). Effort focused on the correction diff 88a31e3..87b1e9f (66e4c97 code, 87b1e9f handoff only). No headless auto-fix was applied, so scope did not change.",
+    "x-checks": "Targeted only (full npm run check already green at 66e4c97 per handoff: 712 tests, 701 pass, 0 fail, 11 skipped): node src/commands/build.mjs --check exit 0; sha256(.baton/bin/baton.mjs) = .baton/bin/baton.mjs.sha256 = 3137404f...a93; lock verify OK; validate exit 0 (pre-existing W_QUICK_LARGE only); node --test test/unit/{requirements,sync,upstream-candidates,local-checks}.test.mjs = 77 pass, 0 fail; node --test --test-name-pattern=fallback test/integration/update.test.mjs = 4 pass (F11 ps/py, CLI-hash ps/py); node --test --test-name-pattern=F39 test/integration/init.test.mjs = 3 pass. Mutation runs in a throwaway worktree (removed afterwards): dropping the owner check, the alias guard or the script-path exemption each fails the fallback tests. git diff -U0 0f68b07 -- test/unit/upstream-candidates.test.mjs removes 3 lines (11, 748, 1148) -> F17.",
+    "x-personas": "Selected and dispatched once each, only from the installed .github/agents list: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher (always-on); adversarial (update fallback mutates adopter files). security-reviewer installed but not selected: the delta changes no trust binding, auth, permission or input boundary. repo-research-analyst is installed but is not a review persona. agent-native reported no gaps.",
+    "x-verdict": "Ready with fixes. No P0 or P1. F11, F12-F16 and the CLI-hash bug verified fixed. New open P2 F17 (unauthorized edits to the frozen feature-003 test, fixable by reverting without owner input) and P3 F18-F20 mapped to tasks. F07 remains open under the user deferral (D41/D48). Route to implement.",
+    "x-d58": "The macOS-smoke local-checks P3 deferral (D58) is consistent with approved scope (no task covers .github/workflows/smoke.yml) but is an implementer decision, not owner-directed, and D58 overstates D3 (D3 excludes dispatch, not edits). Not raised as a finding; needs owner acknowledgement at the PR-review gate.",
+    "x-residual-risks": "fallbackAliases is hand-maintained (no check that pack aliases are listed). Skipped alias/unrefreshed paths do not clear stale .baton/conflicts/*.new files. D56 adds an unregistered refusal in regenerateRequirements (plausibly within T013). Without ps, reaping returns silently at the deadline (R11).",
+    "x-testing-gaps": "No offline-then-online sequence test; no dry-run or user-modified-legacy test of the alias guard; Windows forward-slash root branch of the machine-local check untested; the sync() spy test would fail on the missing lock before reaching deps if validation were removed.",
+    "x-review2": {
+      "x-scope": "Independent review 2 (fresh re-review of the review-1 corrections) of 729ecac81e2d4369832f3f4ed19659c6debc2a70 in a separate worktree on its own review branch; receive OK, no E_SELF_REVIEW. The depth-1 clone was unshallowed so the CLI-recorded diff-base ad64d197c9caa4f85c3d042bfb32060a0683c2c0 (decision D35, written by review 1) is a reachable ancestor; no merge-base was recomputed. handoff scope --json base = ad64d19; CLI subject set = 14 files; pinned tracked diff ad64d19..729ecac = 18 files (CLI set plus .baton/bin/baton.mjs{,.metafile.json,.sha256} and specs/004 handoff.md), no untracked files; CLI set is a strict subset. ce-review base = CLI base; reviewed file set = the 18-file pinned set (generated bundle verified against src by build --check rather than line review). No headless auto-fix was applied, so scope did not change. The governed full-feature scope dea5807..dba6cea (64 files) was covered by review 1 (reviewed-tree D34); this pass covers the D35 delta, which contains every correction commit (3b6c71e, 8099026, 729ecac).",
+      "x-checks": "New checks only, no full-suite rerun (full npm run check at 8099026: 705 tests, 694 pass, 0 fail, 11 skipped, per handoff): build --check exit 0 (bundle matches src); lock verify OK; sha256 of baton/upstream/specify-cli.requirements.txt = 6b4fd91586cfa44f8dfbd496e00036928e87efac679d0d02bd2a5ba4c5d77b68 = lock requirements_sha256 and header has no absolute path; git diff --name-only ad64d19 shows CHANGELOG.md, .baton/quick/* and spec/plan/tasks untouched. F11 and F12 were confirmed by the orchestrator reading update.mjs:126-160, packs/issues.yml, the alias SKILL.md, and sync.mjs:460-462/505-511.",
+      "x-personas": "Selected and dispatched only from the installed .github/agents list: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher (always-on); adversarial (>=50 changed src lines in process cleanup and the update fallback). security-reviewer installed but not selected: the delta changes no trust binding, auth, permission or input boundary. repo-research-analyst is installed but is not a review persona. agent-native and learnings reported no findings.",
+      "x-verdict": "Ready with fixes. No P0 or P1. F01-F06 and F08-F10 verified fixed. New open P2 F11 (regression introduced by the F01 fix on the 1.0.11 offline ps/py issues upgrade path); its fix extends update behaviour beyond the owner's narrow T026/D7 exception, so routing needs an owner decision. New P3 F12-F16 open and mapped. F07 remains open under the owner's deferral D41."
+    },
     "x-review1": {
       "x-scope": "Independent review 1 of candidate dba6ceac27b13722449c4afc77ac7d9b2af653f0 in a separate worktree on its own review branch (receive OK, no E_SELF_REVIEW). The shallow clone was unshallowed so the CLI-recorded base dea5807d5a7e343059837ddf67e85d8d3e55f79d (decision D20) is a reachable ancestor; no merge-base was recomputed. Pinned tracked diff dea5807..dba6cea = 64 files, no untracked files; handoff scope CLI subject set = 52 files, a strict subset (12 extra pinned files: .baton/bin/baton.mjs{,.metafile.json,.sha256}, .baton/manifest.json, .baton/quick/release-014.md, .baton/quick/release-records-docs-a7.md, .baton/template-cleanup.yml, specs/001 and 002 handoff.md, specs/004 analysis.md, handoff.md and tasks.md). ce-review base = CLI base; reviewed file set = the 64-file pinned set. Includes user-approved commit 292d7b1 (local-checks terminateTree).",
       "x-checks": "Targeted only, no full suite and no CI or workflow dispatch: node --test on test/unit/{issues-wrapper,packs,relay-hooks,schema,sync,upstream-candidates,local-checks}.test.mjs and test/integration/{init,update,upstream-upgrade}.test.mjs = 151 pass, 0 fail, 0 skipped; build --check OK; sync --check OK (public PyPI reachable here); lock verify OK; validate exit 0 (pre-existing W_QUICK_LARGE warnings only); git diff --check dea5807 clean. Orchestrator verified F02 against Darwin killpg semantics (zombie-only group returns EPERM) and the macos-latest smoke job, and verified F01 by reading update.mjs:137 against the github skill bytes and the 1.0.11 fixture, which the old skip did match.",
@@ -15,12 +24,10 @@
       "x-verdict": "Ready with fixes. No P0 or P1. Open P2 items: F01, F02 and F03."
     },
     "x-pre-existing": "project-standards (P3, 0.65): handoff.md body 'What changed'/'Next steps' still describe the pre-code state ('No code has been written', '1. Human pre-code gate') while the frontmatter is past implement; stale since the first implement write, not introduced by this delta.",
-    "x-learnings": "docs/solutions restricted-mirror-env-only, per-checkout-identity-self-review and crlf-normalized-ownership-hashing are honoured by F06 (no machine-local path, raw-byte requirements hash); each recommends an absence regression test, which is still missing (see testing gaps).",
-    "x-testing-gaps": "No test asserts the requirements header has no absolute path or that regenerateRequirements passes root-relative paths (testing, maintainability, learnings). prepareSpeckitExtension's non-UpstreamError wrap branch is untested. local-checks tests that call real ps fail rather than skip on POSIX hosts without procps. No UV_OFFLINE ps/py test starts from a 1.0.11 issues install (F11).",
-    "x-residual-risks": "D37 behaviour change: a member left live after SIGKILL (Linux D-state) now turns a timeout into E_CHECK_FAILED after reapWaitMs instead of returning silently (intended). With EPERM and live members, ps (10s timeout) runs per 20ms iteration outside the deadline, so the wait can overshoot reapWaitMs by roughly one ps runtime. W_SCRIPT_UNREFRESHED text says script-calling files were preserved, which F11 shows is not true for the 1.0.11 issues upgrade."
+    "x-learnings": "restricted-mirror-env-only and crlf-normalized-ownership-hashing honoured; quick-lane-scope-and-stranded-land (scope discipline) violated by F17."
   },
-  "base": "ad64d197c9caa4f85c3d042bfb32060a0683c2c0",
-  "head": "729ecac81e2d4369832f3f4ed19659c6debc2a70",
+  "base": "729ecac81e2d4369832f3f4ed19659c6debc2a70",
+  "head": "87b1e9fe6c346a498ab949305c9f3aa1d128a6a9",
   "personas": [
     "correctness-reviewer",
     "testing-reviewer",
@@ -137,7 +144,7 @@
       "confidence": 0.6,
       "task": "T027",
       "disposition": "open",
-      "reason": "Still open by owner decision D41: deferred to release preparation, where the entry for the POSIX reap fix is added; CHANGELOG.md is hash-bound by .baton/quick/release-014.md and is untouched in this delta. Review 2 judged the recorded disposition adequate (role-attributed decision, concrete reason, named destination). Release prep should make the entry cover both the bounded reap wait (D31) and the Darwin EPERM/ps confirmation (D37).",
+      "reason": "User-directed deferral to release preparation (D41/D48), re-confirmed by the review-3 brief; CHANGELOG.md and release-014 untouched. Release prep should cover D31, D37 and consider D58.",
       "x-fix": "Add a '### Fixed' item under [Unreleased] for the bounded process-group reap wait after a timed-out local check (POSIX).",
       "x-review1-disposition": "open",
       "x-review1-reason": "CONTRIBUTING.md asks for a relevant changelog entry with each change. Commit 292d7b1 changes the bundled CLI's POSIX timeout cleanup (a bounded reap wait), but [Unreleased] covers only the Spec Kit bump."
@@ -197,8 +204,8 @@
       "persona": "adversarial-reviewer",
       "confidence": 0.78,
       "task": "T025",
-      "disposition": "open",
-      "reason": "Introduced by the F01 correction. When the fallback stages sh, the delegate .github/skills/speckit-github-taskstoissues/SKILL.md now matches callsBashScripts and is skipped, but a 1.0.11 adopter has no delegate yet, so nothing is preserved. The Baton alias at .github/skills/speckit-taskstoissues/SKILL.md (packs/issues.yml:14, from: baton) calls no bash script, so it passes the skip and overwrites the adopter's managed, unmodified ps/py-flavoured 1.0.11 skill. After update, /speckit-taskstoissues reports the delegate is not installed while the manifest lists issues, and W_SCRIPT_UNREFRESHED says script-calling files were preserved. Before the correction the bash delegate was at least installed. Transient until a non-fallback update. Fixing it extends update fallback behaviour beyond the owner's narrow T026/D7 exception (D36), so it needs an owner decision.",
+      "disposition": "fixed",
+      "reason": "Verified in review 3: update.mjs:146-157 skips the alias with a per-file W_SCRIPT_UNREFRESHED when its delegate is skipped and absent (D47/D51); F11 ps/py tests pass and fail when the guard is removed (mutation run).",
       "x-evidence": "update.mjs:88-94 sets scriptFallback and stages sh; update.mjs:137-138 skips entries whose staged bytes call bash scripts; packs/issues/files/.github/skills/speckit-github-taskstoissues/SKILL.md:59 calls .specify/extensions/github/scripts/bash/resolve-tasks.sh; packs/issues/files/.github/skills/speckit-taskstoissues/SKILL.md:9-15 stops with 'not installed' when the delegate is absent; update.mjs:139-160 overwrites a managed file whose hash matches the old row. update.test.mjs's ps/py fallback test starts from a 1.3.0 install where the delegate exists; the 1.0.11 issues upgrade test (~179-208) is sh only. Confirmed by orchestrator code reading; not executed (needs a live 1.0.11 ps install).",
       "x-fix": "Within the fallback branch only: when a script-calling issues-pack delegate is skipped and absent in root, also skip (or report as a conflict) its alias so the 1.0.11 skill stays until a full update; add a UV_OFFLINE ps/py variant of the 1.0.11 issues upgrade test asserting no orphaned alias. Needs owner approval as an extension of the D36 exception.",
       "x-route": "gated_auto -> downstream-resolver, requires verification and an owner decision"
@@ -212,8 +219,8 @@
       "persona": "correctness-reviewer",
       "confidence": 0.82,
       "task": "T008",
-      "disposition": "open",
-      "reason": "D42's dedicated E_UPSTREAM_VERIFY '<pack>: unsupported Spec Kit extension <id>: <path>' only fires when prepareEntries is called directly. In sync(), the prepareEntries arguments call use.prepareSpeckitExtension for every packExtensionIds id first (sync.mjs:460-462), which throws E_USAGE 'Unsupported Spec Kit extension: <id>' (upstream.mjs:113), mapped to exit 2 (sync.mjs:509). It still fails closed, but as a usage error without the pack or file. The from!=='speckit' check likewise runs only after specify extension add. The sync.test case calls prepareEntries directly.",
+      "disposition": "fixed",
+      "reason": "Verified in review 3: validatePackExtensions runs in sync() before any dependency (sync.mjs:412); spy test covers default, --check and --bump (D54).",
       "x-evidence": "Raised by correctness (0.72); maintainability noted the same unreachability as a residual risk; confidence boosted for agreement. Confirmed by orchestrator at sync.mjs:460-462 and 505-511.",
       "x-fix": "Validate every pack extension entry (from speckit, id in SPECKIT_EXTENSIONS) once in sync() right after packExtensionIds(packs), before preparing trees; add a sync()-level test with injected deps.",
       "x-route": "gated_auto -> downstream-resolver, requires verification"
@@ -227,8 +234,8 @@
       "persona": "testing-reviewer",
       "confidence": 0.88,
       "task": "T025",
-      "disposition": "open",
-      "reason": "resolve-tasks.sh self-references .specify/extensions/github/scripts/bash/ (line 127), so callsBashScripts is true for the script itself and only the new path exemption keeps it installable in fallback. In the UV_OFFLINE ps/py test the script is already installed and identical to the stage, so the fallback writes nothing with or without the exemption.",
+      "disposition": "fixed",
+      "reason": "Verified in review 3: the CLI-hash fallback test refreshes resolve-tasks.sh and fails when the isSpeckitScriptPath exemption is removed (mutation run) (D53).",
       "x-evidence": "Raised by testing (0.78); correctness and maintainability listed the same gap; confidence boosted for agreement. test/integration/update.test.mjs:385-394 asserts only the warning, manifest script, core scriptReference and the issues skill.",
       "x-fix": "Before the UV_OFFLINE run, remove or change resolve-tasks.sh and its manifest row, then assert the fallback reinstalls it and records its sha; or unit-test the skip predicate.",
       "x-route": "manual -> downstream-resolver, requires verification"
@@ -242,8 +249,8 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.65,
       "task": "T025",
-      "disposition": "open",
-      "reason": "The script-layout rule is now spread over callsBashScripts (init.mjs:55-57, content), the inline path regex at update.mjs:137, and startsWith checks at update.mjs:126/131 and init.mjs:196. Why script files are exempt is explained only in D36.",
+      "disposition": "fixed",
+      "reason": "Verified in review 3: init.mjs builds callsBashScripts and isSpeckitScriptPath from one scriptDirectory fragment; update.mjs uses isSpeckitScriptPath (D53).",
       "x-fix": "Add a named path predicate next to callsBashScripts (e.g. isSpeckitScriptPath) built from the same fragment, use it in update.mjs:137 with a one-line comment.",
       "x-route": "manual -> downstream-resolver, requires verification"
     },
@@ -256,8 +263,8 @@
       "persona": "maintainability-reviewer",
       "confidence": 0.7,
       "task": "T013",
-      "disposition": "open",
-      "reason": "The F06 fix passes literal root-relative paths to uv while input/output (upstream.mjs:246-247) are still joined separately and used to write, read, verify and restore. If one spelling changes, uv writes one file while the function verifies another. sync.mjs:16 and candidate-bindings.mjs REQUIREMENTS_IN already name these paths.",
+      "disposition": "fixed",
+      "reason": "Verified in review 3: SPECKIT_REQUIREMENTS is the single spelling in upstream/sync/lock; see F17 for the feature-003 test edit this refactor introduced (D55).",
       "x-fix": "Define the relative paths once and derive input/output with join(root, ...rel.split('/')); pass the relative forms to uv. Add the header absence assertion recommended by docs/solutions.",
       "x-route": "safe_auto -> review-fixer, requires verification; not applied (Baton review does not implement fixes)"
     },
@@ -270,10 +277,58 @@
       "persona": "project-standards-reviewer",
       "confidence": 0.62,
       "task": "T030",
-      "disposition": "open",
-      "reason": "local-checks.mjs:81 'if (expired) return;' treats a still-signalable group as gone when ps cannot run (unchanged D31 behaviour, tested as 'without ps the wait stays bounded and silent'), but D37 lists only the other outcomes and R10 calls the ps dependency 'deliberately fail-safe', which holds only for the EPERM path. Constitution III/V: the baton must describe partial results as partial.",
+      "disposition": "fixed",
+      "reason": "Verified in review 3: local-checks.mjs:81 comments the silent deadline return and R11 records the residual risk (D57).",
       "x-fix": "At the next handoff write, append a decision or risk stating the deadline-without-ps silent return.",
       "x-route": "advisory -> downstream-resolver"
+    },
+    {
+      "id": "F17",
+      "severity": "P2",
+      "title": "F15 refactor modifies two more feature-003 test lines than owner decision A allows, invalidating the SC-006/AC-US3-4 evidence",
+      "file": "test/unit/upstream-candidates.test.mjs",
+      "line": 748,
+      "persona": "correctness-reviewer, testing-reviewer, project-standards-reviewer, learnings-researcher",
+      "confidence": 1,
+      "task": "T029",
+      "disposition": "open",
+      "reason": "git diff -U0 0f68b07 -- test/unit/upstream-candidates.test.mjs removes lines 11 (import) and 748 (REQUIREMENTS_TXT literal pin replaced by a weaker SPECKIT_REQUIREMENTS.output token check) besides the authorized line 1148; both introduced by 66e4c97. Owner decision A, T009, T029 and AC-US3-4 allow only line 1148; D55/D59 self-assess equivalence without an owner decision (Constitution V). Fix without owner input: restore lines 11 and 748 byte-for-byte, keep the quoted literal in sync.mjs lockedRequirements, and pin lockedRequirements === SPECKIT_REQUIREMENTS.output with an added sync.test.mjs assertion; then re-run the T029 diff check. Amending decision A instead needs an explicit owner decision."
+    },
+    {
+      "id": "F18",
+      "severity": "P3",
+      "title": "No test refreshes the taskstoissues alias in the offline fallback when its delegate is present",
+      "file": "src/commands/update.mjs",
+      "line": 152,
+      "persona": "testing-reviewer, adversarial-reviewer, correctness-reviewer",
+      "confidence": 0.8,
+      "task": "T025",
+      "disposition": "open",
+      "reason": "Removing the on-disk delegate check would make every offline ps/py update skip the alias without failing any test. Add a fallbackRepo test with the delegate installed and an outdated managed alias: the alias is refreshed and no per-file W_SCRIPT_UNREFRESHED names it."
+    },
+    {
+      "id": "F19",
+      "severity": "P3",
+      "title": "regenerateRequirements machine-local path check is a bare substring match, so roots such as / or /spec always fail",
+      "file": "src/lib/upstream.mjs",
+      "line": 266,
+      "persona": "adversarial-reviewer",
+      "confidence": 0.68,
+      "task": "T013",
+      "disposition": "open",
+      "reason": "The root-relative header always contains '/upstream/specify-cli.requirements.in', so compiled.includes(resolve(root)) is true for root '/' or prefixes like '/spec', and sync --bump speckit can never succeed there. Match the root followed by a separator (skip or special-case the filesystem root) and add a unit case."
+    },
+    {
+      "id": "F20",
+      "severity": "P3",
+      "title": "Exported prepareEntries silently relies on callers running validatePackExtensions first",
+      "file": "src/commands/sync.mjs",
+      "line": 282,
+      "persona": "maintainability-reviewer",
+      "confidence": 0.62,
+      "task": "T008",
+      "disposition": "open",
+      "reason": "The from/supported-id checks moved out of prepareEntries; only sync() calls validatePackExtensions. Document the precondition in the prepareEntries JSDoc or call the cheap validation at its top."
     }
   ]
 }

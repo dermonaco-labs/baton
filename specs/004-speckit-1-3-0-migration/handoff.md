@@ -2,22 +2,22 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: implement
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: implement
+next_owner: speckit-implement
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Review-2 corrections at 66e4c97 (on receipt 88a31e3): F11 fixed under D47 (offline ps/py fallback keeps a 1.0.11 taskstoissues skill whose delegate cannot be generated); user-authorized CLI-hash fix narrows the fallback skip to Spec Kit-owned files so the Baton CLI and its .sha256 stay consistent; F12-F15 fixed with regression tests; F16 documented and pinned (R11); macOS-smoke local-checks P3 deferred to release prep; F07 stays deferred (D41/D48). tasks.md, spec.md and plan.md are unchanged."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Review 3 (base 729ecac, head 87b1e9f): no P0/P1. F11, CLI-hash and F12-F16 verified fixed. New open P2 F17: the F15 refactor edited upstream-candidates.test.mjs:11 and :748 beyond owner decision A, so SC-006/AC-US3-4/T029 evidence is false; revert those lines and keep the quoted requirements literal in sync.mjs. New open P3 F18-F20 (alias-refresh test with delegate present, separator-aware path check, prepareEntries precondition). F07 stays deferred (D41/D48)."
 read_first:
   - path: specs/004-speckit-1-3-0-migration/review.json
-    why: Review-2 findings F11-F16 to verify against D51-D59; F07 deferred (D41/D48)
+    why: Review-3 findings F17-F20 to fix; F07 deferred (D41/D48); F01-F06, F08-F16 fixed
   - path: specs/004-speckit-1-3-0-migration/tasks.md
-    why: T001-T031 and the Acceptance Registry (unchanged)
+    why: T029/AC-US3-4 diff property that F17 must restore; mapped tasks T008, T013, T025, T029
   - path: specs/004-speckit-1-3-0-migration/spec.md
-    why: Approved scope FR-001..FR-015, SC-001..SC-007
+    why: SC-006 and approved scope FR-001..FR-015
   - path: specs/004-speckit-1-3-0-migration/plan.md
-    why: Design, risks and D7/T026 update constraints
+    why: Design, D7/T026 update constraints
 artifacts:
   - path: specs/004-speckit-1-3-0-migration/spec.md
     role: source-of-truth
@@ -45,86 +45,9 @@ artifacts:
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
 entry_checked: []
 exit_criteria:
-  - id: tasks-all-checked-or-deferred
+  - id: findings-json-valid
     met: true
-    evidence: 0 outstanding tasks
-  - id: acceptance-evidence
-    met: true
-    evidence: 0 checks lack evidence
-  - id: local-checks-pass
-    met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-       owned rows keep their install target, provenance, license and shape; hashes match the written bytes (963.190169ms)
-        ✔ new rows may not collide with each other or with kept rows in any letter case (6.841322ms)
-        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (1.269193ms)
-        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (7.049501ms)
-      ✔ upstream candidates speckit and atv row ownership policy (1201.081961ms)
-      ▶ upstream candidates lifecycle
-        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.308669ms)
-        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (0.728401ms)
-        ✔ a human-edited candidate with a newer pin waits for the human (0.524238ms)
-        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (1.638762ms)
-        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.566982ms)
-        ✔ a human close suppresses exactly that pin; a newer pin generates again (1.015817ms)
-        ✔ the automation obsolete close never suppresses (0.257262ms)
-        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (0.843231ms)
-      ✔ upstream candidates lifecycle (6.444803ms)
-      ▶ upstream candidates Spec Kit github extension trust (feature 004)
-        ✔ stored extension files under a pack install root are trusted like BOUND_ROOTS (17.382004ms)
-        ✔ a lock row carrying x-speckit-extension is trusted in either lock (10.090854ms)
-        ✔ x-speckit-extension is frozen on existing rows (9.075206ms)
-        ✔ the Baton wrapper may not become a Spec Kit lock row (8.681894ms)
-        ✔ regenerated ordinary core rows stay outside the narrowed trust (3.767301ms)
-        ✔ x-speckit-extension appears only on issues-pack extension rows, always as github (0.924362ms)
-      ✔ upstream candidates Spec Kit github extension trust (feature 004) (50.20524ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (306.397218ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (106.530442ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (126.662878ms)
-        ✔ E_ANALYSIS_CRITICAL (4.352699ms)
-        ✔ E_ANALYSIS_MISSING (2.401744ms)
-        ✔ E_APPROVER_FORMAT (4.339329ms)
-        ✔ E_BLOCKING_OPEN (3.081623ms)
-        ✔ E_BODY_SECTIONS (2.852192ms)
-        ✔ E_BUDGET (3.924574ms)
-        ✔ E_DENYLIST (4.442853ms)
-        ✔ E_EXIT_UNMET (2.827395ms)
-        ✔ E_GATE_PENDING (19.331807ms)
-        ✔ E_LANE_ESCALATE (95.171357ms)
-        ✔ E_LANE_MISMATCH (2.853224ms)
-        ✔ E_MISSING_ARTIFACT (1.861081ms)
-        ✔ E_MODEL_NOT_ALLOWED (6.757197ms)
-        ✔ E_MULTIPLE_BATONS (2.791723ms)
-        ✔ E_NO_PREREG (4.616611ms)
-        ✔ E_OWNER (2.849188ms)
-        ✔ E_PR_MISSING (3.184917ms)
-        ✔ E_REVIEW_BLOCKING (56.514542ms)
-        ✔ E_REVIEW_MISSING (7.168748ms)
-        ✔ E_SCHEMA (6.135094ms)
-        ✔ E_STALE_ARTIFACT (4.466467ms)
-        ✔ E_TRANSITION (2.497496ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (388.593055ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (74.400394ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (9.812ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (82.417806ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (8.515957ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (105.967642ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (76.290304ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (0.585859ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (9.074466ms)
-      ✔ ready with a blocking question is rejected (69.006314ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (97.548959ms)
-      ℹ tests 712
-      ℹ suites 10
-      ℹ pass 701
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 11
-      ℹ todo 0
-      ℹ duration_ms 168282.106297
+    evidence: specs/004-speckit-1-3-0-migration/review.json
 open_questions: []
 decisions:
   - id: D1
@@ -375,6 +298,27 @@ decisions:
     decision: "Review-2 corrections change no feature records: tasks.md, spec.md, plan.md, CHANGELOG.md and release-014 are untouched; F07 remains deferred (D41/D48)"
     rationale: The fixes stay within the mapped tasks (T008, T013, T025, T026/D47, T030) and existing scope. No update behaviour changes beyond the authorized fallback narrowing (D47 and the CLI-hash authorization). No PR, merge, tag, release, settings change or workflow dispatch.
     by: speckit-implement
+  - id: D60
+    decision: Review 3 recorded against the exact CLI base 729ecac (D50) after fetching history in a fresh independent checkout
+    rationale: "HEAD verified as 87b1e9f before start; receive OK, no E_SELF_REVIEW; no merge-base recomputed. handoff scope reports 11 CLI subjects, a strict subset of the 16-file pinned tracked diff 729ecac..87b1e9f; ce-review base and reviewed file set equal the CLI base and the 16-file set; no auto-fix applied. Installed personas only, each once: correctness, testing, maintainability, project-standards, agent-native, learnings-researcher, adversarial. Targeted checks green: build --check, bundle sha = .sha256, lock verify, validate, 77 unit tests, 4 fallback update tests, 3 F39 init tests; mutation runs confirm the F11, owner and script-exemption guards are pinned."
+    by: baton-review
+  - id: D61
+    decision: Route review 3 to implement for F17 (P2) and F18-F20 (P3); F17 is fixable within existing scope without an owner decision
+    rationale: F17 contradicts owner decision A, T009, T029 and AC-US3-4 (only upstream-candidates.test.mjs:1148 may be modified vs 0f68b07); D55/D59 self-assessed equivalence without an owner decision, which Constitution V does not allow. Restoring lines 11 and 748 byte-for-byte and keeping the quoted literal 'baton/upstream/specify-cli.requirements.txt' as sync.mjs lockedRequirements (pinned equal to SPECKIT_REQUIREMENTS.output by an added sync.test.mjs assertion) returns to the approved state. Amending decision A instead would need an explicit owner decision. F18-F20 are P3 at the implementer's discretion within T025, T013 and T008. D58 (macOS-smoke local-checks deferral) is consistent with scope but self-made, and D58 overstates D3 (D3 excludes dispatch, not edits); it needs owner acknowledgement at the PR-review gate, not a correction. No PR, merge, tag, release, settings change or workflow dispatch.
+    by: baton-review
+  - id: D62
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 013f3f7cc00046e9cfe462e45347df0466ded4294b567fd9a6ce55f255e0f2c4
+    x-base-commit: 729ecac81e2d4369832f3f4ed19659c6debc2a70
+    by: baton
+  - id: D63
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 87b1e9fe6c346a498ab949305c9f3aa1d128a6a9
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -485,8 +429,15 @@ history:
     x-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
     commit: 66e4c97
     x-action: write
-updated_at: 2026-11-05T12:16:53.652Z
-updated_by: speckit-implement
+  - phase: review
+    at: 2026-11-05T12:30:15.250Z
+    by: baton
+    writer: 60ab1554a1fdab6398e4b9f814ed3f558d11cd304d9c31f4f417003056cbe17a
+    x-worktree: 43e921421975bb40e2dcc7fb786ed2d2c90940b841ff83387a9fe2604f380937
+    commit: 87b1e9f
+    x-action: write
+updated_at: 2026-11-05T12:30:15.241Z
+updated_by: baton-review
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
