@@ -17,7 +17,7 @@ read_first:
     sha256: a9eb3abc02a41b5e64e8b94e389e01c526c21c798eee958336d34d439d309f34
   - path: CHANGELOG.md
     why: Dated v0.1.4 release notes and unchanged upstream pins
-    sha256: 9c7d3f203d95fbc6b7b4e1c24d3a46da55f6857704b1239583f311832a5ade44
+    sha256: 977f4d1d1410badce65c2ea06784307b538d5dcc4e50a6eb48f5bf62da8dd68c
 artifacts: []
 entry_checked: []
 exit_criteria:
@@ -103,6 +103,10 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Owner authorized (control-plane delegation) a metadata-only artifact hash refresh limited to feature 004 T027/T028 Spec Kit 1.3.0 documentation edits (version 1.0.11 -> 1.3.0 and the issues pack now shipping the github extension plus the /speckit-taskstoissues alias). No other content changes.
     by: implementation-session
+  - id: D18
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "Metadata-only refresh, owner-authorized (option A) for feature 004 T027/T028 Spec Kit 1.3.0 documentation edits: corrects the CHANGELOG [Unreleased] Upstream entry's spec-kit v1.3.0 commit from the annotated tag object 91261fdcf1738cb095a31ff5bee145f502e3af91 to the peeled commit 34a0d388eac671d656eb05b125ad3ed6056168ed recorded in baton.lock.json. No other release-014 content changes; gate remains pending."
+    by: implementation-session
 gate:
   required: true
   approved_by: null
@@ -157,7 +161,14 @@ history:
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
     commit: 83d02b3
     x-action: refresh
-updated_at: 2026-11-05T10:15:56.115Z
+  - phase: land
+    at: 2026-11-05T10:24:11.883Z
+    by: implementation-session
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: ccdc665
+    x-action: refresh
+updated_at: 2026-11-05T10:24:11.883Z
 updated_by: implementation-session
 risks:
   - id: R1
