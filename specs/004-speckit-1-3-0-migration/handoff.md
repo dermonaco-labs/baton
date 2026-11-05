@@ -2,41 +2,25 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: review
-next_phase: implement
-next_owner: speckit-implement
+phase_completed: implement
+next_phase: review
+next_owner: baton-review
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Review 1 of dba6cea vs CLI base dea5807 (64-file pinned diff, CLI subset 52; 8 installed personas). No P0/P1. Open P2: F01 update.mjs:137 fallback misses extension bash refs for ps/py issues adopters; F02 terminateTree rethrows Darwin EPERM (292d7b1); F03 prepareSpeckitExtension untested. P3 F04-F10. Targeted tests 151/151; build/sync --check, lock verify, validate OK."
+model_role: review
+suggested_model: claude-opus-5.5
+summary: "Review-1 correction pass at 8099026 (FF from review head 3b6c71e). Fixed with regression tests: F01 (owner-approved narrow T026/D7 update.mjs fallback exception), F02/F05, F03, F04, F06, F08, F09, F10. F07 deferred to release preparation by user decision. No tasks/spec/plan edits; next is a fresh review of the corrections."
 read_first:
+  - path: specs/004-speckit-1-3-0-migration/review.json
+    why: Review-1 findings F01-F10 that this pass addresses; update dispositions against D36-D45
   - path: specs/004-speckit-1-3-0-migration/tasks.md
-    why: T001-T031 in dependency order with the Acceptance Registry
+    why: T001-T031 and the Acceptance Registry (unchanged)
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
   - path: specs/004-speckit-1-3-0-migration/spec.md
-    why: "Approved scope: FR-001..FR-015, SC-001..SC-007"
+    why: Approved scope FR-001..FR-015, SC-001..SC-007
     sha256: b21abe7d51d9e2d68fede7bf6c1e5a140fd8d1c7264953bd3fcb8b4bceee0063
   - path: specs/004-speckit-1-3-0-migration/plan.md
-    why: Design summary, project structure, risks and complexity notes
+    why: Design, risks and D7/T026 update constraints
     sha256: 00ce00a456a9be36d8fdec1beb3e4b13a0e953402ae5c30c68884aafa4866419
-  - path: specs/004-speckit-1-3-0-migration/research.md
-    why: Decisions R1-R12 with evidence (1.3.0 delta, extension tree, trust narrowing, flavours, mirror)
-    sha256: 8d4d2f7283032ba4caf804e383d6becd3a46705aa68b3c82e02b681040e6be02
-  - path: specs/004-speckit-1-3-0-migration/data-model.md
-    why: Pack entry, lock row, wrapper and trusted-path rules
-    sha256: 38be196dbb6c61e37a466c196c686f078e9c74bd3849754e88c7d61b60c5b0de
-  - path: specs/004-speckit-1-3-0-migration/contracts/issues-pack.md
-    why: Install surface, wrapper behaviour, closure and update contract
-    sha256: 892c096f2958feb0790e9e1d1cb0f404cdc233360f77886859a58ce736945286
-  - path: specs/004-speckit-1-3-0-migration/contracts/sync-github-extension.md
-    why: Extension-tree generation and validation contract
-    sha256: aa5866e5883280e4d03cf393c0581b3fb0662f49c38327c4b343af5f211e3fe0
-  - path: specs/004-speckit-1-3-0-migration/quickstart.md
-    why: Bump, reproducibility and acceptance procedure
-    sha256: 25babcb745a8696818e702db90a334766f4ec014005a5640491aed6e52fec4d1
-  - path: .specify/memory/constitution.md
-    why: Principles I, II, VI and VIII constrain the bump, wrapper and checks
-    sha256: 2483435fa0d2f24999d9c4351b6c1b286a41bfce344c1eef5b84f269a7299391
 artifacts:
   - path: specs/004-speckit-1-3-0-migration/spec.md
     role: source-of-truth
@@ -64,9 +48,86 @@ artifacts:
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: tasks-all-checked-or-deferred
     met: true
-    evidence: specs/004-speckit-1-3-0-migration/review.json
+    evidence: 0 outstanding tasks
+  - id: acceptance-evidence
+    met: true
+    evidence: 0 checks lack evidence
+  - id: local-checks-pass
+    met: true
+    evidence: |-
+      baton: 0
+      stdout (tail):
+      ned rows keep their install target, provenance, license and shape; hashes match the written bytes (827.229259ms)
+        ✔ new rows may not collide with each other or with kept rows in any letter case (9.038683ms)
+        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (1.455159ms)
+        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (7.187135ms)
+      ✔ upstream candidates speckit and atv row ownership policy (1061.011364ms)
+      ▶ upstream candidates lifecycle
+        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.246175ms)
+        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (0.68721ms)
+        ✔ a human-edited candidate with a newer pin waits for the human (0.896951ms)
+        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (2.673628ms)
+        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.546291ms)
+        ✔ a human close suppresses exactly that pin; a newer pin generates again (1.222404ms)
+        ✔ the automation obsolete close never suppresses (0.314416ms)
+        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (0.899414ms)
+      ✔ upstream candidates lifecycle (7.855337ms)
+      ▶ upstream candidates Spec Kit github extension trust (feature 004)
+        ✔ stored extension files under a pack install root are trusted like BOUND_ROOTS (10.52ms)
+        ✔ a lock row carrying x-speckit-extension is trusted in either lock (11.676006ms)
+        ✔ x-speckit-extension is frozen on existing rows (16.455078ms)
+        ✔ the Baton wrapper may not become a Spec Kit lock row (2.921555ms)
+        ✔ regenerated ordinary core rows stay outside the narrowed trust (6.049487ms)
+        ✔ x-speckit-extension appears only on issues-pack extension rows, always as github (1.065952ms)
+      ✔ upstream candidates Spec Kit github extension trust (feature 004) (49.019091ms)
+      ✔ every feature phase and quick lane phase has a valid independent fixture (371.949783ms)
+      ✔ pre-existing feature baton without specify history or attachment still validates (121.089808ms)
+      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
+        ✔ E_ACTOR_FORMAT (95.016146ms)
+        ✔ E_ANALYSIS_CRITICAL (3.300998ms)
+        ✔ E_ANALYSIS_MISSING (2.380012ms)
+        ✔ E_APPROVER_FORMAT (3.764406ms)
+        ✔ E_BLOCKING_OPEN (2.31839ms)
+        ✔ E_BODY_SECTIONS (2.373492ms)
+        ✔ E_BUDGET (4.217789ms)
+        ✔ E_DENYLIST (2.487542ms)
+        ✔ E_EXIT_UNMET (2.088809ms)
+        ✔ E_GATE_PENDING (22.360591ms)
+        ✔ E_LANE_ESCALATE (112.278762ms)
+        ✔ E_LANE_MISMATCH (6.689937ms)
+        ✔ E_MISSING_ARTIFACT (4.103449ms)
+        ✔ E_MODEL_NOT_ALLOWED (6.376072ms)
+        ✔ E_MULTIPLE_BATONS (5.052467ms)
+        ✔ E_NO_PREREG (6.352637ms)
+        ✔ E_OWNER (2.509373ms)
+        ✔ E_PR_MISSING (3.876793ms)
+        ✔ E_REVIEW_BLOCKING (45.509833ms)
+        ✔ E_REVIEW_MISSING (6.372386ms)
+        ✔ E_SCHEMA (14.10444ms)
+        ✔ E_STALE_ARTIFACT (3.026121ms)
+        ✔ E_TRANSITION (5.268899ms)
+      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (401.863152ms)
+      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (100.900188ms)
+      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (22.731882ms)
+      ▶ model allowlist warns in warn mode and errors in error mode
+        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (78.776708ms)
+        ✔ error mode emits E_MODEL_NOT_ALLOWED (10.314937ms)
+      ✔ model allowlist warns in warn mode and errors in error mode (105.609365ms)
+      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (87.984211ms)
+      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (0.591047ms)
+      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (7.437898ms)
+      ✔ ready with a blocking question is rejected (79.349848ms)
+      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (135.781749ms)
+      ℹ tests 705
+      ℹ suites 10
+      ℹ pass 694
+      ℹ fail 0
+      ℹ cancelled 0
+      ℹ skipped 11
+      ℹ todo 0
+      ℹ duration_ms 170079.518263
 open_questions: []
 decisions:
   - id: D1
@@ -216,6 +277,46 @@ decisions:
     tag: diff-base
     x-base-commit: ad64d197c9caa4f85c3d042bfb32060a0683c2c0
     by: baton
+  - id: D36
+    decision: "F01 fixed: update fallback keeps ps/py issues-pack extension skills that call extension bash scripts"
+    rationale: Owner-approved narrow T026/D7 exception, limited to update.mjs unavailable-generator/offline fallback. callsBashScripts (init.mjs) now matches .specify/(extensions/<id>/)?scripts/bash/ and is shared by flavouredBytes and the update fallback skip; script files themselves are not skipped. UV_OFFLINE ps/py test in update.test.mjs extended with --packs issues; failed 2/2 on the old bundle, passes after rebuild.
+    by: speckit-implement
+  - id: D37
+    decision: "F02/F05 fixed: reapProcessGroup bounds the post-SIGKILL wait and handles Darwin EPERM without assuming the group is gone"
+    rationale: "SIGKILL then signal-0 probes every 20ms up to reapWaitMs (2000). ESRCH returns. EPERM or the deadline consults ps -A -o pid=,pgid=,stat=: no non-zombie member returns; live members at the deadline throw an explicit cleanup error; EPERM with ps unavailable rethrows. Other errors rethrow. Injected-deps unit tests cover ESRCH, Darwin EPERM on kill and probe, live-then-empty, unverifiable EPERM, live-at-deadline, EINVAL, and parseGroupMembers; POSIX runLocalCheck-level tests cover EPERM and always-signalable probes."
+    by: speckit-implement
+  - id: D38
+    decision: "F03 fixed: prepareSpeckitExtension guards, failure cleanup and the sync invocation are tested hermetically"
+    rationale: test/unit/speckit-extension.test.mjs covers E_USAGE for unsupported ids, E_UPSTREAM_VERIFY without specify or project, and (POSIX fake specify) non-zero exit and missing manifest leaving no project-github with the core project unchanged, plus the success path removing stale trees. sync-bump.test.mjs asserts sync calls it once with extension github and the core project and that its failure propagates with no writes.
+    by: speckit-implement
+  - id: D39
+    decision: "F04 fixed: hermetic flavouredBytes and callsBashScripts case for the github extension skill"
+    rationale: init.test.mjs F39 hermetic test now renders the issues skill from a ps project and pins callsBashScripts for extension bash, ps and README references, independent of live uv.
+    by: speckit-implement
+  - id: D40
+    decision: "F06 fixed: requirements compile uses root-relative forward-slash paths"
+    rationale: regenerateRequirements runs uv pip compile from the repo root with baton/upstream/specify-cli.requirements.in -o baton/upstream/specify-cli.requirements.txt, so the header no longer records a host worktree path. Header line 2 and baton.lock.json requirements_sha256 (6b4fd915...7b68) updated; cloud regeneration with public PyPI reproduces it byte-for-byte.
+    by: speckit-implement
+  - id: D41
+    decision: F07 deferred to release preparation
+    rationale: "User decision relayed by the coordinator: defer F07 to release prep with a recorded reason. CHANGELOG.md is hash-bound by .baton/quick/release-014.md; adding the entry now would need another bound-record refresh. The release-preparation lane adds the local-checks POSIX reap fix entry."
+    by: speckit-implement
+  - id: D42
+    decision: "F08 fixed: sync validates extension ids against SPECKIT_EXTENSIONS"
+    rationale: sync.mjs splits the from-speckit check from an unsupported-extension check using SPECKIT_EXTENSIONS; prepareSpeckitExtension no longer defaults to 'github'; schema.test.mjs pins the pack schema extension enum to SPECKIT_EXTENSIONS and sync.test.mjs covers the unsupported id error.
+    by: speckit-implement
+  - id: D43
+    decision: "F09 fixed: shared packExtensionIds helper"
+    rationale: upstream.mjs exports packExtensionIds used by init (selected pack definitions) and sync (all packs); unit-tested for sorting, de-duplication and undefined definitions.
+    by: speckit-implement
+  - id: D44
+    decision: F10 fixed by pinning the transform rather than adding a render option
+    rationale: sync.test.mjs pins diffDocument output for a bump summary exactly (h2 heading, blank line after each bold list header, no h3) and its absence without x-bump-summary; this keeps the PR-body summary format unchanged while guarding lint-clean nesting.
+    by: speckit-implement
+  - id: D45
+    decision: No tasks.md, spec.md or plan.md edits for the correction pass
+    rationale: Findings map to existing tasks (T025, T030, T004, T022, T013, T027, T008, T016); editing hashed artifacts would reset the approved pre-code gate. Dispositions are recorded as decisions D36-D44 for the next review.
+    by: speckit-implement
 gate:
   required: false
   approved_by: null
@@ -305,8 +406,15 @@ history:
     x-worktree: 3a89c9d1ee435b7c5e7b9076c65570e45b4bd6164d59351b51a934d0cbc2f86e
     commit: ad64d19
     x-action: write
-updated_at: 2026-11-05T11:28:55.310Z
-updated_by: baton-review
+  - phase: implement
+    at: 2026-11-05T11:46:13.471Z
+    by: speckit-implement
+    writer: 5f00924a333f2145b5cc3d08b5263dc13be579de2a88786886896cbca9be8a7d
+    x-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
+    commit: "8099026"
+    x-action: write
+updated_at: 2026-11-05T11:43:14.477Z
+updated_by: speckit-implement
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
@@ -334,6 +442,9 @@ risks:
     severity: medium
   - id: R9
     text: F39 live --script ps init tests (core and --packs issues) cannot run on hosts without public PyPI egress; they passed 2/2 in the hosted sandbox at ca95054.
+    severity: low
+  - id: R10
+    text: Darwin zombie-group cleanup relies on ps; without ps an EPERM probe rethrows instead of assuming the group is gone (deliberately fail-safe per review). Linux ESRCH path is unaffected.
     severity: low
 assumptions: []
 acceptance_checks:
@@ -393,7 +504,7 @@ analysis:
   report_path: specs/004-speckit-1-3-0-migration/analysis.md
 x-implementation-writer: 5f00924a333f2145b5cc3d08b5263dc13be579de2a88786886896cbca9be8a7d
 x-implementation-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
-x-implementation-cycle: f3818ec7e86915e958459653b87fbc41a64de460a7e7220f7345cb8a2a9ae8c3
+x-implementation-cycle: 76215a35edb77b3713dd1697d8a5fda57fc5d7f75f019767bea8da36cf628506
 review:
   findings_path: specs/004-speckit-1-3-0-migration/review.json
   blocking_findings: 0
