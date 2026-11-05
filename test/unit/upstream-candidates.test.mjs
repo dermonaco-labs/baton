@@ -1266,6 +1266,12 @@ describe('upstream candidates Spec Kit github extension trust (feature 004)', ()
   const shipped = new Map([[skill, Buffer.from('skill\n')], [manifestFile, Buffer.from('extension\n')]]);
   const postBumpFile = (/** @type {string} */ path) => shipped.get(path) ?? baseFile(path);
   const postBumpMode = (/** @type {string} */ path) => shipped.has(path) ? '100644' : baseMode(path);
+  /** The real lock without its extension rows, so tests seed them explicitly (the bumped lock already has them). */
+  const plainLock = () => {
+    const lock = baseLock();
+    lock.files = lock.files.filter((/** @type {any} */ file) => file['x-speckit-extension'] === undefined);
+    return lock;
+  };
   /**
    * Binding issues for `path` when a candidate writes or deletes it, with optional extension rows in each lock.
    * @param {{changed?:Array<[string,string]>,deleted?:string[],baseRows?:any[],rows?:any[],readBase?:(path:string)=>Buffer|null,
@@ -1273,9 +1279,9 @@ describe('upstream candidates Spec Kit github extension trust (feature 004)', ()
    */
   const issuesFor = ({ changed = [], deleted = [], baseRows = [], rows = baseRows, readBase = postBumpFile, mode = '100644' },
     path) => {
-    const base = baseLock();
+    const base = plainLock();
     base.files.push(...baseRows);
-    const lock = baseLock();
+    const lock = plainLock();
     lock.files.push(...rows);
     return bindingIssues({ id: 'speckit', manifest: { changed: changed.map(([file]) => ({ path: file, mode })), deleted },
       files: new Map(changed.map(([file, text]) => [file, { bytes: Buffer.from(text) }])), baseLock: base, lock,
@@ -1313,7 +1319,7 @@ describe('upstream candidates Spec Kit github extension trust (feature 004)', ()
     const latest = speckitLatest();
     /** @param {(base:any)=>void} seed @param {(lock:any)=>void} mutate */
     const issuesOf = (seed, mutate) => {
-      const base = baseLock();
+      const base = plainLock();
       seed(base);
       const lock = structuredClone(base);
       Object.assign(lock.upstreams.speckit, { version: latest.version, tag: `v${latest.version}`, commit: latest.commit });

@@ -22,7 +22,7 @@ All notable changes to Baton are documented here. This follows
 ### Upstream
 
 - Spec Kit `specify-cli` 1.0.11 → 1.3.0 (tag `v1.3.0`, commit
-  `91261fdcf1738cb095a31ff5bee145f502e3af91`). The `core` pack's file set and relay
+  `34a0d388eac671d656eb05b125ad3ed6056168ed`). The `core` pack's file set and relay
   hooks are unchanged.
 - `/speckit-taskstoissues` is now a Baton-authored compatibility wrapper that only
   delegates to `/speckit-github-taskstoissues`.

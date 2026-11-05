@@ -3598,7 +3598,7 @@
       "format": "esm"
     },
     "src/lib/lock-report.mjs": {
-      "bytes": 3770,
+      "bytes": 3975,
       "imports": [
         {
           "path": "src/lib/upstream.mjs",
@@ -5597,7 +5597,7 @@
           "bytesInOutput": 2857
         },
         "src/lib/lock-report.mjs": {
-          "bytesInOutput": 2365
+          "bytesInOutput": 2439
         },
         "src/lib/repairs.mjs": {
           "bytesInOutput": 1660
@@ -5672,7 +5672,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 430093
+      "bytes": 430167
     }
   }
 }

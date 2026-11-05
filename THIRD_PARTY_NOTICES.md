@@ -11,7 +11,7 @@ redistributing the installed files.
 
 ## MIT-licensed materials
 
-- [GitHub Spec Kit (`specify-cli`)](https://github.com/github/spec-kit/blob/91261fdcf1738cb095a31ff5bee145f502e3af91/LICENSE):
+- [GitHub Spec Kit (`specify-cli`)](https://github.com/github/spec-kit/blob/34a0d388eac671d656eb05b125ad3ed6056168ed/LICENSE):
   Copyright GitHub, Inc.
 - [ATV Starter Kit](https://github.com/All-The-Vibes/ATV-StarterKit/blob/ad996736b879be87c7755df5c5017d5336203bbc/LICENSE):
   Copyright (c) 2026 All The Vibes.

@@ -102,7 +102,7 @@ async function writeAdopterManifest(root) {
   }
   const manifest = {
     schema: 1, baton_version: '0.1.4', installed_at: new Date().toISOString(), source: 'template',
-    upstreams: { speckit: '1.3.0@91261fd', atv: 'main@ad99673' },
+    upstreams: { speckit: '1.3.0@34a0d38', atv: 'main@ad99673' },
     packs: ['core'], recommended_packs: recommendedPacks(await loadPacks(root), ['core']),
     files, marker_sections: [],
   };

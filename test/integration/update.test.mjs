@@ -203,7 +203,9 @@ test('update from a 1.0.11 issues install replaces the taskstoissues skill in pl
           assert.ok(await exists(root, path), path);
           assert.equal(after.files.find(file => file.path === path)?.owner, 'speckit', path);
         }
-        assert.equal(after.files.filter(file => file.path.includes('taskstoissues')).length, 2, 'no orphan rows');
+        const issuesRows = after.files.filter(file => file.pack === 'issues').map(file => file.path).sort();
+        assert.deepEqual(issuesRows, [...await installedLockPaths('issues'), wrapper].sort(), 'no orphan or missing issues rows');
+        assert.equal(new Set(after.files.map(file => file.path)).size, after.files.length, 'no duplicate rows');
         const source = await readFile(join(sourceRoot, 'baton/skills/speckit-taskstoissues/SKILL.md'));
         if (edited) {
           assert.equal(result.code, 4, result.stdout || result.stderr);
@@ -235,8 +237,14 @@ test('F99 core.autocrlf checkout keeps CRLF issues files owned through doctor, u
     await rm(clone.root, { recursive: true, force: true });
     execFileSync('git', ['clone', '-q', '-c', 'core.autocrlf=true', installed.root, clone.root], { cwd: installed.root });
     const root = clone.root;
-    const paths = ['.github/skills/speckit-taskstoissues/SKILL.md', '.github/skills/speckit-github-taskstoissues/SKILL.md'];
-    for (const path of paths) {
+    // `.github/skills/** text eol=lf` keeps both skills LF; the unpinned extension files check out as CRLF.
+    const skills = ['.github/skills/speckit-taskstoissues/SKILL.md', '.github/skills/speckit-github-taskstoissues/SKILL.md'];
+    const crlf = ['.specify/extensions/github/extension.yml', '.specify/extensions/github/commands/speckit.github.taskstoissues.md'];
+    const paths = [...skills, ...crlf];
+    for (const path of skills) {
+      assert.doesNotMatch(await readFile(join(root, path), 'utf8'), /\r\n/, `${path} must stay LF`);
+    }
+    for (const path of crlf) {
       assert.match(await readFile(join(root, path), 'utf8'), /\r\n/, `${path} must check out as CRLF`);
     }
     const doctor = await runCli(root, ['doctor', '--json']);
