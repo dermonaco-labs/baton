@@ -2,22 +2,25 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: review
-next_phase: implement
-next_owner: speckit-implement
+phase_completed: implement
+next_phase: review
+next_owner: baton-review
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Review 3 (base 729ecac, head 87b1e9f): no P0/P1. F11, CLI-hash and F12-F16 verified fixed. New open P2 F17: the F15 refactor edited upstream-candidates.test.mjs:11 and :748 beyond owner decision A, so SC-006/AC-US3-4/T029 evidence is false; revert those lines and keep the quoted requirements literal in sync.mjs. New open P3 F18-F20 (alias-refresh test with delegate present, separator-aware path check, prepareEntries precondition). F07 stays deferred (D41/D48)."
+model_role: review
+suggested_model: claude-opus-5.5
+summary: "Review-3 corrections at 20f9c8f (on receipt 8f2dd96): F17 fixed without changing owner decision A. upstream-candidates.test.mjs lines 11 and 748 are restored to 0f68b07, and the T029/AC-US3-4/SC-006 diff invariant is re-verified (exactly the three recorded in-place replacements). F18-F20 fixed with regression tests; the no-ps reap comment is reworded as the D57/R11 assumption. D58 is a self-made scope judgment awaiting owner acknowledgement at the PR-review gate; F07 stays deferred by the user (D41/D48). tasks.md, spec.md and plan.md are unchanged."
 read_first:
   - path: specs/004-speckit-1-3-0-migration/review.json
-    why: Review-3 findings F17-F20 to fix; F07 deferred (D41/D48); F01-F06, F08-F16 fixed
+    why: Review-3 findings F17-F20 to verify against D64-D70; F07 deferred (D41/D48)
   - path: specs/004-speckit-1-3-0-migration/tasks.md
-    why: T029/AC-US3-4 diff property that F17 must restore; mapped tasks T008, T013, T025, T029
+    why: T029/AC-US3-4 diff property (D65) and mapped tasks T008, T013, T025, T029
+    sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
   - path: specs/004-speckit-1-3-0-migration/spec.md
     why: SC-006 and approved scope FR-001..FR-015
+    sha256: b21abe7d51d9e2d68fede7bf6c1e5a140fd8d1c7264953bd3fcb8b4bceee0063
   - path: specs/004-speckit-1-3-0-migration/plan.md
-    why: Design, D7/T026 update constraints
+    why: Design and D7/T026 update constraints
+    sha256: 00ce00a456a9be36d8fdec1beb3e4b13a0e953402ae5c30c68884aafa4866419
 artifacts:
   - path: specs/004-speckit-1-3-0-migration/spec.md
     role: source-of-truth
@@ -45,9 +48,87 @@ artifacts:
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: tasks-all-checked-or-deferred
     met: true
-    evidence: specs/004-speckit-1-3-0-migration/review.json
+    evidence: 0 outstanding tasks
+  - id: acceptance-evidence
+    met: true
+    evidence: 0 checks lack evidence
+  - id: local-checks-pass
+    met: true
+    evidence: |-
+      baton: 0
+      stdout (tail):
+      hashes match the written bytes (855.622648ms)
+        ✔ new rows may not collide with each other or with kept rows in any letter case (3.968199ms)
+        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (1.795975ms)
+        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (5.5259ms)
+      ✔ upstream candidates speckit and atv row ownership policy (1064.38227ms)
+      ▶ upstream candidates lifecycle
+        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.242299ms)
+        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (0.813136ms)
+        ✔ a human-edited candidate with a newer pin waits for the human (0.468125ms)
+        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (1.483201ms)
+        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.441105ms)
+        ✔ a human close suppresses exactly that pin; a newer pin generates again (0.641642ms)
+        ✔ the automation obsolete close never suppresses (0.267417ms)
+        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (0.894097ms)
+      ✔ upstream candidates lifecycle (5.5731ms)
+      ▶ upstream candidates Spec Kit github extension trust (feature 004)
+        ✔ stored extension files under a pack install root are trusted like BOUND_ROOTS (10.432491ms)
+        ✔ a lock row carrying x-speckit-extension is trusted in either lock (10.437839ms)
+        ✔ x-speckit-extension is frozen on existing rows (4.520428ms)
+        ✔ the Baton wrapper may not become a Spec Kit lock row (2.502163ms)
+        ✔ regenerated ordinary core rows stay outside the narrowed trust (3.127031ms)
+        ✔ x-speckit-extension appears only on issues-pack extension rows, always as github (0.483618ms)
+        ✔ the bound requirements paths are the ones sync and lock use (0.093138ms)
+      ✔ upstream candidates Spec Kit github extension trust (feature 004) (31.875961ms)
+      ✔ every feature phase and quick lane phase has a valid independent fixture (274.658956ms)
+      ✔ pre-existing feature baton without specify history or attachment still validates (87.98317ms)
+      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
+        ✔ E_ACTOR_FORMAT (69.114781ms)
+        ✔ E_ANALYSIS_CRITICAL (3.176814ms)
+        ✔ E_ANALYSIS_MISSING (2.265071ms)
+        ✔ E_APPROVER_FORMAT (2.738253ms)
+        ✔ E_BLOCKING_OPEN (2.495413ms)
+        ✔ E_BODY_SECTIONS (2.161688ms)
+        ✔ E_BUDGET (3.993175ms)
+        ✔ E_DENYLIST (2.498838ms)
+        ✔ E_EXIT_UNMET (2.234356ms)
+        ✔ E_GATE_PENDING (16.868131ms)
+        ✔ E_LANE_ESCALATE (74.073919ms)
+        ✔ E_LANE_MISMATCH (2.300514ms)
+        ✔ E_MISSING_ARTIFACT (2.050133ms)
+        ✔ E_MODEL_NOT_ALLOWED (6.949833ms)
+        ✔ E_MULTIPLE_BATONS (3.008524ms)
+        ✔ E_NO_PREREG (3.709254ms)
+        ✔ E_OWNER (2.347513ms)
+        ✔ E_PR_MISSING (2.671955ms)
+        ✔ E_REVIEW_BLOCKING (37.05003ms)
+        ✔ E_REVIEW_MISSING (4.221034ms)
+        ✔ E_SCHEMA (4.556762ms)
+        ✔ E_STALE_ARTIFACT (2.930399ms)
+        ✔ E_TRANSITION (2.582933ms)
+      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (270.047208ms)
+      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (62.618461ms)
+      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (11.013403ms)
+      ▶ model allowlist warns in warn mode and errors in error mode
+        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (73.08014ms)
+        ✔ error mode emits E_MODEL_NOT_ALLOWED (6.480216ms)
+      ✔ model allowlist warns in warn mode and errors in error mode (95.764701ms)
+      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (61.068541ms)
+      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (0.908227ms)
+      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (7.166344ms)
+      ✔ ready with a blocking question is rejected (52.143166ms)
+      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (79.28313ms)
+      ℹ tests 717
+      ℹ suites 10
+      ℹ pass 706
+      ℹ fail 0
+      ℹ cancelled 0
+      ℹ skipped 11
+      ℹ todo 0
+      ℹ duration_ms 170052.135479
 open_questions: []
 decisions:
   - id: D1
@@ -319,6 +400,34 @@ decisions:
     tag: diff-base
     x-base-commit: 87b1e9fe6c346a498ab949305c9f3aa1d128a6a9
     by: baton
+  - id: D64
+    by: speckit-implement
+    decision: "F17 fixed within owner decision A: test/unit/upstream-candidates.test.mjs lines 11 and 748 are restored byte-for-byte to 0f68b07, superseding the equivalence self-assessment in D55/D59"
+    rationale: "Per D61. The file was restored from 729ecac, and 66e4c97 had changed only those two lines. sync.mjs keeps the quoted literal 'baton/upstream/specify-cli.requirements.txt' as the exported lockedRequirements, so line 748's literal check holds unchanged. A new sync.test.mjs test pins lockedRequirements === SPECKIT_REQUIREMENTS.output. The coordinator also asked for an added-lines-only pin in upstream-candidates.test.mjs: a separate new import line plus a new test in the feature-004 describe block asserting SPECKIT_REQUIREMENTS equals {REQUIREMENTS_IN, REQUIREMENTS_TXT}. Owner decision A is unchanged."
+  - id: D65
+    by: speckit-implement
+    decision: T029/AC-US3-4/SC-006 diff invariant re-verified against baseline 0f68b07 before handoff
+    rationale: git diff -U0 0f68b07 -- test/unit/upstream-candidates.test.mjs src/lib/candidate-bindings.mjs src/lib/upstream-candidates.mjs removes exactly three lines, each replaced in place, as recorded in the tasks.md T029 note. They are upstream-candidates.test.mjs:1148 (owner decision A), the isTrusted return in candidate-bindings.mjs (extended with ||), and FROZEN_FIELDS in upstream-candidates.mjs (one appended field). Lines 11 and 748 do not appear among the removals. Every other change is an addition.
+  - id: D66
+    by: speckit-implement
+    decision: "F18 fixed: regression test that the offline ps/py fallback refreshes an outdated taskstoissues alias when its delegate is installed"
+    rationale: update.test.mjs adds 'F18 ps|py fallback refreshes an outdated taskstoissues alias when its delegate is installed'. The alias is refreshed to the shipped bytes and its manifest row is updated, the installed delegate keeps its flavour, no .new conflict is written, and no warning names the alias. Removing the delegate-presence condition in update.mjs fails F18 while F11 still passes (mutation run). update.mjs is unchanged.
+  - id: D67
+    by: speckit-implement
+    decision: "F19 fixed: machine-local path detection is a pure helper anchored at the root and a separator"
+    rationale: upstream.mjs exports recordsMachineLocalPath(text, root), and regenerateRequirements uses it. A path counts only as root + separator, natively or with forward slashes. For a filesystem root (where every absolute path would match) only the rooted requirements input and output paths count. requirements.test.mjs adds a test that runs on every platform, including win32. It checks the root-relative uv header against the filesystem root, <root>/spec and a temp root, both separator variants, a sibling prefix (<root>/specify-cli) and an unrelated absolute path. The previous substring check would have rejected /spec. The POSIX fake-uv test (D56) still passes.
+  - id: D68
+    by: speckit-implement
+    decision: "F20 fixed: the prepareEntries JSDoc states that packs must already have passed validatePackExtensions"
+    rationale: sync() runs validatePackExtensions first (D54). Documenting the precondition keeps the single validation point and adds no runtime work or behaviour change.
+  - id: D69
+    by: speckit-implement
+    decision: "Stopped-review P3s addressed: the no-ps reap comment is reworded as an assumption, and the read_first sha256 values for tasks, spec and plan are restored"
+    rationale: local-checks.mjs now states that, without ps, any member still signalable after SIGKILL is assumed to be a zombie or exiting member, and that a SIGKILL survivor would go unreported (D57/R11). The comment changes no behaviour. This handoff carries the hashArtifact values for tasks.md, spec.md and plan.md, which are unchanged since 729ecac.
+  - id: D70
+    by: speckit-implement
+    decision: "Attribution kept: D58 (deferring local-checks in the macOS smoke job) is the implementer scope judgment, not an owner decision; F07 stays deferred by user decision (D41/D48)"
+    rationale: Per D61, D58 needs owner acknowledgement at the PR-review gate. D3 excludes workflow dispatch, not workflow edits, so D58 rests on scope (no workflow edits planned in 004), not on D3. No CHANGELOG, release-014, tasks, spec, plan or workflow edits. No PR, merge, tag, release, settings change or workflow dispatch.
 gate:
   required: false
   approved_by: null
@@ -436,8 +545,15 @@ history:
     x-worktree: 43e921421975bb40e2dcc7fb786ed2d2c90940b841ff83387a9fe2604f380937
     commit: 87b1e9f
     x-action: write
-updated_at: 2026-11-05T12:30:15.241Z
-updated_by: baton-review
+  - phase: implement
+    at: 2026-11-05T12:41:31.529Z
+    by: speckit-implement
+    writer: 5f00924a333f2145b5cc3d08b5263dc13be579de2a88786886896cbca9be8a7d
+    x-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
+    commit: 20f9c8f
+    x-action: write
+updated_at: 2026-11-05T12:38:32.201Z
+updated_by: speckit-implement
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
@@ -530,7 +646,7 @@ analysis:
   report_path: specs/004-speckit-1-3-0-migration/analysis.md
 x-implementation-writer: 5f00924a333f2145b5cc3d08b5263dc13be579de2a88786886896cbca9be8a7d
 x-implementation-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
-x-implementation-cycle: 71480559a8ec2684a792c8cff52644ed551799b54ed76ef925c80c5402929b4e
+x-implementation-cycle: 846402e305830b638841471f60c389c1652d3e193f4edcee66c7d2e2b9710e2e
 review:
   findings_path: specs/004-speckit-1-3-0-migration/review.json
   blocking_findings: 0
