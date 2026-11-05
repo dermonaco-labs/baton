@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: release-015
-phase_completed: work
-next_phase: review
-next_owner: baton-review
+phase_completed: review
+next_phase: land
+next_owner: baton-land
 status: ready
-model_role: review
-suggested_model: claude-opus-5.5
-summary: "Prepare the v0.1.5 candidate from merge 2c53a55: promote all Unreleased entries with F07, version CLI/package/metadata, run local-checks in macOS smoke only, and refresh owner-authorized historical bindings and template cleanup. Independent review is next; no PR, merge or publication."
+model_role: implementation
+suggested_model: gpt-6-sol
+summary: "Independent single-pass ce-review headless of exact CLI base 2c53a55 to candidate 843884e: 22 tracked files reviewed (pinned set; the 14 CLI subjects are a subset). Versions are consistent at 0.1.5, the CHANGELOG promotion and F07 wording are faithful, all upstream pins are unchanged, and the bundle, sidecar, manifest and lock are consistent. Cleanup covers the release-015 records, and the smoke change is macOS-only. Two P3 findings were dismissed with reasons; no auto-fixes. Ready for land's separate human gate. No merge, tag, publication or dispatch is implied."
 read_first:
   - path: .baton/quick/release-015.md
     why: Release scope, decisions and review base
@@ -19,84 +19,15 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: diff-nonempty
+  - id: findings-json-valid
     met: true
-    evidence: 14 changed files
-  - id: local-checks-pass
+    evidence: .baton/quick/release-015.review.json
+  - id: findings-fixed-or-dismissed
     met: true
-    evidence: |-
-      baton: 0
-      stdout (tail):
-      ch the written bytes (826.427542ms)
-        ✔ new rows may not collide with each other or with kept rows in any letter case (6.836701ms)
-        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (1.389449ms)
-        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (6.200965ms)
-      ✔ upstream candidates speckit and atv row ownership policy (1002.825118ms)
-      ▶ upstream candidates lifecycle
-        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.280007ms)
-        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (0.699372ms)
-        ✔ a human-edited candidate with a newer pin waits for the human (1.228038ms)
-        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (2.034569ms)
-        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.572703ms)
-        ✔ a human close suppresses exactly that pin; a newer pin generates again (1.001511ms)
-        ✔ the automation obsolete close never suppresses (0.26187ms)
-        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (1.920149ms)
-      ✔ upstream candidates lifecycle (8.302724ms)
-      ▶ upstream candidates Spec Kit github extension trust (feature 004)
-        ✔ stored extension files under a pack install root are trusted like BOUND_ROOTS (9.373068ms)
-        ✔ a lock row carrying x-speckit-extension is trusted in either lock (12.659653ms)
-        ✔ x-speckit-extension is frozen on existing rows (5.24474ms)
-        ✔ the Baton wrapper may not become a Spec Kit lock row (4.144021ms)
-        ✔ regenerated ordinary core rows stay outside the narrowed trust (4.674662ms)
-        ✔ x-speckit-extension appears only on issues-pack extension rows, always as github (0.744559ms)
-        ✔ the bound requirements paths are the ones sync and lock use (0.086599ms)
-      ✔ upstream candidates Spec Kit github extension trust (feature 004) (37.246155ms)
-      ✔ every feature phase and quick lane phase has a valid independent fixture (281.564547ms)
-      ✔ pre-existing feature baton without specify history or attachment still validates (98.915022ms)
-      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
-        ✔ E_ACTOR_FORMAT (81.587257ms)
-        ✔ E_ANALYSIS_CRITICAL (4.888781ms)
-        ✔ E_ANALYSIS_MISSING (2.623096ms)
-        ✔ E_APPROVER_FORMAT (3.316939ms)
-        ✔ E_BLOCKING_OPEN (2.158234ms)
-        ✔ E_BODY_SECTIONS (6.155497ms)
-        ✔ E_BUDGET (4.185743ms)
-        ✔ E_DENYLIST (2.849383ms)
-        ✔ E_EXIT_UNMET (2.311863ms)
-        ✔ E_GATE_PENDING (18.648662ms)
-        ✔ E_LANE_ESCALATE (97.629086ms)
-        ✔ E_LANE_MISMATCH (2.733881ms)
-        ✔ E_MISSING_ARTIFACT (2.325784ms)
-        ✔ E_MODEL_NOT_ALLOWED (7.224068ms)
-        ✔ E_MULTIPLE_BATONS (5.021438ms)
-        ✔ E_NO_PREREG (4.319702ms)
-        ✔ E_OWNER (5.030631ms)
-        ✔ E_PR_MISSING (4.662113ms)
-        ✔ E_REVIEW_BLOCKING (52.691386ms)
-        ✔ E_REVIEW_MISSING (4.193896ms)
-        ✔ E_SCHEMA (6.03011ms)
-        ✔ E_STALE_ARTIFACT (2.973068ms)
-        ✔ E_TRANSITION (2.327286ms)
-      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (345.801778ms)
-      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (125.616985ms)
-      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (15.647852ms)
-      ▶ model allowlist warns in warn mode and errors in error mode
-        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (73.656828ms)
-        ✔ error mode emits E_MODEL_NOT_ALLOWED (16.260224ms)
-      ✔ model allowlist warns in warn mode and errors in error mode (115.726858ms)
-      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (91.052953ms)
-      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (11.05281ms)
-      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (10.856558ms)
-      ✔ ready with a blocking question is rejected (85.951576ms)
-      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (111.943172ms)
-      ℹ tests 717
-      ℹ suites 10
-      ℹ pass 706
-      ℹ fail 0
-      ℹ cancelled 0
-      ℹ skipped 11
-      ℹ todo 0
-      ℹ duration_ms 169850.996925
+    evidence: 0 findings unresolved
+  - id: quick-scope-held
+    met: true
+    evidence: "Reviewed exact CLI base 2c53a55 to 843884e: 22 tracked files cover all 14 CLI subjects. Source and tests change only version literals. The bundle equals the base bundle with seven 0.1.4 strings replaced by 0.1.5, and its SHA-256 02960c63952c11345410fe1a0004bc36e4867fae6ad9fc81349cced84f1c5acc matches the sidecar. The manifest and lock are identical to base apart from baton_version and generated_by, so the Spec Kit 1.3.0, ATV main ad99673, token-budget v1.1.0 and optimize v1.0.0 pins are unchanged. The CHANGELOG promotes every Unreleased bullet with a faithful F07 note for the already-merged reapProcessGroup, which is absent at v0.1.4. The 0.1.4 history is byte-identical. smoke.yml is maintainer-only (template cleanup removes it) and only its macos step changed. The release-014, a7 and cleanup changes are owner-authorized bookkeeping. No user-facing behavior, public contract or component version changes."
 open_questions: []
 decisions:
   - id: D1
@@ -126,6 +57,28 @@ decisions:
     decision: Record focused pre-handoff acceptance evidence
     rationale: "AC1: all preexisting Unreleased bullets remain in the dated 2026-11-05 0.1.5 section, 0.1.4 historical section is byte-identical, F07 wording matches src/lib/local-checks.mjs and feature 004 D41/D48; comparison links and lock's peeled 1.3.0 commit match. AC2: src/cli, report, doctor, adopt, init and sync; package and lock roots; version-bound init/update expectations; generated manifest and lock now report 0.1.5. AC3: only the macOS smoke scenario command gained test/unit/local-checks.test.mjs; an existing maintainer-workflows test pins macOS-only inclusion, unconditional execution, unchanged source guard and SHA-pinned actions. AC4: initial focused test run passed 87/88 with the lone version-bound init regex expecting 0.1.4; updated it to 0.1.5 and reran all three affected test names with 3/3 pass. AC5: npm run build generated a 431965-byte bundle (<460800); raw SHA-256 02960c63952c11345410fe1a0004bc36e4867fae6ad9fc81349cced84f1c5acc equals sidecar; manifest, sync, build --check and lock verify passed. A comparison of lock upstreams/files against HEAD is identical. AC6: global validate passed with advisory recommended-pack/quick-size warnings; no approval, merge or publication was inferred. The first build and targeted tests failed for missing Node dependencies; npm ci --ignore-scripts --no-audit --no-fund restored 92 packages. Final configured check remains for the work write."
     by: release-015-work
+  - id: D7
+    decision: Verify v0.1.5 candidate remains within quick scope
+    tag: quick-scope-held
+    rationale: "Reviewed exact CLI base 2c53a55 to 843884e: 22 tracked files cover all 14 CLI subjects. Source and tests change only version literals. The bundle equals the base bundle with seven 0.1.4 strings replaced by 0.1.5, and its SHA-256 02960c63952c11345410fe1a0004bc36e4867fae6ad9fc81349cced84f1c5acc matches the sidecar. The manifest and lock are identical to base apart from baton_version and generated_by, so the Spec Kit 1.3.0, ATV main ad99673, token-budget v1.1.0 and optimize v1.0.0 pins are unchanged. The CHANGELOG promotes every Unreleased bullet with a faithful F07 note for the already-merged reapProcessGroup, which is absent at v0.1.4. The 0.1.4 history is byte-identical. smoke.yml is maintainer-only (template cleanup removes it) and only its macos step changed. The release-014, a7 and cleanup changes are owner-authorized bookkeeping. No user-facing behavior, public contract or component version changes."
+    by: release-015-review
+  - id: D8
+    decision: Dismiss both P3 findings with reasons and route to land
+    rationale: "R015-1 (testing) is a false positive: maintainer-workflows.test.mjs:122-123 already requires the macos job. R015-2 (project-standards) is a stale placeholder body with existing precedent; the frontmatter and `handoff next` route, and D3-D6 record the changes. No P0, P1 or P2 findings and no auto-fixes. Targeted checks passed: build --check, sync --check, lock verify, typecheck, git diff --check, the release.yml tag/package and changelog guards for v0.1.5, local-checks plus maintainer-workflows 28/28, init/update version tests 2/2, and global and path validate exit 0 with advisory warnings only. The work-write npm run check (706 pass, 0 fail) was not rerun. The CE run artifact and this payload stay untracked under gitignored .context/. This receipt is not owner approval."
+    by: release-015-review
+  - id: D9
+    decision: Record reviewed code tree
+    rationale: Land must use the exact code inspected by review
+    tag: reviewed-tree
+    x-tree-sha256: 15dcb27e46b6ec60c370ce3214680232263ae5e022c4192658298e7c9eacaa9b
+    x-base-commit: 2c53a55bf0a04a68c8f518b4a1eed98acbc7bcca
+    by: baton
+  - id: D10
+    decision: Record reviewed implementation base
+    rationale: Review completed at this commit
+    tag: diff-base
+    x-base-commit: 843884e862e13e4ff2779542a8a2d8b16df4fb5a
+    by: baton
 gate:
   required: false
   approved_by: null
@@ -138,8 +91,15 @@ history:
     x-worktree: 2c2debb6cccf5bef661bd1eb4f4feb2d2eddebf4667460a974d77dc3acfaeb88
     commit: 2c53a55
     x-action: write
-updated_at: 2026-11-05T14:55:05.189Z
-updated_by: ce-work
+  - phase: review
+    at: 2026-11-05T15:05:23.500Z
+    by: release-015-review
+    writer: 56be92467971b4566ea06882af1cd79134253df6d62a6dade3b5d477afb94c5e
+    x-worktree: a8c6ef7ed2851dc84c200c494d28cc74cba6cbbb49d3ab67f4c0b5ab1424842c
+    commit: 843884e
+    x-action: write
+updated_at: 2026-11-05T15:05:23.493Z
+updated_by: baton-review
 risks:
   - id: R1
     text: The macOS runner can exercise the real Darwin process-group behavior only after a separately approved tag or workflow dispatch; local Linux tests cover injected-dependency paths.
@@ -147,6 +107,9 @@ risks:
 x-implementation-writer: 7eaa43b0f60faebc891a621528b92c2d8a7804de7e591f0d3e703093cdbb64aa
 x-implementation-worktree: 2c2debb6cccf5bef661bd1eb4f4feb2d2eddebf4667460a974d77dc3acfaeb88
 x-implementation-cycle: 01318e6574a449d831077e2a883524b791a1935774298bc1c3ad9c781339f4c9
+review:
+  findings_path: .baton/quick/release-015.review.json
+  blocking_findings: 0
 ---
 ## Goal
 Keep the work in scope.

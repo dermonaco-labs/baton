@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "source": {
+    "engine": "ce-review",
+    "mode": "headless",
+    "run_artifact": ".context/compound-engineering/ce-review/release-015-843884e/report.json"
+  },
+  "base": "2c53a55bf0a04a68c8f518b4a1eed98acbc7bcca",
+  "head": "843884e862e13e4ff2779542a8a2d8b16df4fb5a",
+  "personas": ["correctness-reviewer", "testing-reviewer", "project-standards-reviewer", "learnings-researcher"],
+  "findings": [
+    {
+      "id": "R015-1",
+      "severity": "P3",
+      "title": "macOS inclusion assertion passes if the macos job disappears",
+      "file": "test/unit/maintainer-workflows.test.mjs",
+      "line": 28,
+      "persona": "testing-reviewer",
+      "confidence": 0.66,
+      "disposition": "dismissed",
+      "reason": "False positive. The test 'smoke' at test/unit/maintainer-workflows.test.mjs:122-123 already asserts that the ubuntu, macos and windows jobs all exist and that macos runs on macos-latest. Deleting the macos job therefore fails the suite, while the loop at line 28 pins macOS-only inclusion of local-checks."
+    },
+    {
+      "id": "R015-2",
+      "severity": "P3",
+      "title": "Release-015 baton body still shows the default /ce-work instructions",
+      "file": ".baton/quick/release-015.md",
+      "line": 158,
+      "persona": "project-standards-reviewer",
+      "confidence": 0.62,
+      "disposition": "dismissed",
+      "reason": "Bookkeeping only; routing and behavior are unaffected. Routing comes from the frontmatter and `handoff next`. The CLI write keeps the `handoff new` body (handoff.mjs:40), and five quick batons, including landed a7 and review-land-fixes-012, kept that placeholder. The frontmatter summary and D3-D6 record what changed, the acceptance evidence and the publication boundary."
+    }
+  ]
+}
