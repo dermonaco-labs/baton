@@ -75,8 +75,8 @@ decisions:
     by: baton
 gate:
   required: true
-  approved_by: null
-  approved_at: null
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-11-05
 history:
   - phase: work
     at: 2026-11-05T14:58:04.047Z
@@ -99,8 +99,15 @@ history:
     x-worktree: 940b7f9ce73a060e0ce44e5e270b75651d547264041189e9a0a78b3e43ec7bd4
     commit: 6c12e0b
     x-action: write
-updated_at: 2026-11-05T15:16:22.358Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-11-05T15:21:58.805Z
+    by: human:repository-owner
+    writer: 9cbe1430e26a0b53b803cce098c55db7ce994ffe7e27cb10d2e07e2591e85193
+    x-worktree: 940b7f9ce73a060e0ce44e5e270b75651d547264041189e9a0a78b3e43ec7bd4
+    commit: 8aab337
+    x-action: approve
+updated_at: 2026-11-05T15:21:58.805Z
+updated_by: human:repository-owner
 risks:
   - id: R1
     text: The macOS runner can exercise the real Darwin process-group behavior only after a separately approved tag or workflow dispatch; local Linux tests cover injected-dependency paths.
