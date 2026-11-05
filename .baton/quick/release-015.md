@@ -2,13 +2,13 @@
 baton: 1
 lane: quick
 feature: release-015
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Independent single-pass ce-review headless of exact CLI base 2c53a55 to candidate 843884e: 22 tracked files reviewed (pinned set; the 14 CLI subjects are a subset). Versions are consistent at 0.1.5, the CHANGELOG promotion and F07 wording are faithful, all upstream pins are unchanged, and the bundle, sidecar, manifest and lock are consistent. Cleanup covers the release-015 records, and the smoke change is macOS-only. Two P3 findings were dismissed with reasons; no auto-fixes. Ready for land's separate human gate. No merge, tag, publication or dispatch is implied."
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: "Landed the v0.1.5 release-prep candidate as PR #60 into main from the reviewed head 6c12e0b. Land receive and the configured checks passed. The PR review gate is pending; merge, the v0.1.5 tag, publication and any workflow dispatch each need separate owner approval."
 read_first:
   - path: .baton/quick/release-015.md
     why: Release scope, decisions and review base
@@ -19,15 +19,9 @@ read_first:
 artifacts: []
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: .baton/quick/release-015.review.json
-  - id: findings-fixed-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
-  - id: quick-scope-held
-    met: true
-    evidence: "Reviewed exact CLI base 2c53a55 to 843884e: 22 tracked files cover all 14 CLI subjects. Source and tests change only version literals. The bundle equals the base bundle with seven 0.1.4 strings replaced by 0.1.5, and its SHA-256 02960c63952c11345410fe1a0004bc36e4867fae6ad9fc81349cced84f1c5acc matches the sidecar. The manifest and lock are identical to base apart from baton_version and generated_by, so the Spec Kit 1.3.0, ATV main ad99673, token-budget v1.1.0 and optimize v1.0.0 pins are unchanged. The CHANGELOG promotes every Unreleased bullet with a faithful F07 note for the already-merged reapProcessGroup, which is absent at v0.1.4. The 0.1.4 history is byte-identical. smoke.yml is maintainer-only (template cleanup removes it) and only its macos step changed. The release-014, a7 and cleanup changes are owner-authorized bookkeeping. No user-facing behavior, public contract or component version changes."
+    evidence: https://github.com/dermonaco-labs/baton/pull/60
 open_questions: []
 decisions:
   - id: D1
@@ -79,8 +73,12 @@ decisions:
     tag: diff-base
     x-base-commit: 843884e862e13e4ff2779542a8a2d8b16df4fb5a
     by: baton
+  - id: D11
+    decision: Open the v0.1.5 release-prep PR without merging
+    rationale: "Owner approved landing via control-plane delegation. Run from the independent review checkout at 6c12e0b, which is not the work checkout. `handoff receive --phase land --quick release-015` exited 0 with no E_SELF_REVIEW. `npm run check` exited 0 (tests 717, suites 10, pass 706, fail 0, cancelled 0, skipped 11, todo 0). `baton validate` exited 0 with advisory W_PACK_RECOMMENDED and W_QUICK_LARGE warnings only. `gh pr create --base main` opened #60 using .github/pull_request_template.md. The session note is written outside the repo. No merge, gate approval, tag, release, workflow dispatch, CI rerun or settings change."
+    by: release-015-land
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -98,8 +96,15 @@ history:
     x-worktree: a8c6ef7ed2851dc84c200c494d28cc74cba6cbbb49d3ab67f4c0b5ab1424842c
     commit: 843884e
     x-action: write
-updated_at: 2026-11-05T15:05:23.493Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-11-05T15:20:59.977Z
+    by: release-015-land
+    writer: 56be92467971b4566ea06882af1cd79134253df6d62a6dade3b5d477afb94c5e
+    x-worktree: a8c6ef7ed2851dc84c200c494d28cc74cba6cbbb49d3ab67f4c0b5ab1424842c
+    commit: 6c12e0b
+    x-action: write
+updated_at: 2026-11-05T15:20:59.968Z
+updated_by: baton-land
 risks:
   - id: R1
     text: The macOS runner can exercise the real Darwin process-group behavior only after a separately approved tag or workflow dispatch; local Linux tests cover injected-dependency paths.
@@ -110,6 +115,9 @@ x-implementation-cycle: 01318e6574a449d831077e2a883524b791a1935774298bc1c3ad9c78
 review:
   findings_path: .baton/quick/release-015.review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/60
+  number: 60
 ---
 ## Goal
 Keep the work in scope.
