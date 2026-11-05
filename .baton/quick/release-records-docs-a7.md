@@ -14,10 +14,10 @@ read_first:
     why: New canonical docs-only lane scope, source base, WORK receipt and CLI-owned writer/checkout proof
   - path: CONTRIBUTING.md
     why: Portable release evidence, main-dispatch versus tag-push provenance and explicitly deferred task bookkeeping
-    sha256: 22e28d2178758bc3f6c85619d08ed1404d169782715f3318b9413a60a7701487
+    sha256: 934b75f625283b9209fb4087adc53189be15c28213ebe92abf72cbcc57955a7a
   - path: README.md
     why: Published release status and evidence link
-    sha256: 139f8fc46b356c622eb579fe3d9a682ed539061de4bc9f3e6ad65c4a02bc5f6a
+    sha256: 6aceba88bb6ff3faeda85186c0bc06662a7a9be690bd3df697c2798370d0056e
   - path: SECURITY.md
     why: Supported v0.1 release line after publication
     sha256: 61ecec33aad1e5a6ee9fed40994ee287150751564952eda98a054537c3156ae2
@@ -26,14 +26,14 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: .baton/template-cleanup.yml
     why: Source-only cleanup coverage for new docs lane and later canonical review artifacts
-    sha256: 2b034bbcbfe30a18c337d7177a7a2a9e1c2d46fa74fdd653b21ec8b22d8f20b0
+    sha256: 364f0b7aaad1b13669466395b4852e700294db95d4001733be3aea28ad110d5e
   - path: .baton/quick/release-records-docs-a7.work.json
     why: Actual judgment-only input to this new canonical WORK write
     sha256: de632df430c6cae373d42517f38b3d1bde768ad2f66a7923bcb449813cc449f4
 artifacts:
   - path: CONTRIBUTING.md
     role: evidence
-    sha256: 22e28d2178758bc3f6c85619d08ed1404d169782715f3318b9413a60a7701487
+    sha256: 934b75f625283b9209fb4087adc53189be15c28213ebe92abf72cbcc57955a7a
   - path: .context/compound-engineering/ce-review/release-records-docs-a7-20261009/report.md
     role: review
     sha256: 7f2e4b6b9a75e05bd43c9a4bee6c0875d6bcaad2f47a22e2f03256fc4b620787
@@ -132,10 +132,18 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Owner authorized (direct approval) a metadata-only refresh of the .baton/template-cleanup.yml hash for one added remove entry, specs/003-upstream-upgrade-prs/, so feature 003 maintainer artifacts do not ship to adopters (T001 baseline adopt failure). No other a7 content changes.
     by: implementation-session
+  - id: D20
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Owner authorized (control-plane delegation) a metadata-only refresh of the .baton/template-cleanup.yml hash for one added remove entry, specs/004-speckit-1-3-0-migration/, so feature 004 maintainer artifacts do not ship to adopters. No other a7 content changes.
+    by: implementation-session
+  - id: D21
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Owner authorized (control-plane delegation) a metadata-only artifact hash refresh limited to feature 004 T027/T028 Spec Kit 1.3.0 documentation edits (version 1.0.11 -> 1.3.0 and the issues pack now shipping the github extension plus the /speckit-taskstoissues alias). No other content changes.
+    by: implementation-session
 gate:
   required: true
-  approved_by: repository owner via direct approval
-  approved_at: 2026-11-04
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-11-05
 history:
   - phase: work
     at: 2026-10-09T14:15:01.488Z
@@ -249,7 +257,35 @@ history:
     x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
     commit: ae34a99
     x-action: approve
-updated_at: 2026-11-04T12:56:18.672Z
+  - phase: land
+    at: 2026-11-05T10:08:54.698Z
+    by: implementation-session
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 73348a8
+    x-action: refresh
+  - phase: land
+    at: 2026-11-05T10:08:54.993Z
+    by: human:repository-owner
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 73348a8
+    x-action: approve
+  - phase: land
+    at: 2026-11-05T10:15:56.384Z
+    by: implementation-session
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 83d02b3
+    x-action: refresh
+  - phase: land
+    at: 2026-11-05T10:15:56.617Z
+    by: human:repository-owner
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 83d02b3
+    x-action: approve
+updated_at: 2026-11-05T10:15:56.617Z
 updated_by: human:repository-owner
 do_not_read:
   - path: specs/001-baton-template/roadmap.md

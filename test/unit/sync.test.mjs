@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { diffDocument, generatedStable, lockFile, packDefinitions, prepareEntries, snapshotDrift } from '../../src/commands/sync.mjs';
-import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
+import { diffDocument, formatBumpSummary, generatedStable, lockFile, lockedRequirements, packDefinitions, pinnedNames, prepareEntries, snapshotDrift, sync, validatePackExtensions } from '../../src/commands/sync.mjs';
+import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_REPO, SPECKIT_REQUIREMENTS, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
+import { REQUIREMENTS_IN, REQUIREMENTS_TXT } from '../../src/lib/candidate-bindings.mjs';
 import { sourceRoot } from '../helpers/index.mjs';
 
 test('pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift', async () => {
@@ -106,6 +107,100 @@ test('pinned generator can refresh Baton-authored handoff outputs without blessi
     lock.files.push({ path: 'unchanged.md', packs: ['core'], sha256_upstream: '0'.repeat(64) });
     assert.throws(() => prepareEntries(root, generated, atv, packs, [], lock, false),
       /E_UPSTREAM_VERIFY.*unchanged\.md/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('Spec Kit github extension entries come only from the extension tree into the issues pack', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'baton-sync-extension-'));
+  try {
+    const generated = join(root, 'generated');
+    const extension = join(root, 'project-github');
+    const atv = join(root, 'atv');
+    const skill = '.github/skills/speckit-github-taskstoissues/SKILL.md';
+    const paths = [
+      skill,
+      '.specify/extensions/github/extension.yml',
+      '.specify/extensions/github/README.md',
+      '.specify/extensions/github/commands/speckit.github.taskstoissues.md',
+      '.specify/extensions/github/scripts/bash/resolve-tasks.sh',
+      '.specify/extensions/github/scripts/powershell/resolve-tasks.ps1',
+      '.specify/extensions/github/scripts/python/resolve_tasks.py',
+    ];
+    const skillText = '---\nname: speckit-github-taskstoissues\ndescription: Create GitHub issues from tasks.\n---\n\nBody.\n';
+    /** @param {string} base @param {string} path @param {string|Buffer} bytes */
+    const put = async (base, path, bytes) => {
+      await mkdir(join(base, path, '..'), { recursive: true });
+      await writeFile(join(base, path), bytes);
+    };
+    for (const base of [generated, extension]) {
+      await put(base, '.specify/scripts/bash/common.sh', 'echo core\n');
+    }
+    await put(generated, '.specify/extensions.yml', 'installed: []\r\n');
+    await put(generated, '.specify/extensions/.registry', '{"extensions":{}}\n');
+    await put(extension, '.specify/extensions.yml', 'installed: [github]\n');
+    await put(extension, '.specify/extensions/.registry', '{"extensions":{"github":{}}}\n');
+    for (const path of paths) {
+      await put(extension, path, path === skill ? skillText.replaceAll('\n', '\r\n') : `fixture ${path}\n`);
+    }
+    await put(root, 'specs/001-baton-template/contracts/packs.md',
+      await readFile(join(sourceRoot, 'specs/001-baton-template/contracts/packs.md')));
+    const packs = [
+      { id: 'core', requires: [], conflicts: [], files: [] },
+      { id: 'issues', requires: ['core'], conflicts: [],
+        files: paths.map(path => ({ from: 'speckit', extension: 'github', path })) },
+    ];
+    const { vendored } = prepareEntries(root, generated, atv, packs, [], null, false, {}, { github: extension });
+    for (const path of paths) {
+      const entry = vendored.find(row => row.path === path);
+      assert.ok(entry, path);
+      const { bytes, sha256: digest, sha256_upstream: upstreamDigest, ...row } = entry;
+      assert.deepEqual(row, {
+        path, upstream: 'speckit', upstream_path: path, stored_at: `packs/issues/files/${path}`,
+        license: 'MIT', repair: null, packs: ['issues'], 'x-speckit-extension': 'github',
+      });
+      assert.equal(digest, sha256(bytes));
+      assert.equal(upstreamDigest, digest);
+    }
+    assert.deepEqual(vendored.find(row => row.path === skill).bytes, Buffer.from(skillText));
+    const core = vendored.filter(row => row.packs.includes('core'));
+    assert.ok(core.every(row => !row.path.startsWith('.specify/extensions/github/') &&
+      !row.path.includes('speckit-github-taskstoissues') && !('x-speckit-extension' in row)));
+    assert.deepEqual(core.find(row => row.path === '.specify/extensions.yml').bytes, Buffer.from('installed: []\n'));
+    assert.deepEqual(core.find(row => row.path === '.specify/extensions/.registry').bytes,
+      Buffer.from('{"extensions":{}}\n'));
+    assert.ok(pinnedNames(generated, atv, [extension]).has('speckit-github-taskstoissues'));
+    assert.ok(!pinnedNames(generated, atv).has('speckit-github-taskstoissues'));
+
+    assert.throws(() => prepareEntries(root, generated, atv, packs, [], null, false, {}),
+      error => error.code === 'E_UPSTREAM_VERIFY' && /extension github/.test(error.message));
+    validatePackExtensions(packs);
+    for (const from of ['baton', 'atv']) {
+      const misrouted = [packs[0], { ...packs[1], files: [{ from, extension: 'github', path: skill }] }];
+      assert.throws(() => validatePackExtensions(misrouted),
+        error => error.code === 'E_UPSTREAM_VERIFY' && /must come from speckit/.test(error.message));
+    }
+    const unsupported = [packs[0], { ...packs[1], files: [{ from: 'speckit', extension: 'gitlab', path: skill }] }];
+    assert.throws(() => validatePackExtensions(unsupported),
+      error => error.code === 'E_UPSTREAM_VERIFY' && /issues: unsupported Spec Kit extension gitlab/.test(error.message) &&
+        error.message.includes(skill));
+    const readme = join(extension, '.specify/extensions/github/README.md');
+    const original = await readFile(readme);
+    await rm(readme);
+    assert.throws(() => prepareEntries(root, generated, atv, packs, [], null, false, {}, { github: extension }),
+      error => error.code === 'E_UPSTREAM_VERIFY' && error.message.includes('README.md'));
+    await put(root, 'outside/README.md', original);
+    let linked = true;
+    try {
+      await symlink(join(root, 'outside/README.md'), readme);
+    } catch {
+      linked = false;
+    }
+    if (linked) {
+      assert.throws(() => prepareEntries(root, generated, atv, packs, [], null, false, {}, { github: extension }),
+        error => error.code === 'E_UPSTREAM_VERIFY' && error.message.includes('README.md'));
+    }
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -269,6 +364,30 @@ test('lock and snapshot document label optional provenance by its named source',
   assert.deepEqual(Object.keys(core.upstreams), ['speckit', 'atv']);
 });
 
+test('snapshot document nests the bump summary under its h1 with blank-line-separated lists', () => {
+  const pins = (/** @type {string} */ version, /** @type {string} */ commit) => ({
+    speckit: { version, commit }, atv: { ref: 'main', version: null, commit: 'b'.repeat(40) } });
+  const before = { upstreams: pins('1.0.0', 'a'.repeat(40)), files: [{ stored_at: 'kept.md', sha256: '1'.repeat(64) }] };
+  const after = { upstreams: pins('1.1.0', 'c'.repeat(40)),
+    files: [{ stored_at: 'kept.md', sha256: '2'.repeat(64) }, { stored_at: 'new.md', sha256: '3'.repeat(64) }] };
+  const summary = formatBumpSummary(before, after);
+  assert.ok(summary.startsWith('### Upstream bump (PR summary)\n\n'));
+  assert.match(summary, /\*\*Added \(1\)\*\*\n- `new\.md`/);
+  const document = diffDocument({ ...after, 'x-bump-summary': summary });
+  const start = document.indexOf('## Upstream bump');
+  assert.ok(start > 0);
+  assert.equal(document.slice(start, document.indexOf('| Stored at |')), [
+    '## Upstream bump (PR summary)', '',
+    `- Spec Kit: 1.0.0 (\`${'a'.repeat(40)}\`) → 1.1.0 (\`${'c'.repeat(40)}\`). [Releases](${SPECKIT_REPO}/releases).`, '',
+    '**Added (1)**', '', '- `new.md`', '',
+    '**Changed (1)**', '', '- `kept.md`', '',
+    '**Removed (0)**', '', '- None', '',
+    'Reproduce: `baton sync --bump speckit=1.1.0`, then `baton sync --check`.', '', '',
+  ].join('\n'));
+  assert.doesNotMatch(document, /^### /m);
+  assert.equal(diffDocument(after).includes('Upstream bump'), false);
+});
+
 test('optional pin fields are one immutable list matching the locked projection order', () => {
   assert.deepEqual(OPTIONAL_PIN_FIELDS, ['version', 'repo', 'tag', 'commit', 'tree', 'license']);
   assert.ok(Object.isFrozen(OPTIONAL_PIN_FIELDS));
@@ -285,6 +404,40 @@ test('MIT license verifier keeps each source copyright requirement', () => {
     { code: 'E_LICENSE', message: 'E_LICENSE Pinned optimize LICENSE is not the expected MIT license' });
   assert.throws(() => verifyMitLicense('Apache License\nCopyright (c) 2026 All The Vibes\n', 'Copyright (c) 2026 All The Vibes', 'ATV'),
     { code: 'E_LICENSE', message: 'E_LICENSE Pinned ATV LICENSE is not the expected MIT license' });
+});
+
+test('sync rejects an unsupported pack extension before preparing any upstream tree', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'baton-sync-extension-'));
+  try {
+    await cp(join(sourceRoot, 'packs'), join(root, 'packs'), { recursive: true });
+    const issues = join(root, 'packs', 'issues.yml');
+    await writeFile(issues, (await readFile(issues, 'utf8')).replace(
+      '{ from: speckit, extension: github, path: .specify/extensions/github/README.md }',
+      '{ from: speckit, extension: gitlab, path: .specify/extensions/gitlab/README.md }'));
+    /** @type {string[]} */
+    const called = [];
+    const spy = (/** @type {string} */ name) => () => { called.push(name); throw new Error(`${name} must not run`); };
+    const deps = Object.fromEntries(['regenerateRequirements', 'resolveTag', 'resolveCommit', 'fetchAtv', 'fetchSource',
+      'prepareSpeckit', 'prepareSpeckitExtension'].map(name => [name, spy(name)]));
+    for (const options of [{}, { check: true }, { bump: 'speckit=9.9.9' }]) {
+      assert.throws(() => sync({ cwd: root, ...options, deps: /** @type {any} */ (deps) }),
+        error => error.code === 'E_UPSTREAM_VERIFY' &&
+          error.message.includes('issues: unsupported Spec Kit extension gitlab: .specify/extensions/gitlab/README.md'));
+    }
+    assert.deepEqual(called, []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('requirements paths have one spelling shared by sync, lock and the trusted-base bindings', () => {
+  assert.equal(SPECKIT_REQUIREMENTS.input, REQUIREMENTS_IN);
+  assert.equal(SPECKIT_REQUIREMENTS.output, REQUIREMENTS_TXT);
+  assert.ok(Object.isFrozen(SPECKIT_REQUIREMENTS));
+});
+
+test('the lock records the requirements file sync regenerates', () => {
+  assert.equal(lockedRequirements, SPECKIT_REQUIREMENTS.output);
 });
 
 test('pack definitions require every original pack and accept additional optional packs', async () => {

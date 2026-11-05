@@ -3551,7 +3551,7 @@
       "format": "esm"
     },
     "src/lib/upstream.mjs": {
-      "bytes": 11801,
+      "bytes": 15230,
       "imports": [
         {
           "path": "node:crypto",
@@ -3577,7 +3577,7 @@
       "format": "esm"
     },
     "src/commands/lock.mjs": {
-      "bytes": 4930,
+      "bytes": 4924,
       "imports": [
         {
           "path": "node:fs",
@@ -3598,7 +3598,7 @@
       "format": "esm"
     },
     "src/lib/lock-report.mjs": {
-      "bytes": 3812,
+      "bytes": 3975,
       "imports": [
         {
           "path": "src/lib/upstream.mjs",
@@ -3625,7 +3625,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 25944,
+      "bytes": 28477,
       "imports": [
         {
           "path": "node:fs",
@@ -3800,7 +3800,7 @@
       "format": "esm"
     },
     "src/lib/local-checks.mjs": {
-      "bytes": 4055,
+      "bytes": 6612,
       "imports": [
         {
           "path": "node:child_process",
@@ -4123,7 +4123,7 @@
       "format": "esm"
     },
     "src/commands/adopt.mjs": {
-      "bytes": 13744,
+      "bytes": 13743,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4317,7 +4317,7 @@
       "format": "esm"
     },
     "src/commands/init.mjs": {
-      "bytes": 20497,
+      "bytes": 21761,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -4398,7 +4398,7 @@
       "format": "esm"
     },
     "src/commands/update.mjs": {
-      "bytes": 11970,
+      "bytes": 13184,
       "imports": [
         {
           "path": "node:fs",
@@ -5591,19 +5591,19 @@
           "bytesInOutput": 1818
         },
         "src/lib/upstream.mjs": {
-          "bytesInOutput": 6818
+          "bytesInOutput": 8135
         },
         "src/commands/lock.mjs": {
-          "bytesInOutput": 2857
+          "bytesInOutput": 2795
         },
         "src/lib/lock-report.mjs": {
-          "bytesInOutput": 2365
+          "bytesInOutput": 2439
         },
         "src/lib/repairs.mjs": {
           "bytesInOutput": 1660
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 12645
+          "bytesInOutput": 13626
         },
         "src/lib/phases.mjs": {
           "bytesInOutput": 7007
@@ -5618,7 +5618,7 @@
           "bytesInOutput": 7859
         },
         "src/lib/local-checks.mjs": {
-          "bytesInOutput": 1967
+          "bytesInOutput": 2719
         },
         "src/lib/checks.mjs": {
           "bytesInOutput": 11000
@@ -5642,7 +5642,7 @@
           "bytesInOutput": 541
         },
         "src/commands/adopt.mjs": {
-          "bytesInOutput": 7540
+          "bytesInOutput": 7539
         },
         "src/commands/doctor.mjs": {
           "bytesInOutput": 3803
@@ -5657,10 +5657,10 @@
           "bytesInOutput": 740
         },
         "src/commands/init.mjs": {
-          "bytesInOutput": 10785
+          "bytesInOutput": 11281
         },
         "src/commands/update.mjs": {
-          "bytesInOutput": 6053
+          "bytesInOutput": 6449
         },
         "src/commands/models.mjs": {
           "bytesInOutput": 2004
@@ -5672,7 +5672,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 428012
+      "bytes": 431965
     }
   }
 }

@@ -1,6 +1,6 @@
 import { existsSync, lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, sha256, UpstreamError } from '../lib/upstream.mjs';
+import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_REQUIREMENTS, sha256, UpstreamError } from '../lib/upstream.mjs';
 
 /** @param {{cwd?:string}} [options] */
 export function verifyLock({ cwd = process.cwd() } = {}) {
@@ -35,10 +35,10 @@ export function verifyLock({ cwd = process.cwd() } = {}) {
     }
   };
   check(lock.upstreams?.speckit?.requirements, lock.upstreams?.speckit?.requirements_sha256);
-  const input = join(root, 'baton', 'upstream', 'specify-cli.requirements.in');
+  const input = join(root, ...SPECKIT_REQUIREMENTS.input.split('/'));
   if (!existsSync(input) || readFileSync(input, 'utf8').trim() !==
       `specify-cli==${lock.upstreams?.speckit?.version}`) {
-    mismatch.push('baton/upstream/specify-cli.requirements.in');
+    mismatch.push(SPECKIT_REQUIREMENTS.input);
   }
   /** @type {Set<string>} */
   const unique = new Set();

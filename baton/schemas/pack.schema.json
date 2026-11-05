@@ -33,7 +33,8 @@
         "from": { "enum": ["speckit", "atv", "baton", "token-budget", "optimize"] },
         "upstream_path": { "$ref": "#/$defs/path" },
         "path": { "$ref": "#/$defs/path" },
-        "role": { "type": "string", "minLength": 1 }
+        "role": { "type": "string", "minLength": 1 },
+        "extension": { "enum": ["github"] }
       },
       "patternProperties": { "^x-": {} },
       "additionalProperties": false,
@@ -49,6 +50,10 @@
         {
           "if": { "properties": { "from": { "const": "optimize" } }, "required": ["from"] },
           "then": { "required": ["upstream_path"], "properties": { "path": { "pattern": "^\\.baton/vendor/optimize/" } } }
+        },
+        {
+          "if": { "required": ["extension"] },
+          "then": { "properties": { "from": { "const": "speckit" } } }
         }
       ]
     },

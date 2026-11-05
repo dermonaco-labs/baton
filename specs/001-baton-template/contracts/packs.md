@@ -64,7 +64,7 @@ spec amendment.
 | `docs-review` | skills: document-review, ce-compound-refresh. Agents: coherence, feasibility, scope-guardian, product-lens, design-lens, security-lens and adversarial-document reviewers | core | advisory review of spec/plan prose. `adversarial-document-reviewer` is dispatched by `document-review`, so it ships in this pack (never in core; closure rule 2) |
 | `security` | skill: atv-security. Agent: security-sentinel | core | a deeper audit than the core security persona |
 | `research` | agents: best-practices-researcher, framework-docs-researcher, git-history-analyzer, issue-intelligence-analyst | core | used by plan Phase 0 when present |
-| `issues` | skill: speckit-taskstoissues | core | needs the GitHub MCP / `gh`. Creates issues from tasks.md |
+| `issues` | skills: speckit-github-taskstoissues (Spec Kit `github` extension files) + speckit-taskstoissues alias | core | needs the GitHub MCP / `gh`. Creates issues from tasks.md |
 | `stack-python` | agent: kieran-python-reviewer | core | |
 | `stack-typescript` | agents: kieran-typescript-reviewer, julik-frontend-races-reviewer | core | |
 | `stack-rails` | agents: dhh-rails-reviewer, kieran-rails-reviewer | core | |
@@ -123,7 +123,7 @@ ref, sync fails with a hard error (no silent drop).
 
 ## Reference classification at the pin (A6)
 
-Source: the verified `sync` of Spec Kit v1.0.11 + ATV `ad99673` (12 unique file→token pairs, repeated in every
+Source: the verified `sync` of Spec Kit v1.3.0 + ATV `ad99673` (12 unique file→token pairs, repeated in every
 closure) plus the enhancement lists the old scanner missed. Upstream files are never edited; the pin does not move.
 
 | Pack · file | Reference | At pin | Reason / action | Degraded behaviour |

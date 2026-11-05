@@ -10,7 +10,9 @@ import { mergeMarker } from '../lib/markers.mjs';
 import { mergeAttributes } from '../lib/attributes.mjs';
 import { hashManaged } from '../lib/hash.mjs';
 import { repairAtv } from '../lib/repairs.mjs';
-import { OPTIONAL_SOURCES, prepareSpeckit, UpstreamError } from '../lib/upstream.mjs';
+import {
+  OPTIONAL_SOURCES, packExtensionIds, prepareSpeckit, prepareSpeckitExtension, UpstreamError
+} from '../lib/upstream.mjs';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
@@ -49,13 +51,30 @@ function options(args) {
   return result;
 }
 
+const scriptDirectory = String.raw`\.specify\/(?:extensions\/[^/]+\/)?scripts\/`;
+const bashScriptCall = new RegExp(`${scriptDirectory}bash\\/`);
+const scriptFile = new RegExp(`^${scriptDirectory}`);
+
+/** @param {Buffer} bytes */
+export function callsBashScripts(bytes) {
+  return bashScriptCall.test(bytes.toString('utf8'));
+}
+
+/**
+ * Core or extension script files of any flavour; they are payload, not script callers to flavour.
+ * @param {string} path
+ */
+export function isSpeckitScriptPath(path) {
+  return scriptFile.test(path);
+}
+
 /**
  * Locked Spec Kit files are generated with bash scripts; a ps/py install takes any file that
  * calls them from the flavour-specific generated project instead.
  * @param {string} project @param {string} path @param {Buffer} bytes @returns {Promise<Buffer>}
  */
 export async function flavouredBytes(project, path, bytes) {
-  if (!bytes.includes('.specify/scripts/bash/')) return bytes;
+  if (!callsBashScripts(bytes)) return bytes;
   return await optionalBytes(project, path) ?? bytes;
 }
 
@@ -144,7 +163,7 @@ export async function run(root, args) {
     }
     throw error;
   }
-  /** @type {{cleanup:() => Promise<void>,project:string}|null} */
+  /** @type {{cleanup:() => Promise<void>,project:string,extensions:Record<string,string>}|null} */
   let generated = null;
   try {
     const lock = JSON.parse(await readFile(join(payload.root, 'baton.lock.json'), 'utf8'));
@@ -166,9 +185,14 @@ export async function run(root, args) {
     const script = opts.script ?? await installedScript(root, previous);
     if (script !== 'sh') {
       const directory = await mkdtemp(join(tmpdir(), 'baton-speckit-'));
-      generated = { project: join(directory, 'project'), cleanup: () => rm(directory, { recursive: true, force: true }) };
+      generated = { project: join(directory, 'project'), extensions: {},
+        cleanup: () => rm(directory, { recursive: true, force: true }) };
       try {
         prepareSpeckit({ root: payload.root, work: directory, script, version: lock.upstreams.speckit.version });
+        // Extension files that call bash scripts come from the same extension added to the flavour project.
+        for (const extension of packExtensionIds(packs.map(id => definitions.get(id)))) {
+          generated.extensions[extension] = prepareSpeckitExtension({ work: directory, project: generated.project, extension });
+        }
       } catch (error) {
         if (error instanceof UpstreamError &&
             (error.code === 'E_PREREQUISITE' || /no version of specify-cli==/i.test(error.message))) {
@@ -185,7 +209,12 @@ export async function run(root, args) {
       /** @type {Buffer} */
       let bytes = await payloadBytes(payload.root, entry.stored_at);
       if (digest(bytes) !== entry.sha256) throw new BatonError('E_LOCK_MISMATCH', `Payload changed: ${entry.stored_at}`);
-      if (generated && entry.upstream === 'speckit') bytes = await flavouredBytes(generated.project, entry.path, bytes);
+      if (generated && entry.upstream === 'speckit') {
+        const extension = entry['x-speckit-extension'];
+        const project = extension === undefined ? generated.project : generated.extensions[extension];
+        if (!project) throw new BatonError('E_PREREQUISITE', `Spec Kit extension ${extension} was not prepared for ${entry.path}`, 5);
+        bytes = await flavouredBytes(project, entry.path, bytes);
+      }
       planned.set(entry.path, { bytes, pack, owner: optionalSources.includes(entry.upstream) || entry.upstream === 'atv' || entry.upstream === 'speckit' ? entry.upstream : 'baton' });
     }
     for (const pack of packs) {

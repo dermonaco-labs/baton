@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { join, parse, resolve, sep } from 'node:path';
 
 export const ATV_REPO = 'https://github.com/All-The-Vibes/ATV-StarterKit';
 export const SPECKIT_REPO = 'https://github.com/github/spec-kit';
+/** Root-relative, forward-slash paths of the hash-locked specify-cli requirements. */
+export const SPECKIT_REQUIREMENTS = Object.freeze({
+  input: 'baton/upstream/specify-cli.requirements.in',
+  output: 'baton/upstream/specify-cli.requirements.txt',
+});
 
 /** `owner/name` of a GitHub repository URL. @param {string} url */
 export const repoSlug = url => new URL(url).pathname.slice(1);
@@ -58,7 +63,7 @@ export function workspace(root) {
 export function prepareSpeckit({ root, work, script = 'sh', version }) {
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw new UpstreamError('E_UPSTREAM_VERIFY', `Invalid specify-cli version: ${version}`);
   if (!['sh', 'ps', 'py'].includes(script)) throw new UpstreamError('E_USAGE', `Unsupported script: ${script}`);
-  const requirements = join(root, 'baton', 'upstream', 'specify-cli.requirements.txt');
+  const requirements = join(root, ...SPECKIT_REQUIREMENTS.output.split('/'));
   if (!existsSync(requirements)) throw new UpstreamError('E_PREREQUISITE', `Missing ${requirements}`);
   const venv = join(work, 'venv');
   const project = join(work, 'project');
@@ -86,6 +91,50 @@ export function prepareSpeckit({ root, work, script = 'sh', version }) {
   run(specify, ['extension', 'add', '--dev', extension], { cwd: project });
   run(specify, ['preset', 'add', '--dev', preset], { cwd: project });
   return project;
+}
+
+/** Spec Kit extensions bundled in the pinned wheel that a Baton pack may ship. */
+export const SPECKIT_EXTENSIONS = Object.freeze(['github']);
+
+/**
+ * Sorted, distinct Spec Kit extension ids that the given pack definitions route files through.
+ * @param {Iterable<{files?:Array<{extension?:string}>}|undefined>} definitions
+ * @returns {string[]}
+ */
+export function packExtensionIds(definitions) {
+  const ids = new Set();
+  for (const definition of definitions) {
+    for (const file of definition?.files ?? []) if (file.extension !== undefined) ids.add(file.extension);
+  }
+  return [...ids].sort();
+}
+
+/**
+ * Derive the extension tree: a copy of the generated core project with one bundled Spec Kit extension added by the
+ * verified `specify` from `work/venv`. The core project is left untouched; on failure nothing remains.
+ * @param {{work:string,project:string,extension:string}} options
+ */
+export function prepareSpeckitExtension({ work, project, extension }) {
+  if (!SPECKIT_EXTENSIONS.includes(extension)) throw new UpstreamError('E_USAGE', `Unsupported Spec Kit extension: ${extension}`);
+  const bin = process.platform === 'win32' ? 'Scripts' : 'bin';
+  const specify = join(work, 'venv', bin, process.platform === 'win32' ? 'specify.exe' : 'specify');
+  if (!existsSync(specify) || !existsSync(project)) {
+    throw new UpstreamError('E_UPSTREAM_VERIFY', `Spec Kit extension ${extension} needs the verified core project first`);
+  }
+  const tree = join(work, `project-${extension}`);
+  rmSync(tree, { recursive: true, force: true });
+  try {
+    cpSync(project, tree, { recursive: true, verbatimSymlinks: true });
+    run(specify, ['extension', 'add', extension], { cwd: tree });
+    if (!existsSync(join(tree, '.specify', 'extensions', extension, 'extension.yml'))) {
+      throw new UpstreamError('E_UPSTREAM_VERIFY', `Spec Kit extension ${extension} did not install its manifest`);
+    }
+  } catch (error) {
+    rmSync(tree, { recursive: true, force: true });
+    if (error instanceof UpstreamError) throw error;
+    throw new UpstreamError('E_UPSTREAM_VERIFY', `Spec Kit extension ${extension} failed: ${error}`);
+  }
+  return tree;
 }
 
 /**
@@ -196,20 +245,39 @@ export function fetchSource({ work, id, pin = OPTIONAL_SOURCES[id] }) {
   return repo;
 }
 
+/**
+ * Whether compiled requirements text names a path inside `root`, natively or with forward slashes. A path counts
+ * only when the root is followed by a separator, so `/spec` does not match `/specify-cli`. A filesystem root prefixes
+ * every absolute path, so there only the rooted requirements files count.
+ * @param {string} text @param {string} root
+ */
+export function recordsMachineLocalPath(text, root) {
+  const absolute = resolve(root);
+  const needles = absolute === parse(absolute).root
+    ? Object.values(SPECKIT_REQUIREMENTS).map(path => join(absolute, ...path.split('/')))
+    : [`${absolute}${sep}`];
+  return needles.some(needle => text.includes(needle) || text.includes(needle.replaceAll('\\', '/')));
+}
+
 /** @param {string} root @param {string} version */
 export function regenerateRequirements(root, version) {
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw new UpstreamError('E_USAGE', `Invalid specify-cli version: ${version}`);
-  const input = join(root, 'baton', 'upstream', 'specify-cli.requirements.in');
-  const output = join(root, 'baton', 'upstream', 'specify-cli.requirements.txt');
+  const input = join(root, ...SPECKIT_REQUIREMENTS.input.split('/'));
+  const output = join(root, ...SPECKIT_REQUIREMENTS.output.split('/'));
   if (!existsSync(input)) throw new UpstreamError('E_PREREQUISITE', `Missing ${input}`);
   const previousInput = readFileSync(input);
   const previousOutput = existsSync(output) ? readFileSync(output) : null;
   try {
     writeFileSync(input, `specify-cli==${version}\n`);
-    run('uv', ['pip', 'compile', '--generate-hashes', '--python-version', '3.11', input, '-o', output], { cwd: root });
+    // Root-relative paths keep uv's generated header free of machine-local paths.
+    run('uv', ['pip', 'compile', '--generate-hashes', '--python-version', '3.11',
+      SPECKIT_REQUIREMENTS.input, '-o', SPECKIT_REQUIREMENTS.output], { cwd: root });
     const compiled = readFileSync(output, 'utf8');
     if (!compiled.includes(`specify-cli==${version} \\`) || !compiled.includes('--hash=sha256:')) {
       throw new UpstreamError('E_UPSTREAM_VERIFY', 'uv did not produce a hash-locked specify-cli requirements file');
+    }
+    if (recordsMachineLocalPath(compiled, root)) {
+      throw new UpstreamError('E_UPSTREAM_VERIFY', 'uv recorded a machine-local path in the requirements file');
     }
     return sha256(Buffer.from(compiled));
   } catch (error) {

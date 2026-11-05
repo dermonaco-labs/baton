@@ -1,9 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
+import YAML from 'yaml';
 import { loadSchemas, validateSchema } from '../../src/lib/schema.mjs';
+import { SPECKIT_EXTENSIONS } from '../../src/lib/upstream.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -35,6 +37,26 @@ test('pack schema requires a classified reason for every optional reference', as
   assert.deepEqual(validateSchema(registry, 'pack', pack), []);
   pack.optional_refs[0].reason = 'arbitrary';
   assert.ok(validateSchema(registry, 'pack', pack).length);
+});
+
+test('pack schema routes Spec Kit bundled-extension files only through extension github', async () => {
+  const registry = await loadSchemas(root);
+  const pack = (/** @type {object} */ file) => ({ schema: 1, id: 'issues', description: 'Opt-in issues', requires: ['core'],
+    conflicts: [], files: [file] });
+  const path = '.specify/extensions/github/extension.yml';
+  assert.deepEqual(validateSchema(registry, 'pack', pack({ from: 'speckit', extension: 'github', path })), []);
+  for (const file of [
+    { from: 'speckit', extension: 'gitlab', path },
+    { from: 'baton', extension: 'github', path },
+    { from: 'atv', extension: 'github', upstream_path: path, path },
+  ]) assert.ok(validateSchema(registry, 'pack', pack(file)).length, JSON.stringify(file));
+  for (const name of (await readdir(resolve(root, 'packs'))).filter(file => file.endsWith('.yml') && file !== 'repairs.yml')) {
+    const shipped = YAML.parse(await readFile(resolve(root, 'packs', name), 'utf8'));
+    assert.deepEqual(validateSchema(registry, 'pack', shipped), [], name);
+  }
+  const schema = JSON.parse(await readFile(resolve(root, 'baton/schemas/pack.schema.json'), 'utf8'));
+  assert.deepEqual(schema.$defs.file.properties.extension.enum, [...SPECKIT_EXTENSIONS],
+    'pack schema extension ids must match the bundled Spec Kit extensions sync can prepare');
 });
 
 test('pack, lock and manifest schemas accept named optional sources without relaxing old shapes', async () => {

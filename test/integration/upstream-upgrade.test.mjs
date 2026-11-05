@@ -829,7 +829,8 @@ describe('upstream upgrade publish', () => {
       assert.equal(issue.state, 'open');
       assert.deepEqual(issue.labels, ['upstream-bump']);
       assert.ok(issue.body.includes(ISSUE_NOTICE));
-      assert.match(issue.body, /\| speckit \| 1\.0\.11 [^|]*\| 9\.9\.9 [^|]*\| failed \| E_CHECK_FAILED \(validate\) \[run\]\(https:\/\/github\.com\/dermonaco-labs\/baton\/actions\/runs\/42\) \|/);
+      const pinned = JSON.parse(readFileSync(join(fx.work, 'baton.lock.json'), 'utf8')).upstreams.speckit.version.replaceAll('.', '\\.');
+      assert.match(issue.body, new RegExp(`\\| speckit \\| ${pinned} [^|]*\\| 9\\.9\\.9 [^|]*\\| failed \\| E_CHECK_FAILED \\(validate\\) \\[run\\]\\(https://github\\.com/dermonaco-labs/baton/actions/runs/42\\) \\|`));
       assert.match(issue.body, /### speckit: E_CHECK_FAILED\n\n```+text\nnpm ERR! lint failed in docs\/07-updating\.md\n```+/);
       assert.ok(gh.labels.has('upstream-bump'));
     } finally {

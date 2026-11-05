@@ -12,7 +12,7 @@ runner needs, and each pass is validated.
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/dermonaco-labs/baton/actions/workflows/ci.yml/badge.svg)](https://github.com/dermonaco-labs/baton/actions/workflows/ci.yml)
 [![Release](https://github.com/dermonaco-labs/baton/actions/workflows/release.yml/badge.svg)](https://github.com/dermonaco-labs/baton/actions/workflows/release.yml)
-[![Spec Kit 1.0.11](https://img.shields.io/badge/Spec%20Kit-1.0.11-6f42c1.svg)](https://github.com/github/spec-kit/releases/tag/v1.0.11)
+[![Spec Kit 1.3.0](https://img.shields.io/badge/Spec%20Kit-1.3.0-6f42c1.svg)](https://github.com/github/spec-kit/releases/tag/v1.3.0)
 [![ATV pinned](https://img.shields.io/badge/ATV-main%40ad99673-0a7bbb.svg)](https://github.com/All-The-Vibes/ATV-StarterKit/tree/ad996736b879be87c7755df5c5017d5336203bbc)
 ![Status: v0.1 MVP](https://img.shields.io/badge/status-v0.1%20MVP-orange.svg)
 
@@ -87,7 +87,7 @@ or claim a role; use an independent reviewer and checkout for meaningful separat
 
 ## What you get
 
-- **The Spec Kit workflow** (v1.0.11, Copilot integration, skills mode): constitution, specify, clarify, plan, tasks,
+- **The Spec Kit workflow** (v1.3.0, Copilot integration, skills mode): constitution, specify, clarify, plan, tasks,
   analyze, implement, converge and checklist.
 - **The best of ATV** (pinned commit): brainstorming, headless multi-persona code review, `ce-work` for small
   changes, `land` for commit → push → PR, and `ce-compound` for recording what you learned in `docs/solutions/`.
@@ -422,7 +422,7 @@ plus `repo-research-analyst` and `learnings-researcher`). Everything else is an 
 | `research` | best-practices and framework-docs researchers, git-history analyzer, issue-intelligence analyst | planning needs external research |
 | `security` | `atv-security` and `security-sentinel` | you need a deeper audit than the core security persona |
 | `learning` | `observe`, `learn`, `instincts`, `evolve` and the observer hook | you want local pattern learning (opt-in, writes local telemetry) |
-| `issues` | `speckit-taskstoissues` | you want GitHub issues from `tasks.md` |
+| `issues` | `speckit-github-taskstoissues` (Spec Kit `github` extension) and the `speckit-taskstoissues` alias | you want GitHub issues from `tasks.md` |
 | `stack-python` / `stack-typescript` / `stack-rails` | stack-specific reviewers | you work in that stack |
 | `design` | `frontend-design`, design-implementation reviewer, Figma sync, design iterator | you build UI |
 | `token-budget` | guarded draft compact/restore, scoped context advice, session-only concise and usage estimates | you want smaller unapproved, unbound SDD artifacts without invalidating handoffs |
@@ -650,7 +650,7 @@ Baton is released under the [MIT License](LICENSE).
 It stands on the shoulders of two MIT-licensed projects, and it would not exist without them:
 
 - **[GitHub Spec Kit](https://github.com/github/spec-kit)** by GitHub. It provides the spec-driven development
-  workflow, templates, scripts and `/speckit-*` skills. Vendored at v1.0.11.
+  workflow, templates, scripts and `/speckit-*` skills. Vendored at v1.3.0.
 - **[ATV Starter Kit](https://github.com/All-The-Vibes/ATV-StarterKit)** by All-The-Vibes. It provides the
   compound-engineering skills and the review agents. Vendored at commit `ad99673`.
 

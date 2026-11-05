@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, stat, rm } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import YAML from 'yaml';
@@ -48,6 +49,12 @@ async function assertScriptReferencesExist(root, manifest) {
       assert.ok(await exists(root, reference), `${path} references missing script ${reference}`);
     }
   }
+}
+
+/** @param {string} pack */
+async function installedLockPaths(pack) {
+  const lock = JSON.parse(await readFile(join(sourceRoot, 'baton.lock.json'), 'utf8'));
+  return lock.files.filter(entry => entry.packs.includes(pack)).map(entry => entry.path);
 }
 
 async function installedRepo(args = []) {
@@ -170,6 +177,93 @@ test('F99 core.autocrlf checkout keeps CRLF managed files owned through doctor, 
   }
 });
 
+test('update from a 1.0.11 issues install replaces the taskstoissues skill in place or reports a conflict', async (t) => {
+  const wrapper = '.github/skills/speckit-taskstoissues/SKILL.md';
+  const fixture = await readFile(join(sourceRoot, 'test/fixtures/speckit-1.0.11/speckit-taskstoissues/SKILL.md'));
+  const extensionPaths = (await installedLockPaths('issues')).filter(path => path !== wrapper);
+  assert.equal(extensionPaths.length, 7);
+  for (const edited of [false, true]) {
+    await t.test(edited ? 'locally edited copy conflicts' : 'unmodified copy is replaced', async () => {
+      const { root, cleanup } = await installedRepo(['--packs', 'issues']);
+      try {
+        const manifestPath = join(root, '.baton/manifest.json');
+        const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+        await writeFile(join(root, wrapper), fixture);
+        Object.assign(manifest.files.find(file => file.path === wrapper), { owner: 'speckit', sha256: digest(fixture) });
+        for (const path of extensionPaths) await rm(join(root, path));
+        manifest.files = manifest.files.filter(file => !extensionPaths.includes(file.path));
+        await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+        const local = Buffer.concat([fixture, Buffer.from('\nLocal adopter note.\n')]);
+        if (edited) await writeFile(join(root, wrapper), local);
+
+        const result = await runCli(root, ['update', '--json']);
+        const output = JSON.parse(result.stdout || result.stderr);
+        assert.ok(!output.warnings.some(({ code, file }) => code === 'W_REMOVED_UPSTREAM' && file === wrapper), result.stdout);
+        const after = JSON.parse(await readFile(manifestPath, 'utf8'));
+        for (const path of extensionPaths) {
+          assert.ok(await exists(root, path), path);
+          assert.equal(after.files.find(file => file.path === path)?.owner, 'speckit', path);
+        }
+        const issuesRows = after.files.filter(file => file.pack === 'issues').map(file => file.path).sort();
+        assert.deepEqual(issuesRows, [...await installedLockPaths('issues'), wrapper].sort(), 'no orphan or missing issues rows');
+        assert.equal(new Set(after.files.map(file => file.path)).size, after.files.length, 'no duplicate rows');
+        const source = await readFile(join(sourceRoot, 'baton/skills/speckit-taskstoissues/SKILL.md'));
+        if (edited) {
+          assert.equal(result.code, 4, result.stdout || result.stderr);
+          assert.deepEqual(output.data.conflicts.map(({ path }) => path), [wrapper]);
+          assert.deepEqual(await readFile(join(root, wrapper)), local);
+          assert.deepEqual(await readFile(join(root, `.baton/conflicts/${wrapper}.new`)), source);
+        } else {
+          assert.equal(result.code, 0, result.stdout || result.stderr);
+          assert.deepEqual(output.data.conflicts, []);
+          assert.deepEqual(await readFile(join(root, wrapper)), source);
+          const row = after.files.find(file => file.path === wrapper);
+          assert.equal(row.owner, 'baton');
+          assert.equal(row.sha256, digest(source));
+        }
+      } finally { await cleanup(); }
+    });
+  }
+});
+
+test('F99 core.autocrlf checkout keeps CRLF issues files owned through doctor, update and uninstall', async () => {
+  const installed = await installedRepo(['--packs', 'issues']);
+  const clone = await tempRepo();
+  try {
+    const { execFileSync } = await import('node:child_process');
+    execFileSync('git', ['init', '-q'], { cwd: installed.root });
+    execFileSync('git', ['add', '-A'], { cwd: installed.root });
+    execFileSync('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+      'commit', '-qm', 'installed files'], { cwd: installed.root });
+    await rm(clone.root, { recursive: true, force: true });
+    execFileSync('git', ['clone', '-q', '-c', 'core.autocrlf=true', installed.root, clone.root], { cwd: installed.root });
+    const root = clone.root;
+    // `.github/skills/** text eol=lf` keeps both skills LF; the unpinned extension files check out as CRLF.
+    const skills = ['.github/skills/speckit-taskstoissues/SKILL.md', '.github/skills/speckit-github-taskstoissues/SKILL.md'];
+    const crlf = ['.specify/extensions/github/extension.yml', '.specify/extensions/github/commands/speckit.github.taskstoissues.md'];
+    const paths = [...skills, ...crlf];
+    for (const path of skills) {
+      assert.doesNotMatch(await readFile(join(root, path), 'utf8'), /\r\n/, `${path} must stay LF`);
+    }
+    for (const path of crlf) {
+      assert.match(await readFile(join(root, path), 'utf8'), /\r\n/, `${path} must check out as CRLF`);
+    }
+    const doctor = await runCli(root, ['doctor', '--json']);
+    assert.equal(doctor.code, 0, doctor.stdout || doctor.stderr);
+    assert.ok(!JSON.parse(doctor.stdout).warnings.some(({ code, file }) =>
+      ['W_MANIFEST_INTEGRITY', 'W_AGENT_CORRUPTED'].includes(code) && paths.includes(file)), doctor.stdout);
+    const update = await runCli(root, ['update', '--dry-run', '--json']);
+    assert.equal(update.code, 0, update.stdout || update.stderr);
+    assert.ok(!JSON.parse(update.stdout).data.conflicts.some(({ path }) => paths.includes(path)), update.stdout);
+    const uninstall = await runCli(root, ['uninstall', '--json']);
+    assert.equal(uninstall.code, 0, uninstall.stdout || uninstall.stderr);
+    for (const path of paths) assert.equal(await exists(root, path), false, `${path} should be removed`);
+  } finally {
+    await clone.cleanup();
+    await installed.cleanup();
+  }
+});
+
 test('update preserves adopter Copilot hooks from a merged learning-pack install', async () => {
   const { root, cleanup } = await tempRepo('repos/empty');
   const path = '.github/hooks/copilot-hooks.json';
@@ -212,7 +306,10 @@ test('update does not conflict on a customized constitution', async () => {
 
 for (const script of ['ps', 'py']) {
   test(`update retains the installed ${script} script flavour`, async () => {
-    const { root, cleanup } = await installedRepo();
+    const { root, cleanup } = await installedRepo(['--packs', 'issues']);
+    const issuesSkill = '.github/skills/speckit-github-taskstoissues/SKILL.md';
+    const issuesScript = `.specify/extensions/github/scripts/${script === 'ps' ?
+      'powershell/resolve-tasks.ps1' : 'python/resolve_tasks.py'}`;
     try {
       const manifestPath = '.baton/manifest.json';
       const manifest = JSON.parse(await readFile(join(root, manifestPath), 'utf8'));
@@ -241,7 +338,8 @@ for (const script of ['ps', 'py']) {
       for (const file of manifest.files) {
         const original = await readFile(join(root, file.path), 'utf8');
         const flavoured = original.replace(/\.specify\/scripts\/bash\/([\w.-]+)\.sh\b/g,
-          (_, name) => `.specify/scripts/${directory}/${name}.${extension}`);
+          (_, name) => `.specify/scripts/${directory}/${name}.${extension}`)
+          .replaceAll('.specify/extensions/github/scripts/bash/resolve-tasks.sh', issuesScript);
         if (flavoured === original) continue;
         await writeFile(join(root, file.path), flavoured);
         file.sha256 = digest(flavoured);
@@ -280,6 +378,10 @@ for (const script of ['ps', 'py']) {
       assert.ok(skillReferences.length > 0, 'updated Spec Kit skills must call scripts');
       assert.ok(skillReferences.every(reference => reference.startsWith(`.specify/scripts/${directory}/`)),
         'update must keep every Spec Kit skill on the selected script flavour');
+      const flavouredSkill = await readFile(join(root, issuesSkill), 'utf8');
+      assert.ok(flavouredSkill.includes(issuesScript), 'update must flavour the issues-pack skill');
+      assert.ok(!flavouredSkill.includes('.specify/extensions/github/scripts/bash/'));
+      assert.ok(await exists(root, issuesScript));
 
       const fallback = await runCli(root, ['update', '--json'], { UV_OFFLINE: '1', UV_NO_CACHE: '1' });
       assert.equal(fallback.code, 0, fallback.stdout + fallback.stderr);
@@ -287,6 +389,124 @@ for (const script of ['ps', 'py']) {
       const preserved = JSON.parse(await readFile(join(root, manifestPath), 'utf8'));
       assert.equal(preserved.script, script);
       await assertScriptReferencesExist(root, preserved);
+      assert.equal(await readFile(join(root, issuesSkill), 'utf8'), flavouredSkill,
+        'fallback must not replace the flavoured issues-pack skill with bash bytes');
+      assert.equal(preserved.files.find(file => file.path === issuesSkill)?.sha256,
+        digest(flavouredSkill), 'manifest must keep tracking the preserved issues-pack skill');
+    } finally { await cleanup(); }
+  });
+}
+
+/**
+ * An issues install switched to `script` without generating its payload; `UV_OFFLINE` then forces the sh fallback.
+ * @param {string} script
+ */
+async function fallbackRepo(script) {
+  const repo = await installedRepo(['--packs', 'issues']);
+  const manifestPath = join(repo.root, '.baton/manifest.json');
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  for (const [path, edit] of [
+    ['.specify/init-options.json', content => { content.script = script; }],
+    ['.specify/integration.json', content => { content.integration_settings.copilot.script = script; }],
+  ]) {
+    const content = JSON.parse(await readFile(join(repo.root, path), 'utf8'));
+    edit(content);
+    const bytes = JSON.stringify(content, null, 2) + '\n';
+    await writeFile(join(repo.root, path), bytes);
+    manifest.files.find(file => file.path === path).sha256 = digest(bytes);
+  }
+  manifest.script = script;
+  return { ...repo, manifest, manifestPath };
+}
+
+const offline = { UV_OFFLINE: '1', UV_NO_CACHE: '1' };
+
+for (const script of ['ps', 'py']) {
+  test(`F11 ${script} fallback keeps a 1.0.11 taskstoissues skill whose delegate cannot be generated`, async () => {
+    const wrapper = '.github/skills/speckit-taskstoissues/SKILL.md';
+    const delegate = '.github/skills/speckit-github-taskstoissues/SKILL.md';
+    const legacy = (await readFile(join(sourceRoot, 'test/fixtures/speckit-1.0.11/speckit-taskstoissues/SKILL.md'), 'utf8'))
+      .replace(/\.specify\/scripts\/bash\/([\w.-]+)\.sh\b/g, (_, name) =>
+        script === 'ps' ? `.specify/scripts/powershell/${name}.ps1` : `.specify/scripts/python/${name}.py`);
+    const extensionPaths = (await installedLockPaths('issues')).filter(path => path !== wrapper);
+    const { root, cleanup, manifest, manifestPath } = await fallbackRepo(script);
+    try {
+      await writeFile(join(root, wrapper), legacy);
+      const legacyRow = Object.assign(manifest.files.find(file => file.path === wrapper),
+        { owner: 'speckit', sha256: digest(legacy) });
+      for (const path of extensionPaths) await rm(join(root, path));
+      manifest.files = manifest.files.filter(file => !extensionPaths.includes(file.path));
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+
+      const result = await runCli(root, ['update', '--json'], offline);
+      assert.equal(result.code, 0, result.stdout + result.stderr);
+      const output = JSON.parse(result.stdout);
+      assert.ok(output.warnings.some(({ code, file, message }) => code === 'W_SCRIPT_UNREFRESHED' &&
+        file === wrapper && message.includes(delegate)), result.stdout);
+      assert.equal(await readFile(join(root, wrapper), 'utf8'), legacy, 'the working legacy skill must be preserved');
+      assert.equal(await exists(root, delegate), false);
+      assert.equal(await exists(root, `.baton/conflicts/${wrapper}.new`), false);
+      const after = JSON.parse(await readFile(manifestPath, 'utf8'));
+      assert.deepEqual(after.files.find(file => file.path === wrapper), legacyRow,
+        'the legacy row stays so the next online update replaces the skill');
+      assert.equal(after.files.some(file => file.path === delegate), false);
+    } finally { await cleanup(); }
+  });
+
+  test(`F18 ${script} fallback refreshes an outdated taskstoissues alias when its delegate is installed`, async () => {
+    const wrapper = '.github/skills/speckit-taskstoissues/SKILL.md';
+    const delegate = '.github/skills/speckit-github-taskstoissues/SKILL.md';
+    const { root, cleanup, manifest, manifestPath } = await fallbackRepo(script);
+    try {
+      const shipped = await readFile(join(root, wrapper));
+      const installedDelegate = await readFile(join(root, delegate));
+      const older = '---\nname: speckit-taskstoissues\n---\nOlder Baton alias.\n';
+      await writeFile(join(root, wrapper), older);
+      manifest.files.find(file => file.path === wrapper).sha256 = digest(older);
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+
+      const result = await runCli(root, ['update', '--json'], offline);
+      assert.equal(result.code, 0, result.stdout + result.stderr);
+      const output = JSON.parse(result.stdout);
+      assert.equal(output.warnings.some(({ file }) => file === wrapper), false, result.stdout);
+      assert.deepEqual(await readFile(join(root, wrapper)), shipped, 'the alias is refreshed beside its delegate');
+      assert.deepEqual(await readFile(join(root, delegate)), installedDelegate, 'the installed delegate keeps its flavour');
+      assert.equal(await exists(root, `.baton/conflicts/${wrapper}.new`), false);
+      const after = JSON.parse(await readFile(manifestPath, 'utf8'));
+      assert.equal(after.files.find(file => file.path === wrapper)?.sha256, digest(shipped));
+    } finally { await cleanup(); }
+  });
+
+  test(`${script} fallback refreshes the Baton CLI with its hash and Spec Kit script payload files`, async () => {
+    const cli = '.baton/bin/baton.mjs';
+    const extensionScript = '.specify/extensions/github/scripts/bash/resolve-tasks.sh';
+    const { root, cleanup, manifest, manifestPath } = await fallbackRepo(script);
+    try {
+      const source = {
+        cli: await readFile(join(sourceRoot, cli)),
+        extensionScript: await readFile(join(root, extensionScript)),
+      };
+      assert.match(source.cli.toString('utf8'), /\.specify\/scripts\/bash\//, 'the bundle must contain a bash script path');
+      assert.match(source.extensionScript.toString('utf8'), /\.specify\/extensions\/github\/scripts\/bash\//,
+        'the extension script must reference its own bash directory');
+      for (const [path, bytes] of [[cli, '// older Baton CLI\n'], [extensionScript, '#!/usr/bin/env bash\n# older\n']]) {
+        await writeFile(join(root, path), bytes);
+        manifest.files.find(file => file.path === path).sha256 = digest(bytes);
+      }
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+
+      const result = await runCli(root, ['update', '--json'], offline);
+      assert.equal(result.code, 0, result.stdout + result.stderr);
+      assert.match(result.stdout, /W_SCRIPT_UNREFRESHED/);
+      const after = JSON.parse(await readFile(manifestPath, 'utf8'));
+      const installedCli = await readFile(join(root, cli));
+      assert.deepEqual(installedCli, source.cli, 'the Baton CLI is Baton-owned and must be refreshed');
+      const recorded = (await readFile(join(root, `${cli}.sha256`), 'utf8')).trim().split(/\s+/)[0];
+      assert.equal(recorded, createHash('sha256').update(installedCli).digest('hex'), 'CLI and its hash file must agree');
+      assert.equal(after.files.find(file => file.path === cli)?.sha256, digest(installedCli));
+      assert.deepEqual(await readFile(join(root, extensionScript)), source.extensionScript,
+        'script payload files are refreshed even though they name bash script paths');
+      assert.equal(after.files.find(file => file.path === extensionScript)?.sha256, digest(source.extensionScript));
     } finally { await cleanup(); }
   });
 }

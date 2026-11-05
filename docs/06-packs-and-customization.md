@@ -14,7 +14,7 @@ cannot be removed.
 | `docs-review` | Advisory document review and refresh; not the code-review gate |
 | `security` | Deeper security skill and sentinel agent |
 | `research` | Specialized research agents |
-| `issues` | Tasks-to-issues skill; needs GitHub access |
+| `issues` | Spec Kit `github` extension (`/speckit-github-taskstoissues`) plus the `/speckit-taskstoissues` alias; needs GitHub access |
 | `stack-python` | Python reviewer |
 | `stack-typescript` | TypeScript and frontend race reviewers |
 | `stack-rails` | Rails reviewers |

@@ -19,6 +19,24 @@ All notable changes to Baton are documented here. This follows
 - The shipped `baton.yml` workflow also runs when a draft PR is marked ready for review
   (`pull_request` types `opened`, `synchronize`, `reopened`, `ready_for_review`).
 
+### Upstream
+
+- Spec Kit `specify-cli` 1.0.11 → 1.3.0 (tag `v1.3.0`, commit
+  `34a0d388eac671d656eb05b125ad3ed6056168ed`). The `core` pack's file set and relay
+  hooks are unchanged.
+- `/speckit-taskstoissues` is now a Baton-authored compatibility wrapper that only
+  delegates to `/speckit-github-taskstoissues`.
+- The opt-in `issues` pack now ships Spec Kit's bundled `github` extension (v1.0.5):
+  the `/speckit-github-taskstoissues` skill, its command, manifest, README and
+  `resolve-tasks` scripts for every script flavour.
+- `issues` adopters need no manual removal. `baton update` replaces the old skill in
+  place with the wrapper; a locally modified copy is kept and reported as a conflict
+  with a `.baton/conflicts/…/SKILL.md.new` copy.
+- Baton installs the `github` extension files without registering them, so
+  `specify extension list` does not show `github`.
+- Adopters who installed the `github` extension themselves will see managed-file
+  conflicts for those paths when adding the `issues` pack.
+
 ## [0.1.4] - 2026-11-03
 
 ### Added

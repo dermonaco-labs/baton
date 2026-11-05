@@ -55,7 +55,7 @@ artifacts:
     sha256: 2468e82ca33bd1a19530cc9b177bbc23f64dfec3a1b2b094a7aeecb3f0cafd4a
   - path: specs/001-baton-template/contracts/packs.md
     role: source-of-truth
-    sha256: 75dcc68ac03b9caa0b731635e3ccfd5895ed0d00e05b19fca8cd6b438be4bbf4
+    sha256: 0ae9237bb921fd6062e3b0a0532e4623de613436b3260548270cc562853f0040
   - path: specs/001-baton-template/contracts/cli.md
     role: source-of-truth
     sha256: 96a4eca544c8a9bf345ccad8da0b384efbd0a9994e0400169f3bd78ed78e1423
@@ -974,6 +974,10 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: "Owner authorized (direct approval) a metadata-only hash refresh: feature 003 task T021 added supersession notes pointing to specs/003-upstream-upgrade-prs/contracts/upstream-watch.md in spec.md (US upstream scenario 2, FR-072) and contracts/ci.md (upstream-watch row and section); original 001 requirements text is unchanged."
     by: implementation-session
+  - id: D175
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Owner authorized (control-plane delegation) a metadata-only artifact hash refresh limited to feature 004 T027/T028 Spec Kit 1.3.0 documentation edits (version 1.0.11 -> 1.3.0 and the issues pack now shipping the github extension plus the /speckit-taskstoissues alias). No other content changes.
+    by: implementation-session
 open_questions: []
 assumptions:
   - id: AS1
@@ -1027,13 +1031,6 @@ gate:
   approved_by: null
   approved_at: null
 history:
-  - phase: review
-    at: 2026-09-29T01:44:20.081Z
-    by: baton
-    writer: ae2e9d45fd46249b245c2bbb54d058faaa337e32ae1776d452ec57c27d3f8c88
-    x-worktree: 8fcdc52976782fec7e9a26ad4e99881c13949db3ed242971443fbe71296260c6
-    commit: fd83bfa
-    x-action: redact
   - phase: review
     at: 2026-09-29T01:44:20.491Z
     by: baton
@@ -1167,7 +1164,14 @@ history:
     x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
     commit: ae34a99
     x-action: refresh
-updated_at: 2026-11-04T12:40:02.554Z
+  - phase: compound
+    at: 2026-11-05T10:15:55.608Z
+    by: implementation-session
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 83d02b3
+    x-action: refresh
+updated_at: 2026-11-05T10:15:55.607Z
 updated_by: implementation-session
 review:
   findings_path: specs/001-baton-template/review.json

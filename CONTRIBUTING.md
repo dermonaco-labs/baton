@@ -26,7 +26,7 @@ ephemeral Linux container with registry access and the checkout mounted, then
 the hosted CI gate. Never disable TLS verification or commit private registry
 settings. This repository's `.npmrc` intentionally uses the public registry.
 Restricted mirrors may also lack locked pins (npm `ignore` version 7.0.10 and
-`specify-cli==1.0.11` on PyPI). Run the available local checks, record the
+`specify-cli==1.3.0` on PyPI). Run the available local checks, record the
 missing-pin failures, and use hosted CI as the authoritative full gate; the
 planned devcontainer (roadmap RM9) will offer a repeatable local fallback.
 

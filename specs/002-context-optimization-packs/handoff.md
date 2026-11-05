@@ -42,7 +42,7 @@ read_first:
     sha256: 34fd4e89d13257e6c47f89d339cee54702819e01c0cdcc5e6a7e5d085a970931
   - path: docs/06-packs-and-customization.md
     why: Adopter safety and capability documentation
-    sha256: fa9e5d5318d76faa4fb5e6090291873b267cc2d0340c0b8f41a93b351099bc8e
+    sha256: 38dda86abbdac8297711548f240d8e0b719fb5573edf0251ed46f02345ceef55
 artifacts:
   - path: specs/002-context-optimization-packs/spec.md
     role: source-of-truth
@@ -246,18 +246,15 @@ decisions:
     tag: diff-base
     x-base-commit: 4c86684a5ac21faf37ecd511901a496922e7f187
     by: baton
+  - id: D35
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Owner authorized (control-plane delegation) a metadata-only artifact hash refresh limited to feature 004 T027/T028 Spec Kit 1.3.0 documentation edits (version 1.0.11 -> 1.3.0 and the issues pack now shipping the github extension plus the /speckit-taskstoissues alias). No other content changes.
+    by: implementation-session
 gate:
   required: true
   approved_by: null
   approved_at: null
 history:
-  - phase: review
-    at: 2026-11-02T18:22:13.201Z
-    by: baton
-    writer: 948e86a6e5e4d08bdcad428ccbae562b312381687ebc1b16ae635e8608889fad
-    x-worktree: f161633938eb1237a91ef37792e081681bf544826c1b7845ac4df87394f8534b
-    commit: b228777
-    x-action: write
   - phase: review
     at: 2026-11-02T18:32:34.568Z
     by: implementation-session
@@ -391,8 +388,15 @@ history:
     x-worktree: f161633938eb1237a91ef37792e081681bf544826c1b7845ac4df87394f8534b
     commit: 8cbabef
     x-action: write
-updated_at: 2026-11-03T09:44:37.752Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-11-05T10:15:55.874Z
+    by: implementation-session
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 83d02b3
+    x-action: refresh
+updated_at: 2026-11-05T10:15:55.874Z
+updated_by: implementation-session
 acceptance_checks:
   - id: AC-US1-1
     story: US1

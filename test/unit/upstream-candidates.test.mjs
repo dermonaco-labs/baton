@@ -9,6 +9,7 @@ import * as candidates from '../../src/lib/upstream-candidates.mjs';
 import { BOUND_ROOTS, HOOKS_PATH, bindingIssues, errorCause } from '../../src/lib/candidate-bindings.mjs';
 import { diffDocument, formatBumpSummary } from '../../src/lib/lock-report.mjs';
 import { isSha, isVersion } from '../../src/lib/upstream.mjs';
+import { SPECKIT_REQUIREMENTS } from '../../src/lib/upstream.mjs';
 
 const {
   BOT_EMAIL, BOT_NAME, ISSUE_NOTICE, ROW_KEYS, branchFor, buildRunUrl, classifyBranch, commitMessage, compareVersions,
@@ -1145,7 +1146,7 @@ describe('upstream candidates speckit and atv row ownership policy', () => {
   test('every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync', () => {
     const provenance = ['x-baton-source', 'x-baton-source-sha256'];
     for (const row of baseLock().files) {
-      const keys = Object.keys(row).filter(key => !provenance.includes(key)).sort();
+      const keys = Object.keys(row).filter(key => !provenance.includes(key) && key !== 'x-speckit-extension').sort();
       assert.deepEqual(keys, [...ROW_KEYS], row.stored_at);
       assert.equal(provenance.filter(key => Object.hasOwn(row, key)).length % 2, 0, row.stored_at);
       assert.deepEqual({ path: row.path, packs: row.packs }, targetOf(row.stored_at), row.stored_at);
@@ -1248,5 +1249,134 @@ describe('upstream candidates lifecycle', () => {
       assert.equal(plan({ prs: [open(marker(pin))], branch: branch() }).action, 'close-obsolete', pin);
       assert.equal(plan({ prs: [open(marker(pin))], branch: branch({ botOnly: false }) }).action, 'obsolete-human', pin);
     }
+  });
+});
+
+describe('upstream candidates Spec Kit github extension trust (feature 004)', () => {
+  const MANUAL = 'changes here need a manual reviewed update (FR-031)';
+  const skill = 'packs/issues/files/.github/skills/speckit-github-taskstoissues/SKILL.md';
+  const manifestFile = 'packs/issues/files/.specify/extensions/github/extension.yml';
+  const wrapper = 'packs/issues/files/.github/skills/speckit-taskstoissues/SKILL.md';
+  /** A Spec Kit extension row of exactly the shape sync writes. @param {string} storedAt @param {string} bytes */
+  const extensionRow = (storedAt, bytes) => {
+    const path = storedAt.replace(/^packs\/issues\/files\//, '');
+    return { license: 'MIT', packs: ['issues'], path, repair: null, sha256: hex(bytes), sha256_upstream: hex(bytes),
+      stored_at: storedAt, upstream: 'speckit', upstream_path: path, 'x-speckit-extension': 'github' };
+  };
+  /** A base commit after the bump: the extension files are tracked with these bytes. */
+  const shipped = new Map([[skill, Buffer.from('skill\n')], [manifestFile, Buffer.from('extension\n')]]);
+  const postBumpFile = (/** @type {string} */ path) => shipped.get(path) ?? baseFile(path);
+  const postBumpMode = (/** @type {string} */ path) => shipped.has(path) ? '100644' : baseMode(path);
+  /** The real lock without its extension rows, so tests seed them explicitly (the bumped lock already has them). */
+  const plainLock = () => {
+    const lock = baseLock();
+    lock.files = lock.files.filter((/** @type {any} */ file) => file['x-speckit-extension'] === undefined);
+    return lock;
+  };
+  /**
+   * Binding issues for `path` when a candidate writes or deletes it, with optional extension rows in each lock.
+   * @param {{changed?:Array<[string,string]>,deleted?:string[],baseRows?:any[],rows?:any[],readBase?:(path:string)=>Buffer|null,
+   *   mode?:string}} input @param {string} path
+   */
+  const issuesFor = ({ changed = [], deleted = [], baseRows = [], rows = baseRows, readBase = postBumpFile, mode = '100644' },
+    path) => {
+    const base = plainLock();
+    base.files.push(...baseRows);
+    const lock = plainLock();
+    lock.files.push(...rows);
+    return bindingIssues({ id: 'speckit', manifest: { changed: changed.map(([file]) => ({ path: file, mode })), deleted },
+      files: new Map(changed.map(([file, text]) => [file, { bytes: Buffer.from(text) }])), baseLock: base, lock,
+      lockBytes: Buffer.from(`${JSON.stringify(lock, null, 2)}\n`), version: null, baseFile: readBase, baseMode: postBumpMode })
+      .filter(issue => issue.startsWith(path));
+  };
+
+  test('stored extension files under a pack install root are trusted like BOUND_ROOTS', () => {
+    const fresh = 'packs/issues/files/.specify/extensions/github/commands/new.md';
+    assert.deepEqual(issuesFor({ changed: [[fresh, 'new\n']] }, fresh), [`${fresh} is new under a trusted path; ${MANUAL}`]);
+    assert.deepEqual(issuesFor({ changed: [[manifestFile, 'changed\n']] }, manifestFile),
+      [`${manifestFile} differs from its trusted base bytes; ${MANUAL}`]);
+    assert.deepEqual(issuesFor({ changed: [[manifestFile, 'extension\n']], mode: '100755' }, manifestFile),
+      [`${manifestFile} mode 100755 differs from its trusted base mode 100644; ${MANUAL}`]);
+    assert.deepEqual(issuesFor({ deleted: [manifestFile] }, manifestFile),
+      [`${manifestFile} is a trusted path and may not be deleted; ${MANUAL}`]);
+    assert.deepEqual(issuesFor({ changed: [[manifestFile, 'extension\n']] }, manifestFile), []);
+  });
+
+  test('a lock row carrying x-speckit-extension is trusted in either lock', () => {
+    const row = extensionRow(skill, 'skill\n');
+    for (const rows of [{ baseRows: [row], rows: [row] }, { baseRows: [row], rows: [] }, { baseRows: [], rows: [row] }]) {
+      assert.deepEqual(issuesFor({ ...rows, changed: [[skill, 'changed\n']] }, skill),
+        [`${skill} differs from its trusted base bytes; ${MANUAL}`]);
+      assert.deepEqual(issuesFor({ ...rows, deleted: [skill] }, skill),
+        [`${skill} is a trusted path and may not be deleted; ${MANUAL}`]);
+      assert.deepEqual(issuesFor({ ...rows, changed: [[skill, 'skill\n']], readBase: path => path === skill ? null :
+        postBumpFile(path) }, skill), [`${skill} is new under a trusted path; ${MANUAL}`]);
+    }
+    assert.deepEqual(issuesFor({ changed: [[skill, 'changed\n']] }, skill), [], 'trust comes from the row, not the name');
+  });
+
+  test('x-speckit-extension is frozen on existing rows', () => {
+    const row = extensionRow(skill, 'skill\n');
+    const latest = speckitLatest();
+    /** @param {(base:any)=>void} seed @param {(lock:any)=>void} mutate */
+    const issuesOf = (seed, mutate) => {
+      const base = plainLock();
+      seed(base);
+      const lock = structuredClone(base);
+      Object.assign(lock.upstreams.speckit, { version: latest.version, tag: `v${latest.version}`, commit: latest.commit });
+      mutate(lock);
+      return lockDiffIssues('speckit', base, lock, latest, { baseTree }).filter(issue => issue.includes(skill));
+    };
+    const at = (/** @type {any} */ lock) => lock.files.find((/** @type {any} */ file) => file.stored_at === skill);
+    const seeded = (/** @type {any} */ base) => base.files.push(structuredClone(row));
+    assert.deepEqual(issuesOf(seeded, () => {}), []);
+    assert.deepEqual(issuesOf(seeded, lock => { at(lock)['x-speckit-extension'] = 'gitlab'; }),
+      [`files ${skill} changes x-speckit-extension from "github" to "gitlab"`]);
+    assert.deepEqual(issuesOf(seeded, lock => { delete at(lock)['x-speckit-extension']; }),
+      [`files ${skill} changes its field set`]);
+    const { 'x-speckit-extension': _, ...plain } = row;
+    assert.deepEqual(issuesOf(base => base.files.push(structuredClone(plain)),
+      lock => { at(lock)['x-speckit-extension'] = 'github'; }), [`files ${skill} changes its field set`]);
+  });
+
+  test('the Baton wrapper may not become a Spec Kit lock row', () => {
+    const base = baseLock();
+    base.files = base.files.filter((/** @type {any} */ file) => file.stored_at !== wrapper);
+    const lock = structuredClone(base);
+    const row = { ...extensionRow(wrapper, 'wrapper\n') };
+    delete row['x-speckit-extension'];
+    lock.files.push(row);
+    for (const tree of [new Set([...baseTree, wrapper]), new Set([...baseTree].filter(path => path !== wrapper))]) {
+      const issue = pathPolicyIssue(wrapper, 'changed', 'speckit', { baseLock: base, candidateLock: lock, baseTree: tree });
+      assert.ok(issue, 'wrapper row must be rejected');
+    }
+    assert.equal(pathPolicyIssue(wrapper, 'changed', 'speckit', { baseLock: base, candidateLock: lock,
+      baseTree: new Set([...baseTree, wrapper]) }), `${wrapper} is tracked in the base tree without a base lock row`);
+    assert.equal(pathPolicyIssue(wrapper, 'changed', 'speckit', { baseLock: base, candidateLock: base, baseTree }),
+      `${wrapper} is not a locked upstream output`);
+  });
+
+  test('regenerated ordinary core rows stay outside the narrowed trust', () => {
+    const script = '.specify/scripts/bash/common.sh';
+    assert.deepEqual(issuesFor({ changed: [[script, 'regenerated\n']] }, script), []);
+    assert.doesNotThrow(() => verify(speckitCandidate()));
+  });
+
+  test('x-speckit-extension appears only on issues-pack extension rows, always as github', () => {
+    const pack = readFileSync(join(sourceRoot, 'packs/issues.yml'), 'utf8');
+    const expected = [...pack.matchAll(/\{ from: speckit, extension: github, path: ([^ }]+) \}/g)]
+      .map(match => `packs/issues/files/${match[1]}`).sort();
+    assert.equal(expected.length, 7);
+    const rows = baseLock().files.filter((/** @type {any} */ row) => Object.hasOwn(row, 'x-speckit-extension'));
+    assert.deepEqual(rows.map((/** @type {any} */ row) => row.stored_at).sort(), expected);
+    for (const row of rows) {
+      assert.equal(row['x-speckit-extension'], 'github', row.stored_at);
+      assert.equal(row.upstream, 'speckit', row.stored_at);
+      assert.deepEqual(row.packs, ['issues'], row.stored_at);
+    }
+  });
+
+  test('the bound requirements paths are the ones sync and lock use', () => {
+    assert.deepEqual({ ...SPECKIT_REQUIREMENTS }, { input: REQUIREMENTS_IN, output: REQUIREMENTS_TXT });
   });
 });
