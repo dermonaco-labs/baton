@@ -453,6 +453,30 @@ for (const script of ['ps', 'py']) {
     } finally { await cleanup(); }
   });
 
+  test(`F18 ${script} fallback refreshes an outdated taskstoissues alias when its delegate is installed`, async () => {
+    const wrapper = '.github/skills/speckit-taskstoissues/SKILL.md';
+    const delegate = '.github/skills/speckit-github-taskstoissues/SKILL.md';
+    const { root, cleanup, manifest, manifestPath } = await fallbackRepo(script);
+    try {
+      const shipped = await readFile(join(root, wrapper));
+      const installedDelegate = await readFile(join(root, delegate));
+      const older = '---\nname: speckit-taskstoissues\n---\nOlder Baton alias.\n';
+      await writeFile(join(root, wrapper), older);
+      manifest.files.find(file => file.path === wrapper).sha256 = digest(older);
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+
+      const result = await runCli(root, ['update', '--json'], offline);
+      assert.equal(result.code, 0, result.stdout + result.stderr);
+      const output = JSON.parse(result.stdout);
+      assert.equal(output.warnings.some(({ file }) => file === wrapper), false, result.stdout);
+      assert.deepEqual(await readFile(join(root, wrapper)), shipped, 'the alias is refreshed beside its delegate');
+      assert.deepEqual(await readFile(join(root, delegate)), installedDelegate, 'the installed delegate keeps its flavour');
+      assert.equal(await exists(root, `.baton/conflicts/${wrapper}.new`), false);
+      const after = JSON.parse(await readFile(manifestPath, 'utf8'));
+      assert.equal(after.files.find(file => file.path === wrapper)?.sha256, digest(shipped));
+    } finally { await cleanup(); }
+  });
+
   test(`${script} fallback refreshes the Baton CLI with its hash and Spec Kit script payload files`, async () => {
     const cli = '.baton/bin/baton.mjs';
     const extensionScript = '.specify/extensions/github/scripts/bash/resolve-tasks.sh';

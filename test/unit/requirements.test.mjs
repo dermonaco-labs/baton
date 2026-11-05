@@ -1,9 +1,27 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chmod, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
-import { delimiter, join } from 'node:path';
+import { delimiter, join, parse, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
-import { SPECKIT_REQUIREMENTS, regenerateRequirements, sha256 } from '../../src/lib/upstream.mjs';
+import { SPECKIT_REQUIREMENTS, recordsMachineLocalPath, regenerateRequirements, sha256 } from '../../src/lib/upstream.mjs';
+
+test('machine-local path detection is anchored at the root and its separator on every platform', () => {
+  const header = `#    uv pip compile --generate-hashes --python-version 3.11 ${SPECKIT_REQUIREMENTS.input} ` +
+    `-o ${SPECKIT_REQUIREMENTS.output}\nspecify-cli==1.3.0 \\\n`;
+  const filesystemRoot = parse(resolve(tmpdir())).root;
+  for (const root of [filesystemRoot, resolve(filesystemRoot, 'spec'), resolve(tmpdir(), 'repo')]) {
+    assert.equal(recordsMachineLocalPath(header, root), false, `root-relative header is not machine-local for ${root}`);
+  }
+  const project = resolve(filesystemRoot, 'spec');
+  const native = `# ${project}${sep}baton\n`;
+  assert.equal(recordsMachineLocalPath(native, project), true);
+  assert.equal(recordsMachineLocalPath(native.replaceAll('\\', '/'), project), true, 'forward-slash variant');
+  assert.equal(recordsMachineLocalPath(`# ${project}ify-cli\n`, project), false, 'a sibling prefix is not inside');
+  const rooted = join(filesystemRoot, ...SPECKIT_REQUIREMENTS.input.split('/'));
+  assert.equal(recordsMachineLocalPath(`# ${rooted}\n`, filesystemRoot), true);
+  assert.equal(recordsMachineLocalPath(`# ${rooted.replaceAll('\\', '/')}\n`, filesystemRoot), true);
+  assert.equal(recordsMachineLocalPath(`# ${filesystemRoot}usr${sep}bin\n`, filesystemRoot), false);
+});
 
 test('regenerateRequirements runs uv from the root with root-relative paths and refuses machine-local output',
   { skip: process.platform === 'win32' ? 'needs an executable fake uv' : false }, async () => {

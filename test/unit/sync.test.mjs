@@ -4,7 +4,7 @@ import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/pr
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { diffDocument, formatBumpSummary, generatedStable, lockFile, packDefinitions, pinnedNames, prepareEntries, snapshotDrift, sync, validatePackExtensions } from '../../src/commands/sync.mjs';
+import { diffDocument, formatBumpSummary, generatedStable, lockFile, lockedRequirements, packDefinitions, pinnedNames, prepareEntries, snapshotDrift, sync, validatePackExtensions } from '../../src/commands/sync.mjs';
 import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_REPO, SPECKIT_REQUIREMENTS, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
 import { REQUIREMENTS_IN, REQUIREMENTS_TXT } from '../../src/lib/candidate-bindings.mjs';
 import { sourceRoot } from '../helpers/index.mjs';
@@ -434,6 +434,10 @@ test('requirements paths have one spelling shared by sync, lock and the trusted-
   assert.equal(SPECKIT_REQUIREMENTS.input, REQUIREMENTS_IN);
   assert.equal(SPECKIT_REQUIREMENTS.output, REQUIREMENTS_TXT);
   assert.ok(Object.isFrozen(SPECKIT_REQUIREMENTS));
+});
+
+test('the lock records the requirements file sync regenerates', () => {
+  assert.equal(lockedRequirements, SPECKIT_REQUIREMENTS.output);
 });
 
 test('pack definitions require every original pack and accept additional optional packs', async () => {

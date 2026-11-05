@@ -14,7 +14,8 @@ import {
 
 export { diffDocument, formatBumpSummary };
 
-const lockedRequirements = SPECKIT_REQUIREMENTS.output;
+/** The lock's recorded requirements path; sync.test.mjs pins it equal to SPECKIT_REQUIREMENTS.output. */
+export const lockedRequirements = 'baton/upstream/specify-cli.requirements.txt';
 const forbidden = /(?:^|\/)(?:karpathy-guidelines|\.env(?:\..*)?|\.context|node_modules|\.git)(?:\/|$)/i;
 /** @typedef {{from:string,path:string,upstream_path?:string,extension?:string}} PackFile */
 /** @typedef {{id:string,requires:string[],conflicts:string[],files:PackFile[],optional_refs?:Array<{ref:string,reason:string,note:string}>}} PackDefinition */
@@ -201,7 +202,11 @@ export function referenceClosure(entries, packs, options = {}) {
   if (issues.length) throw new UpstreamError('E_DANGLING_REF', [...new Set(issues)].slice(0, 40).join('\n'));
 }
 
-/** @param {string} root @param {string} generated @param {string} atv @param {PackDefinition[]} packs @param {RepairRule[]} repairs @param {any} oldLock @param {boolean} bump @param {Record<string,string>} [sources] verified optional source checkouts @param {Record<string,string>} [extensions] verified Spec Kit extension trees by extension name */
+/**
+ * Precondition: `packs` already passed validatePackExtensions (sync() runs it first); extension entries are not
+ * re-checked for their upstream or a supported extension id here.
+ * @param {string} root @param {string} generated @param {string} atv @param {PackDefinition[]} packs @param {RepairRule[]} repairs @param {any} oldLock @param {boolean} bump @param {Record<string,string>} [sources] verified optional source checkouts @param {Record<string,string>} [extensions] verified Spec Kit extension trees by extension name
+ */
 export function prepareEntries(root, generated, atv, packs, repairs, oldLock, bump, sources = {}, extensions = {}) {
   /** @type {Map<string,VendoredEntry>} */
   const entries = new Map();

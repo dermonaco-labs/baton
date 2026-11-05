@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, parse, resolve, sep } from 'node:path';
 
 export const ATV_REPO = 'https://github.com/All-The-Vibes/ATV-StarterKit';
 export const SPECKIT_REPO = 'https://github.com/github/spec-kit';
@@ -245,6 +245,20 @@ export function fetchSource({ work, id, pin = OPTIONAL_SOURCES[id] }) {
   return repo;
 }
 
+/**
+ * Whether compiled requirements text names a path inside `root`, natively or with forward slashes. A path counts
+ * only when the root is followed by a separator, so `/spec` does not match `/specify-cli`. A filesystem root prefixes
+ * every absolute path, so there only the rooted requirements files count.
+ * @param {string} text @param {string} root
+ */
+export function recordsMachineLocalPath(text, root) {
+  const absolute = resolve(root);
+  const needles = absolute === parse(absolute).root
+    ? Object.values(SPECKIT_REQUIREMENTS).map(path => join(absolute, ...path.split('/')))
+    : [`${absolute}${sep}`];
+  return needles.some(needle => text.includes(needle) || text.includes(needle.replaceAll('\\', '/')));
+}
+
 /** @param {string} root @param {string} version */
 export function regenerateRequirements(root, version) {
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw new UpstreamError('E_USAGE', `Invalid specify-cli version: ${version}`);
@@ -262,8 +276,7 @@ export function regenerateRequirements(root, version) {
     if (!compiled.includes(`specify-cli==${version} \\`) || !compiled.includes('--hash=sha256:')) {
       throw new UpstreamError('E_UPSTREAM_VERIFY', 'uv did not produce a hash-locked specify-cli requirements file');
     }
-    const absolute = resolve(root);
-    if ([absolute, absolute.replaceAll('\\', '/')].some(path => compiled.includes(path))) {
+    if (recordsMachineLocalPath(compiled, root)) {
       throw new UpstreamError('E_UPSTREAM_VERIFY', 'uv recorded a machine-local path in the requirements file');
     }
     return sha256(Buffer.from(compiled));
