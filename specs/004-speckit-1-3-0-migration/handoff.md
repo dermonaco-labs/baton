@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: review
-next_phase: land
-next_owner: baton-land
+phase_completed: land
+next_phase: compound
+next_owner: ce-compound
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Review 4 (base 87b1e9f, head 7187c11): no P0, P1 or P2 open. F17 (P2) and F18-F20 (P3) verified fixed; the D69 stopped-review P3s are resolved. SC-006/AC-US3-4 holds: versus 0f68b07 only upstream-candidates.test.mjs:1148, the isTrusted return and FROZEN_FIELDS are replaced in place; everything else is an addition. F07 (P3, T027) stays open under the user deferral to release prep (D41/D48). Owner note for the PR gate: the D58/D70 macOS smoke local-checks deferral needs acknowledgement."
+model_role: planning
+suggested_model: claude-opus-5.5
+summary: "Landed as PR #58 (https://github.com/dermonaco-labs/baton/pull/58), base main, head c46d950. Fresh independent checkout: handoff receive --phase land OK (exit 0) with the nested local-checks-pass. npm run check exit 0 (tests 717, pass 706, fail 0, skipped 11). baton validate exit 0 with only W_PACK_RECOMMENDED/W_QUICK_LARGE warnings. baton sync --check exit 0. .github/workflows is unchanged versus origin/main. F07 is deferred to release prep (D41/D48). Owner note for the PR gate: the D58/D70 macOS smoke local-checks deferral needs acknowledgement. Not merged."
 read_first:
   - path: specs/004-speckit-1-3-0-migration/review.json
     why: "Review-4 verdict: F01-F06 and F08-F20 fixed; F07 open under the D41/D48 user deferral; D58/D70 owner note"
@@ -45,12 +45,9 @@ artifacts:
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
 entry_checked: []
 exit_criteria:
-  - id: findings-json-valid
+  - id: pr-opened
     met: true
-    evidence: specs/004-speckit-1-3-0-migration/review.json
-  - id: findings-mapped-to-tasks-or-dismissed
-    met: true
-    evidence: 0 findings unresolved
+    evidence: https://github.com/dermonaco-labs/baton/pull/58
 open_questions: []
 decisions:
   - id: D1
@@ -371,8 +368,12 @@ decisions:
     tag: diff-base
     x-base-commit: 7187c11c6131e2bfe72b983b473078d96066e1be
     by: baton
+  - id: D75
+    decision: "Open PR #58 against main from the reviewed head c46d950 without merging; PR review stays a human gate"
+    rationale: "Repository owner authorized /baton-land to open a PR without merging. Evidence from a fresh unshallowed checkout at c46d9504367c9dce4ab85a44c65ad55e9f5363da: handoff receive --phase land exit 0 (no E_SELF_REVIEW, no blocking finding, no stale baton); npm run check exit 0 (tests 717, suites 10, pass 706, fail 0, cancelled 0, skipped 11, todo 0); baton validate exit 0 (known W_PACK_RECOMMENDED and W_QUICK_LARGE warnings only); baton sync --check exit 0; git diff origin/main -- .github/workflows is empty. The PR body follows .github/pull_request_template.md and includes the FR-015 upstream diff summary. The CHANGELOG item is left unticked because F07 is user-deferred (D41/D48). D58/D70 is flagged for explicit owner acknowledgement. The session note is written outside the repo. No subject changes, merge, tag, release, settings change or workflow dispatch."
+    by: baton-land
 gate:
-  required: false
+  required: true
   approved_by: null
   approved_at: null
 history:
@@ -502,8 +503,15 @@ history:
     x-worktree: 18c8adbed5368089204eae3a65c725ffa638624cbc0e6152419bd362f4625fe4
     commit: 7187c11
     x-action: write
-updated_at: 2026-11-05T12:51:27.106Z
-updated_by: baton-review
+  - phase: land
+    at: 2026-11-05T14:10:15.500Z
+    by: baton-land
+    writer: 713fd9f651bfb1985ef348f31f3578ebcfc079e376b07461d65cddaa31a35813
+    x-worktree: 1e5ed9d4dbbb5a89336b8ff7f6099b2473315d9b3b232176bb319c2911197d46
+    commit: c46d950
+    x-action: write
+updated_at: 2026-11-05T14:10:15.475Z
+updated_by: baton-land
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
@@ -600,6 +608,9 @@ x-implementation-cycle: 846402e305830b638841471f60c389c1652d3e193f4edcee66c7d2e2
 review:
   findings_path: specs/004-speckit-1-3-0-migration/review.json
   blocking_findings: 0
+pr:
+  url: https://github.com/dermonaco-labs/baton/pull/58
+  number: 58
 ---
 
 ## Goal
