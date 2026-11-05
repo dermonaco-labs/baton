@@ -37,7 +37,7 @@ Single-project CLI: `src/`, `test/`, `baton/`, `packs/` at the repository root (
   to the new fixture `test/fixtures/speckit-1.0.11/speckit-taskstoissues/SKILL.md`. Copy the bytes exactly, keep LF,
   and record the source commit `0f68b07` in a sibling `test/fixtures/speckit-1.0.11/README.md`. The update test in
   T029 needs these bytes after the bump deletes the original.
-- [ ] T002 Confirm the generator environment for the bump (research R9). Use a Linux container or hosted CI with
+- [X] T002 Confirm the generator environment for the bump (research R9). Use a Linux container or hosted CI with
   public PyPI. Set mirrors only through environment variables (`UV_DEFAULT_INDEX`, `npm_config_registry`), never in
   tracked files. If the approved local mirror lacks `specify-cli==1.3.0`, record the exact local error as
   unavailable tooling in the implement handoff evidence.
@@ -158,7 +158,7 @@ pass.
   - the description "Opt-in GitHub issue creation from tasks.md (Spec Kit github extension)."
 
   `requires: [core]` and `conflicts: []` stay unchanged.
-- [ ] T013 [US1] In the T002 generator environment, run `node .baton/bin/baton.mjs sync --bump speckit=1.3.0`.
+- [X] T013 [US1] In the T002 generator environment, run `node .baton/bin/baton.mjs sync --bump speckit=1.3.0`.
   Depends on T008, T011 and T012. Commit the regenerated files:
   - `baton.lock.json`
   - `baton/upstream/specify-cli.requirements.{in,txt}`
@@ -168,12 +168,12 @@ pass.
 
   Verify that the lock's `upstreams.speckit` matches data-model.md "Spec Kit pin", the old `issues` skill row is
   gone, and the seven rows carry `x-speckit-extension: github`.
-- [ ] T014 [US1] Update the byte-identical mirror `baton/templates/specify.gitignore` from the regenerated
+- [X] T014 [US1] Update the byte-identical mirror `baton/templates/specify.gitignore` from the regenerated
   `.specify/.gitignore`. `test/unit/payload.test.mjs` lines 8-23 enforce the match; sync does not update this file.
 - [X] T015 [P] [US1] In `src/commands/adopt.mjs` line 105, change the hard-coded manifest
   `upstreams: { speckit: '1.0.11@8147943' }` to `'1.3.0@91261fd'`. Update any `test/integration/adopt.test.mjs`
   assertion that names the old value.
-- [ ] T016 [US1] Run `node .baton/bin/baton.mjs sync --check`, `lock verify` and `validate` in the generator
+- [X] T016 [US1] Run `node .baton/bin/baton.mjs sync --check`, `lock verify` and `validate` in the generator
   environment. All report 0 differences (SC-001). Record the outputs as evidence.
 
 **Checkpoint**: The pin is 1.3.0, and the tree is reproducible and closed. US1 is deliverable on its own as a bump
@@ -191,13 +191,13 @@ issue-creation files.
 
 ### Tests
 
-- [ ] T017 [P] [US2] Create `test/unit/relay-hooks.test.mjs`. Parse `.specify/extensions.yml` and assert that each of
+- [X] T017 [P] [US2] Create `test/unit/relay-hooks.test.mjs`. Parse `.specify/extensions.yml` and assert that each of
   the 14 events `before_`/`after_` × `specify`, `clarify`, `plan`, `tasks`, `analyze`, `implement`, `converge` has
   exactly one entry with `extension: baton`, `optional: false`, `enabled` not `false` and `condition` empty. The
   command is `speckit.baton.receive` for `before_*` and `speckit.baton.handoff` for `after_*` (FR-005, SC-003).
   Also assert that each `.github/skills/speckit-<phase>/SKILL.md` references both `hooks.before_<phase>` and
   `hooks.after_<phase>`, and that `installed` has no `github` entry.
-- [ ] T018 [P] [US2] In `test/integration/init.test.mjs`, add a core-only install test. After `init` with no packs,
+- [X] T018 [P] [US2] In `test/integration/init.test.mjs`, add a core-only install test. After `init` with no packs,
   these must not exist:
   - `.github/skills/speckit-taskstoissues/`
   - `.github/skills/speckit-github-taskstoissues/`
@@ -210,7 +210,7 @@ issue-creation files.
 
 ### Implementation
 
-- [ ] T019 [US2] Run T017 and T018 against the bumped tree. No production change is expected (research R2). If
+- [X] T019 [US2] Run T017 and T018 against the bumped tree. No production change is expected (research R2). If
   either fails, stop and record a blocking question in the baton rather than editing upstream bytes
   (principle IV).
 
@@ -229,20 +229,20 @@ provenance. The wrapper contract holds, the `ps` flavour references existing scr
 
 ### Tests
 
-- [ ] T020 [P] [US3] In `test/integration/init.test.mjs`, add an `issues` install test. After
+- [X] T020 [P] [US3] In `test/integration/init.test.mjs`, add an `issues` install test. After
   `init --packs issues`:
   - The wrapper is installed with manifest owner `baton` and pack `issues`.
   - The seven extension files are installed with owner `speckit` and pack `issues`, and their bytes equal
     `packs/issues/files/<path>` and the lock `sha256`.
   - `.specify/extensions.yml` and `.specify/extensions/.registry` bytes equal a core-only install's.
-- [ ] T021 [P] [US3] Create `test/unit/issues-wrapper.test.mjs` for the wrapper contract. Read
+- [X] T021 [P] [US3] Create `test/unit/issues-wrapper.test.mjs` for the wrapper contract. Read
   `packs/issues/files/.github/skills/speckit-taskstoissues/SKILL.md` and assert:
   - its bytes equal `baton/skills/speckit-taskstoissues/SKILL.md`;
   - frontmatter `name: speckit-taskstoissues`;
   - exactly one skill reference, `/speckit-github-taskstoissues`;
   - the exact missing-command message from T011, which names the `issues` pack;
   - no `issue_write`, `list_issues`, `gh issue`, `scripts/` or `.sh`/`.ps1`/`.py` invocation (FR-007).
-- [ ] T022 [P] [US3] Extend the live test "F39 live init --script ps..." in `test/integration/init.test.mjs`
+- [X] T022 [P] [US3] Extend the live test "F39 live init --script ps..." in `test/integration/init.test.mjs`
   (lines 335-352):
   - Widen `scriptReference` (line 323) to also match `.specify/extensions/<name>/scripts/<flavour>/<file>`.
   - Add a sibling live test that runs `init --script ps --packs issues`. Assert that the installed
@@ -250,7 +250,7 @@ provenance. The wrapper contract holds, the `ps` flavour references existing scr
     and that `missing` is `[]`.
   - Change both skip regexes and messages from `1\.0\.11` to `1\.3\.0`. They skip only when
     `GITHUB_ACTIONS !== 'true'`.
-- [ ] T023 [P] [US3] Add a 1.0.11-to-1.3.0 update test to `test/integration/update.test.mjs`:
+- [X] T023 [P] [US3] Add a 1.0.11-to-1.3.0 update test to `test/integration/update.test.mjs`:
   - Install with `--packs issues`. Then simulate the 1.0.11 state: write the T001 fixture bytes at
     `.github/skills/speckit-taskstoissues/SKILL.md`, set its manifest row to owner `speckit` with the fixture's
     sha256, and remove the seven extension files and their rows.
@@ -260,19 +260,19 @@ provenance. The wrapper contract holds, the `ps` flavour references existing scr
     `.new` copy.
 
   This is existing behavior (FR-011, Q2 = X). The test name must contain `issues`.
-- [ ] T024 [P] [US3] Extend "F99 core.autocrlf checkout..." in `test/integration/update.test.mjs` (lines 137-170),
+- [X] T024 [P] [US3] Extend "F99 core.autocrlf checkout..." in `test/integration/update.test.mjs` (lines 137-170),
   or add a sibling test using `--packs issues`. Add `.github/skills/speckit-taskstoissues/SKILL.md` and
   `.github/skills/speckit-github-taskstoissues/SKILL.md` to `paths`, so CRLF checkouts stay owned through doctor,
   update and uninstall. A sibling test's name must contain `issues`.
 
 ### Implementation
 
-- [ ] T025 [US3] In `src/commands/init.mjs`, change the ps/py flavour path (around lines 148-230) so that, when the
+- [X] T025 [US3] In `src/commands/init.mjs`, change the ps/py flavour path (around lines 148-230) so that, when the
   resolved packs include `issues`, it also runs `extension add github` in the flavour project. Use the T007 helper.
   Generalize `flavouredBytes` (lines 57-60) to match any Spec Kit file referencing
   `.specify/(extensions/<name>/)?scripts/bash/`. Keep the `sh` path and update logic unchanged (research R6).
   Makes T022 pass.
-- [ ] T026 [US3] Run T020, T021, T023 and T024 against the bumped tree. No update-logic change is allowed. If T023
+- [X] T026 [US3] Run T020, T021, T023 and T024 against the bumped tree. No update-logic change is allowed. If T023
   shows a behavior other than in-place replace or conflict, stop and raise a blocking question.
 
 **Checkpoint**: All three stories pass independently.
@@ -281,7 +281,7 @@ provenance. The wrapper contract holds, the `ps` flavour references existing scr
 
 ## Phase 6: Polish & cross-cutting concerns
 
-- [ ] T027 [P] Add a `CHANGELOG.md` entry under **Upstream** (FR-011, FR-012, SC-007) stating:
+- [X] T027 [P] Add a `CHANGELOG.md` entry under **Upstream** (FR-011, FR-012, SC-007) stating:
   - Spec Kit 1.0.11 → 1.3.0 with tag and commit.
   - `/speckit-taskstoissues` is now a compatibility wrapper over `/speckit-github-taskstoissues`.
   - The `issues` pack now ships Spec Kit's `github` extension.
@@ -290,7 +290,7 @@ provenance. The wrapper contract holds, the `ps` flavour references existing scr
   - `specify extension list` does not show `github`.
   - Adopters who installed `github` themselves will see managed-file conflicts.
   - `core` is unchanged.
-- [ ] T028 [P] Update the public docs (FR-013) to 1.3.0 and the new `issues` contents:
+- [X] T028 [P] Update the public docs (FR-013) to 1.3.0 and the new `issues` contents:
   - `README.md`: badge at line 15, line 90, packs table at line 425, vendored components at line 653.
   - `CONTRIBUTING.md` lines 29 and 121.
   - `THIRD_PARTY_NOTICES.md` line 14: the commit-pinned license link moves to `91261fd…`.
@@ -298,13 +298,13 @@ provenance. The wrapper contract holds, the `ps` flavour references existing scr
   - `docs/06-packs-and-customization.md` line 17.
   - `specs/001-baton-template/contracts/packs.md` lines 67 and 126: the `issues` row and the version line only; the
     excluded table is unchanged.
-- [ ] T029 Show that the existing feature 003 tests are unchanged (SC-006). Run
+- [X] T029 Show that the existing feature 003 tests are unchanged (SC-006). Run
   `git diff 0f68b07 -- test/unit/upstream-candidates.test.mjs` and confirm it shows only added lines. Run
   `git diff 0f68b07 -- src/lib/candidate-bindings.mjs src/lib/upstream-candidates.mjs` and confirm it shows only the
   T009 additions.
-- [ ] T030 Run `npm run check` (SC-002). Run it in the generator environment, or record the local mirror limit and
+- [X] T030 Run `npm run check` (SC-002). Run it in the generator environment, or record the local mirror limit and
   cite the hosted CI run of the branch.
-- [ ] T031 Run the [quickstart.md](quickstart.md) steps 1-6 and attach the outputs as evidence. Extract the
+- [X] T031 Run the [quickstart.md](quickstart.md) steps 1-6 and attach the outputs as evidence. Extract the
   reviewed 1.0.11 → 1.3.0 diff summary from `docs/reference/upstream-diff.md` for the PR body (FR-015). Do not open,
   merge or tag a PR here; landing belongs to `/baton-land`.
 
@@ -341,6 +341,37 @@ Task: "Extension-tree sync cases in test/unit/sync.test.mjs" (T004)
 Task: "Trust-narrowing cases in test/unit/upstream-candidates.test.mjs" (T005)
 ```
 
+### Implementation evidence
+
+Final full gate: hosted Linux sandbox (public PyPI and npm) at `7cf28f3`: `npm ci` exit 0; `npm run check` exit 0
+(lint:md 0 errors, typecheck, build --check, `sync: OK`, `lock: OK`, validate, `npm test` 694 tests, 683 pass,
+0 fail, 11 skipped); a second `sync --check` exit 0 with an empty `git status --porcelain`.
+
+- T002: the local generator cannot reach `files.pythonhosted.org` (TLS handshake failure), and the approved mirror
+  lacks the pinned closure (`anyio==4.16.0`). Per R9, T013/T014/T016/T030 ran in the owner-authorized cloud sandbox.
+- T013/T014/T016: cloud commit `f702474`. The lock pins `1.3.0` / `v1.3.0` /
+  `34a0d388eac671d656eb05b125ad3ed6056168ed`. That is the peeled commit; `91261fd…` in the planning artifacts is the
+  annotated tag object (handoff decision). Seven rows carry `x-speckit-extension: github`, all `packs: [issues]`;
+  the wrapper has no lock row; `.specify/.gitignore` and `baton/templates/specify.gitignore` are byte-identical.
+- T015: `adopt.mjs` now writes `1.3.0@34a0d38`.
+- T019/T026: green on the bumped tree with no production change beyond T025. T023 shows in-place replacement and a
+  conflict for an edited copy; no update-logic change.
+- T022: local runs fail on the TLS limit above; the hosted run executes the live tests.
+- T024: adopter `.gitattributes` pins `.github/skills/**` to LF, so the sibling test asserts the skills stay LF and
+  the extension's `extension.yml` and command file check out CRLF and stay owned.
+- T028: CONTRIBUTING line 121 is the historical v0.1.0 record and stays unchanged (handoff decision). The
+  bound docs were refreshed metadata-only under owner authorization (001 D175, 002 D35, release-014 D17/D18, a7 D21
+  with a fresh a7 approval).
+- T029: `git diff 0f68b07` removes exactly three lines, each replaced in place: `upstream-candidates.test.mjs:1148`
+  (owner decision A, the row-shape filter also excludes `x-speckit-extension`), the `isTrusted` return in
+  `candidate-bindings.mjs` (extended with `||`), and `FROZEN_FIELDS` in `upstream-candidates.mjs` (one appended
+  field). Everything else is additions; the feature-004 `plainLock` fixture is inside the new describe block.
+- T030: also fixed the generated upstream-diff summary (h2, blank lines around lists), regenerated
+  `.baton/manifest.json`, and made the `upstream-upgrade` report test read the pinned version from the lock.
+- T031: quickstart §1-§3 per the hosted runs above; §4 `init` core-only and `--packs issues` exit 0 with the expected
+  absent/present files and `doctor --json` exit 0; §5 52/52; §6 PR material is the `## Upstream bump (PR summary)`
+  section of `docs/reference/upstream-diff.md` (7 added, 10 changed, 1 removed).
+
 ## Implementation strategy
 
 1. Setup, then Foundational (offline, still on 1.0.11).
@@ -371,6 +402,19 @@ Task: "Trust-narrowing cases in test/unit/upstream-candidates.test.mjs" (T005)
 | AC-US3-2 | US3 | node --test --test-name-pattern="issues" test/integration/init.test.mjs | command | fail | | |
 | AC-US3-3 | US3 | node --test --test-name-pattern="issues" test/integration/update.test.mjs | command | fail | | |
 | AC-US3-4 | US3 | git diff 0f68b07 -- test/unit/upstream-candidates.test.mjs shows only added lines (SC-006) | manual | n/a | | |
+
+| Check | Result and evidence |
+|---|---|
+| AC-US1-1 | red — at base `dea5807` "the issues pack closes over the github extension skill its wrapper delegates to" fails (11 pass, 1 fail); green — at HEAD 12/12 pass |
+| AC-US1-2 | red — before T006-T009, 5 failures (T003 schema, T004 extension sync, first three T005 trust cases); green — at HEAD 66/66 pass |
+| AC-US1-3 | red — base lock pins speckit 1.0.11 at `8147943`; green — hosted sandbox `f702474` bump, `sync --check`, `lock verify` and `validate` exit 0 at `7cf28f3`; pin 1.3.0 / v1.3.0 / peeled commit `34a0d388eac671d656eb05b125ad3ed6056168ed` (decision: `91261fd` is the tag object) |
+| AC-US1-4 | n/a — regression gate; hosted sandbox at `7cf28f3`: `npm run check` exit 0, 694 tests, 683 pass, 0 fail, 11 skipped |
+| AC-US2-1 | n/a — regression guard, green at base `dea5807` (3/3) and at HEAD (3/3) |
+| AC-US2-2 | n/a — regression guard, green at base `dea5807` (1/1) and at HEAD (1/1) |
+| AC-US3-1 | red — at base `dea5807` the wrapper contract test fails (0/1); green — at HEAD 1/1 pass |
+| AC-US3-2 | red — at base `dea5807` both `issues` init tests fail (0/2); green — install test passes locally, and the live ps test passes in the hosted run (0 failures at `7cf28f3`) |
+| AC-US3-3 | red — at base `dea5807` both `issues` update tests fail (0/2); green — at HEAD 4/4 pass |
+| AC-US3-4 | n/a — diff property: only `upstream-candidates.test.mjs:1148` is modified (owner decision A); every other change is an addition |
 
 `n/a` rationale:
 
