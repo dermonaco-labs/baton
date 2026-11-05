@@ -2,14 +2,16 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: plan
-next_phase: tasks
-next_owner: speckit-tasks
+phase_completed: tasks
+next_phase: analyze
+next_owner: speckit-analyze
 status: ready
-model_role: planning
+model_role: review
 suggested_model: claude-opus-5.5
-summary: "Planned the Spec Kit 1.0.11 -> 1.3.0 migration under A+/X: bump pin and lock; source the opt-in issues pack (7 github extension 1.0.5 files) from a separate generated extension tree so core never contains them; add a same-path Baton-authored /speckit-taskstoissues wrapper (no stale file); extend pack schema with extension: github and lock rows with x-speckit-extension; narrowing-only isTrusted addition keeps extension rows manual-review; init renders the extension for ps/py flavours; update logic unchanged. No code written."
+summary: "Tasks written: 31 test-first tasks across Setup, Foundational (schema, extension-tree sync, trust narrowing), US1 bump with issues repoint, US2 relay-hook and core-only guards, US3 wrapper/install/flavour/update/CRLF tests, and Polish (CHANGELOG, docs, SC-006 diff, npm run check, quickstart). Ten acceptance checks registered."
 read_first:
+  - path: specs/004-speckit-1-3-0-migration/tasks.md
+    why: T001-T031 in dependency order with the Acceptance Registry
   - path: specs/004-speckit-1-3-0-migration/spec.md
     why: "Approved scope: FR-001..FR-015, SC-001..SC-007"
   - path: specs/004-speckit-1-3-0-migration/plan.md
@@ -48,20 +50,20 @@ artifacts:
   - path: specs/004-speckit-1-3-0-migration/quickstart.md
     role: derived
     sha256: 25babcb745a8696818e702db90a334766f4ec014005a5640491aed6e52fec4d1
+  - path: specs/004-speckit-1-3-0-migration/tasks.md
+    role: derived
+    sha256: 1d8361a3dd6e63a8ad14f035f06109c4d26acd05d7b9b566d6e88f54dc8c51c5
 entry_checked: []
 exit_criteria:
-  - id: artifact-exists:plan.md
+  - id: artifact-exists:tasks.md
     met: true
-    evidence: plan.md
-  - id: artifact-exists:research.md
+    evidence: tasks.md
+  - id: tasks-reference-stories
     met: true
-    evidence: research.md
-  - id: no-needs-clarification:plan.md
+    evidence: 17 story tasks
+  - id: acceptance-registered
     met: true
-    evidence: plan.md
-  - id: constitution-check-present
-    met: true
-    evidence: constitution check in plan
+    evidence: "registered: 10, stories: 3"
 open_questions: []
 decisions:
   - id: D1
@@ -128,6 +130,18 @@ decisions:
     decision: Resolved assumptions A1-A3 during planning
     rationale: "A1: token-budget and optimize vendor inert extensions declaring speckit_version >=0.1.0, unaffected by the bump. A2: 1.3.0 extensions.yml is byte-identical after EOL normalization, so hooks are unchanged; a regression test pins one receive and one handoff per event. A3: baton.lock.json lists only .github/skills/speckit-taskstoissues/SKILL.md for issues."
     by: speckit-plan
+  - by: speckit-tasks
+    id: D17
+    decision: Land the issues pack repoint (T012) and wrapper (T011) in the same change as the 1.3.0 bump (T013)
+    rationale: Spec Kit 1.0.11 has no bundled github extension and 1.3.0 no longer generates the old taskstoissues skill, so neither order is reproducible on its own.
+  - by: speckit-tasks
+    id: D18
+    decision: Capture the 1.0.11 issues skill bytes as test/fixtures/speckit-1.0.11/speckit-taskstoissues/SKILL.md before the bump
+    rationale: The update owner-change test (T023) needs the old upstream bytes after sync deletes packs/issues/files copies.
+  - by: speckit-tasks
+    id: D19
+    decision: Update baton/templates/specify.gitignore by a dedicated task (T014)
+    rationale: payload.mjs requires a byte-identical mirror of .specify/.gitignore and sync does not refresh it.
 gate:
   required: false
   approved_by: null
@@ -168,8 +182,15 @@ history:
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
     commit: 787d63b
     x-action: write
-updated_at: 2026-11-05T09:39:07.135Z
-updated_by: speckit-plan
+  - phase: tasks
+    at: 2026-11-05T09:43:59.455Z
+    by: speckit-tasks
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 0f68b07
+    x-action: write
+updated_at: 2026-11-05T09:43:59.448Z
+updated_by: speckit-tasks
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
@@ -196,6 +217,57 @@ risks:
     text: The trust-narrowing addition could unintentionally reject a legitimate future automated core row if BOUND_ROOTS matching is wrong.
     severity: medium
 assumptions: []
+acceptance_checks:
+  - id: AC-US1-1
+    story: US1
+    check: node --test test/unit/packs.test.mjs
+    kind: command
+    expect_initial: fail
+  - id: AC-US1-2
+    story: US1
+    check: node --test test/unit/schema.test.mjs test/unit/sync.test.mjs test/unit/upstream-candidates.test.mjs
+    kind: command
+    expect_initial: fail
+  - id: AC-US1-3
+    story: US1
+    check: "quickstart §1-§2 in the generator environment: sync --bump speckit=1.3.0, then sync --check, lock verify and validate report 0 differences; lock upstreams.speckit is 1.3.0 / v1.3.0 / 91261fdcf1738cb095a31ff5bee145f502e3af91"
+    kind: manual
+    expect_initial: fail
+  - id: AC-US1-4
+    story: US1
+    check: npm run check (generator environment or hosted CI run of the branch)
+    kind: command
+    expect_initial: n/a
+  - id: AC-US2-1
+    story: US2
+    check: node --test test/unit/relay-hooks.test.mjs
+    kind: command
+    expect_initial: n/a
+  - id: AC-US2-2
+    story: US2
+    check: node --test --test-name-pattern="core-only" test/integration/init.test.mjs
+    kind: command
+    expect_initial: n/a
+  - id: AC-US3-1
+    story: US3
+    check: node --test test/unit/issues-wrapper.test.mjs
+    kind: command
+    expect_initial: fail
+  - id: AC-US3-2
+    story: US3
+    check: node --test --test-name-pattern="issues" test/integration/init.test.mjs
+    kind: command
+    expect_initial: fail
+  - id: AC-US3-3
+    story: US3
+    check: node --test --test-name-pattern="issues" test/integration/update.test.mjs
+    kind: command
+    expect_initial: fail
+  - id: AC-US3-4
+    story: US3
+    check: git diff 0f68b07 -- test/unit/upstream-candidates.test.mjs shows only added lines (SC-006)
+    kind: manual
+    expect_initial: n/a
 ---
 
 ## Goal
@@ -205,15 +277,14 @@ creation, relay hooks fire once, and feature 003's trusted-base bindings are unc
 
 ## What changed
 
-Planning is complete: `plan.md`, `research.md` (R1-R12), `data-model.md`, two contracts and `quickstart.md`. The
-`issues` pack is sourced from a separate generated extension tree and gains a same-path Baton wrapper. A
-narrowing-only trust rule keeps extension rows manual-review. No code has been written.
+Planning and tasks are complete. `tasks.md` has 31 tasks, tests first, grouped by US1 (bump), US2 (relay hooks and
+core-only) and US3 (`issues` pack and wrapper), and ends with a 10-row Acceptance Registry. The `issues` repoint must
+land with the bump, because 1.0.11 has no `github` extension. No code has been written.
 
 ## Next steps
 
-1. `/speckit-tasks`: tests first, covering closure, install surfaces, wrapper, schema, trust narrowing, update owner
-   change, CRLF fixture, `ps` flavour and hook count.
-2. `/speckit-analyze`, then stop at the human pre-code gate.
+1. `/speckit-analyze` checks spec, plan and tasks for consistency.
+2. Stop at the human pre-code gate.
 
 ## Watch out for
 
