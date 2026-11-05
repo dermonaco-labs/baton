@@ -26,7 +26,7 @@ read_first:
     sha256: 16a67f0019ec73103832f41591e30539b3916b238ab2b4cb7864e2ccf28b79e6
   - path: .baton/template-cleanup.yml
     why: Source-only cleanup coverage for new docs lane and later canonical review artifacts
-    sha256: 2b034bbcbfe30a18c337d7177a7a2a9e1c2d46fa74fdd653b21ec8b22d8f20b0
+    sha256: 364f0b7aaad1b13669466395b4852e700294db95d4001733be3aea28ad110d5e
   - path: .baton/quick/release-records-docs-a7.work.json
     why: Actual judgment-only input to this new canonical WORK write
     sha256: de632df430c6cae373d42517f38b3d1bde768ad2f66a7923bcb449813cc449f4
@@ -132,10 +132,14 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: Owner authorized (direct approval) a metadata-only refresh of the .baton/template-cleanup.yml hash for one added remove entry, specs/003-upstream-upgrade-prs/, so feature 003 maintainer artifacts do not ship to adopters (T001 baseline adopt failure). No other a7 content changes.
     by: implementation-session
+  - id: D20
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: Owner authorized (control-plane delegation) a metadata-only refresh of the .baton/template-cleanup.yml hash for one added remove entry, specs/004-speckit-1-3-0-migration/, so feature 004 maintainer artifacts do not ship to adopters. No other a7 content changes.
+    by: implementation-session
 gate:
   required: true
-  approved_by: repository owner via direct approval
-  approved_at: 2026-11-04
+  approved_by: repository owner via control-plane delegation
+  approved_at: 2026-11-05
 history:
   - phase: work
     at: 2026-10-09T14:15:01.488Z
@@ -249,7 +253,21 @@ history:
     x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
     commit: ae34a99
     x-action: approve
-updated_at: 2026-11-04T12:56:18.672Z
+  - phase: land
+    at: 2026-11-05T10:08:54.698Z
+    by: implementation-session
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 73348a8
+    x-action: refresh
+  - phase: land
+    at: 2026-11-05T10:08:54.993Z
+    by: human:repository-owner
+    writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
+    x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
+    commit: 73348a8
+    x-action: approve
+updated_at: 2026-11-05T10:08:54.993Z
 updated_by: human:repository-owner
 do_not_read:
   - path: specs/001-baton-template/roadmap.md

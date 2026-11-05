@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 export const ATV_REPO = 'https://github.com/All-The-Vibes/ATV-StarterKit';
@@ -86,6 +86,37 @@ export function prepareSpeckit({ root, work, script = 'sh', version }) {
   run(specify, ['extension', 'add', '--dev', extension], { cwd: project });
   run(specify, ['preset', 'add', '--dev', preset], { cwd: project });
   return project;
+}
+
+/** Spec Kit extensions bundled in the pinned wheel that a Baton pack may ship. */
+export const SPECKIT_EXTENSIONS = Object.freeze(['github']);
+
+/**
+ * Derive the extension tree: a copy of the generated core project with one bundled Spec Kit extension added by the
+ * verified `specify` from `work/venv`. The core project is left untouched; on failure nothing remains.
+ * @param {{work:string,project:string,extension?:string}} options
+ */
+export function prepareSpeckitExtension({ work, project, extension = 'github' }) {
+  if (!SPECKIT_EXTENSIONS.includes(extension)) throw new UpstreamError('E_USAGE', `Unsupported Spec Kit extension: ${extension}`);
+  const bin = process.platform === 'win32' ? 'Scripts' : 'bin';
+  const specify = join(work, 'venv', bin, process.platform === 'win32' ? 'specify.exe' : 'specify');
+  if (!existsSync(specify) || !existsSync(project)) {
+    throw new UpstreamError('E_UPSTREAM_VERIFY', `Spec Kit extension ${extension} needs the verified core project first`);
+  }
+  const tree = join(work, `project-${extension}`);
+  rmSync(tree, { recursive: true, force: true });
+  try {
+    cpSync(project, tree, { recursive: true, verbatimSymlinks: true });
+    run(specify, ['extension', 'add', extension], { cwd: tree });
+    if (!existsSync(join(tree, '.specify', 'extensions', extension, 'extension.yml'))) {
+      throw new UpstreamError('E_UPSTREAM_VERIFY', `Spec Kit extension ${extension} did not install its manifest`);
+    }
+  } catch (error) {
+    rmSync(tree, { recursive: true, force: true });
+    if (error instanceof UpstreamError) throw error;
+    throw new UpstreamError('E_UPSTREAM_VERIFY', `Spec Kit extension ${extension} failed: ${error}`);
+  }
+  return tree;
 }
 
 /**

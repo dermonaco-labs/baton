@@ -47,7 +47,8 @@ const SAFE_PATH = /^[A-Za-z0-9._/@+-]+$/;
 export const ROW_KEYS = Object.freeze(['license', 'packs', 'path', 'repair', 'sha256', 'sha256_upstream', 'stored_at',
   'upstream', 'upstream_path']);
 /** Row fields a Baton pack definition, the fixed extension sources or the stored location decide; a bump never changes them. */
-const FROZEN_FIELDS = ['path', 'packs', 'upstream', 'upstream_path', 'license', 'x-baton-source', 'x-baton-source-sha256'];
+const FROZEN_FIELDS = ['path', 'packs', 'upstream', 'upstream_path', 'license', 'x-baton-source', 'x-baton-source-sha256',
+  'x-speckit-extension'];
 /**
  * The only root where sync adds or drops rows by itself (generated `.specify/` files). Every other row comes from
  * an explicit Baton pack definition item, which a candidate cannot change.

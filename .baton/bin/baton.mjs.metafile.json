@@ -3551,7 +3551,7 @@
       "format": "esm"
     },
     "src/lib/upstream.mjs": {
-      "bytes": 11801,
+      "bytes": 13516,
       "imports": [
         {
           "path": "node:crypto",
@@ -3598,7 +3598,7 @@
       "format": "esm"
     },
     "src/lib/lock-report.mjs": {
-      "bytes": 3812,
+      "bytes": 3770,
       "imports": [
         {
           "path": "src/lib/upstream.mjs",
@@ -3625,7 +3625,7 @@
       "format": "esm"
     },
     "src/commands/sync.mjs": {
-      "bytes": 25944,
+      "bytes": 27661,
       "imports": [
         {
           "path": "node:fs",
@@ -4123,7 +4123,7 @@
       "format": "esm"
     },
     "src/commands/adopt.mjs": {
-      "bytes": 13744,
+      "bytes": 13743,
       "imports": [
         {
           "path": "node:fs/promises",
@@ -5591,7 +5591,7 @@
           "bytesInOutput": 1818
         },
         "src/lib/upstream.mjs": {
-          "bytesInOutput": 6818
+          "bytesInOutput": 7650
         },
         "src/commands/lock.mjs": {
           "bytesInOutput": 2857
@@ -5603,7 +5603,7 @@
           "bytesInOutput": 1660
         },
         "src/commands/sync.mjs": {
-          "bytesInOutput": 12645
+          "bytesInOutput": 13494
         },
         "src/lib/phases.mjs": {
           "bytesInOutput": 7007
@@ -5642,7 +5642,7 @@
           "bytesInOutput": 541
         },
         "src/commands/adopt.mjs": {
-          "bytesInOutput": 7540
+          "bytesInOutput": 7539
         },
         "src/commands/doctor.mjs": {
           "bytesInOutput": 3803
@@ -5672,7 +5672,7 @@
           "bytesInOutput": 2461
         }
       },
-      "bytes": 428012
+      "bytes": 429692
     }
   }
 }

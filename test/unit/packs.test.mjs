@@ -39,6 +39,31 @@ test('each shipped pack has a closed dependency set', async () => {
   }
 });
 
+test('the issues pack closes over the github extension skill its wrapper delegates to', async () => {
+  const root = resolve(import.meta.dirname, '../..');
+  const shipped = await loadPacks(root);
+  const upstreamNames = new Set([...shipped.values()].flatMap(pack => pack.files.map(file =>
+    file.path.match(/^\.github\/(?:skills\/([^/]+)\/SKILL\.md|agents\/([^/]+)\.agent\.md)$/)?.slice(1).find(Boolean)).filter(Boolean)));
+  const contents = new Map();
+  for (const name of resolvePacks(shipped, ['issues'])) {
+    for (const file of shipped.get(name).files) {
+      const stored = name === 'core' ? file.path : `packs/${name}/files/${file.path}`;
+      contents.set(file.path, await readFile(resolve(root, stored), 'utf8'));
+    }
+  }
+  const options = { upstreamNames, exclusions: excludedNames(root) };
+  assert.deepEqual(validatePackClosure(shipped, 'issues', contents, options), []);
+
+  const skill = '.github/skills/speckit-github-taskstoissues/SKILL.md';
+  const wrapper = '.github/skills/speckit-taskstoissues/SKILL.md';
+  const issues = shipped.get('issues');
+  const withoutSkill = new Map(shipped).set('issues', { ...issues, files: issues.files.filter(file => file.path !== skill) });
+  const remaining = new Map([...contents].filter(([path]) => path !== skill));
+  const errors = validatePackClosure(withoutSkill, 'issues', remaining, options);
+  assert.ok(errors.some(error => error.code === 'E_DANGLING_REF' && error.file === wrapper &&
+    /speckit-github-taskstoissues/.test(error.message)), JSON.stringify(errors));
+});
+
 test('a docs-review pack missing its dispatched persona fails closed', () => {
   const defs = new Map([
     ['core', { id: 'core', requires: [], conflicts: [], files: [] }],

@@ -100,13 +100,19 @@ export function bindingIssues({ id, manifest, files, baseLock, lock, lockBytes, 
   };
   /** @type {Map<string,any>} */
   const sourced = new Map();
+  /** @type {Set<string>} */
+  const extensionRows = new Set();
   for (const source of [baseLock, lock]) {
     for (const row of Array.isArray(source?.files) ? source.files : []) {
       if (typeof row?.stored_at === 'string' && row['x-baton-source'] !== undefined) sourced.set(row.stored_at, row);
+      if (typeof row?.stored_at === 'string' && row['x-speckit-extension'] !== undefined) extensionRows.add(row.stored_at);
     }
   }
+  // Pack-stored copies of extension and preset installs, and Spec Kit extension rows, are trusted like BOUND_ROOTS.
+  const installTarget = (/** @type {string} */ path) => /^packs\/[a-z0-9][a-z0-9-]*\/files\/(.+)$/.exec(path)?.[1] ?? path;
   const isTrusted = (/** @type {string} */ path) =>
-    path === HOOKS_PATH || BOUND_ROOTS.some(root => path.startsWith(root)) || sourced.has(path);
+    path === HOOKS_PATH || BOUND_ROOTS.some(root => path.startsWith(root)) || sourced.has(path) ||
+    BOUND_ROOTS.some(root => installTarget(path).startsWith(root)) || extensionRows.has(path);
   const issues = [];
   const written = new Map(manifest.changed.map(item => [item.path, /** @type {Buffer} */ (files.get(item.path)?.bytes)]));
   for (const path of manifest.deleted) {

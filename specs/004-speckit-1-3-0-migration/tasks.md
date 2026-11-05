@@ -33,7 +33,7 @@ Single-project CLI: `src/`, `test/`, `baton/`, `packs/` at the repository root (
 
 **Purpose**: Preserve inputs that the bump removes, and confirm the generator environment.
 
-- [ ] T001 Copy the 1.0.11 `issues` skill bytes from `packs/issues/files/.github/skills/speckit-taskstoissues/SKILL.md`
+- [X] T001 Copy the 1.0.11 `issues` skill bytes from `packs/issues/files/.github/skills/speckit-taskstoissues/SKILL.md`
   to the new fixture `test/fixtures/speckit-1.0.11/speckit-taskstoissues/SKILL.md`. Copy the bytes exactly, keep LF,
   and record the source commit `0f68b07` in a sibling `test/fixtures/speckit-1.0.11/README.md`. The update test in
   T029 needs these bytes after the bump deletes the original.
@@ -53,14 +53,14 @@ offline. Nothing here changes the pin or any vendored byte.
 
 ### Tests (write first; they must fail)
 
-- [ ] T003 [P] Add pack-schema cases to `test/unit/schema.test.mjs`, following the negative-case style at lines
+- [X] T003 [P] Add pack-schema cases to `test/unit/schema.test.mjs`, following the negative-case style at lines
   50-56. Cases:
   - Accept `{ from: speckit, extension: github, path: ... }`.
   - Reject `extension: gitlab`. The rule is "enum `github`; no other value".
   - Reject `extension: github` with `from: baton`, and with `from: atv`. The rule is "allowed only when
     `from: speckit`".
   - Confirm that every shipped `packs/*.yml` still validates.
-- [ ] T004 [P] Add extension-tree sync cases to `test/unit/sync.test.mjs`. Use fake trees in the style of lines
+- [X] T004 [P] Add extension-tree sync cases to `test/unit/sync.test.mjs`. Use fake trees in the style of lines
   11-110: a core tree, plus an extension tree that also holds the seven `github` files. Assert:
   - Entries marked `extension: github` are read from the extension tree. Their lock rows have `upstream: speckit`,
     `upstream_path` equal to the extension-tree path, `stored_at: packs/issues/files/<path>`, `packs: ["issues"]`,
@@ -73,7 +73,7 @@ offline. Nothing here changes the pin or any vendored byte.
     written.
   - A CRLF rendered `.github/skills/speckit-github-taskstoissues/SKILL.md` is stored and hashed as LF.
   - `pinnedNames` includes `speckit-github-taskstoissues`.
-- [ ] T005 [P] Add trust-narrowing cases to `test/unit/upstream-candidates.test.mjs` as **new tests only**. Do not
+- [X] T005 [P] Add trust-narrowing cases to `test/unit/upstream-candidates.test.mjs` as **new tests only**. Do not
   edit any existing test or fixture. Assert that a Spec Kit candidate is rejected for manual review when it:
   - changes, deletes or adds a stored path `packs/issues/files/.specify/extensions/github/...` (install target under
     `BOUND_ROOTS`);
@@ -88,10 +88,10 @@ offline. Nothing here changes the pin or any vendored byte.
 
 ### Implementation
 
-- [ ] T006 [P] In `baton/schemas/pack.schema.json` `$defs.file`, add the optional property `extension`
+- [X] T006 [P] In `baton/schemas/pack.schema.json` `$defs.file`, add the optional property `extension`
   (`enum: ["github"]`). Add an `if`/`then` conditional so that `extension` requires `from: speckit`. Keep
   `additionalProperties: false`. Makes T003 pass.
-- [ ] T007 In `src/lib/upstream.mjs`, add an extension-tree step next to `prepareSpeckit` (lines 58-89):
+- [X] T007 In `src/lib/upstream.mjs`, add an extension-tree step next to `prepareSpeckit` (lines 58-89):
   1. Copy the generated core project to a sibling directory in the same work directory.
   2. Run the verified `specify` binary with `extension add github` there, offline, using the bundled wheel
      extension.
@@ -99,7 +99,7 @@ offline. Nothing here changes the pin or any vendored byte.
   4. Return the tree path.
 
   Leave the core project untouched (research R3, contract `contracts/sync-github-extension.md`).
-- [ ] T008 In `src/commands/sync.mjs`, depends on T006 and T007:
+- [X] T008 In `src/commands/sync.mjs`, depends on T006 and T007:
   - Add `extension?: 'github'` to the `PackFile` typedef (line 17).
   - Pass the extension tree through `SyncDeps` (lines 364-368) so tests can inject it.
   - Make `sourceFor` and the `add` base check route `extension: github` entries to the extension tree.
@@ -109,7 +109,7 @@ offline. Nothing here changes the pin or any vendored byte.
   - Keep `prepareEntries` core sourcing unchanged.
 
   Makes T004 pass.
-- [ ] T009 [P] In `src/lib/candidate-bindings.mjs`, make `isTrusted` (around lines 108-109) also return true when
+- [X] T009 [P] In `src/lib/candidate-bindings.mjs`, make `isTrusted` (around lines 108-109) also return true when
   either:
   - `targetOf(storedPath).path` starts with a `BOUND_ROOTS` entry; or
   - a base- or candidate-lock row for `storedPath` carries `x-speckit-extension`.
@@ -132,7 +132,7 @@ pass.
 
 ### Tests
 
-- [ ] T010 [P] [US1] Add a test to `test/unit/packs.test.mjs` that loads the shipped `packs/issues.yml` and its
+- [X] T010 [P] [US1] Add a test to `test/unit/packs.test.mjs` that loads the shipped `packs/issues.yml` and its
   stored files. Assert `validatePackClosure` for `issues` returns `[]`. Also assert that removing
   `.github/skills/speckit-github-taskstoissues/SKILL.md` from the contents yields `E_DANGLING_REF` for the wrapper's
   reference. Fails until T012-T014 land. The existing "each shipped pack has a closed dependency set" test (lines
@@ -140,7 +140,7 @@ pass.
 
 ### Implementation
 
-- [ ] T011 [US1] Author the wrapper `baton/skills/speckit-taskstoissues/SKILL.md`, following
+- [X] T011 [US1] Author the wrapper `baton/skills/speckit-taskstoissues/SKILL.md`, following
   `baton/skills/speckit-optimize-tokens/SKILL.md` as the pattern:
   - Frontmatter: `name: speckit-taskstoissues`, plus a `description` naming it a compatibility alias for
     `/speckit-github-taskstoissues`.
@@ -152,7 +152,7 @@ pass.
     3. Otherwise run `/speckit-github-taskstoissues` with the user's arguments unchanged.
   - Exclusions: no issue-creation steps, no `issue_write`, `list_issues` or `gh issue`, and no script invocation.
   - Must pass `npm run lint:md`, which covers `baton/**/*.md`.
-- [ ] T012 [US1] Rewrite `packs/issues.yml` exactly as in data-model.md "Pack file entry":
+- [X] T012 [US1] Rewrite `packs/issues.yml` exactly as in data-model.md "Pack file entry":
   - seven `{ from: speckit, extension: github, path: ... }` entries;
   - the `{ from: baton, path: .github/skills/speckit-taskstoissues/SKILL.md }` wrapper entry;
   - the description "Opt-in GitHub issue creation from tasks.md (Spec Kit github extension)."
@@ -170,7 +170,7 @@ pass.
   gone, and the seven rows carry `x-speckit-extension: github`.
 - [ ] T014 [US1] Update the byte-identical mirror `baton/templates/specify.gitignore` from the regenerated
   `.specify/.gitignore`. `test/unit/payload.test.mjs` lines 8-23 enforce the match; sync does not update this file.
-- [ ] T015 [P] [US1] In `src/commands/adopt.mjs` line 105, change the hard-coded manifest
+- [X] T015 [P] [US1] In `src/commands/adopt.mjs` line 105, change the hard-coded manifest
   `upstreams: { speckit: '1.0.11@8147943' }` to `'1.3.0@91261fd'`. Update any `test/integration/adopt.test.mjs`
   assertion that names the old value.
 - [ ] T016 [US1] Run `node .baton/bin/baton.mjs sync --check`, `lock verify` and `validate` in the generator

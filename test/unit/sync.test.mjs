@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { diffDocument, generatedStable, lockFile, packDefinitions, prepareEntries, snapshotDrift } from '../../src/commands/sync.mjs';
+import { diffDocument, generatedStable, lockFile, packDefinitions, pinnedNames, prepareEntries, snapshotDrift } from '../../src/commands/sync.mjs';
 import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
 import { sourceRoot } from '../helpers/index.mjs';
 
@@ -106,6 +106,95 @@ test('pinned generator can refresh Baton-authored handoff outputs without blessi
     lock.files.push({ path: 'unchanged.md', packs: ['core'], sha256_upstream: '0'.repeat(64) });
     assert.throws(() => prepareEntries(root, generated, atv, packs, [], lock, false),
       /E_UPSTREAM_VERIFY.*unchanged\.md/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('Spec Kit github extension entries come only from the extension tree into the issues pack', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'baton-sync-extension-'));
+  try {
+    const generated = join(root, 'generated');
+    const extension = join(root, 'project-github');
+    const atv = join(root, 'atv');
+    const skill = '.github/skills/speckit-github-taskstoissues/SKILL.md';
+    const paths = [
+      skill,
+      '.specify/extensions/github/extension.yml',
+      '.specify/extensions/github/README.md',
+      '.specify/extensions/github/commands/speckit.github.taskstoissues.md',
+      '.specify/extensions/github/scripts/bash/resolve-tasks.sh',
+      '.specify/extensions/github/scripts/powershell/resolve-tasks.ps1',
+      '.specify/extensions/github/scripts/python/resolve_tasks.py',
+    ];
+    const skillText = '---\nname: speckit-github-taskstoissues\ndescription: Create GitHub issues from tasks.\n---\n\nBody.\n';
+    /** @param {string} base @param {string} path @param {string|Buffer} bytes */
+    const put = async (base, path, bytes) => {
+      await mkdir(join(base, path, '..'), { recursive: true });
+      await writeFile(join(base, path), bytes);
+    };
+    for (const base of [generated, extension]) {
+      await put(base, '.specify/scripts/bash/common.sh', 'echo core\n');
+    }
+    await put(generated, '.specify/extensions.yml', 'installed: []\r\n');
+    await put(generated, '.specify/extensions/.registry', '{"extensions":{}}\n');
+    await put(extension, '.specify/extensions.yml', 'installed: [github]\n');
+    await put(extension, '.specify/extensions/.registry', '{"extensions":{"github":{}}}\n');
+    for (const path of paths) {
+      await put(extension, path, path === skill ? skillText.replaceAll('\n', '\r\n') : `fixture ${path}\n`);
+    }
+    await put(root, 'specs/001-baton-template/contracts/packs.md',
+      await readFile(join(sourceRoot, 'specs/001-baton-template/contracts/packs.md')));
+    const packs = [
+      { id: 'core', requires: [], conflicts: [], files: [] },
+      { id: 'issues', requires: ['core'], conflicts: [],
+        files: paths.map(path => ({ from: 'speckit', extension: 'github', path })) },
+    ];
+    const { vendored } = prepareEntries(root, generated, atv, packs, [], null, false, {}, { github: extension });
+    for (const path of paths) {
+      const entry = vendored.find(row => row.path === path);
+      assert.ok(entry, path);
+      const { bytes, sha256: digest, sha256_upstream: upstreamDigest, ...row } = entry;
+      assert.deepEqual(row, {
+        path, upstream: 'speckit', upstream_path: path, stored_at: `packs/issues/files/${path}`,
+        license: 'MIT', repair: null, packs: ['issues'], 'x-speckit-extension': 'github',
+      });
+      assert.equal(digest, sha256(bytes));
+      assert.equal(upstreamDigest, digest);
+    }
+    assert.deepEqual(vendored.find(row => row.path === skill).bytes, Buffer.from(skillText));
+    const core = vendored.filter(row => row.packs.includes('core'));
+    assert.ok(core.every(row => !row.path.startsWith('.specify/extensions/github/') &&
+      !row.path.includes('speckit-github-taskstoissues') && !('x-speckit-extension' in row)));
+    assert.deepEqual(core.find(row => row.path === '.specify/extensions.yml').bytes, Buffer.from('installed: []\n'));
+    assert.deepEqual(core.find(row => row.path === '.specify/extensions/.registry').bytes,
+      Buffer.from('{"extensions":{}}\n'));
+    assert.ok(pinnedNames(generated, atv, [extension]).has('speckit-github-taskstoissues'));
+    assert.ok(!pinnedNames(generated, atv).has('speckit-github-taskstoissues'));
+
+    assert.throws(() => prepareEntries(root, generated, atv, packs, [], null, false, {}),
+      error => error.code === 'E_UPSTREAM_VERIFY' && /extension github/.test(error.message));
+    for (const from of ['baton', 'atv']) {
+      const misrouted = [packs[0], { ...packs[1], files: [{ from, extension: 'github', path: skill }] }];
+      assert.throws(() => prepareEntries(root, generated, atv, misrouted, [], null, false, {}, { github: extension }),
+        error => error.code === 'E_UPSTREAM_VERIFY');
+    }
+    const readme = join(extension, '.specify/extensions/github/README.md');
+    const original = await readFile(readme);
+    await rm(readme);
+    assert.throws(() => prepareEntries(root, generated, atv, packs, [], null, false, {}, { github: extension }),
+      error => error.code === 'E_UPSTREAM_VERIFY' && error.message.includes('README.md'));
+    await put(root, 'outside/README.md', original);
+    let linked = true;
+    try {
+      await symlink(join(root, 'outside/README.md'), readme);
+    } catch {
+      linked = false;
+    }
+    if (linked) {
+      assert.throws(() => prepareEntries(root, generated, atv, packs, [], null, false, {}, { github: extension }),
+        error => error.code === 'E_UPSTREAM_VERIFY' && error.message.includes('README.md'));
+    }
   } finally {
     await rm(root, { recursive: true, force: true });
   }

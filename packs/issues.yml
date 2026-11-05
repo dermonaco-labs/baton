@@ -1,7 +1,14 @@
 schema: 1
 id: issues
-description: Opt-in GitHub issue creation from tasks.md.
+description: Opt-in GitHub issue creation from tasks.md (Spec Kit github extension).
 requires: [core]
 conflicts: []
 files:
-  - { from: speckit, path: .github/skills/speckit-taskstoissues/SKILL.md }
+  - { from: speckit, extension: github, path: .github/skills/speckit-github-taskstoissues/SKILL.md }
+  - { from: speckit, extension: github, path: .specify/extensions/github/extension.yml }
+  - { from: speckit, extension: github, path: .specify/extensions/github/README.md }
+  - { from: speckit, extension: github, path: .specify/extensions/github/commands/speckit.github.taskstoissues.md }
+  - { from: speckit, extension: github, path: .specify/extensions/github/scripts/bash/resolve-tasks.sh }
+  - { from: speckit, extension: github, path: .specify/extensions/github/scripts/powershell/resolve-tasks.ps1 }
+  - { from: speckit, extension: github, path: .specify/extensions/github/scripts/python/resolve_tasks.py }
+  - { from: baton, path: .github/skills/speckit-taskstoissues/SKILL.md }
