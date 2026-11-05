@@ -2,13 +2,13 @@
 baton: 1
 lane: feature
 feature: 004-speckit-1-3-0-migration
-phase_completed: analyze
-next_phase: implement
-next_owner: speckit-implement
+phase_completed: implement
+next_phase: review
+next_owner: baton-review
 status: ready
-model_role: implementation
-suggested_model: gpt-6-sol
-summary: "Analyze complete: 0 CRITICAL, 0 HIGH, 3 MEDIUM (C1 wrapper-vs-principle-VI rationale, I1 SC-006 reading of D12 narrowing-only trust, A1 T021 reference wording), 3 LOW (G1 FR-004 already met without task, U1 AC-US1-4 evidence form, E1 local mirror). Coverage 21/22. Ready for the human pre-code gate."
+model_role: review
+suggested_model: claude-opus-5.5
+summary: "Implement complete: Spec Kit 1.0.11 -> 1.3.0 (peeled commit 34a0d388eac671d656eb05b125ad3ed6056168ed); opt-in issues pack ships the github extension (7 locked rows, x-speckit-extension: github) plus the Baton alias wrapper /speckit-taskstoissues; core unchanged; init renders extension scripts for ps/py; narrowing-only trust additions. Hosted sandbox at 7cf28f3: npm run check exit 0 (694 tests, 683 pass, 0 fail, 11 skipped), sync --check clean. All 31 tasks checked with evidence in tasks.md. /speckit-converge: converged with 0 findings; tasks.md unchanged."
 read_first:
   - path: specs/004-speckit-1-3-0-migration/tasks.md
     why: T001-T031 in dependency order with the Acceptance Registry
@@ -64,12 +64,86 @@ artifacts:
     sha256: 3bb996d06287633357ee443bc96dc557e7c6d981d153908217fb24e2d057bc3c
 entry_checked: []
 exit_criteria:
-  - id: analysis-recorded
+  - id: tasks-all-checked-or-deferred
     met: true
-    evidence: specs/004-speckit-1-3-0-migration/analysis.md
-  - id: no-critical-findings
+    evidence: 0 outstanding tasks
+  - id: acceptance-evidence
     met: true
-    evidence: report CRITICAL 0; baton CRITICAL 0
+    evidence: 0 checks lack evidence
+  - id: local-checks-pass
+    met: true
+    evidence: |-
+      baton: 0
+      stdout (tail):
+        ✔ owned rows keep their install target, provenance, license and shape; hashes match the written bytes (787.474412ms)
+        ✔ new rows may not collide with each other or with kept rows in any letter case (7.934544ms)
+        ✔ every committed lock row has the shape sync writes, so the shared row policy cannot drift from sync (1.31407ms)
+        ✔ install targets outside the upstream install roots are rejected even for a base-locked row (6.643698ms)
+      ✔ upstream candidates speckit and atv row ownership policy (970.968632ms)
+      ▶ upstream candidates lifecycle
+        ✔ a branch is bot-only only when every commit is authored and committed by the bot (0.221699ms)
+        ✔ the same pin, base and digest is unchanged; a new base or content regenerates (0.72789ms)
+        ✔ a human-edited candidate with a newer pin waits for the human (0.582244ms)
+        ✔ a candidate PR without a valid marker blocks for manual repair; its title is never trusted (2.296037ms)
+        ✔ a closed candidate with a restored marker suppresses its pin or, when marked obsolete, releases it (0.611738ms)
+        ✔ a human close suppresses exactly that pin; a newer pin generates again (0.944241ms)
+        ✔ the automation obsolete close never suppresses (0.253997ms)
+        ✔ when the default branch pins the same or newer, bot-only PRs close and human PRs are reported (1.283144ms)
+      ✔ upstream candidates lifecycle (7.450005ms)
+      ▶ upstream candidates Spec Kit github extension trust (feature 004)
+        ✔ stored extension files under a pack install root are trusted like BOUND_ROOTS (9.883146ms)
+        ✔ a lock row carrying x-speckit-extension is trusted in either lock (8.522817ms)
+        ✔ x-speckit-extension is frozen on existing rows (5.053889ms)
+        ✔ the Baton wrapper may not become a Spec Kit lock row (8.847239ms)
+        ✔ regenerated ordinary core rows stay outside the narrowed trust (4.32003ms)
+        ✔ x-speckit-extension appears only on issues-pack extension rows, always as github (0.985563ms)
+      ✔ upstream candidates Spec Kit github extension trust (feature 004) (37.855675ms)
+      ✔ every feature phase and quick lane phase has a valid independent fixture (264.887911ms)
+      ✔ pre-existing feature baton without specify history or attachment still validates (119.769698ms)
+      ▶ each invalid baton fixture reports its named stable error, without unrelated errors
+        ✔ E_ACTOR_FORMAT (85.124928ms)
+        ✔ E_ANALYSIS_CRITICAL (3.11327ms)
+        ✔ E_ANALYSIS_MISSING (2.098344ms)
+        ✔ E_APPROVER_FORMAT (3.274849ms)
+        ✔ E_BLOCKING_OPEN (2.435845ms)
+        ✔ E_BODY_SECTIONS (2.156981ms)
+        ✔ E_BUDGET (3.438032ms)
+        ✔ E_DENYLIST (2.376677ms)
+        ✔ E_EXIT_UNMET (1.902073ms)
+        ✔ E_GATE_PENDING (16.373237ms)
+        ✔ E_LANE_ESCALATE (104.485192ms)
+        ✔ E_LANE_MISMATCH (1.892017ms)
+        ✔ E_MISSING_ARTIFACT (3.3494ms)
+        ✔ E_MODEL_NOT_ALLOWED (5.378481ms)
+        ✔ E_MULTIPLE_BATONS (4.924673ms)
+        ✔ E_NO_PREREG (4.995713ms)
+        ✔ E_OWNER (2.565367ms)
+        ✔ E_PR_MISSING (5.117584ms)
+        ✔ E_REVIEW_BLOCKING (39.260349ms)
+        ✔ E_REVIEW_MISSING (4.697971ms)
+        ✔ E_SCHEMA (4.922935ms)
+        ✔ E_STALE_ARTIFACT (3.146018ms)
+        ✔ E_TRANSITION (3.417641ms)
+      ✔ each invalid baton fixture reports its named stable error, without unrelated errors (327.330231ms)
+      ✔ quick phase checks require a reasoned decision, resolved findings and explicit scope evidence (89.376367ms)
+      ✔ feature phase checks reject missing story evidence, clarification and critical analysis (10.557507ms)
+      ▶ model allowlist warns in warn mode and errors in error mode
+        ✔ warn mode emits W_MODEL_NOT_ALLOWED without an error (89.253184ms)
+        ✔ error mode emits E_MODEL_NOT_ALLOWED (13.083295ms)
+      ✔ model allowlist warns in warn mode and errors in error mode (119.798361ms)
+      ✔ sample handoff satisfies its schema, phase contract, hashes and gate (78.787835ms)
+      ✔ sample evidence uses LF bytes so checked-in fixture hashes stay portable (0.760649ms)
+      ✔ malformed frontmatter is reported as E_FRONTMATTER_MALFORMED (7.697653ms)
+      ✔ ready with a blocking question is rejected (66.710598ms)
+      ✔ role-only A5 examples reject malformed approvers and actors with their stable codes (89.590675ms)
+      ℹ tests 694
+      ℹ suites 10
+      ℹ pass 683
+      ℹ fail 0
+      ℹ cancelled 0
+      ℹ skipped 11
+      ℹ todo 0
+      ℹ duration_ms 164297.832328
 open_questions: []
 decisions:
   - id: D1
@@ -158,10 +232,50 @@ decisions:
     decision: Artifact hashes refreshed after intentional edit
     rationale: "speckit-implement marked T002-T031 complete and added implementation and acceptance evidence to tasks.md; spec.md, plan.md, registered acceptance commands and approved scope are unchanged. Clears the pre-code gate; renewed approval is required before the implement handoff (precedent: 002 D8)."
     by: implementation-session
+  - id: D22
+    decision: "Owner decision A: keep the x-speckit-extension: github lock key and amend only the feature-003 row-shape filter at test/unit/upstream-candidates.test.mjs:1148 to exclude it like the provenance pair; a new test asserts the key appears only on issues-pack rows with value github"
+    rationale: 'User-directed owner decision relayed by the coordinator. Amends T029/SC-006 "added lines only": the single modified test line is 1148; src changes stay additive or narrowing-only (isTrusted extended with ||, FROZEN_FIELDS gains one field).'
+    by: speckit-implement
+  - id: D23
+    decision: Pin the peeled v1.3.0 commit 34a0d388eac671d656eb05b125ad3ed6056168ed; 91261fdcf1738cb095a31ff5bee145f502e3af91 in research/data-model/plan/quickstart/tasks is the annotated tag object
+    rationale: git ls-remote shows refs/tags/v1.3.0 = 91261fd (tag object) and refs/tags/v1.3.0^{} = 34a0d38; sync records the peeled commit. adopt.mjs, CHANGELOG and THIRD_PARTY_NOTICES use 34a0d38. Bound planning artifacts are not rewritten; this decision is the correction.
+    by: speckit-implement
+  - id: D24
+    decision: Run T013/T014/T016/T030 in the owner-authorized GitHub cloud sandbox with public PyPI (T002 outcome)
+    rationale: Locally the TLS handshake to files.pythonhosted.org fails and the approved mirror lacks the pinned closure (no specify-cli==1.3.0, no anyio==4.16.0). Owner authorized branch push plus cloud session only; no mirror settings committed. Bump commit f702474; final checks at 7cf28f3.
+    by: speckit-implement
+  - id: D25
+    decision: "Metadata-only refreshes of bound docs for T027/T028: 001 D175, 002 D35, release-014 D17 and D18, release-records-docs-a7 D20/D21 with a fresh a7 approval by repository owner via control-plane delegation; 002 and release-014 gates left pending"
+    rationale: Owner authorization A (user-directed) limited to feature 004 T027/T028 Spec Kit 1.3.0 documentation edits and the template-cleanup entry for specs/004. release-014 D18 corrects the CHANGELOG commit to the peeled commit (D23).
+    by: speckit-implement
+  - id: D26
+    decision: Keep CONTRIBUTING.md line 121 unchanged (T028 deviation)
+    rationale: Line 121 is the historical v0.1.0 release record; rewriting it to 1.3.0 would falsify history. Owner preserved it as proposed.
+    by: speckit-implement
+  - id: D27
+    decision: "C1: the wrapper is alias-only (delegates to /speckit-github-taskstoissues, no issue-creation logic); recorded here instead of editing the bound plan.md"
+    rationale: Owner-approved at the pre-code gate; avoids invalidating the approved plan.md hash. Enforced by test/unit/issues-wrapper.test.mjs.
+    by: speckit-implement
+  - id: D28
+    decision: T024 asserts LF for the two skill files and CRLF ownership for the extension extension.yml and command file
+    rationale: The adopter .gitattributes pins .github/skills/** to text eol=lf, so CRLF checkouts never apply to skills; the CRLF ownership property is exercised on the extension files under .specify/extensions/github/.
+    by: speckit-implement
+  - id: D29
+    decision: "Post-bump test and generator fixes: plainLock fixture inside the feature-004 describe block, T023 expects the wrapper row alongside lock issues rows, upstream-upgrade report test reads the pinned version from the lock, upstream-diff summary rendered as h2 with blank lines around lists, manifest regenerated"
+    rationale: "Real extension rows in baton.lock.json after the bump conflicted with feature-004 fixtures; the wrapper is from: baton with no lock row; a feature-003 integration test hardcoded 1.0.11; markdownlint MD001/MD032 failed on the generated doc. No feature-003 unit test in SC-006 scope changed beyond D22."
+    by: speckit-implement
+  - id: D30
+    decision: "Converge outcome: converged, 0 findings, no convergence tasks appended"
+    rationale: Checked FR-001..FR-015, SC-001..SC-007, 10 acceptance scenarios, 6 edge cases, plan D1-D17 and constitution I/II/VI/VIII against the tree at 6955489. Remaining 1.0.11 mentions are historical records (CONTRIBUTING:121, docs/solutions), fixtures, or the compatible range >=1.0.11,<2.0.0 (FR-004). Pre-code gate re-approved by repository owner via control-plane delegation after the D21 refresh.
+    by: speckit-converge
+  - id: D31
+    decision: "Harden src/lib/local-checks.mjs terminateTree: after SIGKILL of the process group, wait up to 2s until process.kill(-pgid,0) reports ESRCH before runLocalCheck returns (292d7b1); tests unchanged."
+    rationale: "Pre-existing local-checks.test.mjs:85/:105 failed 4/4 under the nested npm run check inside handoff write on the Linux sandbox: SIGKILLed orphans stay signalable as zombies until init (tini) reaps them. User-directed choice of the src hardening over test polling; outside the original 004 task list, recorded as a decision without editing tasks.md."
+    by: speckit-implement
 gate:
-  required: true
-  approved_by: repository owner via control-plane delegation
-  approved_at: 2026-11-05
+  required: false
+  approved_by: null
+  approved_at: null
 history:
   - phase: specify
     at: 2026-11-05T09:15:49.859Z
@@ -233,8 +347,15 @@ history:
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
     commit: "6955489"
     x-action: approve
-updated_at: 2026-11-05T10:35:37.866Z
-updated_by: human:repository-owner
+  - phase: implement
+    at: 2026-11-05T11:08:00.258Z
+    by: speckit-implement
+    writer: 5f00924a333f2145b5cc3d08b5263dc13be579de2a88786886896cbca9be8a7d
+    x-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
+    commit: 292d7b1
+    x-action: write
+updated_at: 2026-11-05T11:05:06.570Z
+updated_by: speckit-implement
 risks:
   - id: R1
     text: Hook dispatch changes in 1.1-1.3 could silently skip or double Baton receive/handoff hooks.
@@ -260,6 +381,9 @@ risks:
   - id: R8
     text: The trust-narrowing addition could unintentionally reject a legitimate future automated core row if BOUND_ROOTS matching is wrong.
     severity: medium
+  - id: R9
+    text: F39 live --script ps init tests (core and --packs issues) cannot run on hosts without public PyPI egress; they passed 2/2 in the hosted sandbox at ca95054.
+    severity: low
 assumptions: []
 acceptance_checks:
   - id: AC-US1-1
@@ -316,6 +440,9 @@ analysis:
   critical: 0
   high: 0
   report_path: specs/004-speckit-1-3-0-migration/analysis.md
+x-implementation-writer: 5f00924a333f2145b5cc3d08b5263dc13be579de2a88786886896cbca9be8a7d
+x-implementation-worktree: 3af7f0b63ff67b2e3ccc9a408807884e9d0c75834279136c220a52ab422f0752
+x-implementation-cycle: f3818ec7e86915e958459653b87fbc41a64de460a7e7220f7345cb8a2a9ae8c3
 ---
 
 ## Goal
