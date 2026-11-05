@@ -8,16 +8,22 @@ next_owner: speckit-plan
 status: needs-human
 model_role: planning
 suggested_model: claude-opus-5.5
-summary: "Specified the Spec Kit 1.0.11 -> 1.3.0 migration: bump the pin and lock, verify relay hooks fire once, move the opt-in issues pack to the bundled github extension, and record the upgrade. Scope gate pending; Q1/Q2 carry the recommended choices."
+summary: "Specified the Spec Kit 1.0.11 -> 1.3.0 migration per owner decisions A+/X: bump pin and lock, resolve the 1.1.3-1.3.0 E_DANGLING_REF closure by moving the opt-in issues pack to the bundled github extension plus a Baton-authored /speckit-taskstoissues compatibility wrapper, keep core and feature 003 trusted-base bindings unchanged, verify relay hooks fire once, add regression tests. Scope gate pending owner answers to Q1/Q2."
 read_first:
   - path: specs/004-speckit-1-3-0-migration/spec.md
-    why: Requirements FR-001..FR-011 and success criteria for planning
+    why: Requirements FR-001..FR-015 and success criteria SC-001..SC-007 for planning
   - path: .specify/memory/constitution.md
-    why: Principles I/II (byte-identical pinned upstream) and VI (packs) constrain the bump
+    why: Principles I/II (byte-identical pinned upstream, declared repairs) and VI (opt-in packs) constrain the bump and wrapper
   - path: baton.lock.json
     why: Current Spec Kit 1.0.11 pin and the issues-pack file record to replace
   - path: packs/issues.yml
-    why: Only pack that references the removed core taskstoissues source
+    why: Only pack referencing the removed core taskstoissues source; gains github extension files and the wrapper
+  - path: src/lib/packs.mjs
+    why: Pack closure check that raises E_DANGLING_REF
+  - path: src/lib/upstream-candidates.mjs
+    why: Feature 003 path policy that must not widen to extension/preset/registry/wrapper files
+  - path: specs/003-upstream-upgrade-prs/contracts/sync-bump.md
+    why: Feature 003 trusted-base byte/mode binding contract that must stay intact
   - path: CONTRIBUTING.md
     why: Supported sync --bump upgrade procedure and required checks
   - path: baton/speckit-extension/extension.yml
@@ -25,7 +31,7 @@ read_first:
 artifacts:
   - path: specs/004-speckit-1-3-0-migration/spec.md
     role: source-of-truth
-    sha256: a6d2d251eb1197eca8cf06b800dfcce2619c4710b45d17990ba3c2f6902b138d
+    sha256: b21abe7d51d9e2d68fede7bf6c1e5a140fd8d1c7264953bd3fcb8b4bceee0063
 entry_checked: []
 exit_criteria:
   - id: artifact-exists:spec.md
@@ -44,30 +50,38 @@ open_questions:
   - id: Q1
     question: Spec Kit 1.3.0 removes core taskstoissues. How should the opt-in issues pack be handled?
     blocking: true
+    owner: repository owner
     options:
-      - "A: repoint the pack to the bundled github extension; command becomes /speckit-github-taskstoissues (recommended; spec assumes this)"
+      - "A+: repoint the issues pack to the bundled github extension and keep /speckit-taskstoissues as a thin Baton-authored compatibility wrapper backed by the extension command (owner-directed; spec assumes this)"
+      - "A: repoint the issues pack to the bundled github extension only; command becomes /speckit-github-taskstoissues"
       - "B: retire the issues pack"
-      - "C: keep the 1.0.11 taskstoissues bytes under a separate pin"
-    owner: repository owner
   - id: Q2
-    question: baton update does not remove managed files that leave the snapshot, so issues-pack adopters keep a stale speckit-taskstoissues skill. How should this be handled?
+    question: How should files that leave the issues pack be handled on baton update?
     blocking: true
-    options:
-      - "X: document manual removal in CHANGELOG/README; no update behavior change (recommended; spec assumes this)"
-      - "Y: extend update to remove unmodified departed managed files and flag modified ones as conflicts"
     owner: repository owner
+    options:
+      - "X: no update behavior change; document any residual manual removal in CHANGELOG/README (owner-directed; spec assumes this)"
+      - "Y: extend update to remove unmodified departed managed files and flag modified ones as conflicts"
 decisions:
   - id: D1
     decision: Run the migration in the feature lane
-    rationale: "1.3.0 removes core taskstoissues (upstream #5053), changing the public command of the opt-in issues pack; the quick lane forbids public contract changes."
+    rationale: "1.3.0 removes core taskstoissues (upstream #5053) and changes the opt-in issues pack contents; the quick lane forbids public contract changes."
     by: speckit-specify
   - id: D2
     decision: Target exactly Spec Kit 1.3.0
-    rationale: Latest stable release (2026-11-03); intermediate 1.0.12-1.2.6 are not pinned separately.
+    rationale: Latest stable release; resolving closure for 1.3.0 also covers the 1.1.3-1.2.6 E_DANGLING_REF failure mode.
     by: speckit-specify
   - id: D3
-    decision: Exclude adoption of the Copilot --no-model-invocation option and the Baton release itself
-    rationale: Neither is needed to migrate; both can follow as separate work.
+    decision: Exclude the Copilot --no-model-invocation option, the Baton release, merge, tag, settings changes and workflow dispatch
+    rationale: None is needed to migrate; release follows the normal process separately.
+    by: speckit-specify
+  - id: D4
+    decision: Regenerated the unapproved specify baton (first written in commit 9e5045e) so Q1/Q2 options state the owner-directed A+ and X choices exactly
+    rationale: The coordinator relayed owner choices A+ and X; handoff answer needs an exact recorded option and the earlier options lacked A+. The gate was never approved, so no approval is lost; the formal answers and approval remain with the owner.
+    by: speckit-specify
+  - id: D5
+    decision: No stale skill file remains for issues-pack adopters
+    rationale: The compatibility wrapper occupies the same path as the 1.0.11 core taskstoissues skill (.github/skills/speckit-taskstoissues/SKILL.md), so existing update replaces unmodified copies and flags modified ones as conflicts; plan verifies no other residual file.
     by: speckit-specify
 gate:
   required: true
@@ -75,13 +89,13 @@ gate:
   approved_at: null
 history:
   - phase: specify
-    at: 2026-11-05T09:08:06.914Z
+    at: 2026-11-05T09:15:49.859Z
     by: speckit-specify
     writer: 08c2e2d3da13346f9702db0b9bed038be45ec2f104c6e663589851b189637f7c
     x-worktree: c2546d4d6546a79b6cdcfbf98f3bfbf45d1a606aff92e3569ca225f4d16d50ab
-    commit: 890bb99
+    commit: 9e5045e
     x-action: write
-updated_at: 2026-11-05T09:08:06.906Z
+updated_at: 2026-11-05T09:15:49.849Z
 updated_by: speckit-specify
 risks:
   - id: R1
@@ -93,12 +107,21 @@ risks:
   - id: R3
     text: New transitive Python dependencies in specify-cli 1.3.0 change the hash-locked requirements and notices.
     severity: low
+  - id: R4
+    text: Adding github extension or wrapper paths could accidentally widen feature 003's automated upgrade path policy or trusted-base bindings.
+    severity: high
+  - id: R5
+    text: The skills-mode rendering of the github extension command may differ from the core skill layout, affecting where the wrapper and canonical command land.
+    severity: medium
 assumptions:
   - id: A1
-    text: The token-budget and optimize extension packs need only reverification; they declare speckit_version >=0.1.0.
+    text: The token-budget and optimize extension packs need only reverification; they declare compatible speckit_version ranges.
     revisit_at: plan
   - id: A2
     text: "Upstream #5219 (registered command hook invoked once) does not remove or duplicate Baton's mandatory before/after hooks; plan must verify."
+    revisit_at: plan
+  - id: A3
+    text: The 1.0.11 issues pack managed only .github/skills/speckit-taskstoissues/SKILL.md; plan must verify against the lock and integration manifests.
     revisit_at: plan
 ---
 ## Goal
