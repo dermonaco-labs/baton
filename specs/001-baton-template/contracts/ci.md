@@ -20,7 +20,7 @@ smoke. The full Linux/macOS/Windows smoke remains a release-candidate gate.
 | `baton.yml` | `pull_request`, `push` to main | `baton` (ubuntu, 5 min): checkout, setup-node, `node .baton/bin/baton.mjs validate --github`, then `doctor` | `contents: read` | **adopter CI**: the server-side backstop when local hooks are skipped (RK1). Active in both the Baton repo and derived repos, shipped by `init`/`adopt` from `baton/templates/workflows/baton.yml` |
 | `mvp-windows-smoke.yml` | `pull_request` | `smoke` (windows, 10 min): local check + template adoption | `contents: read` | PR backstop (maintainer; dormant in derived repos) |
 | `smoke.yml` | `push` tags `v*.*.*`, `workflow_dispatch` | separate `ubuntu`, `macos`, `windows` jobs (10 min each; no matrix) | `contents: read` | e2e: instantiate the template + overlay the fixtures (maintainer; dormant in derived repos) |
-| `upstream-watch.yml` | `schedule` (weekly, Mon 06:00 UTC), `workflow_dispatch` | `watch` (ubuntu, 5 min) | `contents: read`, `issues: write` | one tracking issue for new upstream releases/commits (maintainer; dormant) |
+| `upstream-watch.yml` | `schedule` (weekly, Mon 06:00 UTC), `workflow_dispatch` | `watch` (ubuntu, 5 min) | `contents: read`, `issues: write` | one tracking issue for new upstream releases/commits (maintainer; dormant). **Superseded** by [003 upstream-watch contract](../../003-upstream-upgrade-prs/contracts/upstream-watch.md): four jobs and draft upgrade PRs |
 | `release.yml` | `push` tags `v*.*.*`, `workflow_dispatch` (`dry_run: true`: builds and verifies, publishes nothing) | `release` (ubuntu, 10 min) | `contents: write`, `id-token: write`, `attestations: write` | build + publish assets (maintainer; dormant) |
 | `template-cleanup.yml` | `push` to the default branch | `cleanup` (ubuntu, 5 min), guarded by `if: github.repository != 'dermonaco-labs/baton'` plus a marker file check | `contents: write` | derived-repo cleanup (US1). Runs `baton adopt --no-workflows` and commits. It never touches `.github/workflows/`, because `GITHUB_TOKEN` cannot push workflow changes (research R12); the maintainer workflows stay behind their guards and the adopter can delete them with `baton adopt --prune-workflows` |
 | `copilot-setup-steps.yml` | `workflow_dispatch` | `copilot-setup-steps` (ubuntu, 10 min) | `contents: read` | coding-agent environment: node 20, uv, `specify-cli` installed with `uv pip install --require-hashes -r baton/upstream/specify-cli.requirements.txt` (maintainer) or skipped when the file is absent (derived repos need no Spec Kit CLI at runtime), `baton doctor` |
@@ -88,6 +88,10 @@ wall-clock and ≤ 25 billable-equivalent minutes under SC-007). Full smoke runs
 demand or tags.
 
 ## `upstream-watch.yml`
+
+> **Superseded** by [specs/003-upstream-upgrade-prs/contracts/upstream-watch.md](../../003-upstream-upgrade-prs/contracts/upstream-watch.md).
+> The watcher now also opens validated draft upgrade PRs (never merging, tagging or releasing). The
+> text below is the original 001 contract, kept for history.
 
 - Queries the PyPI JSON for `specify-cli`, the GitHub releases of `github/spec-kit`, the npm `atv-starterkit` latest,
   and the `All-The-Vibes/ATV-StarterKit` main HEAD and releases.

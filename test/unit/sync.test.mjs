@@ -1,10 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { diffDocument, generatedStable, lockFile, packDefinitions, prepareEntries, snapshotDrift } from '../../src/commands/sync.mjs';
-import { ATV_COMMIT, ATV_TREE, OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, SPECKIT_COMMIT, SPECKIT_VERSION, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
+import { OPTIONAL_PIN_FIELDS, OPTIONAL_SOURCES, sha256, verifyMitLicense } from '../../src/lib/upstream.mjs';
 import { sourceRoot } from '../helpers/index.mjs';
 
 test('pinned generator can refresh Baton-authored handoff outputs without blessing upstream drift', async () => {
@@ -242,12 +243,18 @@ test('named optional sources keep raw provenance and refuse modified or misplace
   }
 });
 
+const lockedPins = () => {
+  const base = JSON.parse(readFileSync(new URL('../../baton.lock.json', import.meta.url), 'utf8'));
+  const { speckit, atv } = base.upstreams;
+  return { base, speckit: { version: speckit.version, commit: speckit.commit, requirements_sha256: 'b'.repeat(64) },
+    atv: { version: atv.version, commit: atv.commit, tree: atv.tree } };
+};
+
 test('lock and snapshot document label optional provenance by its named source', () => {
   const entry = { path: '.baton/vendor/optimize/LICENSE', upstream: 'optimize', upstream_path: 'LICENSE',
     stored_at: 'packs/optimize/files/.baton/vendor/optimize/LICENSE', sha256_upstream: 'a'.repeat(64),
     sha256: 'a'.repeat(64), license: 'MIT', repair: null, packs: ['optimize'], bytes: Buffer.from('x') };
-  const lock = lockFile([entry], 'b'.repeat(64), ATV_COMMIT, ATV_TREE, SPECKIT_VERSION, SPECKIT_COMMIT,
-    { optimize: OPTIONAL_SOURCES.optimize });
+  const lock = lockFile([entry], lockedPins(), { optimize: OPTIONAL_SOURCES.optimize });
   assert.deepEqual(Object.keys(lock.upstreams), ['speckit', 'atv', 'optimize']);
   assert.deepEqual(lock.upstreams.optimize, {
     version: '1.0.0', repo: 'sakitA/spec-kit-optimize', tag: 'v1.0.0',
@@ -258,14 +265,14 @@ test('lock and snapshot document label optional provenance by its named source',
   const document = diffDocument(lock);
   assert.match(document, /- optimize: sakitA\/spec-kit-optimize v1\.0\.0 at `d6dba6ae93bf60322deee3bdc4ffcf127e42b2b9` \(tree `c5bb7b7a37912ef26bc369397980c26c3d70cf7b`\)/);
   assert.match(document, /\| `packs\/optimize\/files\/\.baton\/vendor\/optimize\/LICENSE` \| optimize \| `LICENSE` \|/);
-  const core = lockFile([], 'b'.repeat(64), ATV_COMMIT, ATV_TREE, SPECKIT_VERSION, SPECKIT_COMMIT);
+  const core = lockFile([], lockedPins());
   assert.deepEqual(Object.keys(core.upstreams), ['speckit', 'atv']);
 });
 
 test('optional pin fields are one immutable list matching the locked projection order', () => {
   assert.deepEqual(OPTIONAL_PIN_FIELDS, ['version', 'repo', 'tag', 'commit', 'tree', 'license']);
   assert.ok(Object.isFrozen(OPTIONAL_PIN_FIELDS));
-  const lock = lockFile([], 'b'.repeat(64), ATV_COMMIT, ATV_TREE, SPECKIT_VERSION, SPECKIT_COMMIT, OPTIONAL_SOURCES);
+  const lock = lockFile([], lockedPins(), OPTIONAL_SOURCES);
   for (const id of Object.keys(OPTIONAL_SOURCES)) {
     assert.deepEqual(Object.keys(lock.upstreams[id]), [...OPTIONAL_PIN_FIELDS]);
   }

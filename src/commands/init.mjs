@@ -168,7 +168,7 @@ export async function run(root, args) {
       const directory = await mkdtemp(join(tmpdir(), 'baton-speckit-'));
       generated = { project: join(directory, 'project'), cleanup: () => rm(directory, { recursive: true, force: true }) };
       try {
-        prepareSpeckit({ root: payload.root, work: directory, script });
+        prepareSpeckit({ root: payload.root, work: directory, script, version: lock.upstreams.speckit.version });
       } catch (error) {
         if (error instanceof UpstreamError &&
             (error.code === 'E_PREREQUISITE' || /no version of specify-cli==/i.test(error.message))) {

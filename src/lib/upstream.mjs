@@ -3,11 +3,15 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-export const SPECKIT_VERSION = '1.0.11';
-export const SPECKIT_COMMIT = '8147943512404afb9d99c6252cb9bf84369fd0b0';
-export const ATV_COMMIT = 'ad996736b879be87c7755df5c5017d5336203bbc';
-export const ATV_TREE = '777a37ef9cf15f3a6fd6a3355cc3c945e8bb1c47';
 export const ATV_REPO = 'https://github.com/All-The-Vibes/ATV-StarterKit';
+export const SPECKIT_REPO = 'https://github.com/github/spec-kit';
+
+/** `owner/name` of a GitHub repository URL. @param {string} url */
+export const repoSlug = url => new URL(url).pathname.slice(1);
+/** A stable semver release version without prefix or suffix. @param {unknown} value @returns {value is string} */
+export const isVersion = value => typeof value === 'string' && /^\d+\.\d+\.\d+$/.test(value);
+/** A full lowercase 40-hex commit or tree SHA. @param {unknown} value @returns {value is string} */
+export const isSha = value => typeof value === 'string' && /^[0-9a-f]{40}$/.test(value);
 
 export class UpstreamError extends Error {
   /** @param {string} code @param {string} message */
@@ -50,8 +54,9 @@ export function workspace(root) {
   return { path, cleanup: () => rmSync(path, { recursive: true, force: true, maxRetries: 5 }) };
 }
 
-/** @param {{root:string,work:string,script?:string,version?:string}} options */
-export function prepareSpeckit({ root, work, script = 'sh', version = SPECKIT_VERSION }) {
+/** @param {{root:string,work:string,script?:string,version:string}} options */
+export function prepareSpeckit({ root, work, script = 'sh', version }) {
+  if (!/^\d+\.\d+\.\d+$/.test(version)) throw new UpstreamError('E_UPSTREAM_VERIFY', `Invalid specify-cli version: ${version}`);
   if (!['sh', 'ps', 'py'].includes(script)) throw new UpstreamError('E_USAGE', `Unsupported script: ${script}`);
   const requirements = join(root, 'baton', 'upstream', 'specify-cli.requirements.txt');
   if (!existsSync(requirements)) throw new UpstreamError('E_PREREQUISITE', `Missing ${requirements}`);
@@ -83,8 +88,43 @@ export function prepareSpeckit({ root, work, script = 'sh', version = SPECKIT_VE
   return project;
 }
 
-/** @param {{work:string,commit?:string,tree?:string}} options */
-export function fetchAtv({ work, commit = ATV_COMMIT, tree = ATV_TREE }) {
+/**
+ * Resolve a fetched git ref to its verified immutable commit and tree.
+ * @param {{work:string,name:string,repo:string,ref:string,commit?:string}} options
+ * @returns {{commit:string,tree:string}}
+ */
+function resolveRef({ work, name, repo, ref, commit }) {
+  const probe = mkdtempSync(join(work, `${name}-pin-`));
+  run('git', ['init', '-q', probe]);
+  run('git', ['-C', probe, 'fetch', '--depth', '1', repo, ref]);
+  const actualCommit = run('git', ['-C', probe, 'rev-parse', 'FETCH_HEAD^{commit}']);
+  const tree = run('git', ['-C', probe, 'rev-parse', 'FETCH_HEAD^{tree}']);
+  if (!/^[a-f0-9]{40}$/.test(actualCommit) || !/^[a-f0-9]{40}$/.test(tree) || (commit && actualCommit !== commit)) {
+    throw new UpstreamError('E_UPSTREAM_VERIFY', `${name} ${ref} did not resolve to an immutable commit`);
+  }
+  return { commit: actualCommit, tree };
+}
+
+/**
+ * Resolve a release tag (`v<x.y.z>`) of a pinned upstream repository.
+ * @param {{work:string,name:string,repo:string,tag:string}} options
+ */
+export function resolveTag({ work, name, repo, tag }) {
+  if (!/^v\d+\.\d+\.\d+$/.test(tag)) throw new UpstreamError('E_USAGE', `${name} release tag must be v<x.y.z>: ${tag}`);
+  return resolveRef({ work, name, repo, ref: `refs/tags/${tag}` });
+}
+
+/**
+ * Resolve and verify a full commit id of a pinned upstream repository.
+ * @param {{work:string,name:string,repo:string,commit:string}} options
+ */
+export function resolveCommit({ work, name, repo, commit }) {
+  if (!/^[a-f0-9]{40}$/.test(commit)) throw new UpstreamError('E_USAGE', `${name} bump requires a full commit SHA`);
+  return resolveRef({ work, name, repo, ref: commit, commit });
+}
+
+/** @param {{work:string,commit:string,tree:string}} options */
+export function fetchAtv({ work, commit, tree }) {
   if (!/^[a-f0-9]{40}$/.test(commit) || !/^[a-f0-9]{40}$/.test(tree)) {
     throw new UpstreamError('E_UPSTREAM_VERIFY', 'ATV pin must specify complete commit and tree ids');
   }
@@ -156,8 +196,9 @@ export function fetchSource({ work, id, pin = OPTIONAL_SOURCES[id] }) {
   return repo;
 }
 
-/** @param {string} root @param {string} [version] */
-export function regenerateRequirements(root, version = SPECKIT_VERSION) {
+/** @param {string} root @param {string} version */
+export function regenerateRequirements(root, version) {
+  if (!/^\d+\.\d+\.\d+$/.test(version)) throw new UpstreamError('E_USAGE', `Invalid specify-cli version: ${version}`);
   const input = join(root, 'baton', 'upstream', 'specify-cli.requirements.in');
   const output = join(root, 'baton', 'upstream', 'specify-cli.requirements.txt');
   if (!existsSync(input)) throw new UpstreamError('E_PREREQUISITE', `Missing ${input}`);

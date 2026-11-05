@@ -17,7 +17,7 @@ read_first:
     sha256: a9eb3abc02a41b5e64e8b94e389e01c526c21c798eee958336d34d439d309f34
   - path: CHANGELOG.md
     why: Dated v0.1.4 release notes and unchanged upstream pins
-    sha256: f567395408bb768c02873e1d222795f335ff198b2360bb1bd8de523c9e593a13
+    sha256: 41438ebca2068c9f576a4a63be40729bb73ef9f59742ea27b098e10f4e3b6fa5
 artifacts: []
 entry_checked: []
 exit_criteria:
@@ -95,6 +95,10 @@ decisions:
     tag: diff-base
     x-base-commit: 0b1a1548cf8ecdbf507acce8ef644301462bd910
     by: baton
+  - id: D16
+    decision: Artifact hashes refreshed after intentional edit
+    rationale: "Owner authorized (direct approval) a metadata-only hash refresh: feature 003 task T029 added Unreleased CHANGELOG entries (sync --bump atv=<x.y.z>, upstream-watch draft upgrade PRs, baton.yml ready_for_review trigger); the dated 0.1.4 section is unchanged."
+    by: implementation-session
 gate:
   required: true
   approved_by: null
@@ -135,8 +139,15 @@ history:
     x-worktree: b5a01a3b5998db3f5aa9a583fc85f8ab120cb17c265045fa17cde674c7ebea6e
     commit: 4228cd9
     x-action: write
-updated_at: 2026-11-04T08:24:47.525Z
-updated_by: baton-land
+  - phase: land
+    at: 2026-11-04T12:40:02.841Z
+    by: implementation-session
+    writer: 88cffeac8f04c6b77d9f3385cad5951914e226ccebd3eb55496e25defb4cfe45
+    x-worktree: 162abe481b05e2accd9aef3908d9146d7e40e2f93fc79eae33ec09b01803a8db
+    commit: ae34a99
+    x-action: refresh
+updated_at: 2026-11-04T12:40:02.840Z
+updated_by: implementation-session
 risks:
   - id: R1
     text: Owner approval and merge must bind the exact final PR head. Only after merge may publication proceed through the pinned dry run and an owner-approved annotated v0.1.4 tag; neither action is performed by this release-preparation task.
